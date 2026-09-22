@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Identity\Actions\GetCurrentUserProfileAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginUserRequest;
 use App\Http\Requests\RegisterUserRequest;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly GetCurrentUserProfileAction $profileAction) {}
+
     public function register(RegisterUserRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -38,15 +41,11 @@ class AuthController extends Controller
         $user->assignRole('student');
         $token = $user->createToken('auth-token')->plainTextToken;
 
+        $payload = $this->profileAction->handle($user);
+
         return response()->json([
             'data' => [
-                'user' => [
-                    'id' => $user->getAttribute('id'),
-                    'name' => $user->getAttribute('name'),
-                    'email' => $user->getAttribute('email'),
-                    'role' => $user->getRoleNames()->first(),
-                    'locale' => $user->getAttribute('locale'),
-                ],
+                'user' => $payload['user'],
                 'token' => $token,
             ],
         ], 201);
@@ -75,16 +74,11 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;
+        $payload = $this->profileAction->handle($user);
 
         return response()->json([
             'data' => [
-                'user' => [
-                    'id' => $user->getAttribute('id'),
-                    'name' => $user->getAttribute('name'),
-                    'email' => $user->getAttribute('email'),
-                    'role' => $user->getRoleNames()->first(),
-                    'locale' => $user->getAttribute('locale'),
-                ],
+                'user' => $payload['user'],
                 'token' => $token,
             ],
         ]);
