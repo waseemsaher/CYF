@@ -35,6 +35,7 @@ class User extends Authenticatable
         'academic_year',
         'department',
         'telegram_username',
+        'telegram_user_id',
         'phone',
         'locale',
         'email_verified_at',
@@ -64,6 +65,15 @@ class User extends Authenticatable
             'password' => 'hashed',
             'must_change_password' => 'boolean',
             'is_active' => 'boolean',
+            'telegram_user_id' => 'integer',
         ];
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\TelegramLinkToken, $this>
+     */
+    public function telegramLinkTokens(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TelegramLinkToken::class);
     }
 }
