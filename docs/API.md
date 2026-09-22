@@ -25,6 +25,15 @@ This file is intentionally a foundation stub for the project. The first producti
 
 ## Public catalog endpoints
 
+### GET /api/v1/courses
+- Auth: public.
+- Query parameters: optional `academic_year_id` and `department_id` audience filters.
+- Response: `data` contains published courses with `id`, `slug`, translatable `title` and `description`, `price_cents`, `list_price_cents`, `discount_cents`, `amount_due_cents`, `discount_id`, `status`, and `sort_order`.
+
+### GET /api/v1/courses/{slug}
+- Auth: public.
+- Response: one published course with the same course and calculated pricing fields as the listing endpoint. Returns `404` when the slug is missing or unpublished.
+
 ### GET /api/v1/reference/terms
 - Purpose: returns public term metadata used by the catalog and enrollment workflow.
 - Response: JSON object containing `data` and each term's `id`, `name`, `starts_at`, `ends_at`, `is_current`, and `sort_order`.

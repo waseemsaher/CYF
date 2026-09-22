@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Catalog\Actions\CalculateCoursePrice;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Course;
@@ -14,7 +15,7 @@ use Illuminate\Http\JsonResponse;
 
 class CatalogController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(CalculateCoursePrice $calculateCoursePrice): JsonResponse
     {
         $query = Course::query()
             ->where('status', 'published');
@@ -43,12 +44,15 @@ class CatalogController extends Controller
         $payload = [];
 
         foreach ($courses as $course) {
+            $pricing = $calculateCoursePrice->handle($course);
+
             $payload[] = [
                 'id' => $course->getKey(),
                 'slug' => $course->getAttribute('slug'),
                 'title' => $course->getTranslations('title'),
                 'description' => $course->getTranslations('description'),
                 'price_cents' => (int) $course->getAttribute('price_cents'),
+                ...$pricing,
                 'status' => $course->getAttribute('status'),
                 'sort_order' => (int) $course->getAttribute('sort_order'),
             ];
@@ -59,7 +63,7 @@ class CatalogController extends Controller
         ]);
     }
 
-    public function show(string $slug): JsonResponse
+    public function show(string $slug, CalculateCoursePrice $calculateCoursePrice): JsonResponse
     {
         /** @var Course|null $course */
         $course = Course::query()
@@ -73,6 +77,8 @@ class CatalogController extends Controller
             ], 404);
         }
 
+        $pricing = $calculateCoursePrice->handle($course);
+
         return response()->json([
             'data' => [
                 'id' => $course->getKey(),
@@ -80,6 +86,7 @@ class CatalogController extends Controller
                 'title' => $course->getTranslations('title'),
                 'description' => $course->getTranslations('description'),
                 'price_cents' => (int) $course->getAttribute('price_cents'),
+                ...$pricing,
                 'status' => $course->getAttribute('status'),
                 'sort_order' => (int) $course->getAttribute('sort_order'),
             ],

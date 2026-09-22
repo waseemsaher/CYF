@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\AcademicYear;
 use App\Models\Course;
 use App\Models\Department;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -137,4 +138,38 @@ it('filters the public catalog by academic year and department audience', functi
     $otherResponse = $this->getJson('/api/v1/courses?academic_year_id='.$secondYear->getKey().'&department_id='.$ai->getKey());
 
     $otherResponse->assertOk()->assertJsonCount(0, 'data');
+});
+
+it('returns calculated pricing for public course responses', function (): void {
+    CarbonImmutable::setTestNow('2026-09-22 12:00:00');
+
+    try {
+        $course = Course::create([
+            'slug' => 'discounted-course',
+            'title' => ['ar' => 'دورة مخفضة', 'en' => 'Discounted Course'],
+            'description' => ['ar' => 'دورة بسعر مخفض', 'en' => 'Discounted course'],
+            'price_cents' => 10000,
+            'status' => 'published',
+        ]);
+
+        $course->discounts()->create([
+            'name' => ['ar' => 'خصم عام', 'en' => 'Global discount'],
+            'type' => 'fixed',
+            'value' => 2500,
+            'scope' => 'all',
+            'starts_at' => '2026-09-01',
+            'ends_at' => '2026-09-30',
+            'is_active' => true,
+        ]);
+
+        $response = $this->getJson('/api/v1/courses/discounted-course');
+
+        $response->assertOk()
+            ->assertJsonPath('data.price_cents', 10000)
+            ->assertJsonPath('data.list_price_cents', 10000)
+            ->assertJsonPath('data.discount_cents', 2500)
+            ->assertJsonPath('data.amount_due_cents', 7500);
+    } finally {
+        CarbonImmutable::setTestNow();
+    }
 });
