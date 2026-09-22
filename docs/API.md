@@ -34,6 +34,12 @@ This file is intentionally a foundation stub for the project. The first producti
 - Auth: public.
 - Response: one published course with the same course and calculated pricing fields as the listing endpoint. Returns `404` when the slug is missing or unpublished.
 
+### Admin course management
+- `GET /api/v1/admin/courses`: authenticated users with `courses.manage` or `superadmin`; paginated list of draft, published, and archived courses.
+- `POST /api/v1/admin/courses`: same authorization; creates a course with translated title/description, integer price, status, and optional catalog settings.
+- `PUT /api/v1/admin/courses/{id}`: same authorization; partially updates a course.
+- `DELETE /api/v1/admin/courses/{id}`: same authorization; soft-deletes a course.
+
 ### GET /api/v1/reference/terms
 - Purpose: returns public term metadata used by the catalog and enrollment workflow.
 - Response: JSON object containing `data` and each term's `id`, `name`, `starts_at`, `ends_at`, `is_current`, and `sort_order`.

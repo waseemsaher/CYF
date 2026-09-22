@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\AdminCourseController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\ProfileController;
@@ -20,5 +21,12 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/me', [ProfileController::class, 'show']);
         Route::put('/profile', [ProfileController::class, 'update']);
+
+        Route::prefix('admin')->group(function (): void {
+            Route::get('/courses', [AdminCourseController::class, 'index']);
+            Route::post('/courses', [AdminCourseController::class, 'store']);
+            Route::put('/courses/{course}', [AdminCourseController::class, 'update']);
+            Route::delete('/courses/{course}', [AdminCourseController::class, 'destroy']);
+        });
     });
 });
