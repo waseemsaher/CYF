@@ -1,0 +1,14 @@
+**/.git
+**/node_modules
+**/vendor
+**/.env
+**/.env.*
+**/dist
+**/build
+**/.DS_Store
+**/.idea
+**/.vscode
+**/storage/logs/*
+**/storage/framework/cache/*
+**/storage/framework/sessions/*
+**/storage/framework/views/*
