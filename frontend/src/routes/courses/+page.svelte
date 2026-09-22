@@ -4,6 +4,13 @@
   let { data }: { data: PageData } = $props();
 
   const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
+  const pageHref = (page: number) => {
+    const params = new URLSearchParams();
+    if (data.selectedAcademicYear) params.set('academic_year_id', data.selectedAcademicYear);
+    if (data.selectedDepartment) params.set('department_id', data.selectedDepartment);
+    params.set('page', String(page));
+    return `/courses?${params.toString()}`;
+  };
 </script>
 
 <svelte:head>
@@ -75,6 +82,21 @@
         </article>
       {/each}
     </section>
+    {#if data.pagination.last_page > 1}
+      <nav class="pagination" aria-label="صفحات الدورات">
+        {#if data.pagination.current_page > 1}
+          <a href={pageHref(data.pagination.current_page - 1)}>السابق</a>
+        {:else}
+          <span class="disabled">السابق</span>
+        {/if}
+        <span>صفحة {data.pagination.current_page} من {data.pagination.last_page}</span>
+        {#if data.pagination.current_page < data.pagination.last_page}
+          <a href={pageHref(data.pagination.current_page + 1)}>التالي</a>
+        {:else}
+          <span class="disabled">التالي</span>
+        {/if}
+      </nav>
+    {/if}
   {/if}
 </main>
 
@@ -116,6 +138,10 @@
   .course-footer a { color: #17777a; font-weight: 800; text-decoration: none; }
   .notice { background: white; border: 1px solid #d9e6e4; border-radius: 0.6rem; padding: 1.25rem; }
   .error { border-color: #b55a55; color: #8a302b; }
+  .pagination { align-items: center; display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; }
+  .pagination a, .pagination span { color: #17777a; font-weight: 800; }
+  .pagination a { border: 1px solid #b9d4d2; border-radius: 0.35rem; padding: 0.55rem 0.85rem; text-decoration: none; }
+  .pagination .disabled { color: #9aaeb0; }
 
   @media (max-width: 760px) {
     .catalog-shell { padding-inline: 1rem; }
