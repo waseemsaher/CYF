@@ -18,13 +18,7 @@
   <meta name="description" content="تصفح دورات كلية الحاسبات والذكاء الاصطناعي" />
 </svelte:head>
 
-<main class="catalog-shell">
-  <header class="catalog-header">
-    <a class="brand" href="/">FCAI <span>COURSES</span></a>
-    <nav aria-label="التنقل الرئيسي">
-      <a href="/courses" aria-current="page">الدورات</a>
-    </nav>
-  </header>
+<div class="catalog-shell">
 
   <section class="intro">
     <p class="kicker">دورات كلية الحاسبات والذكاء الاصطناعي</p>
@@ -98,23 +92,10 @@
       </nav>
     {/if}
   {/if}
-</main>
+</div>
 
 <style>
-  :global(body) {
-    margin: 0;
-    background: #f3f7f6;
-    color: #0f282f;
-    font-family: 'IBM Plex Sans Arabic', Tahoma, sans-serif;
-  }
-
-  :global(*) { box-sizing: border-box; }
-
-  .catalog-shell { max-width: 1180px; margin: 0 auto; padding: 1.25rem 1.25rem 4rem; }
-  .catalog-header { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0 3rem; }
-  .brand { color: #0f282f; font-size: 1.05rem; font-weight: 800; letter-spacing: 0.08em; text-decoration: none; }
-  .brand span { color: #17777a; font-size: 0.68rem; margin-inline-start: 0.35rem; }
-  nav a { color: #17777a; font-weight: 700; text-decoration: none; }
+  .catalog-shell { max-width: 1180px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
   .intro { max-width: 700px; margin-bottom: 2rem; }
   .kicker, .course-label { color: #17777a; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.04em; margin: 0 0 0.5rem; }
   h1 { font-size: clamp(2.2rem, 7vw, 4.8rem); line-height: 1.08; margin: 0; }
@@ -145,7 +126,6 @@
 
   @media (max-width: 760px) {
     .catalog-shell { padding-inline: 1rem; }
-    .catalog-header { padding-bottom: 2rem; }
     .filters, .course-grid { grid-template-columns: 1fr; }
     .filters button { width: 100%; }
   }

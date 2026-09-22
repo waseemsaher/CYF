@@ -8,7 +8,7 @@
   let loading = $state(true);
   let errorMsg = $state('');
 
-  const slug = page.params.slug;
+  const slug = page.params.slug || '';
 
   async function loadData() {
     try {

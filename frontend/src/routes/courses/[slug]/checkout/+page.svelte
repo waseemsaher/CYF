@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { submitPayment } from '$lib/api/payments';
 
   let { data }: { data: PageData } = $props();
 
@@ -46,22 +47,10 @@
         formData.append('student_note', studentNote);
       }
 
-      const apiBase = 'http://localhost:8000/api/v1';
-      const response = await fetch(`${apiBase}/payments`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const body = await response.json();
-        errorMsg = body.message || 'حدث خطأ أثناء إرسال الدفعة.';
-        return;
-      }
-
+      await submitPayment(fetch, formData);
       submitted = true;
-    } catch {
-      errorMsg = 'تعذر الاتصال بالخادم. حاول مرة أخرى.';
+    } catch (err) {
+      errorMsg = err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال الدفعة.';
     } finally {
       submitting = false;
     }
@@ -75,11 +64,10 @@
   <meta name="description" content="إتمام عملية الدفع لدورة {data.course.title.ar}" />
 </svelte:head>
 
-<main class="checkout-shell">
-  <header class="checkout-header">
-    <a class="brand" href="/">FCAI <span>COURSES</span></a>
-    <a class="back-link" href={`/courses/${data.course.slug}`}>العودة للدورة <span aria-hidden="true">→</span></a>
-  </header>
+<div class="checkout-shell">
+  <nav class="breadcrumb-nav" aria-label="مسار التنقل">
+    <a class="back-link" href={`/courses/${data.course.slug}`}><span aria-hidden="true">→</span> العودة إلى تفاصيل الدورة</a>
+  </nav>
 
   {#if submitted}
     <section class="success-panel">
@@ -171,16 +159,13 @@
       </aside>
     </section>
   {/if}
-</main>
+</div>
 
 <style>
-  :global(body) { margin: 0; background: #f3f7f6; color: #0f282f; font-family: 'IBM Plex Sans Arabic', Tahoma, sans-serif; }
-  :global(*) { box-sizing: border-box; }
-  .checkout-shell { margin: 0 auto; max-width: 1180px; padding: 1.25rem 1.25rem 4rem; }
-  .checkout-header { align-items: center; display: flex; justify-content: space-between; padding: 0.5rem 0 3rem; }
-  .brand { color: #0f282f; font-size: 1.05rem; font-weight: 800; letter-spacing: 0.08em; text-decoration: none; }
-  .brand span { color: #17777a; font-size: 0.68rem; margin-inline-start: 0.35rem; }
-  .back-link { color: #17777a; font-weight: 800; text-decoration: none; }
+  .checkout-shell { margin: 0 auto; max-width: 1180px; padding: 2rem 1.25rem 4rem; }
+  .breadcrumb-nav { margin-bottom: 1.5rem; }
+  .back-link { color: var(--deep-cyan); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
+  .back-link:hover { text-decoration: underline; }
   .checkout-grid { display: grid; gap: 2rem; grid-template-columns: 1fr 360px; }
   .checkout-form { background: white; border: 1px solid #d9e6e4; border-radius: 0.75rem; padding: 2rem; }
   h1 { font-size: 2rem; margin: 0 0 1.5rem; }

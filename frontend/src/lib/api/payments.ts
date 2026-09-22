@@ -1,4 +1,4 @@
-import { apiGet } from './client';
+import { apiGet, apiPost } from './client';
 
 export type Translation = {
   ar: string;
@@ -60,3 +60,8 @@ export function getAdminPayments(fetcher: typeof fetch, status = 'pending', page
     `/admin/payments?status=${encodeURIComponent(status)}&page=${page}`
   );
 }
+
+export function submitPayment(fetcher: typeof fetch, formData: FormData) {
+  return apiPost<{ data: Payment }>(fetcher, '/payments', formData);
+}
+

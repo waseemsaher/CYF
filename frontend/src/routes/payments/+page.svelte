@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Payment } from '$lib/api/payments';
+  import { getMyPayments, type Payment } from '$lib/api/payments';
 
   let payments: Payment[] = $state([]);
   let loading = $state(true);
@@ -20,10 +20,7 @@
 
   async function loadPayments() {
     try {
-      const apiBase = 'http://localhost:8000/api/v1';
-      const response = await fetch(`${apiBase}/payments`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to load');
-      const data = await response.json();
+      const data = await getMyPayments(fetch);
       payments = data.data;
     } catch {
       errorMsg = 'تعذر تحميل الدفعات. تأكد من تسجيل الدخول.';
@@ -42,13 +39,7 @@
   <meta name="description" content="عرض حالة الدفعات الخاصة بك" />
 </svelte:head>
 
-<main class="payments-shell">
-  <header class="payments-header">
-    <a class="brand" href="/">FCAI <span>COURSES</span></a>
-    <nav aria-label="التنقل الرئيسي">
-      <a href="/courses">الدورات</a>
-    </nav>
-  </header>
+<div class="payments-shell">
 
   <section class="intro">
     <h1>دفعاتي</h1>
@@ -109,16 +100,10 @@
       {/each}
     </div>
   {/if}
-</main>
+</div>
 
 <style>
-  :global(body) { margin: 0; background: #f3f7f6; color: #0f282f; font-family: 'IBM Plex Sans Arabic', Tahoma, sans-serif; }
-  :global(*) { box-sizing: border-box; }
-  .payments-shell { margin: 0 auto; max-width: 900px; padding: 1.25rem 1.25rem 4rem; }
-  .payments-header { align-items: center; display: flex; justify-content: space-between; padding: 0.5rem 0 3rem; }
-  .brand { color: #0f282f; font-size: 1.05rem; font-weight: 800; letter-spacing: 0.08em; text-decoration: none; }
-  .brand span { color: #17777a; font-size: 0.68rem; margin-inline-start: 0.35rem; }
-  nav a { color: #17777a; font-weight: 700; text-decoration: none; }
+  .payments-shell { margin: 0 auto; max-width: 900px; padding: 2rem 1.25rem 4rem; }
   .intro { margin-bottom: 2rem; }
   h1 { font-size: 2.2rem; margin: 0; }
   .lede { color: #49636a; margin: 0.5rem 0 0; }

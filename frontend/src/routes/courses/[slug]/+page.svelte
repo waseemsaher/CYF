@@ -10,11 +10,10 @@
   <meta name="description" content={data.course.description.ar} />
 </svelte:head>
 
-<main class="detail-shell">
-  <header class="detail-header">
-    <a class="brand" href="/">FCAI <span>COURSES</span></a>
-    <a class="back-link" href="/courses">العودة للدورات <span aria-hidden="true">→</span></a>
-  </header>
+<div class="detail-shell">
+  <nav class="breadcrumb-nav" aria-label="مسار التنقل">
+    <a class="back-link" href="/courses"><span aria-hidden="true">→</span> العودة إلى قائمة الدورات</a>
+  </nav>
 
   <section class="course-hero">
     <div class="hero-copy">
@@ -43,16 +42,13 @@
     <h2>ابدأ بخطوة واضحة</h2>
     <p>ستجد داخل الدورة محتوى مرتبًا وروابط المحاضرات والاختبارات الخاصة بالمقرر.</p>
   </section>
-</main>
+</div>
 
 <style>
-  :global(body) { margin: 0; background: #f3f7f6; color: #0f282f; font-family: 'IBM Plex Sans Arabic', Tahoma, sans-serif; }
-  :global(*) { box-sizing: border-box; }
-  .detail-shell { margin: 0 auto; max-width: 1180px; padding: 1.25rem 1.25rem 4rem; }
-  .detail-header { align-items: center; display: flex; justify-content: space-between; padding: 0.5rem 0 4rem; }
-  .brand { color: #0f282f; font-size: 1.05rem; font-weight: 800; letter-spacing: 0.08em; text-decoration: none; }
-  .brand span { color: #17777a; font-size: 0.68rem; margin-inline-start: 0.35rem; }
-  .back-link { color: #17777a; font-weight: 800; text-decoration: none; }
+  .detail-shell { margin: 0 auto; max-width: 1180px; padding: 2rem 1.25rem 4rem; }
+  .breadcrumb-nav { margin-bottom: 1.5rem; }
+  .back-link { color: var(--deep-cyan); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
+  .back-link:hover { text-decoration: underline; }
   .course-hero { align-items: end; background: #0f282f; border-radius: 0.75rem; color: white; display: grid; gap: 2rem; grid-template-columns: 1fr minmax(260px, 340px); padding: clamp(1.5rem, 5vw, 4rem); }
   .kicker { color: #02eff0; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.04em; margin: 0 0 0.75rem; }
   h1 { font-size: clamp(2.3rem, 7vw, 5.5rem); line-height: 1.05; margin: 0; }
@@ -69,5 +65,5 @@
   .outline .kicker { color: #17777a; }
   .outline h2 { font-size: 1.8rem; margin: 0 0 0.5rem; }
   .outline p:last-child { color: #49636a; line-height: 1.8; margin: 0; }
-  @media (max-width: 760px) { .detail-shell { padding-inline: 1rem; } .detail-header { padding-bottom: 2rem; } .course-hero { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) { .detail-shell { padding-inline: 1rem; } .course-hero { grid-template-columns: 1fr; } }
 </style>
