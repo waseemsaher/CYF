@@ -23,3 +23,7 @@
 - Arabic remains the default locale and the app must support RTL/LTR from the start.
 - All docs and decisions are kept in /docs.
 - Work remains limited to the active milestone until the next milestone is approved.
+
+## Catalog bootstrap
+- `CatalogSeeder` owns the initial academic years, departments, current term, and five required courses.
+- Catalog seed records use `updateOrCreate` so `migrate:fresh --seed` and repeated seeding remain deterministic and do not duplicate reference data.
