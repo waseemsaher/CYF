@@ -64,8 +64,11 @@ class QuizController extends Controller
         $attempt = QuizAttempt::query()
             ->where('id', $attemptId)
             ->where('quiz_id', $quizId)
-            ->where('user_id', $user->id)
             ->firstOrFail();
+
+        if ($attempt->user_id !== $user->id) {
+            abort(403, 'غير مصرح لك بتسليم محاولة طالب آخر.');
+        }
 
         $answers = $request->input('answers', []);
         $gradedAttempt = $gradeQuizAttempt->handle($attempt, $answers);
@@ -89,17 +92,16 @@ class QuizController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $query = QuizAttempt::query()
+        /** @var QuizAttempt $attempt */
+        $attempt = QuizAttempt::query()
             ->where('id', $attemptId)
-            ->where('quiz_id', $quizId);
+            ->where('quiz_id', $quizId)
+            ->firstOrFail();
 
         $isStaff = $user->hasRole(['superadmin', 'admin']) || $user->can('courses.manage');
-        if (! $isStaff) {
-            $query->where('user_id', $user->id);
+        if (! $isStaff && $attempt->user_id !== $user->id) {
+            abort(403, 'غير مصرح لك بالاطلاع على محاولة طالب آخر.');
         }
-
-        /** @var QuizAttempt $attempt */
-        $attempt = $query->firstOrFail();
 
         $result = $getResult->handle($attempt, $user);
 

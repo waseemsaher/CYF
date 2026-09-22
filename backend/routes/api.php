@@ -30,8 +30,10 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/reference/terms', [CatalogController::class, 'terms']);
     Route::get('/content-blocks/{key}', [ContentBlockController::class, 'show']);
 
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register'])
+        ->middleware('throttle:10,1');
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:10,1');
 
     // Telegram bot webhook (rate-limited, protected by secret token header)
     Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])
@@ -66,8 +68,9 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/unlink', [TelegramController::class, 'unlink']);
         });
 
-        // Student payments
-        Route::post('/payments', [PaymentController::class, 'store']);
+        // Student payments (rate-limited)
+        Route::post('/payments', [PaymentController::class, 'store'])
+            ->middleware('throttle:10,1');
         Route::get('/payments', [PaymentController::class, 'index']);
         Route::get('/payments/{id}', [PaymentController::class, 'show']);
         Route::post('/payments/{id}/cancel', [PaymentController::class, 'cancel']);
