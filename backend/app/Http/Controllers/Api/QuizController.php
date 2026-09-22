@@ -125,14 +125,14 @@ class QuizController extends Controller
             ->get();
 
         return response()->json([
-            'data' => $attempts->map(fn ($att) => [
+            'data' => $attempts->map(fn (QuizAttempt $att): array => [
                 'id' => $att->id,
                 'status' => $att->status,
                 'started_at' => $att->started_at->toIso8601String(),
                 'submitted_at' => $att->submitted_at?->toIso8601String(),
                 'score' => $att->score,
                 'max_score' => $att->max_score,
-            ]),
+            ])->all(),
         ]);
     }
 }

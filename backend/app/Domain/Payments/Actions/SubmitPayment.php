@@ -94,8 +94,7 @@ class SubmitPayment
         $image = match ($realMime) {
             'image/jpeg' => @imagecreatefromjpeg($file->getRealPath()),
             'image/png' => @imagecreatefrompng($file->getRealPath()),
-            'image/webp' => @imagecreatefromwebp($file->getRealPath()),
-            default => false,
+            default => @imagecreatefromwebp($file->getRealPath()),
         };
 
         if ($image === false) {

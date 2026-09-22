@@ -30,9 +30,7 @@ class RejectPayment
 
         $student = $payment->user;
         if ($student && $student->telegram_user_id) {
-            $courseTitle = is_array($payment->course->title)
-                ? ($payment->course->title['ar'] ?? $payment->course->slug)
-                : (string) $payment->course->title;
+            $courseTitle = $payment->course->getTranslation('title', 'ar') ?: $payment->course->slug;
 
             $msg = "⚠️ نأسف، تم رفض إيصال الدفع لمادة: <b>{$courseTitle}</b>.\nالسبب: <i>{$reason}</i>\nيمكنك إعادة رفع إيصال صحيح من حسابك.\n\nYour payment proof was rejected. Reason: {$reason}";
 

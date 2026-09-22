@@ -26,6 +26,16 @@ class QuizAttempt extends Model
     ];
 
     /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'started_at' => 'datetime',
+        'submitted_at' => 'datetime',
+        'score' => 'integer',
+        'max_score' => 'integer',
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

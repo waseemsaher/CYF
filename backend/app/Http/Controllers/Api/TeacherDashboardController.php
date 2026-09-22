@@ -11,6 +11,7 @@ use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
+use App\Models\TeacherPayout;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,7 +42,7 @@ class TeacherDashboardController extends Controller
                 'id' => $c->id,
                 'slug' => $c->slug,
                 'title' => $c->getTranslations('title'),
-                'teacher_share_percent' => $c->pivot->teacher_share_percent,
+                'teacher_share_percent' => $c->pivot ? $c->pivot->getAttribute('teacher_share_percent') : $c->teacher_share_percent,
                 'active_students_count' => $studentsCount,
             ];
         });
@@ -50,12 +51,13 @@ class TeacherDashboardController extends Controller
             ->orderByDesc('paid_at')
             ->limit(10)
             ->get()
-            ->map(fn ($p) => [
+            ->map(fn (TeacherPayout $p): array => [
                 'id' => $p->id,
                 'amount_cents' => $p->amount_cents,
                 'paid_at' => $p->paid_at->toIso8601String(),
                 'note' => $p->note,
-            ]);
+            ])
+            ->all();
 
         return response()->json([
             'data' => [
@@ -153,14 +155,14 @@ class TeacherDashboardController extends Controller
                     'average_percentage' => $maxScore > 0 ? round(($averageScore / $maxScore) * 100, 1) : 0,
                 ],
                 'questions' => $questionsStats,
-                'attempts' => $attempts->map(fn ($att) => [
+                'attempts' => $attempts->map(fn (QuizAttempt $att): array => [
                     'id' => $att->id,
                     'student_name' => $att->user->name,
                     'student_email' => $att->user->email,
                     'score' => $att->score,
                     'max_score' => $att->max_score,
                     'submitted_at' => $att->submitted_at?->toIso8601String(),
-                ]),
+                ])->all(),
             ],
         ]);
     }

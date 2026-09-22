@@ -114,7 +114,7 @@ class CatalogController extends Controller
                     'sort_order' => (int) $year->getAttribute('sort_order'),
                 ];
             })->all(),
-        ]);
+        ])->header('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     }
 
     public function departments(): JsonResponse
@@ -134,7 +134,7 @@ class CatalogController extends Controller
                     'sort_order' => (int) $department->getAttribute('sort_order'),
                 ];
             })->all(),
-        ]);
+        ])->header('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     }
 
     public function terms(): JsonResponse
@@ -156,6 +156,6 @@ class CatalogController extends Controller
                     'sort_order' => (int) $term->getAttribute('sort_order'),
                 ];
             })->all(),
-        ]);
+        ])->header('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
     }
 }

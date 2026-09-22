@@ -33,6 +33,19 @@ class Quiz extends Model
     ];
 
     /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'title' => 'array',
+        'duration_minutes' => 'integer',
+        'max_attempts' => 'integer',
+        'shuffle_questions' => 'boolean',
+        'shuffle_options' => 'boolean',
+        'available_from' => 'datetime',
+        'available_until' => 'datetime',
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

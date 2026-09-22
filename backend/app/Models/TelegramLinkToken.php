@@ -23,6 +23,14 @@ class TelegramLinkToken extends Model
     ];
 
     /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'expires_at' => 'datetime',
+        'used_at' => 'datetime',
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

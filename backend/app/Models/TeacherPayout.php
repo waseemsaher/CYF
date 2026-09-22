@@ -23,6 +23,14 @@ class TeacherPayout extends Model
     ];
 
     /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'amount_cents' => 'integer',
+        'paid_at' => 'datetime',
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

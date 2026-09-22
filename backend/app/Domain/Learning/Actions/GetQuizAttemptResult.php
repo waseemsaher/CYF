@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Learning\Actions;
 
+use App\Models\QuestionOption;
 use App\Models\QuizAttempt;
 use App\Models\User;
 
@@ -49,10 +50,10 @@ class GetQuizAttemptResult
                     'text' => $question->getTranslations('text'),
                     'explanation' => $question->getTranslations('explanation'),
                     'points' => $question->points,
-                    'points_awarded' => $answer?->points_awarded ?? 0,
-                    'is_correct' => $answer?->is_correct ?? false,
-                    'selected_option_ids' => $answer?->selected_option_ids ?? [],
-                    'options' => $question->options->map(fn ($opt) => [
+                    'points_awarded' => $answer !== null ? $answer->points_awarded : 0,
+                    'is_correct' => $answer !== null ? $answer->is_correct : false,
+                    'selected_option_ids' => $answer !== null ? $answer->selected_option_ids : [],
+                    'options' => $question->options->map(fn (QuestionOption $opt) => [
                         'id' => $opt->id,
                         'text' => $opt->getTranslations('text'),
                         'is_correct' => $opt->is_correct,

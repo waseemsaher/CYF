@@ -47,11 +47,11 @@ class AdminOverviewController extends Controller
             ->orderByDesc('id')
             ->limit(10)
             ->get()
-            ->map(fn ($act) => [
+            ->map(fn (Activity $act): array => [
                 'id' => $act->id,
                 'description' => $act->description,
                 'log_name' => $act->log_name,
-                'causer_name' => $act->causer?->name ?? 'System',
+                'causer_name' => $act->causer instanceof User ? $act->causer->name : 'System',
                 'created_at' => $act->created_at?->toIso8601String(),
             ]);
 

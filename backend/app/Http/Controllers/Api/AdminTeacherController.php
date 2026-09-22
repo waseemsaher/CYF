@@ -24,7 +24,7 @@ class AdminTeacherController extends Controller
         $teachers = User::role('teacher')
             ->with('taughtCourses')
             ->get()
-            ->map(function (User $teacher) use ($calculateBalance) {
+            ->map(function (User $teacher) use ($calculateBalance): array {
                 $balance = $calculateBalance->handle($teacher);
 
                 return [
@@ -32,12 +32,12 @@ class AdminTeacherController extends Controller
                     'name' => $teacher->name,
                     'email' => $teacher->email,
                     'phone' => $teacher->phone,
-                    'courses' => $teacher->taughtCourses->map(fn ($c) => [
+                    'courses' => $teacher->taughtCourses->map(fn (Course $c): array => [
                         'id' => $c->id,
                         'slug' => $c->slug,
                         'title' => $c->getTranslations('title'),
-                        'teacher_share_percent' => $c->pivot->teacher_share_percent,
-                    ]),
+                        'teacher_share_percent' => $c->pivot ? $c->pivot->getAttribute('teacher_share_percent') : $c->teacher_share_percent,
+                    ])->all(),
                     'earnings' => $balance,
                 ];
             });
