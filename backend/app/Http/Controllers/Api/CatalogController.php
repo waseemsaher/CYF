@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicYear;
 use App\Models\Course;
+use App\Models\Department;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 
@@ -63,6 +65,45 @@ class CatalogController extends Controller
                 'status' => $course->getAttribute('status'),
                 'sort_order' => (int) $course->getAttribute('sort_order'),
             ],
+        ]);
+    }
+
+    public function academicYears(): JsonResponse
+    {
+        /** @var Collection<int, AcademicYear> $years */
+        $years = AcademicYear::query()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'data' => $years->map(function (AcademicYear $year): array {
+                return [
+                    'id' => $year->getKey(),
+                    'name' => $year->getTranslations('name'),
+                    'sort_order' => (int) $year->getAttribute('sort_order'),
+                ];
+            })->all(),
+        ]);
+    }
+
+    public function departments(): JsonResponse
+    {
+        /** @var Collection<int, Department> $departments */
+        $departments = Department::query()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'data' => $departments->map(function (Department $department): array {
+                return [
+                    'id' => $department->getKey(),
+                    'code' => $department->getAttribute('code'),
+                    'name' => $department->getTranslations('name'),
+                    'sort_order' => (int) $department->getAttribute('sort_order'),
+                ];
+            })->all(),
         ]);
     }
 }
