@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\TelegramController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -21,9 +22,20 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 
+    // Telegram bot webhook (rate-limited, protected by secret token header)
+    Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])
+        ->middleware('throttle:60,1');
+
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/me', [ProfileController::class, 'show']);
         Route::put('/profile', [ProfileController::class, 'update']);
+
+        // Telegram student endpoints
+        Route::prefix('telegram')->group(function (): void {
+            Route::get('/status', [TelegramController::class, 'status']);
+            Route::post('/link-token', [TelegramController::class, 'generateLinkToken']);
+            Route::post('/unlink', [TelegramController::class, 'unlink']);
+        });
 
         // Student payments
         Route::post('/payments', [PaymentController::class, 'store']);

@@ -122,3 +122,28 @@
 ### PUT /api/v1/admin/enrollments/{id}/extend
 - Body: `expires_at` (date, must be in the future).
 - Response: updated EnrollmentResource.
+
+---
+
+## Telegram Integration
+
+### POST /api/v1/telegram/webhook
+- Auth: public, rate-limited (`throttle:60,1`).
+- Headers: `X-Telegram-Bot-Api-Secret-Token` matching `config('telegram.webhook_secret')`.
+- Handles `message` updates for `/start <token>` account linking.
+- Handles `chat_join_request` updates for automatic enrollment verification and approval/decline.
+- Response: `{"ok": true}` (or `403` if secret token header is missing/mismatched).
+
+### GET /api/v1/telegram/status
+- Auth: authenticated user (`auth:sanctum`).
+- Response: `{"data": {"is_linked": bool, "telegram_user_id": int|null, "telegram_username": string|null}}`.
+
+### POST /api/v1/telegram/link-token
+- Auth: authenticated user (`auth:sanctum`).
+- Response: `{"data": {"token": string, "deep_link": string, "expires_at": string}}`.
+- Generates a 32-character single-use token expiring in 15 minutes. Deep link format: `https://t.me/<bot_username>?start=<token>`.
+
+### POST /api/v1/telegram/unlink
+- Auth: authenticated user (`auth:sanctum`).
+- Unlinks the student's Telegram account (`telegram_user_id = null`, `telegram_username = null`).
+- Response: `{"message": "Telegram account unlinked successfully."}`.

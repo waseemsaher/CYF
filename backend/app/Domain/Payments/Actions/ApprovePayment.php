@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Payments\Actions;
 
+use App\Jobs\SendTelegramNotificationJob;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Setting;
@@ -79,6 +80,18 @@ class ApprovePayment
                     'platform_share_cents' => $platformShareCents,
                 ])
                 ->log('payment_approved');
+
+            // Notify via Telegram if linked
+            $student = $payment->user;
+            if ($student && $student->telegram_user_id) {
+                $courseTitle = is_array($payment->course->title)
+                    ? ($payment->course->title['ar'] ?? $payment->course->slug)
+                    : (string) $payment->course->title;
+
+                $msg = "🎉 تم قبول عملية الدفع وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\nيمكنك الآن الانضمام إلى مجموعة التليجرام الخاصة بالمادة.\n\nYour payment has been approved and your course access is now active!";
+
+                SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg);
+            }
 
             return $enrollment;
         });

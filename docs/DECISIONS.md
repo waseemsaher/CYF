@@ -56,3 +56,17 @@
 ## Frontend
 - Checkout, payments list, and admin review queue pages use client-side authenticated fetch (credentials: include) since they require Sanctum cookies. Public pages continue to use SSR server load functions.
 - The admin payment queue uses status tabs with badge counts and inline rejection reason form.
+
+---
+
+# Milestone 4 Decisions
+
+## Telegram bot integration
+- Bot interaction uses a lightweight, typed `TelegramClient` wrapping Laravel's HTTP client with 10s timeouts. Supports full test mocking via `Http::fake()`.
+- Bot deep linking generates a cryptographically secure 32-character token stored with SHA-256 hash in `telegram_link_tokens` with 15-minute expiration. Previous unused tokens for the same user are deleted on new token generation.
+- `/start <token>` in Telegram links the user's account by matching the SHA-256 hash. If another account was previously linked to that Telegram ID, it is unlinked automatically.
+- Webhook endpoint (`POST /api/v1/telegram/webhook`) verifies `X-Telegram-Bot-Api-Secret-Token` header. Rejects unauthorized calls with 403. Rate-limited to 60 req/min.
+- Join request approvals (`chat_join_request`): automatically approves requests if the Telegram user ID belongs to a platform user with an active enrollment for that course (or is staff/admin). All others are declined.
+- Member removal on enrollment expiration or revocation: uses Telegram's `banChatMember` followed immediately by `unbanChatMember` (with `only_if_banned: true`), removing them from the closed group without blacklisting so they can rejoin upon re-enrollment.
+- Scheduled task `telegram:remove-expired` runs daily to check and kick expired/revoked members from course chats.
+- Payment notifications: `SendTelegramNotificationJob` dispatches queued notifications to the student's linked Telegram upon payment approval or rejection.
