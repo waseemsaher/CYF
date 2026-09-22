@@ -63,4 +63,28 @@ class Course extends Model
     {
         return $this->belongsToMany(Discount::class, 'discount_course');
     }
+
+    /**
+     * @return HasMany<CourseSection, $this>
+     */
+    public function sections(): HasMany
+    {
+        return $this->hasMany(CourseSection::class)->orderBy('position');
+    }
+
+    /**
+     * @return HasMany<CourseItem, $this>
+     */
+    public function items(): HasMany
+    {
+        return $this->hasMany(CourseItem::class)->orderBy('position');
+    }
+
+    /**
+     * @return HasMany<Quiz, $this>
+     */
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(Quiz::class);
+    }
 }
