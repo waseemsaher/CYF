@@ -147,3 +147,53 @@
 - Auth: authenticated user (`auth:sanctum`).
 - Unlinks the student's Telegram account (`telegram_user_id = null`, `telegram_username = null`).
 - Response: `{"message": "Telegram account unlinked successfully."}`.
+
+---
+
+## Learning Content & Quizzes
+
+### GET /api/v1/courses/{slug}/content
+- Auth: optional.
+- If not enrolled / unauthenticated: returns outline only with items flagged `is_locked: true` and sensitive URLs/files hidden.
+- If actively enrolled / staff: returns full sections, items, lecture links, file download availability, and `telegram_invite_link`.
+
+### GET /api/v1/courses/{slug}/items/{itemId}/file
+- Auth: authenticated user with active enrollment (or staff).
+- Streams / downloads private course file attachment. Returns 403 if not enrolled.
+
+### POST /api/v1/quizzes/{quizId}/start
+- Auth: authenticated enrolled student.
+- Validates enrollment, time window (`available_from`/`available_until`), and `max_attempts`.
+- Returns attempt object and questions list without leaking `is_correct` flags.
+
+### POST /api/v1/quizzes/{quizId}/attempts/{attemptId}/submit
+- Auth: authenticated attempt owner.
+- Body: `answers` object mapping question IDs to selected option ID array.
+- Auto-grades submission, calculates score, and marks attempt `submitted`.
+
+### GET /api/v1/quizzes/{quizId}/attempts/{attemptId}
+- Auth: attempt owner or staff.
+- Returns score and question review breakdown according to `results_visibility` setting (`immediate`, `after_close`, or `hidden`).
+
+### GET /api/v1/quizzes/{quizId}/my-attempts
+- Auth: authenticated student.
+- Returns list of past attempts and scores for the specified quiz.
+
+---
+
+## Admin Content Management
+
+### Sections:
+- `POST /api/v1/admin/courses/{course}/sections`: create course section.
+- `PUT /api/v1/admin/sections/{section}`: update section title/position.
+- `DELETE /api/v1/admin/sections/{section}`: delete section.
+
+### Items:
+- `POST /api/v1/admin/courses/{course}/sections/{section}/items`: create item (supports file uploads up to 50MB).
+- `PUT /api/v1/admin/items/{item}`: update item.
+- `DELETE /api/v1/admin/items/{item}`: delete item.
+
+### Quizzes & Questions:
+- `POST /api/v1/admin/courses/{course}/quizzes`: create quiz/exam.
+- `POST /api/v1/admin/quizzes/{quiz}/questions`: create question with options.
+- `DELETE /api/v1/admin/questions/{question}`: delete question.

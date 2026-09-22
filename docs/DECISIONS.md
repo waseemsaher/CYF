@@ -70,3 +70,17 @@
 - Member removal on enrollment expiration or revocation: uses Telegram's `banChatMember` followed immediately by `unbanChatMember` (with `only_if_banned: true`), removing them from the closed group without blacklisting so they can rejoin upon re-enrollment.
 - Scheduled task `telegram:remove-expired` runs daily to check and kick expired/revoked members from course chats.
 - Payment notifications: `SendTelegramNotificationJob` dispatches queued notifications to the student's linked Telegram upon payment approval or rejection.
+
+---
+
+# Milestone 5 Decisions
+
+## Learning Content & Course Outline
+- Content access is gated by active enrollment: unauthenticated users or non-enrolled students see the course syllabus/outline with `is_locked: true` and sensitive URLs/files stripped out. Enrolled students and staff unlock full lecture links, private downloads, quizzes, and the closed Telegram group invite link.
+- Course files are stored on the private `local` storage disk (`course_files/{course_id}/...`) and downloaded exclusively through the authorized streaming endpoint `GET /api/v1/courses/{slug}/items/{item_id}/file` with MIME validation and 50MB size limit.
+
+## Quizzes & Exams Engine
+- Single unified engine for both `quiz` and `exam` models. Supports duration limits (timed tests), max attempt limits, date availability windows, question shuffling, and option shuffling.
+- Security: `StartQuizAttempt` strips `is_correct` flags from question options so answers are never exposed to the client prior to or during an attempt.
+- Auto-grading: `GradeQuizAttempt` grades submissions synchronously, awards question points, logs `attempt_answers`, and marks the attempt `submitted`. Attempts exceeding the time limit (+1 min network grace) are marked `expired`.
+- Results visibility: `immediate` displays score and full breakdown with model answers and explanations; `after_close` displays the score but hides answers until `available_until` elapses; `hidden` hides the score and answers from the student.
