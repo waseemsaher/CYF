@@ -9,6 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCourseRequest;
 use App\Http\Requests\UpdateCourseRequest;
 use App\Models\Course;
+use App\Models\CourseAudience;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -19,6 +21,7 @@ class AdminCourseController extends Controller
         Gate::authorize('viewAny', Course::class);
 
         $courses = Course::query()
+            ->with('audiences')
             ->orderBy('sort_order')
             ->orderBy('id')
             ->paginate(12);
@@ -65,6 +68,9 @@ class AdminCourseController extends Controller
      */
     private function payload(Course $course): array
     {
+        /** @var Collection<int, CourseAudience> $audiences */
+        $audiences = $course->getRelation('audiences');
+
         return [
             'id' => $course->getKey(),
             'slug' => $course->getAttribute('slug'),
@@ -77,6 +83,10 @@ class AdminCourseController extends Controller
             'telegram_invite_link' => $course->getAttribute('telegram_invite_link'),
             'teacher_share_percent' => $course->getAttribute('teacher_share_percent'),
             'sort_order' => (int) $course->getAttribute('sort_order'),
+            'audiences' => $audiences->map(fn (CourseAudience $audience): array => [
+                'academic_year_id' => (int) $audience->getAttribute('academic_year_id'),
+                'department_id' => (int) $audience->getAttribute('department_id'),
+            ])->all(),
         ];
     }
 }

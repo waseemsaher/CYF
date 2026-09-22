@@ -36,8 +36,8 @@ This file is intentionally a foundation stub for the project. The first producti
 
 ### Admin course management
 - `GET /api/v1/admin/courses`: authenticated users with `courses.manage` or `superadmin`; paginated list of draft, published, and archived courses.
-- `POST /api/v1/admin/courses`: same authorization; creates a course with translated title/description, integer price, status, and optional catalog settings.
-- `PUT /api/v1/admin/courses/{id}`: same authorization; partially updates a course.
+- `POST /api/v1/admin/courses`: same authorization; creates a course with translated title/description, integer price, status, optional catalog settings, and an `audiences` array of `{academic_year_id, department_id}` pairs.
+- `PUT /api/v1/admin/courses/{id}`: same authorization; partially updates a course. Supplying `audiences` replaces the course's current audience rows; omitting it leaves them unchanged.
 - `DELETE /api/v1/admin/courses/{id}`: same authorization; soft-deletes a course.
 
 ### GET /api/v1/reference/terms

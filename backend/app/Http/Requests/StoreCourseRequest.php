@@ -34,6 +34,9 @@ class StoreCourseRequest extends FormRequest
             'telegram_invite_link' => ['nullable', 'url', 'max:255'],
             'teacher_share_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'audiences' => ['sometimes', 'array'],
+            'audiences.*.academic_year_id' => ['required', 'integer', 'exists:academic_years,id'],
+            'audiences.*.department_id' => ['required', 'integer', 'exists:departments,id'],
         ];
     }
 }

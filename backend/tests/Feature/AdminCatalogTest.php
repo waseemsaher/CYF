@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Models\AcademicYear;
 use App\Models\Course;
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
@@ -24,6 +26,8 @@ function adminUserForCatalog(): User
 
 it('allows a permitted admin to create, update, and delete a course', function (): void {
     $admin = adminUserForCatalog();
+    $year = AcademicYear::create(['name' => ['ar' => 'الأولى', 'en' => 'First'], 'sort_order' => 1]);
+    $department = Department::create(['code' => 'CS', 'name' => ['ar' => 'حاسب', 'en' => 'CS'], 'sort_order' => 1]);
 
     $createResponse = $this->actingAs($admin, 'sanctum')->postJson('/api/v1/admin/courses', [
         'slug' => 'new-course',
@@ -32,11 +36,18 @@ it('allows a permitted admin to create, update, and delete a course', function (
         'price_cents' => 25000,
         'status' => 'draft',
         'sort_order' => 1,
+        'audiences' => [['academic_year_id' => $year->id, 'department_id' => $department->id]],
     ]);
 
     $courseId = $createResponse->assertCreated()
         ->assertJsonPath('data.slug', 'new-course')
         ->json('data.id');
+
+    $this->assertDatabaseHas('course_audiences', [
+        'course_id' => $courseId,
+        'academic_year_id' => $year->id,
+        'department_id' => $department->id,
+    ]);
 
     $this->actingAs($admin, 'sanctum')->putJson('/api/v1/admin/courses/'.$courseId, [
         'title' => ['ar' => 'دورة محدثة', 'en' => 'Updated Course'],
