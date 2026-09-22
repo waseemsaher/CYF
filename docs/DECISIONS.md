@@ -84,3 +84,20 @@
 - Security: `StartQuizAttempt` strips `is_correct` flags from question options so answers are never exposed to the client prior to or during an attempt.
 - Auto-grading: `GradeQuizAttempt` grades submissions synchronously, awards question points, logs `attempt_answers`, and marks the attempt `submitted`. Attempts exceeding the time limit (+1 min network grace) are marked `expired`.
 - Results visibility: `immediate` displays score and full breakdown with model answers and explanations; `after_close` displays the score but hides answers until `available_until` elapses; `hidden` hides the score and answers from the student.
+
+---
+
+# Milestone 6 Decisions
+
+## Dashboards & Operations
+- Admin overview dashboard surfaces real-time metrics: pending payments, active enrollments, current term revenue, and registered student count with Spatie activity log integration.
+- Assistant admin permissions: granular permissions (`payments.review`, `students.manage`, `courses.manage`, `content.manage`) allow assistant admins to perform designated tasks without full superadmin rights.
+
+## Teacher Portal & Payouts
+- Teacher earnings balance is dynamically computed: sum of frozen `teacher_share_cents` from approved payments in assigned courses minus recorded manual payouts from `teacher_payouts`.
+- Manual payouts record timestamp, amount, admin author, and optional notes; all operations logged via activitylog.
+- Teachers access read-only student rosters and quiz analytics (student scores, average accuracy, per-question correct rates) for their assigned courses only.
+
+## Content Blocks & Platform Configuration
+- Content blocks (`content_blocks` table) manage landing page copy and legal policies (Terms of Use, Privacy Policy, Refund Policy).
+- Reads are cached with 1-hour TTL and invalidated automatically upon admin updates.

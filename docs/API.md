@@ -197,3 +197,47 @@
 - `POST /api/v1/admin/courses/{course}/quizzes`: create quiz/exam.
 - `POST /api/v1/admin/quizzes/{quiz}/questions`: create question with options.
 - `DELETE /api/v1/admin/questions/{question}`: delete question.
+
+---
+
+## Teacher Portal (`auth:sanctum` + teacher role)
+
+### GET /api/v1/teacher/dashboard
+- Returns teacher's assigned courses, active student counts, earnings balance, total earned, total paid out, and payout history.
+
+### GET /api/v1/teacher/courses/{courseId}/students
+- Paginated student roster for teacher's course (read-only).
+
+### GET /api/v1/teacher/quizzes/{quizId}/analytics
+- Performance analytics: total attempts, average score, per-question correct percentage rate.
+
+---
+
+## Admin Overview & System Management (`auth:sanctum` + admin permissions)
+
+### GET /api/v1/admin/overview
+- Overview dashboard KPIs: pending payments, active enrollments, term revenue, total students, recent activity.
+
+### GET /api/v1/admin/students
+- Paginated student search (`q`) and filters (`branch`, `academic_year`, `department`).
+
+### GET /api/v1/admin/teachers
+- Teachers list with assigned courses and computed balances.
+
+### POST /api/v1/admin/teachers
+- Creates teacher account with temporary password (`must_change_password: true`) and assigns `teacher` role.
+
+### POST /api/v1/admin/courses/{courseId}/teachers
+- Assigns teacher to course with optional revenue share percent override.
+
+### POST /api/v1/admin/teachers/{teacherId}/payouts
+- Records manual payout to teacher and updates balance.
+
+### GET /api/v1/admin/settings & PUT /api/v1/admin/settings
+- View and update grouped platform configuration settings.
+
+### GET /api/v1/content-blocks/{key} (Public)
+- Retrieve translated content block or legal policy text.
+
+### GET /api/v1/admin/content-blocks & PUT /api/v1/admin/content-blocks/{key}
+- Admin view and update content blocks with cache invalidation.

@@ -5,13 +5,19 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\AdminCourseController;
 use App\Http\Controllers\Api\AdminEnrollmentController;
 use App\Http\Controllers\Api\AdminLearningController;
+use App\Http\Controllers\Api\AdminOverviewController;
 use App\Http\Controllers\Api\AdminPaymentController;
+use App\Http\Controllers\Api\AdminSettingsController;
+use App\Http\Controllers\Api\AdminStudentController;
+use App\Http\Controllers\Api\AdminTeacherController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogController;
+use App\Http\Controllers\Api\ContentBlockController;
 use App\Http\Controllers\Api\CourseContentController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\QuizController;
+use App\Http\Controllers\Api\TeacherDashboardController;
 use App\Http\Controllers\Api\TelegramController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +28,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/reference/academic-years', [CatalogController::class, 'academicYears']);
     Route::get('/reference/departments', [CatalogController::class, 'departments']);
     Route::get('/reference/terms', [CatalogController::class, 'terms']);
+    Route::get('/content-blocks/{key}', [ContentBlockController::class, 'show']);
 
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
@@ -45,6 +52,13 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/my-attempts', [QuizController::class, 'myAttempts']);
         });
 
+        // Teacher dashboard
+        Route::prefix('teacher')->group(function (): void {
+            Route::get('/dashboard', [TeacherDashboardController::class, 'dashboard']);
+            Route::get('/courses/{course}/students', [TeacherDashboardController::class, 'courseStudents']);
+            Route::get('/quizzes/{quiz}/analytics', [TeacherDashboardController::class, 'quizAnalytics']);
+        });
+
         // Telegram student endpoints
         Route::prefix('telegram')->group(function (): void {
             Route::get('/status', [TelegramController::class, 'status']);
@@ -59,6 +73,18 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/payments/{id}/cancel', [PaymentController::class, 'cancel']);
 
         Route::prefix('admin')->group(function (): void {
+            // Overview dashboard
+            Route::get('/overview', [AdminOverviewController::class, '__invoke']);
+
+            // Student management
+            Route::get('/students', [AdminStudentController::class, 'index']);
+
+            // Teacher management & payouts
+            Route::get('/teachers', [AdminTeacherController::class, 'index']);
+            Route::post('/teachers', [AdminTeacherController::class, 'store']);
+            Route::post('/courses/{course}/teachers', [AdminTeacherController::class, 'assignCourse']);
+            Route::post('/teachers/{teacher}/payouts', [AdminTeacherController::class, 'recordPayout']);
+
             // Course management
             Route::get('/courses', [AdminCourseController::class, 'index']);
             Route::post('/courses', [AdminCourseController::class, 'store']);
@@ -77,6 +103,12 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/courses/{course}/quizzes', [AdminLearningController::class, 'storeQuiz']);
             Route::post('/quizzes/{quiz}/questions', [AdminLearningController::class, 'storeQuestion']);
             Route::delete('/questions/{question}', [AdminLearningController::class, 'destroyQuestion']);
+
+            // Settings & Content blocks
+            Route::get('/settings', [AdminSettingsController::class, 'index']);
+            Route::put('/settings', [AdminSettingsController::class, 'update']);
+            Route::get('/content-blocks', [ContentBlockController::class, 'index']);
+            Route::put('/content-blocks/{key}', [ContentBlockController::class, 'update']);
 
             // Payment review queue
             Route::get('/payments', [AdminPaymentController::class, 'index']);

@@ -8,6 +8,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -76,5 +77,23 @@ class User extends Authenticatable
     public function telegramLinkTokens(): HasMany
     {
         return $this->hasMany(TelegramLinkToken::class);
+    }
+
+    /**
+     * @return BelongsToMany<Course, $this>
+     */
+    public function taughtCourses(): BelongsToMany
+    {
+        return $this->belongsToMany(Course::class, 'course_teacher', 'teacher_id', 'course_id')
+            ->withPivot('teacher_share_percent')
+            ->withTimestamps();
+    }
+
+    /**
+     * @return HasMany<TeacherPayout, $this>
+     */
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(TeacherPayout::class, 'teacher_id');
     }
 }

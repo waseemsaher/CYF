@@ -87,4 +87,14 @@ class Course extends Model
     {
         return $this->hasMany(Quiz::class);
     }
+
+    /**
+     * @return BelongsToMany<User, $this>
+     */
+    public function teachers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'course_teacher', 'course_id', 'teacher_id')
+            ->withPivot('teacher_share_percent')
+            ->withTimestamps();
+    }
 }

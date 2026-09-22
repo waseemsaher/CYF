@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         $this->seedRolesAndPermissions();
         $this->call(CatalogSeeder::class);
         $this->call(SettingsSeeder::class);
+        $this->call(ContentBlockSeeder::class);
 
         $superadmin = User::factory()->create([
             'name' => 'Super Admin',
