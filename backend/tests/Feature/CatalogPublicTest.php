@@ -55,3 +55,29 @@ it('lists only published courses in the public catalog', function (): void {
         ->assertJsonPath('data.0.slug', 'discrete-math')
         ->assertJsonPath('data.1.slug', 'c-plus-plus');
 });
+
+it('returns the public detail for a published course', function (): void {
+    Course::create([
+        'slug' => 'c-plus-plus',
+        'title' => ['ar' => 'لغة C++', 'en' => 'C++'],
+        'description' => ['ar' => 'دورة شاملة', 'en' => 'Complete course'],
+        'price_cents' => 35000,
+        'status' => 'published',
+        'sort_order' => 2,
+    ]);
+
+    Course::create([
+        'slug' => 'hidden-course',
+        'title' => ['ar' => 'دورة مخفية', 'en' => 'Hidden Course'],
+        'description' => ['ar' => 'غير منشور', 'en' => 'Not published'],
+        'price_cents' => 25000,
+        'status' => 'draft',
+        'sort_order' => 1,
+    ]);
+
+    $response = $this->getJson('/api/v1/courses/c-plus-plus');
+
+    $response->assertOk()
+        ->assertJsonPath('data.slug', 'c-plus-plus')
+        ->assertJsonPath('data.title.en', 'C++');
+});

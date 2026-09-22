@@ -26,8 +26,8 @@ class CatalogController extends Controller
             $payload[] = [
                 'id' => $course->getKey(),
                 'slug' => $course->getAttribute('slug'),
-                'title' => $course->getAttribute('title'),
-                'description' => $course->getAttribute('description'),
+                'title' => $course->getTranslations('title'),
+                'description' => $course->getTranslations('description'),
                 'price_cents' => (int) $course->getAttribute('price_cents'),
                 'status' => $course->getAttribute('status'),
                 'sort_order' => (int) $course->getAttribute('sort_order'),
@@ -36,6 +36,33 @@ class CatalogController extends Controller
 
         return response()->json([
             'data' => $payload,
+        ]);
+    }
+
+    public function show(string $slug): JsonResponse
+    {
+        /** @var Course|null $course */
+        $course = Course::query()
+            ->where('slug', $slug)
+            ->where('status', 'published')
+            ->first();
+
+        if (! $course instanceof Course) {
+            return response()->json([
+                'message' => 'Course not found.',
+            ], 404);
+        }
+
+        return response()->json([
+            'data' => [
+                'id' => $course->getKey(),
+                'slug' => $course->getAttribute('slug'),
+                'title' => $course->getTranslations('title'),
+                'description' => $course->getTranslations('description'),
+                'price_cents' => (int) $course->getAttribute('price_cents'),
+                'status' => $course->getAttribute('status'),
+                'sort_order' => (int) $course->getAttribute('sort_order'),
+            ],
         ]);
     }
 }
