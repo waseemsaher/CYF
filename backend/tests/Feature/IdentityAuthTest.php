@@ -31,6 +31,8 @@ it('registers a new student and returns a token', function (): void {
 });
 
 it('logs in an existing user with valid credentials', function (): void {
+    Role::create(['name' => 'student']);
+
     $user = User::factory()->create([
         'email' => 'login@example.com',
         'password' => bcrypt('Password123!'),
