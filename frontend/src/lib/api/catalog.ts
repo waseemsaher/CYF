@@ -30,6 +30,10 @@ export function getCourses(fetcher: typeof fetch, params: URLSearchParams) {
   return apiGet<CollectionResponse<Course>>(fetcher, `/courses${query ? `?${query}` : ''}`);
 }
 
+export function getCourse(fetcher: typeof fetch, slug: string) {
+  return apiGet<{ data: Course }>(fetcher, `/courses/${encodeURIComponent(slug)}`);
+}
+
 export function getAcademicYears(fetcher: typeof fetch) {
   return apiGet<CollectionResponse<ReferenceOption>>(fetcher, '/reference/academic-years');
 }
