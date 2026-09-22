@@ -31,8 +31,10 @@
       <strong>{formatPrice(data.course.amount_due_cents)}</strong>
       {#if data.course.amount_due_cents === 0}
         <span class="free-label">مجانية</span>
+        <a class="enroll-btn free" href={`/courses/${data.course.slug}/checkout`}>سجّل فورًا — مجانًا</a>
+      {:else}
+        <a class="enroll-btn" href={`/courses/${data.course.slug}/checkout`}>سجّل الآن <span aria-hidden="true">←</span></a>
       {/if}
-      <button type="button" disabled>التسجيل قريبًا</button>
     </aside>
   </section>
 
@@ -60,8 +62,11 @@
   .enrollment-panel strong { display: block; font-size: 2rem; }
   .old-price { color: #799095; display: block; text-decoration: line-through; }
   .free-label { color: #17777a; display: block; font-weight: 800; margin-top: 0.35rem; }
-  button { background: #02eff0; border: 0; border-radius: 0.35rem; color: #0f282f; cursor: not-allowed; font: inherit; font-weight: 800; margin-top: 1.25rem; min-height: 2.8rem; opacity: 0.65; width: 100%; }
+  .enroll-btn { align-items: center; background: #02eff0; border: 0; border-radius: 0.4rem; color: #0f282f; display: flex; font: inherit; font-weight: 900; gap: 0.5rem; justify-content: center; margin-top: 1.25rem; min-height: 2.8rem; text-decoration: none; transition: opacity 150ms; width: 100%; }
+  .enroll-btn:hover { opacity: 0.85; }
+  .enroll-btn.free { background: #17777a; color: white; }
   .outline { background: white; border-radius: 0.5rem; margin-top: 1rem; padding: 2rem; }
+  .outline .kicker { color: #17777a; }
   .outline h2 { font-size: 1.8rem; margin: 0 0 0.5rem; }
   .outline p:last-child { color: #49636a; line-height: 1.8; margin: 0; }
   @media (max-width: 760px) { .detail-shell { padding-inline: 1rem; } .detail-header { padding-bottom: 2rem; } .course-hero { grid-template-columns: 1fr; } }

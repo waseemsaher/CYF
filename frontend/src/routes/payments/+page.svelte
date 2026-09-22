@@ -1,0 +1,152 @@
+<script lang="ts">
+  import type { Payment } from '$lib/api/payments';
+
+  let payments: Payment[] = $state([]);
+  let loading = $state(true);
+  let errorMsg = $state('');
+
+  const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const statusLabels: Record<string, { label: string; cls: string }> = {
+    pending: { label: 'قيد المراجعة', cls: 'badge-pending' },
+    approved: { label: 'تمت الموافقة', cls: 'badge-approved' },
+    rejected: { label: 'مرفوض', cls: 'badge-rejected' },
+    cancelled: { label: 'ملغى', cls: 'badge-cancelled' }
+  };
+
+  async function loadPayments() {
+    try {
+      const apiBase = 'http://localhost:8000/api/v1';
+      const response = await fetch(`${apiBase}/payments`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to load');
+      const data = await response.json();
+      payments = data.data;
+    } catch {
+      errorMsg = 'تعذر تحميل الدفعات. تأكد من تسجيل الدخول.';
+    } finally {
+      loading = false;
+    }
+  }
+
+  $effect(() => {
+    loadPayments();
+  });
+</script>
+
+<svelte:head>
+  <title>دفعاتي | منصة FCAI</title>
+  <meta name="description" content="عرض حالة الدفعات الخاصة بك" />
+</svelte:head>
+
+<main class="payments-shell">
+  <header class="payments-header">
+    <a class="brand" href="/">FCAI <span>COURSES</span></a>
+    <nav aria-label="التنقل الرئيسي">
+      <a href="/courses">الدورات</a>
+    </nav>
+  </header>
+
+  <section class="intro">
+    <h1>دفعاتي</h1>
+    <p class="lede">متابعة حالة جميع الدفعات التي قمت بها.</p>
+  </section>
+
+  {#if loading}
+    <div class="loading-state">
+      <div class="spinner" aria-hidden="true"></div>
+      <p>جاري تحميل الدفعات...</p>
+    </div>
+  {:else if errorMsg}
+    <div class="notice error" role="alert">{errorMsg}</div>
+  {:else if payments.length === 0}
+    <div class="empty-state">
+      <p>لا توجد دفعات بعد.</p>
+      <a href="/courses">تصفح الدورات</a>
+    </div>
+  {:else}
+    <div class="payments-list">
+      {#each payments as payment}
+        <article class="payment-card">
+          <div class="payment-header">
+            <div>
+              <span class={`badge ${statusLabels[payment.status]?.cls ?? ''}`}>
+                {statusLabels[payment.status]?.label ?? payment.status}
+              </span>
+              <span class="payment-date">{formatDate(payment.created_at)}</span>
+            </div>
+            <span class="payment-method">{payment.method}</span>
+          </div>
+
+          <div class="payment-body">
+            {#if payment.course}
+              <h2>{payment.course.title.ar}</h2>
+            {/if}
+            <div class="price-row">
+              <span>المبلغ المطلوب</span>
+              <strong>{formatPrice(payment.amount_due_cents)}</strong>
+            </div>
+            {#if payment.discount_cents > 0}
+              <div class="price-row muted">
+                <span>الخصم</span>
+                <span>-{formatPrice(payment.discount_cents)}</span>
+              </div>
+            {/if}
+          </div>
+
+          {#if payment.status === 'rejected' && payment.rejection_reason}
+            <div class="rejection-box">
+              <p><strong>سبب الرفض:</strong> {payment.rejection_reason}</p>
+              {#if payment.course}
+                <a href={`/courses/${payment.course.slug}/checkout`}>إعادة التقديم ←</a>
+              {/if}
+            </div>
+          {/if}
+        </article>
+      {/each}
+    </div>
+  {/if}
+</main>
+
+<style>
+  :global(body) { margin: 0; background: #f3f7f6; color: #0f282f; font-family: 'IBM Plex Sans Arabic', Tahoma, sans-serif; }
+  :global(*) { box-sizing: border-box; }
+  .payments-shell { margin: 0 auto; max-width: 900px; padding: 1.25rem 1.25rem 4rem; }
+  .payments-header { align-items: center; display: flex; justify-content: space-between; padding: 0.5rem 0 3rem; }
+  .brand { color: #0f282f; font-size: 1.05rem; font-weight: 800; letter-spacing: 0.08em; text-decoration: none; }
+  .brand span { color: #17777a; font-size: 0.68rem; margin-inline-start: 0.35rem; }
+  nav a { color: #17777a; font-weight: 700; text-decoration: none; }
+  .intro { margin-bottom: 2rem; }
+  h1 { font-size: 2.2rem; margin: 0; }
+  .lede { color: #49636a; margin: 0.5rem 0 0; }
+  .loading-state { align-items: center; display: flex; flex-direction: column; gap: 1rem; padding: 4rem 0; }
+  .spinner { animation: spin 800ms linear infinite; border: 3px solid #d9e6e4; border-radius: 50%; border-top-color: #17777a; height: 2.5rem; width: 2.5rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .notice { background: white; border: 1px solid #d9e6e4; border-radius: 0.6rem; padding: 1.25rem; }
+  .error { border-color: #e8b5b2; color: #8a302b; }
+  .empty-state { background: white; border: 1px solid #d9e6e4; border-radius: 0.6rem; padding: 3rem; text-align: center; }
+  .empty-state p { color: #49636a; margin: 0 0 1rem; }
+  .empty-state a { color: #17777a; font-weight: 800; text-decoration: none; }
+  .payments-list { display: grid; gap: 0.75rem; }
+  .payment-card { background: white; border: 1px solid #d9e6e4; border-radius: 0.6rem; padding: 1.25rem; }
+  .payment-header { align-items: center; display: flex; justify-content: space-between; margin-bottom: 1rem; }
+  .payment-header > div { align-items: center; display: flex; gap: 0.75rem; }
+  .badge { border-radius: 9rem; font-size: 0.78rem; font-weight: 800; padding: 0.3rem 0.75rem; }
+  .badge-pending { background: #fef3c7; color: #92400e; }
+  .badge-approved { background: #d1fae5; color: #065f46; }
+  .badge-rejected { background: #fee2e2; color: #991b1b; }
+  .badge-cancelled { background: #e5e7eb; color: #374151; }
+  .payment-date { color: #799095; font-size: 0.82rem; }
+  .payment-method { background: #f3f7f6; border-radius: 0.3rem; color: #49636a; font-size: 0.78rem; font-weight: 700; padding: 0.25rem 0.6rem; }
+  .payment-body h2 { font-size: 1.15rem; margin: 0 0 0.75rem; }
+  .price-row { display: flex; justify-content: space-between; margin-bottom: 0.35rem; }
+  .price-row span { color: #49636a; }
+  .muted span { color: #799095; font-size: 0.85rem; }
+  .rejection-box { background: #fef2f2; border-radius: 0.4rem; margin-top: 1rem; padding: 0.85rem 1rem; }
+  .rejection-box p { color: #8a302b; margin: 0 0 0.5rem; }
+  .rejection-box a { color: #17777a; font-weight: 800; text-decoration: none; }
+  @media (max-width: 760px) { .payments-shell { padding-inline: 1rem; } }
+</style>
