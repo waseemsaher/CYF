@@ -34,6 +34,7 @@ class EnrollmentResource extends JsonResource
             'granted_by' => $enrollment->getAttribute('granted_by'),
             'course' => $this->whenLoaded('course', function () use ($enrollment): array {
                 $course = $enrollment->course;
+
                 return [
                     'id' => $course->getKey(),
                     'slug' => $course->getAttribute('slug'),

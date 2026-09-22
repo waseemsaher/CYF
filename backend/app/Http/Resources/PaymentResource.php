@@ -41,6 +41,7 @@ class PaymentResource extends JsonResource
             'has_duplicate_proof' => $payment->hasDuplicateProof(),
             'course' => $this->whenLoaded('course', function () use ($payment): array {
                 $course = $payment->course;
+
                 return [
                     'id' => $course->getKey(),
                     'slug' => $course->getAttribute('slug'),
@@ -49,6 +50,7 @@ class PaymentResource extends JsonResource
             }),
             'user' => $this->whenLoaded('user', function () use ($payment): array {
                 $user = $payment->user;
+
                 return [
                     'id' => $user->getKey(),
                     'name' => $user->getAttribute('name'),

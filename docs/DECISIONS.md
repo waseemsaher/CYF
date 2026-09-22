@@ -27,3 +27,32 @@
 ## Catalog bootstrap
 - `CatalogSeeder` owns the initial academic years, departments, current term, and five required courses.
 - Catalog seed records use `updateOrCreate` so `migrate:fresh --seed` and repeated seeding remain deterministic and do not duplicate reference data.
+
+---
+
+# Milestone 3 Decisions
+
+## Payment flow
+- Proof images are processed server-side using PHP GD (no Intervention Image dependency needed). EXIF is stripped by re-encoding to JPEG. Images stored in private local disk with randomized filenames.
+- SHA-256 hash of proof files is stored and indexed for duplicate detection. Duplicates are flagged in the admin UI but not auto-rejected per requirements.
+- Revenue share (teacher/platform split) is frozen at payment approval time inside a DB transaction with pessimistic row locking. Share priority: per-course override > global default (70/30).
+- ApprovePayment action is idempotent: re-approving an already-approved payment returns the existing enrollment without creating a duplicate.
+
+## Enrollment
+- Free courses (effective price = 0 after discounts) create an enrollment immediately without a payment record, per requirements §6.
+- Admin can grant enrollments without payment (source=admin_grant), revoke enrollments, and extend expiry dates. All logged via spatie/activitylog.
+
+## Settings
+- Platform settings stored in a `settings` table with (group, key, value JSON) pattern. Reads are cached with 1-hour TTL and invalidated on writes.
+- Default settings seeded: payment methods (Vodafone Cash, InstaPay, Other e-wallet), revenue share (70%), upload limits (5MB proof, 50MB teacher files), grace days (0).
+
+## Email
+- PaymentApproved and PaymentRejected mailables are queued (ShouldQueue). Subject and body are locale-aware (ar/en based on user locale preference).
+- Email provider is configured via SMTP env vars (supports Brevo, Resend, or any SMTP provider).
+
+## Activity logging
+- `spatie/laravel-activitylog` installed. Logs cover: payment approval, rejection, cancellation, enrollment grant, revoke, and extension.
+
+## Frontend
+- Checkout, payments list, and admin review queue pages use client-side authenticated fetch (credentials: include) since they require Sanctum cookies. Public pages continue to use SSR server load functions.
+- The admin payment queue uses status tabs with badge counts and inline rejection reason form.

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
@@ -65,7 +66,7 @@ class Setting extends Model
      */
     public static function getGroup(string $group): array
     {
-        /** @var \Illuminate\Database\Eloquent\Collection<int, Setting> $settings */
+        /** @var Collection<int, Setting> $settings */
         $settings = static::query()->where('group', $group)->get();
 
         $result = [];

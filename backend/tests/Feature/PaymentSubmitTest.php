@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Models\Course;
-use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\Term;
@@ -13,6 +12,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 uses(RefreshDatabase::class);
 
@@ -21,7 +21,7 @@ function setupPaymentTestData(): array
     // Create roles and permissions
     Permission::findOrCreate('payments.review', 'web');
     Permission::findOrCreate('courses.manage', 'web');
-    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
     Role::findOrCreate('superadmin', 'web');
     $adminRole = Role::findOrCreate('admin', 'web');
@@ -207,7 +207,7 @@ it('prevents a student from viewing another students payment', function (): void
     ]);
 
     $this->actingAs($data['student'], 'sanctum')
-        ->getJson('/api/v1/payments/' . $payment->getKey())
+        ->getJson('/api/v1/payments/'.$payment->getKey())
         ->assertForbidden();
 });
 
@@ -229,7 +229,7 @@ it('allows a student to cancel their own pending payment', function (): void {
     ]);
 
     $this->actingAs($data['student'], 'sanctum')
-        ->postJson('/api/v1/payments/' . $payment->getKey() . '/cancel')
+        ->postJson('/api/v1/payments/'.$payment->getKey().'/cancel')
         ->assertOk()
         ->assertJsonPath('data.status', 'cancelled');
 });

@@ -16,6 +16,7 @@ use App\Models\Payment;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\UploadedFile;
 
 class PaymentController extends Controller
 {
@@ -33,7 +34,7 @@ class PaymentController extends Controller
         /** @var Term $term */
         $term = Term::query()->findOrFail($request->validated('term_id'));
 
-        /** @var \Illuminate\Http\UploadedFile $proof */
+        /** @var UploadedFile $proof */
         $proof = $request->file('proof');
 
         $result = $submitPayment->handle($user, $course, $term, $proof, [

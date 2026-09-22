@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Enrollment\Actions;
 
-use App\Models\Enrollment;
 use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;

@@ -25,8 +25,8 @@ class PaymentApprovedMail extends Mailable implements ShouldQueue
     {
         $locale = $this->payment->user->getAttribute('locale') ?? 'ar';
         $subject = $locale === 'en'
-            ? 'Payment Approved — ' . ($this->payment->course->getTranslation('title', 'en'))
-            : 'تمت الموافقة على الدفع — ' . ($this->payment->course->getTranslation('title', 'ar'));
+            ? 'Payment Approved — '.($this->payment->course->getTranslation('title', 'en'))
+            : 'تمت الموافقة على الدفع — '.($this->payment->course->getTranslation('title', 'ar'));
 
         return new Envelope(subject: $subject);
     }

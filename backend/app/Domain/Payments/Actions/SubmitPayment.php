@@ -22,7 +22,7 @@ class SubmitPayment
     ) {}
 
     /**
-     * @param array{method: string, sender_identifier: string, student_note?: string|null} $data
+     * @param  array{method: string, sender_identifier: string, student_note?: string|null}  $data
      */
     public function handle(User $user, Course $course, Term $term, UploadedFile $proof, array $data): Payment|Enrollment
     {
@@ -105,7 +105,7 @@ class SubmitPayment
         }
 
         // Generate a random filename and save as JPEG (strips EXIF)
-        $filename = 'proofs/' . bin2hex(random_bytes(16)) . '.jpg';
+        $filename = 'proofs/'.bin2hex(random_bytes(16)).'.jpg';
         $tempPath = tempnam(sys_get_temp_dir(), 'proof_');
 
         if ($tempPath === false) {

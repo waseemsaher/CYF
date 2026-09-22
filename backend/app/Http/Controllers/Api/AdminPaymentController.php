@@ -39,7 +39,7 @@ class AdminPaymentController extends Controller
 
         // Status counts for dashboard
         $counts = Payment::query()
-            ->selectRaw("status, count(*) as count")
+            ->selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status')
             ->all();

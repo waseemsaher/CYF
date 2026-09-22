@@ -25,8 +25,8 @@ class PaymentRejectedMail extends Mailable implements ShouldQueue
     {
         $locale = $this->payment->user->getAttribute('locale') ?? 'ar';
         $subject = $locale === 'en'
-            ? 'Payment Rejected — ' . ($this->payment->course->getTranslation('title', 'en'))
-            : 'تم رفض الدفع — ' . ($this->payment->course->getTranslation('title', 'ar'));
+            ? 'Payment Rejected — '.($this->payment->course->getTranslation('title', 'en'))
+            : 'تم رفض الدفع — '.($this->payment->course->getTranslation('title', 'ar'));
 
         return new Envelope(subject: $subject);
     }

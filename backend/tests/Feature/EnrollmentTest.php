@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 uses(RefreshDatabase::class);
 
@@ -17,7 +18,7 @@ function setupEnrollmentTestData(): array
 {
     Permission::findOrCreate('payments.review', 'web');
     Permission::findOrCreate('courses.manage', 'web');
-    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
     $superadminRole = Role::findOrCreate('superadmin', 'web');
     $adminRole = Role::findOrCreate('admin', 'web');
@@ -87,7 +88,7 @@ it('allows an admin to revoke an enrollment', function (): void {
     ]);
 
     $response = $this->actingAs($data['admin'], 'sanctum')
-        ->postJson('/api/v1/admin/enrollments/' . $enrollment->getKey() . '/revoke');
+        ->postJson('/api/v1/admin/enrollments/'.$enrollment->getKey().'/revoke');
 
     $response->assertOk()
         ->assertJsonPath('data.status', 'revoked');
@@ -109,7 +110,7 @@ it('allows an admin to extend an enrollment', function (): void {
     $newExpiry = now()->addMonths(6)->toISOString();
 
     $response = $this->actingAs($data['admin'], 'sanctum')
-        ->putJson('/api/v1/admin/enrollments/' . $enrollment->getKey() . '/extend', [
+        ->putJson('/api/v1/admin/enrollments/'.$enrollment->getKey().'/extend', [
             'expires_at' => $newExpiry,
         ]);
 
@@ -142,6 +143,6 @@ it('denies a student from revoking enrollments', function (): void {
     ]);
 
     $this->actingAs($data['student'], 'sanctum')
-        ->postJson('/api/v1/admin/enrollments/' . $enrollment->getKey() . '/revoke')
+        ->postJson('/api/v1/admin/enrollments/'.$enrollment->getKey().'/revoke')
         ->assertForbidden();
 });

@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 uses(RefreshDatabase::class);
 
@@ -18,7 +19,7 @@ function setupAdminPaymentTestData(): array
 {
     Permission::findOrCreate('payments.review', 'web');
     Permission::findOrCreate('courses.manage', 'web');
-    app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
     Role::findOrCreate('superadmin', 'web');
     $adminRole = Role::findOrCreate('admin', 'web');
@@ -83,7 +84,7 @@ it('allows an admin to approve a payment and creates enrollment', function (): v
     $data = setupAdminPaymentTestData();
 
     $response = $this->actingAs($data['admin'], 'sanctum')
-        ->postJson('/api/v1/admin/payments/' . $data['payment']->getKey() . '/approve');
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
 
     $response->assertOk()
         ->assertJsonPath('data.source', 'payment')
@@ -110,12 +111,12 @@ it('is idempotent when approving an already approved payment', function (): void
 
     // Approve first time
     $this->actingAs($data['admin'], 'sanctum')
-        ->postJson('/api/v1/admin/payments/' . $data['payment']->getKey() . '/approve')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve')
         ->assertOk();
 
     // Approve second time — should return existing enrollment, not error
     $response = $this->actingAs($data['admin'], 'sanctum')
-        ->postJson('/api/v1/admin/payments/' . $data['payment']->getKey() . '/approve');
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
 
     $response->assertOk();
 
@@ -132,7 +133,7 @@ it('allows an admin to reject a payment with a reason', function (): void {
     $data = setupAdminPaymentTestData();
 
     $response = $this->actingAs($data['admin'], 'sanctum')
-        ->postJson('/api/v1/admin/payments/' . $data['payment']->getKey() . '/reject', [
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
             'rejection_reason' => 'صورة الإيصال غير واضحة',
         ]);
 
@@ -145,7 +146,7 @@ it('requires a reason when rejecting a payment', function (): void {
     $data = setupAdminPaymentTestData();
 
     $this->actingAs($data['admin'], 'sanctum')
-        ->postJson('/api/v1/admin/payments/' . $data['payment']->getKey() . '/reject', [])
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['rejection_reason']);
 });
@@ -162,7 +163,7 @@ it('denies a student from approving a payment', function (): void {
     $data = setupAdminPaymentTestData();
 
     $this->actingAs($data['student'], 'sanctum')
-        ->postJson('/api/v1/admin/payments/' . $data['payment']->getKey() . '/approve')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve')
         ->assertForbidden();
 });
 
