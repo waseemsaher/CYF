@@ -81,3 +81,60 @@ it('returns the public detail for a published course', function (): void {
         ->assertJsonPath('data.slug', 'c-plus-plus')
         ->assertJsonPath('data.title.en', 'C++');
 });
+
+it('filters the public catalog by academic year and department audience', function (): void {
+    $firstYear = AcademicYear::create([
+        'name' => ['ar' => 'السنة الأولى', 'en' => '1st Year'],
+        'sort_order' => 1,
+    ]);
+
+    $secondYear = AcademicYear::create([
+        'name' => ['ar' => 'السنة الثانية', 'en' => '2nd Year'],
+        'sort_order' => 2,
+    ]);
+
+    $cs = Department::create([
+        'code' => 'CS',
+        'name' => ['ar' => 'علوم الحاسب', 'en' => 'Computer Science'],
+        'sort_order' => 1,
+    ]);
+
+    $ai = Department::create([
+        'code' => 'AI',
+        'name' => ['ar' => 'الذكاء الاصطناعي', 'en' => 'AI'],
+        'sort_order' => 2,
+    ]);
+
+    $targeted = Course::create([
+        'slug' => 'cs-101',
+        'title' => ['ar' => 'أساسيات الحاسب', 'en' => 'CS 101'],
+        'description' => ['ar' => 'للسنة الأولى', 'en' => 'For 1st year'],
+        'price_cents' => 15000,
+        'status' => 'published',
+        'sort_order' => 1,
+    ]);
+
+    $targeted->audiences()->create([
+        'academic_year_id' => $firstYear->getKey(),
+        'department_id' => $cs->getKey(),
+    ]);
+
+    Course::create([
+        'slug' => 'ai-200',
+        'title' => ['ar' => 'ذكاء اصطناعي', 'en' => 'AI 200'],
+        'description' => ['ar' => 'للسنة الثانية', 'en' => 'For 2nd year'],
+        'price_cents' => 18000,
+        'status' => 'published',
+        'sort_order' => 2,
+    ]);
+
+    $response = $this->getJson('/api/v1/courses?academic_year_id='.$firstYear->getKey().'&department_id='.$cs->getKey());
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.slug', 'cs-101');
+
+    $otherResponse = $this->getJson('/api/v1/courses?academic_year_id='.$secondYear->getKey().'&department_id='.$ai->getKey());
+
+    $otherResponse->assertOk()->assertJsonCount(0, 'data');
+});

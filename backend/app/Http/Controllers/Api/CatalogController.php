@@ -15,9 +15,26 @@ class CatalogController extends Controller
 {
     public function index(): JsonResponse
     {
+        $query = Course::query()
+            ->where('status', 'published');
+
+        $academicYearId = request()->query('academic_year_id');
+        $departmentId = request()->query('department_id');
+
+        if (is_string($academicYearId) && $academicYearId !== '') {
+            $query->whereHas('audiences', function ($audienceQuery) use ($academicYearId): void {
+                $audienceQuery->where('academic_year_id', (int) $academicYearId);
+            });
+        }
+
+        if (is_string($departmentId) && $departmentId !== '') {
+            $query->whereHas('audiences', function ($audienceQuery) use ($departmentId): void {
+                $audienceQuery->where('department_id', (int) $departmentId);
+            });
+        }
+
         /** @var Collection<int, Course> $courses */
-        $courses = Course::query()
-            ->where('status', 'published')
+        $courses = $query
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();

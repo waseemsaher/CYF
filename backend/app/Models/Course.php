@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 
@@ -44,5 +45,13 @@ class Course extends Model
             'sort_order' => 'integer',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return HasMany<CourseAudience, $this>
+     */
+    public function audiences(): HasMany
+    {
+        return $this->hasMany(CourseAudience::class);
     }
 }
