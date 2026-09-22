@@ -25,9 +25,18 @@ export type ReferenceOption = {
 
 type CollectionResponse<T> = { data: T[] };
 
+type PaginatedResponse<T> = CollectionResponse<T> & {
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+};
+
 export function getCourses(fetcher: typeof fetch, params: URLSearchParams) {
   const query = params.toString();
-  return apiGet<CollectionResponse<Course>>(fetcher, `/courses${query ? `?${query}` : ''}`);
+  return apiGet<PaginatedResponse<Course>>(fetcher, `/courses${query ? `?${query}` : ''}`);
 }
 
 export function getCourse(fetcher: typeof fetch, slug: string) {

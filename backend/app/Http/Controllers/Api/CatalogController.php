@@ -35,15 +35,14 @@ class CatalogController extends Controller
             });
         }
 
-        /** @var Collection<int, Course> $courses */
         $courses = $query
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->get();
+            ->paginate(12);
 
         $payload = [];
 
-        foreach ($courses as $course) {
+        foreach ($courses->getCollection() as $course) {
             $pricing = $calculateCoursePrice->handle($course);
 
             $payload[] = [
@@ -60,6 +59,12 @@ class CatalogController extends Controller
 
         return response()->json([
             'data' => $payload,
+            'meta' => [
+                'current_page' => $courses->currentPage(),
+                'last_page' => $courses->lastPage(),
+                'per_page' => $courses->perPage(),
+                'total' => $courses->total(),
+            ],
         ]);
     }
 

@@ -53,8 +53,35 @@ it('lists only published courses in the public catalog', function (): void {
 
     $response->assertOk()
         ->assertJsonCount(2, 'data')
+        ->assertJsonPath('meta.current_page', 1)
+        ->assertJsonPath('meta.per_page', 12)
         ->assertJsonPath('data.0.slug', 'discrete-math')
         ->assertJsonPath('data.1.slug', 'c-plus-plus');
+});
+
+it('paginates the public course catalog', function (): void {
+    foreach (range(1, 13) as $courseNumber) {
+        Course::create([
+            'slug' => 'course-'.$courseNumber,
+            'title' => ['ar' => 'دورة '.$courseNumber, 'en' => 'Course '.$courseNumber],
+            'description' => ['ar' => 'وصف', 'en' => 'Description'],
+            'price_cents' => 10000,
+            'status' => 'published',
+            'sort_order' => $courseNumber,
+        ]);
+    }
+
+    $firstPage = $this->getJson('/api/v1/courses');
+    $secondPage = $this->getJson('/api/v1/courses?page=2');
+
+    $firstPage->assertOk()
+        ->assertJsonCount(12, 'data')
+        ->assertJsonPath('meta.last_page', 2)
+        ->assertJsonPath('meta.total', 13);
+
+    $secondPage->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.slug', 'course-13');
 });
 
 it('returns the public detail for a published course', function (): void {

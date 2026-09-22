@@ -28,7 +28,7 @@ This file is intentionally a foundation stub for the project. The first producti
 ### GET /api/v1/courses
 - Auth: public.
 - Query parameters: optional `academic_year_id` and `department_id` audience filters.
-- Response: `data` contains published courses with `id`, `slug`, translatable `title` and `description`, `price_cents`, `list_price_cents`, `discount_cents`, `amount_due_cents`, `discount_id`, `status`, and `sort_order`.
+- Response: paginated JSON with 12 courses per page. `data` contains published courses with `id`, `slug`, translatable `title` and `description`, `price_cents`, `list_price_cents`, `discount_cents`, `amount_due_cents`, `discount_id`, `status`, and `sort_order`. `meta` contains `current_page`, `last_page`, `per_page`, and `total`.
 
 ### GET /api/v1/courses/{slug}
 - Auth: public.
