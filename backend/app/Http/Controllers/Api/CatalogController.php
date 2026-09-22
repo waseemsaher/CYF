@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicYear;
 use App\Models\Course;
 use App\Models\Department;
+use App\Models\Term;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 
@@ -119,6 +120,28 @@ class CatalogController extends Controller
                     'code' => $department->getAttribute('code'),
                     'name' => $department->getTranslations('name'),
                     'sort_order' => (int) $department->getAttribute('sort_order'),
+                ];
+            })->all(),
+        ]);
+    }
+
+    public function terms(): JsonResponse
+    {
+        /** @var Collection<int, Term> $terms */
+        $terms = Term::query()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'data' => $terms->map(function (Term $term): array {
+                return [
+                    'id' => $term->getKey(),
+                    'name' => $term->getTranslations('name'),
+                    'starts_at' => $term->getAttribute('starts_at')?->toISOString(),
+                    'ends_at' => $term->getAttribute('ends_at')?->toISOString(),
+                    'is_current' => (bool) $term->getAttribute('is_current'),
+                    'sort_order' => (int) $term->getAttribute('sort_order'),
                 ];
             })->all(),
         ]);
