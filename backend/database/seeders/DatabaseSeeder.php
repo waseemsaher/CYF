@@ -23,19 +23,29 @@ class DatabaseSeeder extends Seeder
         $this->call(SettingsSeeder::class);
         $this->call(ContentBlockSeeder::class);
 
-        $superadmin = User::factory()->create([
-            'name' => 'Super Admin',
-            'email' => 'admin@example.com',
-            'email_verified_at' => now(),
-        ]);
-        $superadmin->assignRole('superadmin');
+        $superadmin = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+        if (! $superadmin->hasRole('superadmin')) {
+            $superadmin->assignRole('superadmin');
+        }
 
-        $student = User::factory()->create([
-            'name' => 'Test Student',
-            'email' => 'student@example.com',
-            'email_verified_at' => now(),
-        ]);
-        $student->assignRole('student');
+        $student = User::firstOrCreate(
+            ['email' => 'student@example.com'],
+            [
+                'name' => 'Test Student',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+        if (! $student->hasRole('student')) {
+            $student->assignRole('student');
+        }
     }
 
     private function seedRolesAndPermissions(): void
