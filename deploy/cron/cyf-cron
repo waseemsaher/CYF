@@ -1,0 +1,9 @@
+# Production Crontab Entry for Al-Azhar FCAI Course Platform
+# Add to crontab via: crontab -u www-data -e
+# Or place in /etc/cron.d/cyf-cron
+
+# Run Laravel scheduler every minute (handles Telegram cleanup, expiry, queued jobs maintenance)
+* * * * * cd /var/www/cyf/backend && php artisan schedule:run >> /var/log/cyf_scheduler.log 2>&1
+
+# Run daily database backup at 03:00 AM
+0 3 * * * /var/www/cyf/scripts/backup.sh >> /var/log/cyf_backup.log 2>&1

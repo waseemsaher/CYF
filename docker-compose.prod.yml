@@ -1,0 +1,105 @@
+version: '3.9'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: cyf-prod-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/nginx/cyf.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/build/client:/var/www/cyf/frontend/build/client:ro
+      - ./backend/public:/var/www/cyf/backend/public:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - cyf-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cyf-prod-backend
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+      - ./deploy/php/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+    environment:
+      APP_ENV: production
+      APP_DEBUG: 'false'
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - cyf-network
+
+  queue-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cyf-prod-worker
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --timeout=90
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - cyf-network
+
+  frontend:
+    image: node:20-alpine
+    container_name: cyf-prod-frontend
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      ORIGIN: https://courses.fcai-azhar.edu.eg
+    command: node build/index.js
+    ports:
+      - '127.0.0.1:3000:3000'
+    networks:
+      - cyf-network
+
+  mysql:
+    image: mysql:8.4
+    container_name: cyf-prod-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: cyf
+      MYSQL_USER: cyf
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql-prod-data:/var/lib/mysql
+    networks:
+      - cyf-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: cyf-prod-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-prod-data:/data
+    networks:
+      - cyf-network
+
+networks:
+  cyf-network:
+    driver: bridge
+
+volumes:
+  mysql-prod-data:
+  redis-prod-data:
