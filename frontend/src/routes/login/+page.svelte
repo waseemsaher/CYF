@@ -1,11 +1,27 @@
 <script lang="ts">
-  import { login } from '$lib/api/auth';
+  import { login, currentUser } from '$lib/api/auth';
   import { goto } from '$app/navigation';
 
   let email = $state('');
   let password = $state('');
   let loading = $state(false);
   let errorMessage = $state('');
+
+  function redirectUser(role?: string) {
+    if (role === 'superadmin' || role === 'admin') {
+      goto('/admin');
+    } else if (role === 'teacher') {
+      goto('/teacher');
+    } else {
+      goto('/courses');
+    }
+  }
+
+  function fillCredentials(testEmail: string) {
+    email = testEmail;
+    password = 'password';
+    errorMessage = '';
+  }
 
   async function handleLogin(e: SubmitEvent) {
     e.preventDefault();
@@ -20,9 +36,10 @@
 
     try {
       const res = await login(fetch, { email, password });
-      if (res.data.token) {
-        // Redirect to dashboard or payments
-        await goto('/courses');
+      if (res.data?.token) {
+        const user = res.data.user;
+        const role = user?.role || (user?.roles && user.roles[0]) || '';
+        redirectUser(role);
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -43,64 +60,107 @@
 
 <div class="auth-page">
   <div class="auth-card">
-    <div class="auth-header">
-      <span class="auth-badge">بوابة الطلاب والمعلمين</span>
-      <h1>تسجيل الدخول</h1>
-      <p>أدخل بريدك الإلكتروني وكلمة المرور لمتابعة مقرراتك الدراسية.</p>
-    </div>
+    {#if $currentUser}
+      <div class="already-logged-in">
+        <div class="user-avatar" aria-hidden="true">👤</div>
+        <h2>أنت مسجل الدخول بالفعل</h2>
+        <p>مرحباً بك مجدداً، <strong>{$currentUser.name}</strong> ({$currentUser.email})</p>
+        <div class="already-actions">
+          <button type="button" class="btn-submit" onclick={() => redirectUser($currentUser?.role)}>
+            <span>الدخول إلى لوحة التحكم</span>
+            <span aria-hidden="true">←</span>
+          </button>
+          <a href="/courses" class="btn-secondary-link">تصفح المقررات</a>
+        </div>
+      </div>
+    {:else}
+      <div class="auth-header">
+        <span class="auth-badge">بوابة الطلاب والمعلمين والإدارة</span>
+        <h1>تسجيل الدخول</h1>
+        <p>أدخل بريدك الإلكتروني وكلمة المرور لمتابعة حسابك ومقرراتك.</p>
+      </div>
 
-    {#if errorMessage}
-      <div class="error-banner" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <p>{errorMessage}</p>
+      {#if errorMessage}
+        <div class="error-banner" role="alert">
+          <span aria-hidden="true">⚠️</span>
+          <p>{errorMessage}</p>
+        </div>
+      {/if}
+
+      <form class="auth-form" onsubmit={handleLogin}>
+        <div class="form-group">
+          <label for="email">البريد الإلكتروني</label>
+          <input
+            id="email"
+            type="email"
+            bind:value={email}
+            required
+            dir="ltr"
+            placeholder="admin@example.com"
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label for="password">كلمة المرور</label>
+          </div>
+          <input
+            id="password"
+            type="password"
+            bind:value={password}
+            required
+            dir="ltr"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+        </div>
+
+        <button type="submit" class="btn-submit" disabled={loading}>
+          {#if loading}
+            <span>جاري تسجيل الدخول...</span>
+          {:else}
+            <span>دخول</span>
+            <span aria-hidden="true">←</span>
+          {/if}
+        </button>
+      </form>
+
+      <!-- Quick Credentials Box for Testing -->
+      <div class="quick-credentials">
+        <span class="quick-title">⚡ حسابات تجريبية سريعة (اضغط للتعبئة):</span>
+        <div class="quick-buttons">
+          <button
+            type="button"
+            class="btn-quick admin-quick"
+            onclick={() => fillCredentials('admin@example.com')}
+          >
+            👑 مدير عام (Admin)
+          </button>
+          <button
+            type="button"
+            class="btn-quick teacher-quick"
+            onclick={() => fillCredentials('teacher@example.com')}
+          >
+            👨‍🏫 محاضر (Teacher)
+          </button>
+          <button
+            type="button"
+            class="btn-quick student-quick"
+            onclick={() => fillCredentials('student@example.com')}
+          >
+            🎓 طالب (Student)
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-footer">
+        <p>
+          ليس لديك حساب بعد؟
+          <a href="/register">إنشاء حساب طالب جديد</a>
+        </p>
       </div>
     {/if}
-
-    <form class="auth-form" onsubmit={handleLogin}>
-      <div class="form-group">
-        <label for="email">البريد الإلكتروني</label>
-        <input
-          id="email"
-          type="email"
-          bind:value={email}
-          required
-          dir="ltr"
-          placeholder="student@example.com"
-          autocomplete="email"
-        />
-      </div>
-
-      <div class="form-group">
-        <div class="label-row">
-          <label for="password">كلمة المرور</label>
-        </div>
-        <input
-          id="password"
-          type="password"
-          bind:value={password}
-          required
-          dir="ltr"
-          placeholder="••••••••"
-          autocomplete="current-password"
-        />
-      </div>
-
-      <button type="submit" class="btn-submit" disabled={loading}>
-        {#if loading}
-          <span>جاري تسجيل الدخول...</span>
-        {:else}
-          <span>دخول</span>
-          <span aria-hidden="true">←</span>
-        {/if}
-      </button>
-    </form>
-
-    <div class="auth-footer">
-      <p>
-        ليس لديك حساب بعد؟
-        <a href="/register">إنشاء حساب طالب جديد</a>
-      </p>
-    </div>
   </div>
 </div>
 
@@ -119,8 +179,57 @@
     border-radius: 1.25rem;
     padding: clamp(2rem, 5vw, 3rem);
     width: 100%;
-    max-width: 460px;
+    max-width: 480px;
     box-shadow: 0 10px 30px -10px rgba(15, 40, 47, 0.08);
+  }
+
+  .already-logged-in {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+  }
+
+  .user-avatar {
+    font-size: 3rem;
+    background: #eef7f6;
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .already-logged-in h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin: 0;
+    color: var(--storm);
+  }
+
+  .already-logged-in p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  .already-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .btn-secondary-link {
+    color: var(--deep-cyan);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.95rem;
+    padding: 0.5rem;
   }
 
   .auth-header {
@@ -139,31 +248,32 @@
     margin-bottom: 0.75rem;
   }
 
-  h1 {
+  .auth-header h1 {
     font-size: 1.85rem;
     font-weight: 900;
     color: var(--storm);
     margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
   }
 
   .auth-header p {
     color: var(--muted);
     font-size: 0.95rem;
-    line-height: 1.6;
     margin: 0;
+    line-height: 1.5;
   }
 
   .error-banner {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    background: #fff5f5;
-    border: 1px solid #feb2b2;
-    color: #c53030;
-    padding: 0.85rem 1rem;
+    background: #fdf2f2;
+    border: 1px solid #f8b4b4;
+    color: #9b1c1c;
+    padding: 0.75rem 1rem;
     border-radius: 0.5rem;
-    font-size: 0.9rem;
     margin-bottom: 1.5rem;
+    font-size: 0.9rem;
   }
 
   .error-banner p {
@@ -189,7 +299,7 @@
   }
 
   label {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: var(--storm);
   }
@@ -224,6 +334,7 @@
     gap: 0.5rem;
     margin-top: 0.5rem;
     transition: opacity 150ms ease, transform 150ms ease;
+    width: 100%;
   }
 
   .btn-submit:hover:not(:disabled) {
@@ -236,10 +347,50 @@
     cursor: not-allowed;
   }
 
+  .quick-credentials {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 0.75rem;
+  }
+
+  .quick-title {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 0.6rem;
+  }
+
+  .quick-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .btn-quick {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.45rem;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1e293b;
+    cursor: pointer;
+    text-align: right;
+    transition: all 120ms ease;
+  }
+
+  .btn-quick:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+  }
+
   .auth-footer {
     text-align: center;
     border-top: 1px solid var(--line);
-    margin-top: 2rem;
+    margin-top: 1.5rem;
     padding-top: 1.25rem;
   }
 

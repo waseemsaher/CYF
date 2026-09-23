@@ -2,37 +2,18 @@
   import type { Snippet } from 'svelte';
   import { onMount } from 'svelte';
   import { page } from '$app/state';
-  import { getCurrentUser, logout, type UserProfile } from '$lib/api/auth';
-  import { getAuthToken } from '$lib/api/client';
+  import { currentUser, refreshUser, logout } from '$lib/api/auth';
 
   let { children }: { children: Snippet } = $props();
 
-  let user = $state<UserProfile | null>(null);
-
-  async function checkUser() {
-    const token = getAuthToken();
-    if (!token) {
-      user = null;
-      return;
-    }
-
-    try {
-      const res = await getCurrentUser(fetch);
-      user = res.data?.user ?? null;
-    } catch {
-      user = null;
-    }
-  }
+  onMount(() => {
+    refreshUser(fetch);
+  });
 
   function handleLogout() {
     logout();
-    user = null;
     window.location.href = '/';
   }
-
-  onMount(() => {
-    checkUser();
-  });
 
   const baseLinks = [
     { href: '/', label: 'الرئيسية' },
@@ -41,6 +22,7 @@
 
   let navLinks = $derived.by(() => {
     const links = [...baseLinks];
+    const user = $currentUser;
     if (!user) return links;
 
     const role = user.role || (user.roles && user.roles[0]) || '';
@@ -100,10 +82,10 @@
       </nav>
 
       <div class="header-actions">
-        {#if user}
+        {#if $currentUser}
           <div class="user-badge">
-            <span class="user-name">{user.name}</span>
-            <span class="role-chip">{getRoleLabel(user.role)}</span>
+            <span class="user-name">{$currentUser.name}</span>
+            <span class="role-chip">{getRoleLabel($currentUser.role)}</span>
             <button type="button" class="btn-logout" onclick={handleLogout} title="تسجيل الخروج">
               خروج
             </button>

@@ -1,9 +1,11 @@
 <script lang="ts">
   import { getMyPayments, type Payment } from '$lib/api/payments';
+  import { getAuthToken } from '$lib/api/client';
 
   let payments: Payment[] = $state([]);
   let loading = $state(true);
   let errorMsg = $state('');
+  let isUnauthenticated = $state(false);
 
   const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
   const formatDate = (iso: string) => {
@@ -19,11 +21,21 @@
   };
 
   async function loadPayments() {
+    loading = true;
+    errorMsg = '';
+    isUnauthenticated = false;
+
+    if (!getAuthToken()) {
+      isUnauthenticated = true;
+      loading = false;
+      return;
+    }
+
     try {
       const data = await getMyPayments(fetch);
       payments = data.data;
     } catch {
-      errorMsg = 'تعذر تحميل الدفعات. تأكد من تسجيل الدخول.';
+      isUnauthenticated = true;
     } finally {
       loading = false;
     }
@@ -50,6 +62,11 @@
     <div class="loading-state">
       <div class="spinner" aria-hidden="true"></div>
       <p>جاري تحميل الدفعات...</p>
+    </div>
+  {:else if isUnauthenticated}
+    <div class="empty-state">
+      <p>يجب تسجيل الدخول لمتابعة حالة مدفوعاتك واشتراكاتك في المقررات.</p>
+      <a href="/login" style="display: inline-block; margin-top: 1rem; padding: 0.65rem 1.6rem; background: #0f282f; color: #02eff0; text-decoration: none; border-radius: 0.5rem; font-weight: 700;">تسجيل الدخول</a>
     </div>
   {:else if errorMsg}
     <div class="notice error" role="alert">{errorMsg}</div>
