@@ -106,7 +106,7 @@
       <!-- Metric Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1 -->
-        <a href="/admin/payments" class="p-6 rounded-2xl border border-border bg-card shadow-sm hover:border-primary/50 transition space-y-2 block">
+        <a href="/admin/payments" class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm hover:border-primary/50 transition space-y-2 block">
           <div class="flex items-center justify-between text-muted-foreground">
             <span class="text-xs font-semibold">طلبات الدفع المعلقة</span>
             <span class="inline-flex h-2.5 w-2.5 rounded-full {overview.pending_payments_count > 0 ? 'bg-amber-500 animate-pulse' : 'bg-muted'}"></span>
@@ -116,21 +116,21 @@
         </a>
 
         <!-- Card 2 -->
-        <div class="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-2">
+        <div class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm space-y-2">
           <div class="text-xs font-semibold text-muted-foreground">الاشتراكات الفعالة</div>
           <p class="text-3xl font-black text-emerald-500">{overview.active_enrollments_count}</p>
           <p class="text-xs text-muted-foreground">طالب مسجل حالياً</p>
         </div>
 
         <!-- Card 3 -->
-        <div class="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-2">
+        <div class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm space-y-2">
           <div class="text-xs font-semibold text-muted-foreground">إيرادات هذا الفصل</div>
           <p class="text-3xl font-black text-foreground">{formatPrice(overview.term_revenue_cents)}</p>
           <p class="text-xs text-muted-foreground">إجمالي المبيعات المؤكدة</p>
         </div>
 
         <!-- Card 4 -->
-        <div class="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-2">
+        <div class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm space-y-2">
           <div class="text-xs font-semibold text-muted-foreground">إجمالي الطلاب</div>
           <p class="text-3xl font-black text-sky-500">{overview.total_students_count}</p>
           <p class="text-xs text-muted-foreground">حسابات طلاب مسجلة</p>
@@ -139,24 +139,24 @@
 
       <!-- Quick Navigation Modules -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-        <a href="/admin/payments" class="p-6 rounded-2xl border border-border bg-card hover:bg-muted/20 transition space-y-2">
+        <a href="/admin/payments" class="p-6 rounded-2xl border-2 border-border bg-card hover:bg-muted/20 transition space-y-2">
           <h3 class="font-bold text-base">إدارة المدفوعات والتحويلات</h3>
           <p class="text-xs text-muted-foreground">مراجعة إيصالات فودافون كاش وإنستاباي والتحقق من التكرارات</p>
         </a>
 
-        <a href="/courses" class="p-6 rounded-2xl border border-border bg-card hover:bg-muted/20 transition space-y-2">
+        <a href="/courses" class="p-6 rounded-2xl border-2 border-border bg-card hover:bg-muted/20 transition space-y-2">
           <h3 class="font-bold text-base">كتالوج المواد والمناهج</h3>
           <p class="text-xs text-muted-foreground">عرض المواد التعليمية والأقسام المخصصة لكل سنة دراسية</p>
         </a>
 
-        <a href="/teacher" class="p-6 rounded-2xl border border-border bg-card hover:bg-muted/20 transition space-y-2">
+        <a href="/teacher" class="p-6 rounded-2xl border-2 border-border bg-card hover:bg-muted/20 transition space-y-2">
           <h3 class="font-bold text-base">بوابة المحاضرين</h3>
           <p class="text-xs text-muted-foreground">متابعة أرصدة المدرسين ونسب الأرباح وسجلات التحويل</p>
         </a>
       </div>
 
       <!-- Recent Audit Log -->
-      <div class="rounded-2xl border border-border bg-card overflow-hidden shadow-sm space-y-4 p-6">
+      <div class="rounded-2xl border-2 border-border bg-card overflow-hidden shadow-sm space-y-4 p-6">
         <h2 class="text-lg font-bold">آخر النشاطات والعمليات</h2>
 
         {#if overview.recent_activity.length === 0}

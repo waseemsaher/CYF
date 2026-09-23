@@ -121,32 +121,30 @@
         />
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="password">كلمة المرور</label>
-          <input
-            id="password"
-            type="password"
-            bind:value={password}
-            required
-            dir="ltr"
-            placeholder="8 أحرف على الأقل"
-            autocomplete="new-password"
-          />
-        </div>
+      <div class="form-group">
+        <label for="password">كلمة المرور</label>
+        <input
+          id="password"
+          type="password"
+          bind:value={password}
+          required
+          dir="ltr"
+          placeholder="8 أحرف على الأقل"
+          autocomplete="new-password"
+        />
+      </div>
 
-        <div class="form-group">
-          <label for="password_confirmation">تأكيد كلمة المرور</label>
-          <input
-            id="password_confirmation"
-            type="password"
-            bind:value={passwordConfirmation}
-            required
-            dir="ltr"
-            placeholder="أعد إدخال كلمة المرور"
-            autocomplete="new-password"
-          />
-        </div>
+      <div class="form-group">
+        <label for="password_confirmation">تأكيد كلمة المرور</label>
+        <input
+          id="password_confirmation"
+          type="password"
+          bind:value={passwordConfirmation}
+          required
+          dir="ltr"
+          placeholder="أعد إدخال كلمة المرور"
+          autocomplete="new-password"
+        />
       </div>
 
       <div class="form-group">
@@ -259,12 +257,13 @@
 
   .auth-card {
     background: white;
-    border: 1px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 1.25rem;
-    padding: clamp(2rem, 5vw, 3rem);
+    padding: clamp(1.75rem, 5vw, 2.75rem);
     width: 100%;
     max-width: 620px;
     box-shadow: 0 10px 30px -10px rgba(15, 40, 47, 0.08);
+    box-sizing: border-box;
   }
 
   .auth-header {
@@ -280,6 +279,7 @@
     background: #eef7f6;
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
+    border: 1px solid rgba(23, 119, 122, 0.2);
     margin-bottom: 0.75rem;
   }
 
@@ -302,7 +302,7 @@
     align-items: center;
     gap: 0.6rem;
     background: #fff5f5;
-    border: 1px solid #feb2b2;
+    border: 1.5px solid #feb2b2;
     color: #c53030;
     padding: 0.85rem 1rem;
     border-radius: 0.5rem;
@@ -322,14 +322,19 @@
 
   .form-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   label, .field-label {
@@ -343,7 +348,10 @@
   input[type="password"],
   input[type="tel"],
   select {
-    border: 1px solid var(--line);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border: 1.5px solid var(--line);
     border-radius: 0.5rem;
     padding: 0.75rem 0.9rem;
     font-size: 0.95rem;
@@ -356,7 +364,7 @@
   select:focus {
     border-color: var(--deep-cyan);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(23, 119, 122, 0.12);
+    box-shadow: 0 0 0 3px rgba(23, 119, 122, 0.15);
   }
 
   .radio-toggle {
@@ -371,7 +379,7 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 0.65rem;
-    border: 1px solid var(--line);
+    border: 1.5px solid var(--line);
     border-radius: 0.5rem;
     cursor: pointer;
     font-size: 0.92rem;

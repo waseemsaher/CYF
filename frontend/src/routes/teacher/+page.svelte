@@ -93,19 +93,19 @@
     </div>
       <!-- Earnings Balance Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div class="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-2">
+        <div class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm space-y-2">
           <span class="text-xs font-semibold text-muted-foreground">الرصيد المتاح للتحويل</span>
           <p class="text-3xl font-black text-emerald-500">{formatPrice(data.earnings.balance_cents)}</p>
           <p class="text-xs text-muted-foreground">أرباح مستحقة الدفع</p>
         </div>
 
-        <div class="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-2">
+        <div class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm space-y-2">
           <span class="text-xs font-semibold text-muted-foreground">إجمالي الأرباح المحققة</span>
           <p class="text-3xl font-black text-foreground">{formatPrice(data.earnings.earned_cents)}</p>
           <p class="text-xs text-muted-foreground">حصة المدرس من الاشتراكات المقبولة</p>
         </div>
 
-        <div class="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-2">
+        <div class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm space-y-2">
           <span class="text-xs font-semibold text-muted-foreground">المسحوبات السابقة</span>
           <p class="text-3xl font-black text-muted-foreground">{formatPrice(data.earnings.paid_out_cents)}</p>
           <p class="text-xs text-muted-foreground">تم تحويلها لحسابك البنكي أو المحفظة</p>
@@ -117,13 +117,13 @@
         <h2 class="text-xl font-bold">المواد المسندة إليك</h2>
 
         {#if data.courses.length === 0}
-          <div class="p-8 rounded-2xl border border-dashed border-border text-center text-muted-foreground">
+          <div class="p-8 rounded-2xl border-2 border-dashed border-border text-center text-muted-foreground">
             لم يتم إسناد أي مواد إلى حسابك حتى الآن.
           </div>
         {:else}
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             {#each data.courses as course}
-              <div class="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-4 flex flex-col justify-between">
+              <div class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm space-y-4 flex flex-col justify-between">
                 <div class="space-y-2">
                   <div class="flex items-center justify-between">
                     <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-primary/10 text-primary">
@@ -151,7 +151,7 @@
       </div>
 
       <!-- Payouts History -->
-      <div class="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+      <div class="rounded-2xl border-2 border-border bg-card p-6 shadow-sm space-y-4">
         <h2 class="text-lg font-bold">سجل التحويلات والمسحوبات</h2>
 
         {#if data.payouts.length === 0}

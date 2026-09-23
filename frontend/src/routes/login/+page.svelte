@@ -175,12 +175,13 @@
 
   .auth-card {
     background: white;
-    border: 1px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 1.25rem;
     padding: clamp(2rem, 5vw, 3rem);
     width: 100%;
     max-width: 480px;
     box-shadow: 0 10px 30px -10px rgba(15, 40, 47, 0.08);
+    box-sizing: border-box;
   }
 
   .already-logged-in {
@@ -201,6 +202,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 2px solid rgba(23, 119, 122, 0.2);
   }
 
   .already-logged-in h2 {
@@ -245,6 +247,7 @@
     background: #eef7f6;
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
+    border: 1px solid rgba(23, 119, 122, 0.2);
     margin-bottom: 0.75rem;
   }
 
@@ -268,7 +271,7 @@
     align-items: center;
     gap: 0.6rem;
     background: #fdf2f2;
-    border: 1px solid #f8b4b4;
+    border: 1.5px solid #f8b4b4;
     color: #9b1c1c;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
@@ -290,6 +293,9 @@
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .label-row {
@@ -305,7 +311,10 @@
   }
 
   input {
-    border: 1px solid var(--line);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border: 1.5px solid var(--line);
     border-radius: 0.5rem;
     padding: 0.75rem 0.9rem;
     font-size: 0.95rem;
@@ -316,7 +325,7 @@
   input:focus {
     border-color: var(--deep-cyan);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(23, 119, 122, 0.12);
+    box-shadow: 0 0 0 3px rgba(23, 119, 122, 0.15);
   }
 
   .btn-submit {

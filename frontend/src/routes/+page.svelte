@@ -476,7 +476,7 @@
 
   .step-card {
     background: white;
-    border: 1px solid var(--line);
+    border: 1.5px solid var(--line);
     border-radius: 1rem;
     padding: 2rem;
     display: flex;
@@ -484,7 +484,7 @@
     gap: 0.85rem;
     position: relative;
     box-shadow: 0 4px 12px rgba(15, 40, 47, 0.03);
-    transition: transform 160ms ease, box-shadow 160ms ease;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
   }
 
   .step-card:hover {
@@ -528,7 +528,7 @@
 
   .course-card {
     background: white;
-    border: 1px solid var(--line);
+    border: 1.5px solid var(--line);
     border-radius: 1rem;
     padding: 1.75rem;
     display: flex;
@@ -636,7 +636,7 @@
 
   .feature-card {
     background: white;
-    border: 1px solid var(--line);
+    border: 1.5px solid var(--line);
     border-radius: 1rem;
     padding: 1.75rem;
     box-shadow: 0 4px 12px rgba(15, 40, 47, 0.03);
@@ -672,7 +672,7 @@
 
   .faq-item {
     background: white;
-    border: 1px solid var(--line);
+    border: 1.5px solid var(--line);
     border-radius: 0.75rem;
     overflow: hidden;
     transition: border-color 160ms ease;
@@ -707,7 +707,7 @@
 
   .faq-answer {
     padding: 0 1.5rem 1.5rem;
-    border-top: 1px solid #f0f5f4;
+    border-top: 1.5px solid #f0f5f4;
   }
 
   .faq-answer p {
@@ -754,7 +754,7 @@
 
   .notice {
     background: white;
-    border: 1px solid var(--line);
+    border: 1.5px solid var(--line);
     border-radius: 0.75rem;
     padding: 2rem;
     text-align: center;

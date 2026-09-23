@@ -136,7 +136,7 @@
 
   .guard-card {
     background: #ffffff;
-    border: 1px solid #d7e5e3;
+    border: 2px solid #bfd6d2;
     border-radius: 1.25rem;
     box-shadow: 0 10px 30px -10px rgba(15, 40, 47, 0.08);
     max-width: 520px;
@@ -230,7 +230,7 @@
     font-weight: 600;
     font-size: 0.95rem;
     text-decoration: none;
-    border: 1px solid #d7e5e3;
+    border: 1.5px solid #bfd6d2;
     cursor: pointer;
     transition: background 150ms ease;
   }
@@ -243,7 +243,7 @@
     margin-top: 1rem;
     padding: 0.85rem 1rem;
     background: #f8fafc;
-    border: 1px dashed #cbd5e1;
+    border: 1.5px dashed #94a3b8;
     border-radius: 0.6rem;
     width: 100%;
     box-sizing: border-box;

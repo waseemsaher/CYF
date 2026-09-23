@@ -131,7 +131,7 @@
     --ink: #12343b;
     --muted: #597078;
     --paper: #f3f7f6;
-    --line: #d7e5e3;
+    --line: #bfd6d2;
     --deep-cyan: #17777a;
   }
 
@@ -165,6 +165,7 @@
     font-weight: 700;
     z-index: 1000;
     text-decoration: none;
+    border: 2px solid var(--cyan);
     transition: top 150ms ease;
   }
 
@@ -180,7 +181,7 @@
 
   .global-header {
     background: white;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 2px solid var(--line);
     position: sticky;
     top: 0;
     z-index: 50;
@@ -257,9 +258,9 @@
     align-items: center;
     gap: 0.5rem;
     background: var(--paper);
-    padding: 0.3rem 0.6rem;
+    padding: 0.35rem 0.75rem;
     border-radius: 9999px;
-    border: 1px solid var(--line);
+    border: 2px solid var(--line);
     font-size: 0.85rem;
   }
 
@@ -279,6 +280,7 @@
     color: var(--deep-cyan);
     padding: 0.15rem 0.45rem;
     border-radius: 0.25rem;
+    border: 1px solid rgba(23, 119, 122, 0.25);
   }
 
   .btn-logout {
@@ -304,11 +306,13 @@
     text-decoration: none;
     padding: 0.4rem 0.85rem;
     border-radius: 0.375rem;
-    transition: background-color 150ms ease;
+    border: 1.5px solid var(--line);
+    transition: background-color 150ms ease, border-color 150ms ease;
   }
 
   .btn-auth-login:hover {
     background-color: var(--paper);
+    border-color: var(--storm);
   }
 
   .btn-auth-register {
@@ -319,6 +323,7 @@
     text-decoration: none;
     padding: 0.45rem 1rem;
     border-radius: 0.375rem;
+    border: 1.5px solid var(--storm);
     transition: transform 150ms ease, opacity 150ms ease;
   }
 
@@ -339,7 +344,7 @@
 
   .global-footer {
     background: white;
-    border-top: 1px solid var(--line);
+    border-top: 2px solid var(--line);
     margin-top: auto;
     padding: 2.5rem 1.25rem;
   }
