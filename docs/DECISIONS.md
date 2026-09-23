@@ -98,6 +98,33 @@
 - Manual payouts record timestamp, amount, admin author, and optional notes; all operations logged via activitylog.
 - Teachers access read-only student rosters and quiz analytics (student scores, average accuracy, per-question correct rates) for their assigned courses only.
 
-## Content Blocks & Platform Configuration
-- Content blocks (`content_blocks` table) manage landing page copy and legal policies (Terms of Use, Privacy Policy, Refund Policy).
-- Reads are cached with 1-hour TTL and invalidated automatically upon admin updates.
+## Platform Configuration & Content Blocks
+- Content blocks stored in `content_blocks` table with multi-lingual JSON `{ar, en}` content.
+- Reads cached with 1-hour TTL via `ContentBlockService` and automatically invalidated upon update.
+- Seeded blocks support landing page elements and legal policies (Terms, Privacy, Refund).
+
+---
+
+# Milestone 7 Decisions
+
+## Security Review & Hardening
+- Rate limiting middleware configured: `/api/v1/login` (10 req/min), `/api/v1/register` (10 req/min), and `/api/v1/payments` submission (10 req/min). Telegram webhook throttled at 60 req/min.
+- Standard defensive HTTP security headers injected via `SecurityHeaders` middleware:
+  - `X-Frame-Options: SAMEORIGIN`
+  - `X-Content-Type-Options: nosniff`
+  - `X-XSS-Protection: 1; mode=block`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- Strict CORS configuration via `config/cors.php` restricting allowed origins to configured frontend URL (`FRONTEND_URL`) and localhost dev origins, with credentials support enabled.
+- Authorization isolation: explicit 403 Forbidden checks implemented for cross-student quiz attempts, payments, and teacher course boundary enforcement.
+
+## Performance & Static Analysis
+- Static analysis configured with `phpstan.neon` loading `vendor/larastan/larastan/extension.neon` at Level 6. All models, actions, and controllers typed and passing with 0 errors.
+- HTTP caching headers: `Cache-Control: public, max-age=3600, stale-while-revalidate=86400` applied to public reference data (academic years, departments, terms) and public content blocks.
+- `Model::preventLazyLoading` enforced across application to guarantee eager loading and prevent N+1 query regressions.
+
+## Frontend Polish & Accessibility Pass
+- Root layout (`+layout.svelte`) introduces universal, responsive header and footer navigation, skip-to-content accessibility link (`#main-content`), and centralized design token definitions.
+- Typography: Google Fonts `IBM Plex Sans Arabic` preconnected and imported in `app.html` for Arabic typography across all platforms.
+- RTL correctness: verified all views use logical utilities (`start`, `end`, `margin-inline`, `padding-inline`) and mirrored directional icons (`→` back, `←` forward in RTL context).
+- Form accessibility: all inputs feature associated label tags, focus rings with high-contrast outlines, and ARIA roles for errors and loading indicators.

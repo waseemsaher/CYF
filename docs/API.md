@@ -6,6 +6,9 @@
 - Auth: Laravel Sanctum cookie auth for SPA requests
 - Errors: consistent JSON error envelopes
 - Authorization: required for every endpoint
+- Security headers: `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`
+- Rate limits: `/login` (10/min), `/register` (10/min), `/payments` submission (10/min), `/telegram/webhook` (60/min)
+- HTTP Caching: `Cache-Control: public, max-age=3600, stale-while-revalidate=86400` on public reference and content block endpoints
 
 ---
 
