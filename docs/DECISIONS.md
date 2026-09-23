@@ -128,3 +128,25 @@
 - Typography: Google Fonts `IBM Plex Sans Arabic` preconnected and imported in `app.html` for Arabic typography across all platforms.
 - RTL correctness: verified all views use logical utilities (`start`, `end`, `margin-inline`, `padding-inline`) and mirrored directional icons (`→` back, `←` forward in RTL context).
 - Form accessibility: all inputs feature associated label tags, focus rings with high-contrast outlines, and ARIA roles for errors and loading indicators.
+
+---
+
+# Milestone 8 Decisions
+
+## Deployment & Hosting Architecture
+- DigitalOcean Droplet (Ubuntu 24.04 LTS, 2GB-4GB RAM, 2 vCPUs) selected for hosting PHP-FPM 8.3, Node.js SvelteKit SSR, MySQL 8.4, and Redis 7.
+- Nginx configured as reverse proxy with HTTP/2 and Let's Encrypt SSL, routing `/api/*`, `/up`, and `/sanctum/*` to PHP-FPM (`unix:/run/php/php8.3-fpm.sock`) and all frontend routes to SvelteKit Node SSR (`127.0.0.1:3000`).
+- SvelteKit static immutable assets (`/_app/immutable/`) served directly by Nginx with 1-year cache headers (`Cache-Control: public, max-age=31536000, immutable`).
+- `client_max_body_size` set to 55M across Nginx and PHP to handle 50MB course material uploads and proof images.
+
+## Process Supervision & Scheduler
+- Supervisor manages 2 background queue workers (`cyf-worker`) running `php artisan queue:work redis` with graceful termination, memory limits, and auto-restart.
+- SvelteKit SSR cluster managed via PM2 (`ecosystem.config.cjs`) or Supervisor (`cyf-frontend.conf`).
+- System cron configured to execute `php artisan schedule:run` every minute for Telegram expired member kick job and quiz closure automation.
+
+## Backups & Automation
+- Automated daily database backup (`scripts/backup.sh`) dumps MySQL using `--single-transaction`, compresses with gzip, retains the last 7 days locally, and syncs to DigitalOcean Spaces bucket.
+- Safe restore script (`scripts/restore.sh`) with validation and application cache clearing.
+- Zero-downtime deployment script (`scripts/deploy.sh`) with maintenance bypass token, asset compilation, migration enforcement, and health check validation.
+- Containerized alternative provided via `docker-compose.prod.yml`.
+
