@@ -8,13 +8,13 @@
   let errorMessage = $state('');
 
   function redirectUser(role?: string) {
+    let dest = '/dashboard';
     if (role === 'superadmin' || role === 'admin') {
-      goto('/admin');
+      dest = '/admin';
     } else if (role === 'teacher') {
-      goto('/teacher');
-    } else {
-      goto('/courses');
+      dest = '/teacher';
     }
+    window.location.href = dest;
   }
 
   function fillCredentials(testEmail: string) {

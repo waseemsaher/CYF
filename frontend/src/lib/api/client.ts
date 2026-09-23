@@ -1,6 +1,14 @@
 import { env } from '$env/dynamic/public';
 
-const apiBaseUrl = env.PUBLIC_API_BASE_URL || 'http://localhost:8000/api/v1';
+export function getApiBaseUrl(): string {
+  if (env.PUBLIC_API_BASE_URL) {
+    return env.PUBLIC_API_BASE_URL;
+  }
+  if (typeof window !== 'undefined' && window.location) {
+    return `${window.location.protocol}//${window.location.hostname}:8000/api/v1`;
+  }
+  return 'http://127.0.0.1:8000/api/v1';
+}
 
 const TOKEN_KEY = 'fcai_auth_token';
 
@@ -33,7 +41,7 @@ export async function apiGet<T>(fetcher: typeof fetch, path: string): Promise<T>
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetcher(`${apiBaseUrl}${path}`, {
+  const response = await fetcher(`${getApiBaseUrl()}${path}`, {
     headers,
     credentials: 'include',
   });
@@ -61,7 +69,7 @@ export async function apiPost<T>(fetcher: typeof fetch, path: string, body?: unk
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetcher(`${apiBaseUrl}${path}`, {
+  const response = await fetcher(`${getApiBaseUrl()}${path}`, {
     method: 'POST',
     headers,
     body: isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined,

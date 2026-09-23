@@ -2,7 +2,7 @@
   import { logout } from '$lib/api/auth';
 
   interface Props {
-    requiredRole: 'admin' | 'teacher';
+    requiredRole: 'admin' | 'teacher' | 'student';
     isUnauthenticated?: boolean;
     currentRole?: string;
     customError?: string;
@@ -20,12 +20,13 @@
   const roleLabels: Record<string, string> = {
     admin: 'المسؤولين',
     teacher: 'أعضاء هيئة التدريس والمحاضرين',
-    student: 'طالب',
+    student: 'الطلاب المسجلين',
   };
 
   const devCredentials = {
     admin: { email: 'admin@example.com', pass: 'password' },
     teacher: { email: 'teacher@example.com', pass: 'password' },
+    student: { email: 'student@example.com', pass: 'password' },
   };
 
   function handleLogout() {

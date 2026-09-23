@@ -63,9 +63,12 @@ export async function refreshUser(fetcher: typeof fetch = fetch): Promise<UserPr
     currentUser.set(user);
     authChecked.set(true);
     return user;
-  } catch {
-    clearAuthToken();
-    currentUser.set(null);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes('401') || message.includes('Unauthenticated')) {
+      clearAuthToken();
+      currentUser.set(null);
+    }
     authChecked.set(true);
     return null;
   }

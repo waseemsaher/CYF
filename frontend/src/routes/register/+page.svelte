@@ -57,8 +57,8 @@
         phone: phone || undefined,
       });
 
-      if (res.data.token) {
-        await goto('/courses');
+      if (res.data?.token) {
+        window.location.href = '/dashboard';
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

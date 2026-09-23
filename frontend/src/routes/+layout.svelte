@@ -33,6 +33,7 @@
     } else if (role === 'teacher') {
       links.push({ href: '/teacher', label: 'لوحة المعلم' });
     } else {
+      links.push({ href: '/dashboard', label: 'لوحة الطالب' });
       links.push({ href: '/payments', label: 'مدفوعاتي' });
     }
 
