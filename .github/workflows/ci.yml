@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  backend:
+    name: Backend (PHP 8.3 / Laravel)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP runtime
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, sqlite3, redis, gd
+          coverage: none
+
+      - name: Copy environment configuration
+        run: cp .env.example .env
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      - name: Run code style check (Pint)
+        run: ./vendor/bin/pint --test
+
+      - name: Run static analysis (Larastan Level 6)
+        run: ./vendor/bin/phpstan analyse
+
+      - name: Run test suite (Pest)
+        run: ./vendor/bin/pest
+
+      - name: Verify database migrations and seeders
+        run: php artisan migrate:fresh --seed
+
+  frontend:
+    name: Frontend (Node 20 / SvelteKit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Check TypeScript and Svelte diagnostics
+        run: npm run check
+
+      - name: Build production bundle
+        run: npm run build
+
+  scripts:
+    name: Shell Scripts Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate bash scripts syntax
+        run: bash -n scripts/*.sh
