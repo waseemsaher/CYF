@@ -130,10 +130,14 @@
     --storm: #0f282f;
     --cyan: #02eff0;
     --ink: #12343b;
-    --muted: #597078;
+    --muted: #476269;
     --paper: #f3f7f6;
-    --line: #bfd6d2;
+    --line: #2d544c; /* High-contrast crisp defined border */
+    --line-subtle: #4b736b;
+    --line-bold: #0f282f;
     --deep-cyan: #17777a;
+    --card: #ffffff;
+    --border-width: 2px;
   }
 
   :global(body) {
@@ -149,6 +153,48 @@
 
   :global(*), :global(*::before), :global(*::after) {
     box-sizing: border-box;
+  }
+
+  :global(.border-border), :global(.border-slate-200), :global(.border-gray-200) {
+    border-color: var(--line) !important;
+  }
+
+  :global(.border) {
+    border-width: 2px !important;
+    border-style: solid !important;
+    border-color: var(--line) !important;
+  }
+
+  :global(.border-2) {
+    border-width: 2px !important;
+    border-style: solid !important;
+    border-color: var(--line) !important;
+  }
+
+  :global(.border-b) {
+    border-bottom-width: 2px !important;
+    border-bottom-style: solid !important;
+    border-bottom-color: var(--line) !important;
+  }
+
+  :global(.border-t) {
+    border-top-width: 2px !important;
+    border-top-style: solid !important;
+    border-top-color: var(--line) !important;
+  }
+
+  :global(.border-dashed) {
+    border-style: dashed !important;
+    border-width: 2px !important;
+    border-color: var(--line) !important;
+  }
+
+  :global(.card), :global(.dash-section), :global(.auth-card), :global(.course-card), :global(.profile-card), :global(.guard-card), :global(.admin-card), :global(aside.enrollment-panel) {
+    border: 2px solid var(--line) !important;
+  }
+
+  :global(input), :global(select), :global(textarea) {
+    border: 2px solid var(--line) !important;
   }
 
   :global(a:focus-visible), :global(button:focus-visible), :global(input:focus-visible), :global(select:focus-visible), :global(textarea:focus-visible) {

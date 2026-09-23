@@ -83,3 +83,61 @@ export async function apiPost<T>(fetcher: typeof fetch, path: string, body?: unk
 
   return response.json() as Promise<T>;
 }
+
+export async function apiPut<T>(fetcher: typeof fetch, path: string, body?: unknown): Promise<T> {
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+  };
+
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetcher(`${getApiBaseUrl()}${path}`, {
+    method: 'PUT',
+    headers,
+    body: isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    throw new Error(errorBody?.message || `API request failed with status ${response.status}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+export async function apiDelete<T = unknown>(fetcher: typeof fetch, path: string): Promise<T> {
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+  };
+
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetcher(`${getApiBaseUrl()}${path}`, {
+    method: 'DELETE',
+    headers,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    throw new Error(errorBody?.message || `API request failed with status ${response.status}`);
+  }
+
+  if (response.status === 204) {
+    return null as unknown as T;
+  }
+
+  return response.json().catch(() => null) as Promise<T>;
+}

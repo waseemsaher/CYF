@@ -476,7 +476,7 @@
 
   .step-card {
     background: white;
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 1rem;
     padding: 2rem;
     display: flex;
@@ -528,7 +528,7 @@
 
   .course-card {
     background: white;
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 1rem;
     padding: 1.75rem;
     display: flex;
@@ -636,7 +636,7 @@
 
   .feature-card {
     background: white;
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 1rem;
     padding: 1.75rem;
     box-shadow: 0 4px 12px rgba(15, 40, 47, 0.03);
@@ -672,7 +672,7 @@
 
   .faq-item {
     background: white;
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 0.75rem;
     overflow: hidden;
     transition: border-color 160ms ease;
@@ -754,7 +754,7 @@
 
   .notice {
     background: white;
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 0.75rem;
     padding: 2rem;
     text-align: center;

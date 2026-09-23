@@ -15,6 +15,9 @@ export type Course = {
   discount_cents: number;
   amount_due_cents: number;
   discount_id: number | null;
+  status?: string;
+  telegram_invite_link?: string | null;
+  teacher_share_percent?: number | null;
 };
 
 export type ReferenceOption = {
