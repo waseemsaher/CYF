@@ -46,6 +46,11 @@
           </a>
         {/each}
       </nav>
+
+      <div class="header-actions">
+        <a href="/login" class="btn-auth-login">دخول</a>
+        <a href="/register" class="btn-auth-register">حساب جديد</a>
+      </div>
     </div>
   </header>
 
@@ -194,6 +199,43 @@
     color: var(--storm);
     background-color: var(--paper);
     font-weight: 700;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-inline-start: auto;
+  }
+
+  .btn-auth-login {
+    color: var(--storm);
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+    padding: 0.4rem 0.85rem;
+    border-radius: 0.375rem;
+    transition: background-color 150ms ease;
+  }
+
+  .btn-auth-login:hover {
+    background-color: var(--paper);
+  }
+
+  .btn-auth-register {
+    background-color: var(--storm);
+    color: var(--cyan);
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-decoration: none;
+    padding: 0.45rem 1rem;
+    border-radius: 0.375rem;
+    transition: transform 150ms ease, opacity 150ms ease;
+  }
+
+  .btn-auth-register:hover {
+    transform: translateY(-1px);
+    opacity: 0.95;
   }
 
   .main-content {
