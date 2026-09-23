@@ -1,21 +1,47 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { getAdminOverview, type AdminOverviewData } from '$lib/api/admin';
+  import { getAuthToken } from '$lib/api/client';
+  import { getCurrentUser } from '$lib/api/auth';
+  import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
 
   let overview: AdminOverviewData | null = $state(null);
   let loading = $state(true);
   let errorMsg = $state('');
+  let isUnauthenticated = $state(false);
+  let currentRole = $state('');
 
   const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
 
   async function loadData() {
+    loading = true;
+    errorMsg = '';
+    isUnauthenticated = false;
+
+    const token = getAuthToken();
+    if (!token) {
+      isUnauthenticated = true;
+      loading = false;
+      return;
+    }
+
     try {
-      loading = true;
-      errorMsg = '';
+      const userRes = await getCurrentUser(fetch).catch(() => null);
+      if (userRes?.data?.user) {
+        currentRole = userRes.data.user.role || '';
+      }
+
       const res = await getAdminOverview(fetch);
       overview = res.data;
     } catch (e: any) {
-      errorMsg = e?.message || 'تعذر تحميل بيانات لوحة التحكم. تأكد من امتلاك صلاحيات المسؤول.';
+      const msg = e?.message || '';
+      if (msg.includes('401') || msg.includes('Unauthenticated')) {
+        isUnauthenticated = true;
+      } else if (msg.includes('403') || msg.includes('Unauthorized')) {
+        if (!currentRole) currentRole = 'student';
+      } else {
+        errorMsg = msg || 'تعذر تحميل بيانات لوحة التحكم. تأكد من امتلاك صلاحيات المسؤول.';
+      }
     } finally {
       loading = false;
     }
@@ -30,6 +56,36 @@
   <title>لوحة التحكم الرئيسية | منصة دورات حاسبات الأزهر</title>
 </svelte:head>
 
+{#if isUnauthenticated || (currentRole && currentRole !== 'admin' && currentRole !== 'superadmin')}
+  <AuthGuardCard
+    requiredRole="admin"
+    {isUnauthenticated}
+    {currentRole}
+    onRetry={loadData}
+  />
+{:else if loading}
+  <div class="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto space-y-8">
+      <div class="h-10 w-48 bg-muted rounded animate-pulse"></div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
+        <div class="h-28 bg-muted rounded-2xl"></div>
+        <div class="h-28 bg-muted rounded-2xl"></div>
+        <div class="h-28 bg-muted rounded-2xl"></div>
+        <div class="h-28 bg-muted rounded-2xl"></div>
+      </div>
+    </div>
+  </div>
+{:else if errorMsg}
+  <div class="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto space-y-8">
+      <AuthGuardCard
+        requiredRole="admin"
+        customError={errorMsg}
+        onRetry={loadData}
+      />
+    </div>
+  </div>
+{:else if overview}
 <div class="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8">
   <div class="max-w-6xl mx-auto space-y-8">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
@@ -47,22 +103,6 @@
         </a>
       </div>
     </div>
-
-    {#if loading}
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-        <div class="h-28 bg-muted rounded-2xl"></div>
-        <div class="h-28 bg-muted rounded-2xl"></div>
-        <div class="h-28 bg-muted rounded-2xl"></div>
-        <div class="h-28 bg-muted rounded-2xl"></div>
-      </div>
-    {:else if errorMsg}
-      <div class="p-6 rounded-2xl bg-destructive/10 border border-destructive/20 text-center space-y-4">
-        <p class="text-sm font-medium text-destructive">{errorMsg}</p>
-        <button onclick={loadData} class="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">
-          إعادة المحاولة
-        </button>
-      </div>
-    {:else if overview}
       <!-- Metric Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Card 1 -->
@@ -135,6 +175,6 @@
           </div>
         {/if}
       </div>
-    {/if}
+    </div>
   </div>
-</div>
+{/if}

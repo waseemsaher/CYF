@@ -1,16 +1,68 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { onMount } from 'svelte';
   import { page } from '$app/state';
+  import { getCurrentUser, logout, type UserProfile } from '$lib/api/auth';
+  import { getAuthToken } from '$lib/api/client';
 
   let { children }: { children: Snippet } = $props();
 
-  const navLinks = [
+  let user = $state<UserProfile | null>(null);
+
+  async function checkUser() {
+    const token = getAuthToken();
+    if (!token) {
+      user = null;
+      return;
+    }
+
+    try {
+      const res = await getCurrentUser(fetch);
+      user = res.data?.user ?? null;
+    } catch {
+      user = null;
+    }
+  }
+
+  function handleLogout() {
+    logout();
+    user = null;
+    window.location.href = '/';
+  }
+
+  onMount(() => {
+    checkUser();
+  });
+
+  const baseLinks = [
     { href: '/', label: 'الرئيسية' },
     { href: '/courses', label: 'الدورات' },
-    { href: '/payments', label: 'مدفوعاتي' },
-    { href: '/teacher', label: 'لوحة المعلم' },
-    { href: '/admin', label: 'الإدارة' },
   ];
+
+  let navLinks = $derived.by(() => {
+    const links = [...baseLinks];
+    if (!user) return links;
+
+    const role = user.role || (user.roles && user.roles[0]) || '';
+
+    if (role === 'superadmin' || role === 'admin') {
+      links.push({ href: '/admin', label: 'لوحة الإدارة' });
+      links.push({ href: '/admin/payments', label: 'طابور المراجعة' });
+    } else if (role === 'teacher') {
+      links.push({ href: '/teacher', label: 'لوحة المعلم' });
+    } else {
+      links.push({ href: '/payments', label: 'مدفوعاتي' });
+    }
+
+    return links;
+  });
+
+  function getRoleLabel(role?: string): string {
+    if (role === 'superadmin') return 'مدير عام';
+    if (role === 'admin') return 'مسؤول';
+    if (role === 'teacher') return 'محاضر';
+    return 'طالب';
+  }
 
   function isActive(href: string): boolean {
     if (href === '/') {
@@ -48,8 +100,18 @@
       </nav>
 
       <div class="header-actions">
-        <a href="/login" class="btn-auth-login">دخول</a>
-        <a href="/register" class="btn-auth-register">حساب جديد</a>
+        {#if user}
+          <div class="user-badge">
+            <span class="user-name">{user.name}</span>
+            <span class="role-chip">{getRoleLabel(user.role)}</span>
+            <button type="button" class="btn-logout" onclick={handleLogout} title="تسجيل الخروج">
+              خروج
+            </button>
+          </div>
+        {:else}
+          <a href="/login" class="btn-auth-login">دخول</a>
+          <a href="/register" class="btn-auth-register">حساب جديد</a>
+        {/if}
       </div>
     </div>
   </header>
@@ -204,8 +266,53 @@
   .header-actions {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     margin-inline-start: auto;
+  }
+
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--paper);
+    padding: 0.3rem 0.6rem;
+    border-radius: 9999px;
+    border: 1px solid var(--line);
+    font-size: 0.85rem;
+  }
+
+  .user-name {
+    font-weight: 700;
+    color: var(--storm);
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .role-chip {
+    font-size: 0.7rem;
+    font-weight: 800;
+    background: #eef7f6;
+    color: var(--deep-cyan);
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.25rem;
+  }
+
+  .btn-logout {
+    background: none;
+    border: none;
+    color: #e53e3e;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-family: inherit;
+  }
+
+  .btn-logout:hover {
+    background: #fed7d7;
   }
 
   .btn-auth-login {
@@ -268,14 +375,13 @@
   .footer-brand strong {
     color: var(--storm);
     font-size: 1.1rem;
-    font-weight: 900;
-    letter-spacing: 0.06em;
+    font-weight: 800;
   }
 
   .footer-brand p {
     color: var(--muted);
     font-size: 0.85rem;
-    margin: 0.35rem 0 0;
+    margin: 0.25rem 0 0;
   }
 
   .footer-links {
@@ -287,18 +393,19 @@
   }
 
   .footer-links a {
-    color: var(--deep-cyan);
+    color: var(--muted);
+    font-size: 0.85rem;
     text-decoration: none;
-    font-size: 0.88rem;
-    font-weight: 600;
+    transition: color 150ms ease;
   }
 
   .footer-links a:hover {
-    text-decoration: underline;
+    color: var(--deep-cyan);
   }
 
   .separator {
     color: var(--line);
+    font-size: 0.6rem;
   }
 
   .footer-copy small {
@@ -306,21 +413,17 @@
     font-size: 0.8rem;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     .header-inner {
       flex-direction: column;
       align-items: flex-start;
-      gap: 0.75rem;
+      gap: 1rem;
     }
 
-    .nav-menu {
+    .header-actions {
+      margin-inline-start: 0;
       width: 100%;
-      justify-content: space-between;
-    }
-
-    .nav-link {
-      padding: 0.3rem 0.5rem;
-      font-size: 0.85rem;
+      justify-content: flex-end;
     }
   }
 </style>

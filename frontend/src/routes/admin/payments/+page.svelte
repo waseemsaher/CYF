@@ -1,16 +1,24 @@
 <script lang="ts">
-  import type { Payment } from '$lib/api/payments';
+  import {
+    getAdminPayments,
+    approveAdminPayment,
+    rejectAdminPayment,
+    type Payment
+  } from '$lib/api/payments';
+  import { getAuthToken } from '$lib/api/client';
+  import { getCurrentUser } from '$lib/api/auth';
+  import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
 
   let payments: Payment[] = $state([]);
   let counts: Record<string, number> = $state({});
   let activeStatus = $state('pending');
   let loading = $state(true);
   let errorMsg = $state('');
+  let isUnauthenticated = $state(false);
+  let currentRole = $state('');
   let actionLoading = $state<number | null>(null);
   let rejectingId = $state<number | null>(null);
   let rejectionReason = $state('');
-
-  const apiBase = 'http://localhost:8000/api/v1';
 
   const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -25,14 +33,33 @@
   async function loadPayments() {
     loading = true;
     errorMsg = '';
+    isUnauthenticated = false;
+
+    const token = getAuthToken();
+    if (!token) {
+      isUnauthenticated = true;
+      loading = false;
+      return;
+    }
+
     try {
-      const response = await fetch(`${apiBase}/admin/payments?status=${activeStatus}`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Unauthorized');
-      const data = await response.json();
-      payments = data.data;
-      counts = data.counts ?? {};
-    } catch {
-      errorMsg = 'تعذر تحميل الدفعات. تأكد من صلاحيات الوصول.';
+      const userRes = await getCurrentUser(fetch).catch(() => null);
+      if (userRes?.data?.user) {
+        currentRole = userRes.data.user.role || '';
+      }
+
+      const res = await getAdminPayments(fetch, activeStatus);
+      payments = res.data;
+      counts = res.counts ?? {};
+    } catch (e: any) {
+      const msg = e?.message || '';
+      if (msg.includes('401') || msg.includes('Unauthenticated')) {
+        isUnauthenticated = true;
+      } else if (msg.includes('403') || msg.includes('Unauthorized')) {
+        if (!currentRole) currentRole = 'student';
+      } else {
+        errorMsg = 'تعذر تحميل الدفعات. تأكد من صلاحيات الوصول.';
+      }
     } finally {
       loading = false;
     }
@@ -41,12 +68,7 @@
   async function approvePayment(id: number) {
     actionLoading = id;
     try {
-      const response = await fetch(`${apiBase}/admin/payments/${id}/approve`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!response.ok) throw new Error('Failed');
+      await approveAdminPayment(fetch, id);
       await loadPayments();
     } catch {
       errorMsg = 'فشلت عملية الموافقة.';
@@ -59,13 +81,7 @@
     if (!rejectionReason.trim()) return;
     actionLoading = id;
     try {
-      const response = await fetch(`${apiBase}/admin/payments/${id}/reject`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rejection_reason: rejectionReason })
-      });
-      if (!response.ok) throw new Error('Failed');
+      await rejectAdminPayment(fetch, id, rejectionReason);
       rejectingId = null;
       rejectionReason = '';
       await loadPayments();
@@ -90,6 +106,14 @@
   <title>مراجعة الدفعات | لوحة الإدارة</title>
 </svelte:head>
 
+{#if isUnauthenticated || (currentRole && currentRole !== 'admin' && currentRole !== 'superadmin')}
+  <AuthGuardCard
+    requiredRole="admin"
+    {isUnauthenticated}
+    {currentRole}
+    onRetry={loadPayments}
+  />
+{:else}
 <main class="admin-shell">
   <header class="admin-header">
     <a class="brand" href="/">FCAI <span>ADMIN</span></a>
@@ -199,6 +223,7 @@
     </div>
   {/if}
 </main>
+{/if}
 
 <style>
   :global(body) { margin: 0; background: #f3f7f6; color: #0f282f; font-family: 'IBM Plex Sans Arabic', Tahoma, sans-serif; }

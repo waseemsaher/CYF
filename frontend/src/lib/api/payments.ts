@@ -65,3 +65,13 @@ export function submitPayment(fetcher: typeof fetch, formData: FormData) {
   return apiPost<{ data: Payment }>(fetcher, '/payments', formData);
 }
 
+export function approveAdminPayment(fetcher: typeof fetch, id: number) {
+  return apiPost<{ data: Payment }>(fetcher, `/admin/payments/${id}/approve`);
+}
+
+export function rejectAdminPayment(fetcher: typeof fetch, id: number, reason: string) {
+  return apiPost<{ data: Payment }>(fetcher, `/admin/payments/${id}/reject`, {
+    rejection_reason: reason,
+  });
+}
+

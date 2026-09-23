@@ -46,6 +46,25 @@ class DatabaseSeeder extends Seeder
         if (! $student->hasRole('student')) {
             $student->assignRole('student');
         }
+
+        $teacher = User::firstOrCreate(
+            ['email' => 'teacher@example.com'],
+            [
+                'name' => 'Dr. Ahmed Mahmoud',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+        if (! $teacher->hasRole('teacher')) {
+            $teacher->assignRole('teacher');
+        }
+
+        $firstCourse = \App\Models\Course::first();
+        if ($firstCourse && ! $teacher->taughtCourses()->where('courses.id', $firstCourse->id)->exists()) {
+            $teacher->taughtCourses()->attach($firstCourse->id, [
+                'teacher_share_percent' => 70,
+            ]);
+        }
     }
 
     private function seedRolesAndPermissions(): void

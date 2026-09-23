@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './client';
+import { apiGet, apiPost, setAuthToken, clearAuthToken, getAuthToken } from './client';
 
 export type UserProfile = {
   id: number;
@@ -9,7 +9,8 @@ export type UserProfile = {
   department: string;
   telegram_username: string | null;
   phone: string | null;
-  roles: string[];
+  roles?: string[];
+  role?: string;
 };
 
 export type AuthResponse = {
@@ -36,12 +37,28 @@ export type RegisterData = {
   phone?: string;
 };
 
-export function login(fetcher: typeof fetch = fetch, credentials: LoginCredentials) {
-  return apiPost<AuthResponse>(fetcher, '/login', credentials);
+export async function login(fetcher: typeof fetch = fetch, credentials: LoginCredentials) {
+  const res = await apiPost<AuthResponse>(fetcher, '/login', credentials);
+  if (res.data?.token) {
+    setAuthToken(res.data.token);
+  }
+  return res;
 }
 
-export function register(fetcher: typeof fetch = fetch, data: RegisterData) {
-  return apiPost<AuthResponse>(fetcher, '/register', data);
+export async function register(fetcher: typeof fetch = fetch, data: RegisterData) {
+  const res = await apiPost<AuthResponse>(fetcher, '/register', data);
+  if (res.data?.token) {
+    setAuthToken(res.data.token);
+  }
+  return res;
+}
+
+export function logout(): void {
+  clearAuthToken();
+}
+
+export function isAuthenticated(): boolean {
+  return getAuthToken() !== null;
 }
 
 export function getCurrentUser(fetcher: typeof fetch = fetch) {
