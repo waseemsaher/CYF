@@ -53,7 +53,7 @@
 </script>
 
 <svelte:head>
-  <title>لوحة المحاضر | منصة دورات حاسبات الأزهر</title>
+  <title>لوحة المحاضر | منصة Codeera</title>
 </svelte:head>
 
 {#if isUnauthenticated || (currentRole && currentRole !== 'teacher' && currentRole !== 'admin' && currentRole !== 'superadmin')}
@@ -64,121 +64,378 @@
     onRetry={loadData}
   />
 {:else if loading}
-  <div class="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-6xl mx-auto space-y-8">
-      <div class="h-10 w-48 bg-muted rounded animate-pulse"></div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
-        <div class="h-32 bg-muted rounded-2xl"></div>
-        <div class="h-32 bg-muted rounded-2xl"></div>
-        <div class="h-32 bg-muted rounded-2xl"></div>
-      </div>
-    </div>
+  <div class="teacher-loading" dir="rtl">
+    <div class="spinner" aria-hidden="true"></div>
+    <p>جاري تحميل لوحة المحاضر...</p>
   </div>
 {:else if errorMsg}
-  <div class="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-6xl mx-auto space-y-8">
-      <AuthGuardCard
-        requiredRole="teacher"
-        customError={errorMsg}
-        onRetry={loadData}
-      />
-    </div>
+  <div class="teacher-error" dir="rtl">
+    <AuthGuardCard
+      requiredRole="teacher"
+      customError={errorMsg}
+      onRetry={loadData}
+    />
   </div>
 {:else if data}
-<div class="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-6xl mx-auto space-y-8">
-    <div class="border-b border-border pb-6">
-      <h1 class="text-3xl font-extrabold tracking-tight">لوحة تحكم المحاضر</h1>
-      <p class="text-sm text-muted-foreground mt-1">متابعة المواد المكلف بتدريسها، أعداد الطلاب، وأرصدة الأرباح</p>
-    </div>
-      <!-- Earnings Balance Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm space-y-2">
-          <span class="text-xs font-semibold text-muted-foreground">الرصيد المتاح للتحويل</span>
-          <p class="text-3xl font-black text-emerald-500">{formatPrice(data.earnings.balance_cents)}</p>
-          <p class="text-xs text-muted-foreground">أرباح مستحقة الدفع</p>
+  <div class="teacher-page" dir="rtl">
+    <div class="teacher-container">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-top">
+          <span class="role-badge">👨‍🏫 محاضر</span>
         </div>
-
-        <div class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm space-y-2">
-          <span class="text-xs font-semibold text-muted-foreground">إجمالي الأرباح المحققة</span>
-          <p class="text-3xl font-black text-foreground">{formatPrice(data.earnings.earned_cents)}</p>
-          <p class="text-xs text-muted-foreground">حصة المدرس من الاشتراكات المقبولة</p>
-        </div>
-
-        <div class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm space-y-2">
-          <span class="text-xs font-semibold text-muted-foreground">المسحوبات السابقة</span>
-          <p class="text-3xl font-black text-muted-foreground">{formatPrice(data.earnings.paid_out_cents)}</p>
-          <p class="text-xs text-muted-foreground">تم تحويلها لحسابك البنكي أو المحفظة</p>
-        </div>
+        <h1>لوحة تحكم المحاضر</h1>
+        <p>متابعة المواد المكلف بتدريسها، أعداد الطلاب، وأرصدة الأرباح</p>
       </div>
 
+      <!-- KPI Cards -->
+      <section class="kpi-grid" aria-label="مؤشرات مالية">
+        <div class="kpi-card">
+          <span class="kpi-label">الرصيد المتاح للتحويل</span>
+          <strong class="kpi-value kpi-green">{formatPrice(data.earnings.balance_cents)}</strong>
+          <span class="kpi-hint">أرباح مستحقة الدفع</span>
+        </div>
+
+        <div class="kpi-card">
+          <span class="kpi-label">إجمالي الأرباح المحققة</span>
+          <strong class="kpi-value">{formatPrice(data.earnings.earned_cents)}</strong>
+          <span class="kpi-hint">حصة المدرس من الاشتراكات المقبولة</span>
+        </div>
+
+        <div class="kpi-card">
+          <span class="kpi-label">المسحوبات السابقة</span>
+          <strong class="kpi-value kpi-muted">{formatPrice(data.earnings.paid_out_cents)}</strong>
+          <span class="kpi-hint">تم تحويلها لحسابك البنكي أو المحفظة</span>
+        </div>
+      </section>
+
       <!-- Taught Courses -->
-      <div class="space-y-4">
-        <h2 class="text-xl font-bold">المواد المسندة إليك</h2>
+      <section class="section-panel">
+        <h2>المواد المسندة إليك</h2>
 
         {#if data.courses.length === 0}
-          <div class="p-8 rounded-2xl border-2 border-dashed border-border text-center text-muted-foreground">
+          <div class="empty-box">
             لم يتم إسناد أي مواد إلى حسابك حتى الآن.
           </div>
         {:else}
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="courses-grid">
             {#each data.courses as course}
-              <div class="p-6 rounded-2xl border-2 border-border bg-card shadow-sm space-y-4 flex flex-col justify-between">
-                <div class="space-y-2">
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-primary/10 text-primary">
-                      نسبة الأرباح: {course.teacher_share_percent ?? 70}%
-                    </span>
-                    <span class="text-xs font-medium text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">
-                      {course.active_students_count} طالب مشترك
-                    </span>
-                  </div>
-                  <h3 class="text-lg font-bold">{course.title.ar}</h3>
+              <article class="course-card">
+                <div class="course-card-top">
+                  <span class="share-badge">
+                    نسبة الأرباح: {course.teacher_share_percent ?? 70}%
+                  </span>
+                  <span class="students-badge">
+                    {course.active_students_count} طالب مشترك
+                  </span>
                 </div>
-
-                <div class="flex items-center gap-3 pt-2">
-                  <a
-                    href="/my-courses/{course.slug}"
-                    class="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition text-center flex-1"
-                  >
-                    عرض محتوى المادة
-                  </a>
-                </div>
-              </div>
+                <h3>{course.title.ar}</h3>
+                <a href="/my-courses/{course.slug}" class="btn-view-content">
+                  عرض محتوى المادة
+                </a>
+              </article>
             {/each}
           </div>
         {/if}
-      </div>
+      </section>
 
       <!-- Payouts History -->
-      <div class="rounded-2xl border-2 border-border bg-card p-6 shadow-sm space-y-4">
-        <h2 class="text-lg font-bold">سجل التحويلات والمسحوبات</h2>
+      <section class="section-panel">
+        <h2>سجل التحويلات والمسحوبات</h2>
 
         {#if data.payouts.length === 0}
-          <p class="text-xs text-muted-foreground py-4 text-center">لا توجد عمليات تحويل مسجلة بعد.</p>
+          <p class="empty-text">لا توجد عمليات تحويل مسجلة بعد.</p>
         {:else}
-          <div class="overflow-x-auto">
-            <table class="w-full text-start text-xs">
-              <thead class="bg-muted/50 border-b border-border text-muted-foreground">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
                 <tr>
-                  <th class="p-3 text-start">تاريخ التحويل</th>
-                  <th class="p-3 text-start">المبلغ</th>
-                  <th class="p-3 text-start">ملاحظات</th>
+                  <th>تاريخ التحويل</th>
+                  <th>المبلغ</th>
+                  <th>ملاحظات</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-border">
+              <tbody>
                 {#each data.payouts as payout}
                   <tr>
-                    <td class="p-3">{new Date(payout.paid_at).toLocaleDateString('ar-EG')}</td>
-                    <td class="p-3 font-bold text-foreground">{formatPrice(payout.amount_cents)}</td>
-                    <td class="p-3 text-muted-foreground">{payout.note || '—'}</td>
+                    <td>{new Date(payout.paid_at).toLocaleDateString('ar-EG')}</td>
+                    <td><strong>{formatPrice(payout.amount_cents)}</strong></td>
+                    <td class="muted-cell">{payout.note || '—'}</td>
                   </tr>
                 {/each}
               </tbody>
             </table>
           </div>
         {/if}
-      </div>
+      </section>
     </div>
   </div>
 {/if}
+
+<style>
+  .teacher-loading, .teacher-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    gap: 1rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--line);
+    border-top-color: var(--deep-cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .teacher-page {
+    background-color: var(--paper);
+    min-height: calc(100vh - 140px);
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  .teacher-container {
+    max-width: 1100px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .page-header {
+    border-bottom: 2px solid var(--line);
+    padding-bottom: 1.5rem;
+  }
+
+  .header-top {
+    margin-bottom: 0.5rem;
+  }
+
+  .role-badge {
+    background: #eef7f6;
+    color: var(--deep-cyan);
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: 9999px;
+    border: 2px solid rgba(23, 119, 122, 0.25);
+  }
+
+  .page-header h1 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--storm);
+    margin: 0 0 0.35rem;
+  }
+
+  .page-header p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+
+  .kpi-card {
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(15, 40, 47, 0.04);
+  }
+
+  .kpi-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .kpi-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--storm);
+    line-height: 1;
+  }
+
+  .kpi-green {
+    color: #059669;
+  }
+
+  .kpi-muted {
+    color: var(--muted);
+  }
+
+  .kpi-hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  /* Section Panel */
+  .section-panel {
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 1.25rem;
+    padding: 1.75rem;
+    box-shadow: 0 4px 12px rgba(15, 40, 47, 0.04);
+  }
+
+  .section-panel h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--storm);
+    margin: 0 0 1.25rem;
+  }
+
+  /* Courses Grid */
+  .courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .course-card {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 0.85rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: transform 150ms ease, border-color 150ms ease;
+  }
+
+  .course-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--deep-cyan);
+  }
+
+  .course-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .share-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: #eef7f6;
+    color: var(--deep-cyan);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  .students-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  .course-card h3 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--storm);
+    margin: 0;
+  }
+
+  .btn-view-content {
+    background: var(--storm);
+    color: var(--cyan);
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    text-align: center;
+    border: 2px solid var(--storm);
+    transition: opacity 150ms ease;
+  }
+
+  .btn-view-content:hover {
+    opacity: 0.9;
+  }
+
+  /* Empty States */
+  .empty-box {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    background: var(--paper);
+    border: 2px dashed var(--line);
+    border-radius: 1rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .empty-text {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    padding: 1.5rem 0;
+    margin: 0;
+  }
+
+  /* Data Table */
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 2px solid var(--line);
+    font-size: 0.88rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.85rem 1rem;
+    text-align: right;
+    border-bottom: 2px solid var(--line);
+  }
+
+  .data-table th {
+    background: #eef7f6;
+    color: var(--storm);
+    font-weight: 700;
+    font-size: 0.82rem;
+  }
+
+  .data-table tr:hover td {
+    background: #f8fafc;
+  }
+
+  .muted-cell {
+    color: var(--muted);
+  }
+
+  @media (max-width: 768px) {
+    .kpi-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .courses-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -56,7 +56,7 @@ class LinkTelegramUser
         $userName = $linkToken->user->name;
         $this->client->sendMessage(
             $telegramUserId,
-            "✅ أهلاً بك يا <b>{$userName}</b>!\nتم ربط حسابك بنجاح في منصة دورات حاسبات الأزهر.\n\nYour Telegram account has been linked successfully!"
+            "✅ أهلاً بك يا <b>{$userName}</b>!\nتم ربط حسابك بنجاح في منصة Codeera.\n\nYour Telegram account has been linked successfully!"
         );
 
         return true;

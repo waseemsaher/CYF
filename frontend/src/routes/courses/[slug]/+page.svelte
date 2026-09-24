@@ -75,7 +75,7 @@
 </script>
 
 <svelte:head>
-  <title>{data.course.title.ar} | منصة FCAI</title>
+  <title>{data.course.title.ar} | منصة Codeera</title>
   <meta name="description" content={data.course.description.ar} />
 </svelte:head>
 
@@ -165,7 +165,7 @@
 {#if isEditModalOpen}
   <div class="modal-backdrop" onclick={closeEditModal} role="presentation">
     <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div class="modal-card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl">
+    <div class="modal-card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl" tabindex="-1">
       <div class="modal-header">
         <h2>تعديل بيانات المقرر ({data.course.title.ar})</h2>
         <button type="button" class="btn-close-modal" onclick={closeEditModal} aria-label="إغلاق">✕</button>
@@ -339,10 +339,10 @@
 
   /* Admin Panel on Course Hero */
   .admin-panel {
-    background: white;
+    background: var(--card);
     border: 2.5px solid var(--line);
     border-radius: 0.85rem;
-    color: #0f282f;
+    color: var(--storm);
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
@@ -375,7 +375,7 @@
 
   .admin-info-box {
     background: var(--paper);
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 0.5rem;
     padding: 0.75rem 1rem;
     display: flex;
@@ -434,9 +434,9 @@
   }
 
   .btn-back-dashboard {
-    background: white;
+    background: var(--card);
     color: var(--muted);
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     font-size: 0.82rem;
   }
 
@@ -447,15 +447,15 @@
 
   /* Enrollment Panel for Students */
   .enrollment-panel {
-    background: white;
+    background: var(--card);
     border: 2.5px solid var(--line);
     border-radius: 0.85rem;
-    color: #0f282f;
+    color: var(--storm);
     padding: 1.5rem;
   }
 
   .enrollment-panel p {
-    color: #49636a;
+    color: var(--muted);
     margin: 0 0 0.5rem;
     font-weight: 600;
   }
@@ -510,7 +510,7 @@
   }
 
   .outline {
-    background: white;
+    background: var(--card);
     border: 2px solid var(--line);
     border-radius: 0.85rem;
     margin-top: 1.5rem;
@@ -576,7 +576,7 @@
   }
 
   .modal-card {
-    background: white;
+    background: var(--card);
     border: 2.5px solid var(--line);
     border-radius: 1.25rem;
     max-width: 580px;
@@ -616,7 +616,7 @@
     align-items: center;
     gap: 0.5rem;
     background: #fdf2f2;
-    border: 1.5px solid #f8b4b4;
+    border: 2px solid #f8b4b4;
     color: #9b1c1c;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
@@ -668,7 +668,7 @@
   }
 
   .btn-cancel {
-    background: white;
+    background: var(--card);
     border: 2px solid var(--line);
     padding: 0.6rem 1.25rem;
     border-radius: 0.5rem;

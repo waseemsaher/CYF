@@ -1,65 +1,151 @@
-version: '3.9'
-
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    image: cyf-backend:latest
+    pull_policy: never
     container_name: cyf-backend
+    restart: unless-stopped
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
-    ports:
-      - '8000:8000'
-    depends_on:
-      - mysql
-      - redis
     environment:
-      APP_ENV: local
-      APP_DEBUG: 'true'
-      DB_CONNECTION: mysql
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      DB_CONNECTION: ${DB_CONNECTION:-mysql}
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_DATABASE: cyf
-      DB_USERNAME: cyf
-      DB_PASSWORD: secret
+      DB_DATABASE: ${DB_DATABASE:-cyf_db}
+      DB_USERNAME: ${DB_USERNAME:-cyf_user}
+      DB_PASSWORD: ${DB_PASSWORD:-cyf_password}
       REDIS_HOST: redis
-    command: php artisan serve --host=0.0.0.0 --port=8000
+      REDIS_PORT: 6379
+    command: ["php-fpm", "-F"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    image: cyf-frontend:latest
+    pull_policy: never
     container_name: cyf-frontend
+    restart: unless-stopped
     working_dir: /app
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - ./frontend/src:/app/src
     ports:
-      - '5173:5173'
+      - "${FRONTEND_PORT:-5173}:5173"
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
+  queue:
+    image: cyf-backend:latest
+    pull_policy: never
+    container_name: cyf-queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
     environment:
-      HOST: 0.0.0.0
-      PORT: 5173
-    command: npm run dev -- --host 0.0.0.0 --port 5173
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      DB_CONNECTION: ${DB_CONNECTION:-mysql}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-cyf_db}
+      DB_USERNAME: ${DB_USERNAME:-cyf_user}
+      DB_PASSWORD: ${DB_PASSWORD:-cyf_password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=90"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  scheduler:
+    image: cyf-backend:latest
+    pull_policy: never
+    container_name: cyf-scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      DB_CONNECTION: ${DB_CONNECTION:-mysql}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-cyf_db}
+      DB_USERNAME: ${DB_USERNAME:-cyf_user}
+      DB_PASSWORD: ${DB_PASSWORD:-cyf_password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    command: ["sh", "-c", "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   mysql:
-    image: mysql:8.4
+    image: mysql:8.0
+    pull_policy: never
     container_name: cyf-mysql
+    restart: unless-stopped
     environment:
-      MYSQL_DATABASE: cyf
-      MYSQL_USER: cyf
-      MYSQL_PASSWORD: secret
-      MYSQL_ROOT_PASSWORD: rootsecret
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-cyf_root_password}
+      MYSQL_DATABASE: ${DB_DATABASE:-cyf_db}
+      MYSQL_USER: ${DB_USERNAME:-cyf_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-cyf_password}
     ports:
-      - '3306:3306'
+      - "${DB_PORT:-3308}:3306"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - cyf_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${DB_ROOT_PASSWORD:-cyf_root_password}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   redis:
-    image: redis:7-alpine
+    image: redis:alpine
+    pull_policy: never
     container_name: cyf-redis
+    restart: unless-stopped
     ports:
-      - '6379:6379'
+      - "${REDIS_PORT:-6382}:6379"
+    volumes:
+      - cyf_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+
+  nginx:
+    image: nginx:alpine
+    pull_policy: never
+    container_name: cyf-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./backend:/var/www/html:ro
+    depends_on:
+      - backend
+      - frontend
 
 volumes:
-  mysql-data:
+  cyf_mysql_data:
+  cyf_redis_data:

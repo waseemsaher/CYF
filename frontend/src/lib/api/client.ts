@@ -10,11 +10,17 @@ export function getApiBaseUrl(): string {
   return 'http://127.0.0.1:8000/api/v1';
 }
 
-const TOKEN_KEY = 'fcai_auth_token';
+const TOKEN_KEY = 'codeera_auth_token';
+const LEGACY_TOKEN_KEYS = ['coderaa_auth_token', 'fcai_auth_token'];
 
 export function getAuthToken(): string | null {
   if (typeof window !== 'undefined' && window.localStorage) {
-    return localStorage.getItem(TOKEN_KEY);
+    const primary = localStorage.getItem(TOKEN_KEY);
+    if (primary) return primary;
+    for (const legacy of LEGACY_TOKEN_KEYS) {
+      const val = localStorage.getItem(legacy);
+      if (val) return val;
+    }
   }
   return null;
 }
@@ -28,6 +34,9 @@ export function setAuthToken(token: string): void {
 export function clearAuthToken(): void {
   if (typeof window !== 'undefined' && window.localStorage) {
     localStorage.removeItem(TOKEN_KEY);
+    for (const legacy of LEGACY_TOKEN_KEYS) {
+      localStorage.removeItem(legacy);
+    }
   }
 }
 

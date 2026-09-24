@@ -136,8 +136,8 @@
   }
 
   .guard-card {
-    background: #ffffff;
-    border: 2px solid #bfd6d2;
+    background: var(--card);
+    border: 2px solid var(--line);
     border-radius: 1.25rem;
     box-shadow: 0 10px 30px -10px rgba(15, 40, 47, 0.08);
     max-width: 520px;
@@ -180,20 +180,20 @@
   .guard-title {
     font-size: 1.4rem;
     font-weight: 800;
-    color: #0f282f;
+    color: var(--storm);
     margin: 0;
   }
 
   .guard-desc {
     font-size: 0.98rem;
     line-height: 1.7;
-    color: #597078;
+    color: var(--muted);
     margin: 0;
     max-width: 440px;
   }
 
   .role-highlight {
-    color: #0f282f;
+    color: var(--storm);
     font-weight: 700;
   }
 
@@ -207,31 +207,31 @@
   }
 
   .btn-guard-primary {
-    background: #0f282f;
-    color: #ffffff;
+    background: var(--storm);
+    color: var(--cyan);
     padding: 0.75rem 1.6rem;
     border-radius: 0.6rem;
     font-weight: 700;
     font-size: 0.95rem;
     text-decoration: none;
-    border: none;
+    border: 2px solid var(--storm);
     cursor: pointer;
-    transition: background 150ms ease;
+    transition: opacity 150ms ease;
   }
 
   .btn-guard-primary:hover {
-    background: #17777a;
+    opacity: 0.9;
   }
 
   .btn-guard-secondary {
-    background: #f3f7f6;
-    color: #0f282f;
+    background: var(--card);
+    color: var(--storm);
     padding: 0.75rem 1.4rem;
     border-radius: 0.6rem;
     font-weight: 600;
     font-size: 0.95rem;
     text-decoration: none;
-    border: 1.5px solid #bfd6d2;
+    border: 2px solid var(--line);
     cursor: pointer;
     transition: background 150ms ease;
   }
@@ -244,7 +244,7 @@
     margin-top: 1rem;
     padding: 0.85rem 1rem;
     background: #f8fafc;
-    border: 1.5px dashed #94a3b8;
+    border: 2px dashed var(--line);
     border-radius: 0.6rem;
     width: 100%;
     box-sizing: border-box;
@@ -276,11 +276,11 @@
 
   .hint-credentials code {
     font-size: 0.82rem;
-    color: #334155;
-    background: #ffffff;
+    color: var(--storm);
+    background: var(--card);
     padding: 0.2rem 0.4rem;
     border-radius: 0.3rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--line);
     font-family: monospace;
     direction: ltr;
     display: inline-block;

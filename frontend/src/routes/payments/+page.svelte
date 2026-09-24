@@ -47,7 +47,7 @@
 </script>
 
 <svelte:head>
-  <title>دفعاتي | منصة FCAI</title>
+  <title>دفعاتي | منصة Codeera</title>
   <meta name="description" content="عرض حالة الدفعات الخاصة بك" />
 </svelte:head>
 
@@ -66,7 +66,7 @@
   {:else if isUnauthenticated}
     <div class="empty-state">
       <p>يجب تسجيل الدخول لمتابعة حالة مدفوعاتك واشتراكاتك في المقررات.</p>
-      <a href="/login" style="display: inline-block; margin-top: 1rem; padding: 0.65rem 1.6rem; background: #0f282f; color: #02eff0; text-decoration: none; border-radius: 0.5rem; font-weight: 700;">تسجيل الدخول</a>
+      <a href="/login" class="btn-login-cta">تسجيل الدخول</a>
     </div>
   {:else if errorMsg}
     <div class="notice error" role="alert">{errorMsg}</div>
@@ -122,33 +122,46 @@
 <style>
   .payments-shell { margin: 0 auto; max-width: 900px; padding: 2rem 1.25rem 4rem; }
   .intro { margin-bottom: 2rem; }
-  h1 { font-size: 2.2rem; margin: 0; }
-  .lede { color: #49636a; margin: 0.5rem 0 0; }
+  h1 { font-size: 2.2rem; font-weight: 800; margin: 0; color: var(--storm); }
+  .lede { color: var(--muted); margin: 0.5rem 0 0; }
   .loading-state { align-items: center; display: flex; flex-direction: column; gap: 1rem; padding: 4rem 0; }
-  .spinner { animation: spin 800ms linear infinite; border: 3px solid #d9e6e4; border-radius: 50%; border-top-color: #17777a; height: 2.5rem; width: 2.5rem; }
+  .spinner { animation: spin 800ms linear infinite; border: 3px solid var(--line); border-radius: 50%; border-top-color: var(--deep-cyan); height: 2.5rem; width: 2.5rem; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .notice { background: white; border: 1px solid #d9e6e4; border-radius: 0.6rem; padding: 1.25rem; }
+  .notice { background: var(--card); border: 2px solid var(--line); border-radius: 0.75rem; padding: 1.25rem; }
   .error { border-color: #e8b5b2; color: #8a302b; }
-  .empty-state { background: white; border: 1px solid #d9e6e4; border-radius: 0.6rem; padding: 3rem; text-align: center; }
-  .empty-state p { color: #49636a; margin: 0 0 1rem; }
-  .empty-state a { color: #17777a; font-weight: 800; text-decoration: none; }
+  .empty-state { background: var(--card); border: 2px solid var(--line); border-radius: 0.75rem; padding: 3rem; text-align: center; }
+  .empty-state p { color: var(--muted); margin: 0 0 1rem; }
+  .empty-state a { color: var(--deep-cyan); font-weight: 700; text-decoration: none; }
+  .btn-login-cta {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.65rem 1.6rem;
+    background: var(--storm);
+    color: var(--cyan);
+    text-decoration: none;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    border: 2px solid var(--storm);
+    transition: opacity 150ms ease;
+  }
+  .btn-login-cta:hover { opacity: 0.9; }
   .payments-list { display: grid; gap: 0.75rem; }
-  .payment-card { background: white; border: 1px solid #d9e6e4; border-radius: 0.6rem; padding: 1.25rem; }
+  .payment-card { background: var(--card); border: 2px solid var(--line); border-radius: 0.75rem; padding: 1.25rem; }
   .payment-header { align-items: center; display: flex; justify-content: space-between; margin-bottom: 1rem; }
   .payment-header > div { align-items: center; display: flex; gap: 0.75rem; }
-  .badge { border-radius: 9rem; font-size: 0.78rem; font-weight: 800; padding: 0.3rem 0.75rem; }
+  .badge { border-radius: 9rem; font-size: 0.78rem; font-weight: 700; padding: 0.3rem 0.75rem; }
   .badge-pending { background: #fef3c7; color: #92400e; }
   .badge-approved { background: #d1fae5; color: #065f46; }
   .badge-rejected { background: #fee2e2; color: #991b1b; }
   .badge-cancelled { background: #e5e7eb; color: #374151; }
-  .payment-date { color: #799095; font-size: 0.82rem; }
-  .payment-method { background: #f3f7f6; border-radius: 0.3rem; color: #49636a; font-size: 0.78rem; font-weight: 700; padding: 0.25rem 0.6rem; }
-  .payment-body h2 { font-size: 1.15rem; margin: 0 0 0.75rem; }
+  .payment-date { color: var(--muted); font-size: 0.82rem; }
+  .payment-method { background: var(--paper); border-radius: 0.3rem; color: var(--muted); font-size: 0.78rem; font-weight: 700; padding: 0.25rem 0.6rem; border: 2px solid var(--line); }
+  .payment-body h2 { font-size: 1.15rem; font-weight: 800; margin: 0 0 0.75rem; color: var(--storm); }
   .price-row { display: flex; justify-content: space-between; margin-bottom: 0.35rem; }
-  .price-row span { color: #49636a; }
-  .muted span { color: #799095; font-size: 0.85rem; }
-  .rejection-box { background: #fef2f2; border-radius: 0.4rem; margin-top: 1rem; padding: 0.85rem 1rem; }
+  .price-row span { color: var(--muted); }
+  .muted span { color: var(--muted); font-size: 0.85rem; }
+  .rejection-box { background: #fef2f2; border-radius: 0.4rem; margin-top: 1rem; padding: 0.85rem 1rem; border: 2px solid #fecaca; }
   .rejection-box p { color: #8a302b; margin: 0 0 0.5rem; }
-  .rejection-box a { color: #17777a; font-weight: 800; text-decoration: none; }
+  .rejection-box a { color: var(--deep-cyan); font-weight: 700; text-decoration: none; }
   @media (max-width: 760px) { .payments-shell { padding-inline: 1rem; } }
 </style>

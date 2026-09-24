@@ -60,7 +60,7 @@
 </script>
 
 <svelte:head>
-  <title>الدفع — {data.course.title.ar} | منصة FCAI</title>
+  <title>الدفع — {data.course.title.ar} | منصة Codeera</title>
   <meta name="description" content="إتمام عملية الدفع لدورة {data.course.title.ar}" />
 </svelte:head>
 
@@ -167,48 +167,48 @@
   .back-link { color: var(--deep-cyan); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
   .back-link:hover { text-decoration: underline; }
   .checkout-grid { display: grid; gap: 2rem; grid-template-columns: 1fr 360px; }
-  .checkout-form { background: white; border: 1px solid #d9e6e4; border-radius: 0.75rem; padding: 2rem; }
-  h1 { font-size: 2rem; margin: 0 0 1.5rem; }
-  .error-banner { background: #fef2f2; border: 1px solid #e8b5b2; border-radius: 0.5rem; color: #8a302b; margin-bottom: 1.5rem; padding: 0.85rem 1rem; }
+  .checkout-form { background: var(--card); border: 2px solid var(--line); border-radius: 0.75rem; padding: 2rem; color: var(--ink); }
+  h1 { font-size: 2rem; margin: 0 0 1.5rem; color: var(--storm); }
+  .error-banner { background: #fef2f2; border: 2px solid #e8b5b2; border-radius: 0.5rem; color: #8a302b; margin-bottom: 1.5rem; padding: 0.85rem 1rem; }
   fieldset { border: 0; margin: 0 0 1.5rem; padding: 0; }
-  legend { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.75rem; }
+  legend { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--storm); }
   .method-options { display: grid; gap: 0.5rem; grid-template-columns: repeat(3, 1fr); }
-  .method-option { align-items: center; background: #f3f7f6; border: 2px solid transparent; border-radius: 0.5rem; cursor: pointer; display: flex; font-weight: 700; gap: 0.5rem; padding: 0.75rem 1rem; transition: border-color 150ms; }
-  .method-option.active { background: #e6fafa; border-color: #17777a; }
-  .method-option input { accent-color: #17777a; }
-  .method-instructions { background: #f0f9f9; border-radius: 0.35rem; color: #2d5c5f; font-size: 0.88rem; line-height: 1.7; margin-top: 0.75rem; padding: 0.75rem 1rem; }
+  .method-option { align-items: center; background: var(--paper); border: 2px solid var(--line); border-radius: 0.5rem; cursor: pointer; display: flex; font-weight: 700; gap: 0.5rem; padding: 0.75rem 1rem; transition: border-color 150ms; color: var(--storm); }
+  .method-option.active { background: rgba(2, 239, 240, 0.15); border-color: var(--deep-cyan); }
+  .method-option input { accent-color: var(--deep-cyan); }
+  .method-instructions { background: var(--paper); border-radius: 0.35rem; color: var(--storm); font-size: 0.88rem; line-height: 1.7; margin-top: 0.75rem; padding: 0.75rem 1rem; border: 1.5px solid var(--line); }
   .field { display: grid; gap: 0.4rem; margin-bottom: 1.25rem; }
-  .field > span { font-size: 0.88rem; font-weight: 700; }
+  .field > span { font-size: 0.88rem; font-weight: 700; color: var(--storm); }
   .required { color: #c2453e; }
-  input[type="text"], textarea { background: #f3f7f6; border: 1px solid #d9e6e4; border-radius: 0.4rem; font: inherit; min-height: 2.8rem; padding: 0.6rem 0.85rem; }
-  input[type="text"]:focus, textarea:focus { border-color: #17777a; outline: 3px solid rgba(2, 239, 240, 0.25); outline-offset: 1px; }
-  .upload-area { background: #f3f7f6; border: 2px dashed #b9d4d2; border-radius: 0.5rem; padding: 1.5rem; position: relative; text-align: center; }
+  input[type="text"], textarea { background: var(--paper); border: 2px solid var(--line); border-radius: 0.4rem; font: inherit; min-height: 2.8rem; padding: 0.6rem 0.85rem; color: var(--storm); }
+  input[type="text"]:focus, textarea:focus { border-color: var(--deep-cyan); outline: 3px solid rgba(2, 239, 240, 0.25); outline-offset: 1px; }
+  .upload-area { background: var(--paper); border: 2px dashed var(--line); border-radius: 0.5rem; padding: 1.5rem; position: relative; text-align: center; }
   .upload-area input[type="file"] { cursor: pointer; height: 100%; left: 0; opacity: 0; position: absolute; top: 0; width: 100%; }
-  .upload-hint { color: #597078; font-size: 0.85rem; margin: 0; }
-  .file-name { color: #17777a; font-weight: 700; margin: 0; }
-  .submit-btn { background: #02eff0; border: 0; border-radius: 0.5rem; color: #0f282f; cursor: pointer; font: inherit; font-weight: 900; min-height: 3.2rem; transition: opacity 150ms; width: 100%; }
+  .upload-hint { color: var(--muted); font-size: 0.85rem; margin: 0; }
+  .file-name { color: var(--deep-cyan); font-weight: 700; margin: 0; }
+  .submit-btn { background: var(--cyan); border: 2px solid var(--cyan); border-radius: 0.5rem; color: #07191d; cursor: pointer; font: inherit; font-weight: 900; min-height: 3.2rem; transition: opacity 150ms; width: 100%; }
   .submit-btn:disabled { cursor: not-allowed; opacity: 0.55; }
   .submit-btn:hover:not(:disabled) { opacity: 0.9; }
-  .order-summary { align-self: start; background: #0f282f; border-radius: 0.75rem; color: white; padding: 1.5rem; position: sticky; top: 2rem; }
-  .order-summary h2 { color: #02eff0; font-size: 0.88rem; font-weight: 900; letter-spacing: 0.04em; margin: 0 0 1.25rem; }
+  .order-summary { align-self: start; background: var(--storm); border: 2px solid var(--line); border-radius: 0.75rem; color: white; padding: 1.5rem; position: sticky; top: 2rem; }
+  .order-summary h2 { color: var(--cyan); font-size: 0.88rem; font-weight: 900; letter-spacing: 0.04em; margin: 0 0 1.25rem; }
   .summary-course { border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 1rem; padding-bottom: 1rem; }
   .summary-label { color: #9dbfbe; display: block; font-size: 0.78rem; margin-bottom: 0.35rem; }
-  .summary-course strong { display: block; font-size: 1.2rem; }
+  .summary-course strong { display: block; font-size: 1.2rem; color: white; }
   .summary-row { align-items: center; display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
   .summary-row span { color: #9dbfbe; }
-  .discount span:last-child { color: #02eff0; }
+  .discount span:last-child { color: var(--cyan); }
   .summary-total { align-items: center; border-top: 1px solid rgba(255,255,255,0.15); display: flex; justify-content: space-between; margin-top: 0.75rem; padding-top: 0.75rem; }
-  .summary-total strong { color: #02eff0; font-size: 1.5rem; }
+  .summary-total strong { color: var(--cyan); font-size: 1.5rem; }
 
   /* Success */
-  .success-panel { background: white; border: 1px solid #d9e6e4; border-radius: 0.75rem; margin: 0 auto; max-width: 580px; padding: 3rem 2rem; text-align: center; }
-  .success-icon { background: #e6fafa; border-radius: 50%; color: #17777a; display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; height: 4rem; margin-bottom: 1.5rem; width: 4rem; }
-  .success-panel h1 { font-size: 1.8rem; margin: 0 0 0.75rem; }
-  .success-panel p { color: #49636a; line-height: 1.7; margin: 0 0 0.5rem; }
-  .wait-note { background: #f0f9f9; border-radius: 0.35rem; color: #2d5c5f; font-size: 0.9rem; margin-top: 1rem !important; padding: 0.75rem; }
+  .success-panel { background: var(--card); border: 2px solid var(--line); border-radius: 0.75rem; margin: 0 auto; max-width: 580px; padding: 3rem 2rem; text-align: center; }
+  .success-icon { background: rgba(2, 239, 240, 0.15); border-radius: 50%; color: var(--deep-cyan); display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; height: 4rem; margin-bottom: 1.5rem; width: 4rem; }
+  .success-panel h1 { font-size: 1.8rem; margin: 0 0 0.75rem; color: var(--storm); }
+  .success-panel p { color: var(--muted); line-height: 1.7; margin: 0 0 0.5rem; }
+  .wait-note { background: var(--paper); border-radius: 0.35rem; color: var(--storm); font-size: 0.9rem; margin-top: 1rem !important; padding: 0.75rem; border: 1.5px solid var(--line); }
   .success-actions { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1.5rem; }
-  .success-actions a { background: #02eff0; border-radius: 0.4rem; color: #0f282f; font-weight: 800; padding: 0.7rem 1.25rem; text-decoration: none; }
-  .success-actions .secondary { background: transparent; border: 1px solid #b9d4d2; color: #17777a; }
+  .success-actions a { background: var(--cyan); border-radius: 0.4rem; color: #07191d; font-weight: 800; padding: 0.7rem 1.25rem; text-decoration: none; border: 2px solid var(--cyan); }
+  .success-actions .secondary { background: var(--paper); border: 2px solid var(--line); color: var(--storm); }
 
   @media (max-width: 760px) {
     .checkout-grid { grid-template-columns: 1fr; }

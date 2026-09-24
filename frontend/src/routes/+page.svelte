@@ -14,75 +14,108 @@
   const defaultFaqs = [
     {
       q: 'كيف يمكنني الانضمام لمجموعة التليجرام الخاصة بالمقرر؟',
-      a: 'بعد اعتماد إيصال السداد الخاص بك، ادخل إلى صفحة المقرر واضغط على "ربط حساب تليجرام" لتوليد رابط الدخول الخاص بك. عند إرسال طلب الانضمام، يقوم بوت المنصة بالتحقق من اشتراكك وقبولك فوراً وبشكل آلي.'
+      a: 'بعد اعتماد إيصال السداد الخاص بك، ادخل إلى صفحة المقرر أو لوحة التحكم واضغط على "ربط حساب تليجرام" لتوليد رابط الدخول الخاص بك. عند إرسال طلب الانضمام لمجموعة المقرر، يقوم بوت المنصة بالتحقق من اشتراكك وقبولك فوراً وبشكل آلي.'
     },
     {
       q: 'ما هي طرق الدفع المتاحة للاشتراك؟',
-      a: 'نوفر الدفع اليدوي السهل عبر محفظة فودافون كاش (Vodafone Cash)، أو إنستاباي (InstaPay)، أو المحافظ الإلكترونية الأخرى. بعد التحويل، ارفع صورة إيصال التحويل في صفحة إتمام الطلب.'
+      a: 'نوفر الدفع السهل والمباشر عبر فودافون كاش (Vodafone Cash)، أو إنستاباي (InstaPay)، أو أي محفظة إلكترونية بنكية. بعد إتمام التحويل، تقوم برفع صورة إيصال التحويل في صفحة إتمام الطلب لتأكيد اشتراكك.'
     },
     {
       q: 'كم يستغرق وقت مراجعة وتأكيد الاشتراك؟',
-      a: 'تتم مراجعة إيصالات الدفع بواسطة فريق الإدارة بانتظام وفي أسرع وقت ممكن (عادة خلال دقائق إلى ساعات معدودة). ستصلك رسالة تأكيد عبر البريد الإلكتروني فور الاعتماد.'
+      a: 'تتم مراجعة إيصالات الدفع بواسطة فريق الإدارة بانتظام وفي أسرع وقت ممكن (عادة خلال دقائق إلى ساعات معدودة). ستصلك رسالة تأكيد عبر البريد الإلكتروني فور الاعتماد مع فتح صلاحيات المادة فوراً.'
     },
     {
       q: 'ما مدة صلاحية اشتراكي في المادة؟',
-      a: 'يستمر اشتراكك فعالاً حتى نهاية الفصل الدراسي الرسمي للمقرر، مع فترة سماح إضافية لمراجعة المحتوى والاختبارات حتى انتهاء موسم الامتحانات.'
+      a: 'يستمر اشتراكك فعالاً ومتاحاً لك حتى نهاية الفصل الدراسي الرسمي للمقرر، مع فترة سماح إضافية لمراجعة المحتوى والاختبارات حتى انتهاء موسم الامتحانات النهائية.'
     }
   ];
 </script>
 
 <svelte:head>
-  <title>منصة دورات FCAI | كلية الحاسبات والذكاء الاصطناعي — جامعة الأزهر</title>
+  <title>منصة Codeera | شروحات ومقررات برمجية تفاعلية</title>
   <meta
     name="description"
-    content="المنصة الأكاديمية الأولى لشروحات ومقررات واختبارات طلاب كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر."
+    content="منصة Codeera التعليمية التفاعلية لشروحات ومقررات واختبارات البرمجة والذكاء الاصطناعي."
   />
 </svelte:head>
 
 <div class="landing-container">
-  <!-- Hero Section -->
+  <!-- Immersive Hero Section -->
   <section class="hero-section">
-    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-bg-grid" aria-hidden="true"></div>
+    <div class="hero-glow-sphere top-glow" aria-hidden="true"></div>
+    <div class="hero-glow-sphere bottom-glow" aria-hidden="true"></div>
+
     <div class="hero-content">
-      <div class="badge">
-        <span class="badge-dot"></span>
-        <span>منصة طلاب كلية الحاسبات والذكاء الاصطناعي — جامعة الأزهر</span>
+      <div class="badge-pill">
+        <span class="badge-pulse"></span>
+        <span class="badge-text">منصة Codeera التعليمية الرسمية</span>
       </div>
 
       <h1 class="hero-title">
-        شروحات مركزة ومباشرة، <br />
-        <span class="highlight">خطوتك الثابتة نحو التفوق الأكاديمي.</span>
+        شروحات برمجية مركزة، <br />
+        <span class="hero-gradient-text">خطوتك الواثقة نحو الامتياز الأكاديمي.</span>
       </h1>
 
       <p class="hero-description">
         {data.whyUs?.ar ??
-          'محتوى دراسي منظم يغطي مناهج الكلية بدقة، مجموعات تليجرام مقفولة للمناقشة المستمرة، واختبارات تفاعلية تقيس استيعابك للمقرر أولاً بأول.'}
+          'محتوى دراسي منظم ومصور يغطي مناهج الكلية بدقة، مجموعات تليجرام مقفولة للمناقشة المستمرة مع المحاضرين، واختبارات تفاعلية تقيس استيعابك للمقرر أولاً بأول.'}
       </p>
 
       <div class="hero-actions">
-        <a href="/courses" class="btn-primary">
-          <span>استكشف المقررات المتاحة</span>
-          <span aria-hidden="true" class="arrow">←</span>
+        <a href="/courses" class="btn-hero-primary">
+          <span>تصفح المقررات الدراسية</span>
+          <svg class="hero-btn-arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
         </a>
-        <a href="/login" class="btn-secondary">
+        <a href="/login" class="btn-hero-secondary">
           <span>تسجيل الدخول</span>
         </a>
       </div>
 
-      <div class="hero-stats">
-        <div class="stat-item">
-          <strong>+5</strong>
-          <span>مقررات أساسية معتمدة</span>
+      <!-- Glassmorphic Stats Ribbon -->
+      <div class="stats-glass-bar">
+        <div class="stat-pill">
+          <div class="stat-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+          </div>
+          <div class="stat-details">
+            <strong class="stat-number">+10</strong>
+            <span class="stat-label">مقررات تخصصية معتمدة</span>
+          </div>
         </div>
-        <div class="stat-divider" aria-hidden="true"></div>
-        <div class="stat-item">
-          <strong>100%</strong>
-          <span>مجموعات تليجرام موثقة</span>
+
+        <div class="stat-separator" aria-hidden="true"></div>
+
+        <div class="stat-pill">
+          <div class="stat-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <div class="stat-details">
+            <strong class="stat-number">100%</strong>
+            <span class="stat-label">مجموعات تليجرام مقفولة</span>
+          </div>
         </div>
-        <div class="stat-divider" aria-hidden="true"></div>
-        <div class="stat-item">
-          <strong>فوري</strong>
-          <span>قبول آلي عبر البوت</span>
+
+        <div class="stat-separator" aria-hidden="true"></div>
+
+        <div class="stat-pill">
+          <div class="stat-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <div class="stat-details">
+            <strong class="stat-number">فوري</strong>
+            <span class="stat-label">قبول آلي عبر البوت</span>
+          </div>
         </div>
       </div>
     </div>
@@ -90,81 +123,110 @@
 
   <!-- How It Works Section -->
   <section class="steps-section" aria-labelledby="steps-title">
-    <div class="section-header">
-      <span class="eyebrow">خطوات بسيطة</span>
-      <h2 id="steps-title">كيف تبدأ رحلتك التعليمية؟</h2>
-      <p class="section-subtitle">ثلاث خطوات فقط تفصلك عن الوصول لشروحات ومجموعات المقرر.</p>
+    <div class="section-heading-center">
+      <span class="eyebrow-pill">خطوات سريعة</span>
+      <h2 id="steps-title" class="section-title">كيف تبدأ دراستك معنا؟</h2>
+      <p class="section-subtitle">ثلاث خطوات بسيطة ومباشرة تفصلك عن المحتوى الأكاديمي ومجموعات المناقشة.</p>
     </div>
 
     <div class="steps-grid">
       <div class="step-card">
-        <div class="step-number">01</div>
-        <h3>اختر مقررك الدراسي</h3>
-        <p>تصفح قائمة المقررات المتاحة لفرقتك وقسمك (علوم حاسب، نظم، ذكاء اصطناعي)، واطلع على تفاصيل المحتوى.</p>
+        <div class="step-header">
+          <span class="step-index">01</span>
+          <div class="step-icon-wrap">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+        </div>
+        <h3 class="step-title">اختر مقررك الدراسي</h3>
+        <p class="step-desc">تصفح المقررات المتاحة لفرقتك وقسمك (علوم حاسب، نظم، ذكاء اصطناعي)، واطلع على تفاصيل المنهج وشروحاته.</p>
       </div>
 
       <div class="step-card">
-        <div class="step-number">02</div>
-        <h3>سدد الرسوم وارفع الإيصال</h3>
-        <p>قم بالتحويل عبر فودافون كاش أو إنستاباي لحساب المنصة الموضح، وارفع لقطة شاشة للإيصال في صفحة السداد.</p>
+        <div class="step-header">
+          <span class="step-index">02</span>
+          <div class="step-icon-wrap">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+          </div>
+        </div>
+        <h3 class="step-title">سدد الرسوم وارفع الإيصال</h3>
+        <p class="step-desc">حول الرسوم بسهولة عبر فودافون كاش أو إنستاباي، ثم ارفع لقطة شاشة للإيصال في نموذج الاشتراك المباشر.</p>
       </div>
 
-      <div class="step-card highlight-card">
-        <div class="step-number">03</div>
-        <h3>انضم للتليجرام وابدأ المذاكرة</h3>
-        <p>فور اعتماد الإيصال، يُفتح لك محتوى المادة فوراً ويتم قبول انضمامك تلقائياً لمجموعة التليجرام المقفولة.</p>
+      <div class="step-card featured-step-card">
+        <div class="step-header">
+          <span class="step-index highlight-index">03</span>
+          <div class="step-icon-wrap highlight-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
+            </svg>
+          </div>
+        </div>
+        <h3 class="step-title">اربط تليجرام وابدأ الدراسة</h3>
+        <p class="step-desc">فور اعتماد الدفع، يفتح لك المحتوى التعليمي فوراً ويتم قبولك آلياً في مجموعة التليجرام عبر البوت الذكي.</p>
       </div>
     </div>
   </section>
 
   <!-- Featured Courses Section -->
   <section class="courses-section" aria-labelledby="courses-title">
-    <div class="section-header-row">
+    <div class="section-header-flex">
       <div>
-        <span class="eyebrow">المحتوى الدراسي</span>
-        <h2 id="courses-title">المقررات المتاحة الآن</h2>
+        <span class="eyebrow-pill">المقررات الدراسية</span>
+        <h2 id="courses-title" class="section-title">أحدث المقررات المتاحة</h2>
       </div>
-      <a href="/courses" class="link-all">
-        <span>عرض جميع المقررات</span>
-        <span aria-hidden="true">←</span>
+      <a href="/courses" class="link-view-all">
+        <span>عرض كامل الدليل الأكاديمي</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
       </a>
     </div>
 
     {#if data.error}
-      <div class="notice" role="status">
+      <div class="notice-card error" role="status">
         <p>{data.error}</p>
       </div>
     {:else if data.courses.length === 0}
-      <div class="notice">
+      <div class="notice-card">
         <p>ستظهر المقررات الدراسية المتاحة هنا فور إطلاقها.</p>
       </div>
     {:else}
       <div class="courses-grid">
         {#each data.courses as course}
-          <article class="course-card">
-            <div class="course-header">
-              <span class="course-code">{course.slug}</span>
+          <article class="course-modern-card">
+            <div class="card-top-row">
+              <span class="course-slug-badge">{course.slug}</span>
               {#if course.discount_cents > 0}
-                <span class="discount-tag">خصم متاح</span>
+                <span class="discount-badge">خصم ساري</span>
               {/if}
             </div>
 
-            <div class="course-body">
-              <h3 class="course-title-ar">{course.title.ar}</h3>
-              <p class="course-title-en">{course.title.en}</p>
+            <div class="card-titles">
+              <h3 class="card-title-ar">{course.title.ar}</h3>
+              {#if course.title.en}
+                <p class="card-title-en">{course.title.en}</p>
+              {/if}
             </div>
 
-            <div class="course-footer">
-              <div class="price-box">
-                {#if course.discount_cents > 0}
-                  <span class="original-price">{formatPrice(course.list_price_cents)}</span>
-                {/if}
-                <strong class="current-price">
-                  {course.amount_due_cents === 0 ? 'مجانًا' : formatPrice(course.amount_due_cents)}
-                </strong>
+            <div class="card-bottom-row">
+              <div class="price-stack">
+                <span class="price-caption">رسوم المقرر</span>
+                <div class="price-value-row">
+                  {#if course.discount_cents > 0}
+                    <span class="strikethrough-price">{formatPrice(course.list_price_cents)}</span>
+                  {/if}
+                  <strong class="final-price">{formatPrice(course.amount_due_cents)}</strong>
+                </div>
               </div>
 
-              <a href={`/courses/${course.slug}`} class="btn-course-details">
+              <a href={`/courses/${course.slug}`} class="btn-card-explore">
                 <span>التفاصيل</span>
                 <span aria-hidden="true">←</span>
               </a>
@@ -175,62 +237,66 @@
     {/if}
   </section>
 
-  <!-- Why Us Section -->
-  <section class="why-us-section" aria-labelledby="why-title">
-    <div class="section-header">
-      <span class="eyebrow">مميزات المنصة</span>
-      <h2 id="why-title">لماذا يختار طلاب الكلية منصتنا؟</h2>
+  <!-- Platform Features Grid -->
+  <section class="features-section" aria-labelledby="features-title">
+    <div class="section-heading-center">
+      <span class="eyebrow-pill">لماذا Codeera؟</span>
+      <h2 id="features-title" class="section-title">بيئة أكاديمية متكاملة لطلاب الحاسبات</h2>
+      <p class="section-subtitle">صممت منصة Codeera خصيصاً لتلائم طبيعة ومناهج كلية الحاسبات بجامعة الأزهر.</p>
     </div>
 
     <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🎯</div>
-        <h3>مطابقة دقيقة للمنهج</h3>
-        <p>شروحات تركز تحديداً على توصيف المقررات بجامعة الأزهر ومسائل الامتحانات السابقة دون إطالة غير مفيدة.</p>
+      <div class="feature-item">
+        <div class="feature-icon-box">🎓</div>
+        <h3>تغطية شاملة لمقررات الكلية</h3>
+        <p>محتوى مصور ومكتوب متوافق 100% مع توصيف المقررات الأكاديمية والمناهج المعتمدة.</p>
       </div>
 
-      <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <h3>بيئة تليجرام مقفولة وموثقة</h3>
-        <p>مجموعات نقاش مخصصة للطلاب المشتركين فقط، يتم إدارتها آلياً ببوت ذكي يضمن خصوصية ونظام المجموعة.</p>
+      <div class="feature-item">
+        <div class="feature-icon-box">⚡</div>
+        <h3>انضمام آلي وفوري للمجموعات</h3>
+        <p>لا داعي لانتظار قبول المشرفين، بوت المنصة يفحص حالتك ويقبلك تلقائياً فور الاعتماد.</p>
       </div>
 
-      <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <h3>اختبارات تفاعلية مستمرة</h3>
-        <p>تدرب بعد كل درس عبر بنك أسئلة واختبارات مؤقتة تحاكي طبيعة الامتحانات وتصحح إجاباتك فوراً مع التفسير.</p>
+      <div class="feature-item">
+        <div class="feature-icon-box">🧠</div>
+        <h3>اختبارات تقييم ذاتي ذكية</h3>
+        <p>اختبر معلوماتك بعد كل باب دراسي عبر نظام كويزات تفاعلي يعرض نتيجتك وحلول الأسئلة.</p>
       </div>
 
-      <div class="feature-card">
-        <div class="feature-icon">📱</div>
-        <h3>تجربة سهلة على الهاتف</h3>
-        <p>واجهة خفيفة وسريعة مصممة لتعمل بسلاسة على الهواتف وشبكات المحمول لسهولة الوصول في أي وقت.</p>
+      <div class="feature-item">
+        <div class="feature-icon-box">🔒</div>
+        <h3>دفع آمن ومعالجة مباشرة</h3>
+        <p>ادفع عبر المحافظ الإلكترونية المألوفة (فودافون كاش، إنستاباي) مع نظام توثيق فوري للإيصالات.</p>
       </div>
     </div>
   </section>
 
   <!-- FAQ Section -->
   <section class="faq-section" aria-labelledby="faq-title">
-    <div class="section-header">
-      <span class="eyebrow">توضيحات وإجابات</span>
-      <h2 id="faq-title">الأسئلة الشائعة</h2>
-      <p class="section-subtitle">كل ما تود معرفته حول الاشتراك وتفعيل المجموعات واستخدام المنصة.</p>
+    <div class="section-heading-center">
+      <span class="eyebrow-pill">الأسئلة الشائعة</span>
+      <h2 id="faq-title" class="section-title">كل ما تريد معرفته عن المنصة</h2>
+      <p class="section-subtitle">إجابات واضحة ومباشرة عن كافة تساؤلات الطلاب.</p>
     </div>
 
     <div class="faq-accordion">
       {#each defaultFaqs as faq, index}
-        <div class="faq-item" class:open={openFaqIndex === index}>
+        <div class="faq-card" class:faq-card-open={openFaqIndex === index}>
           <button
             type="button"
-            class="faq-question"
-            aria-expanded={openFaqIndex === index}
+            class="faq-trigger"
             onclick={() => toggleFaq(index)}
+            aria-expanded={openFaqIndex === index}
           >
-            <span>{faq.q}</span>
-            <span class="faq-icon" aria-hidden="true">{openFaqIndex === index ? '−' : '+'}</span>
+            <span class="faq-question">{faq.q}</span>
+            <span class="faq-icon-arrow" aria-hidden="true">
+              {openFaqIndex === index ? '−' : '+'}
+            </span>
           </button>
+
           {#if openFaqIndex === index}
-            <div class="faq-answer">
+            <div class="faq-content">
               <p>{faq.a}</p>
             </div>
           {/if}
@@ -239,14 +305,16 @@
     </div>
   </section>
 
-  <!-- CTA Banner Section -->
+  <!-- Immersive CTA Banner -->
   <section class="cta-banner">
-    <div class="cta-inner">
-      <h2>جاهز لبدء الفصل الدراسي بثقة؟</h2>
-      <p>انضم الآن إلى زملائك وابدأ الاستعداد للمقررات مع شروحات وافية واختبارات متجددة.</p>
-      <div class="cta-buttons">
-        <a href="/courses" class="btn-primary">تصفح المقررات الدراسية</a>
-        <a href="/register" class="btn-secondary-light">إنشاء حساب طالب جديد</a>
+    <div class="cta-banner-bg" aria-hidden="true"></div>
+    <div class="cta-content">
+      <span class="cta-badge">ابدأ دراستك الآن</span>
+      <h2>جاهز للتفوق في فصلك الدراسي؟</h2>
+      <p>انضم لزملائك في كلية الحاسبات والذكاء الاصطناعي واستفد من شروحات المقررات ومجموعات التليجرام المقفولة اليوم.</p>
+      <div class="cta-actions">
+        <a href="/courses" class="btn-cta-primary">استكشف جميع المقررات</a>
+        <a href="/register" class="btn-cta-secondary">إنشاء حساب طالب</a>
       </div>
     </div>
   </section>
@@ -257,217 +325,286 @@
     display: flex;
     flex-direction: column;
     gap: 5rem;
-    padding-bottom: 5rem;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding: 1.5rem 1.25rem 5rem;
   }
 
-  /* Hero Section */
+  /* ---------------- HERO SECTION ---------------- */
   .hero-section {
     position: relative;
-    background: var(--storm);
-    color: white;
-    border-radius: 1.25rem;
-    padding: clamp(3rem, 6vw, 5.5rem) clamp(1.5rem, 5vw, 4rem);
     overflow: hidden;
-    margin-top: 1.5rem;
-    box-shadow: 0 20px 40px -15px rgba(15, 40, 47, 0.4);
+    background: radial-gradient(135% 120% at 50% 0%, #153842 0%, var(--storm) 100%);
+    border: 2px solid var(--line);
+    border-radius: 1.75rem;
+    padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 3.5rem);
+    color: white;
+    box-shadow: 0 16px 40px -10px rgba(15, 40, 47, 0.4);
   }
 
-  .hero-glow {
+  :global(:root[data-theme='dark']) .hero-section {
+    background: radial-gradient(135% 120% at 50% 0%, #0d2830 0%, #081216 100%);
+    border-color: rgba(2, 239, 240, 0.25);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
+  }
+
+  .hero-bg-grid {
     position: absolute;
-    top: -10rem;
-    inset-inline-end: -8rem;
-    width: 26rem;
-    height: 26rem;
-    background: radial-gradient(circle, rgba(2, 239, 240, 0.25) 0%, transparent 70%);
+    inset: 0;
+    background-image: radial-gradient(rgba(2, 239, 240, 0.15) 1px, transparent 1px);
+    background-size: 28px 28px;
     pointer-events: none;
+    opacity: 0.6;
+  }
+
+  .hero-glow-sphere {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(80px);
+  }
+
+  .top-glow {
+    width: 320px;
+    height: 320px;
+    top: -100px;
+    left: 10%;
+    background: rgba(2, 239, 240, 0.18);
+  }
+
+  .bottom-glow {
+    width: 350px;
+    height: 350px;
+    bottom: -120px;
+    right: 5%;
+    background: rgba(23, 119, 122, 0.25);
   }
 
   .hero-content {
     position: relative;
-    z-index: 1;
-    max-width: 820px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.75rem;
+    max-width: 860px;
+    margin-inline: auto;
   }
 
-  .badge {
+  .badge-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    background: rgba(2, 239, 240, 0.1);
-    border: 1px solid rgba(2, 239, 240, 0.3);
-    color: var(--cyan);
     padding: 0.4rem 1rem;
+    background: rgba(2, 239, 240, 0.1);
+    border: 1.5px solid rgba(2, 239, 240, 0.35);
     border-radius: 9999px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    margin-bottom: 1.75rem;
+    backdrop-filter: blur(8px);
   }
 
-  .badge-dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    background: var(--cyan);
+  .badge-pulse {
+    width: 0.55rem;
+    height: 0.55rem;
     border-radius: 50%;
-    box-shadow: 0 0 8px var(--cyan);
+    background: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(2, 239, 240, 0.3);
+    animation: pulseGlow 2s infinite ease-in-out;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.3); opacity: 0.7; }
+  }
+
+  .badge-text {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #e2fbfb;
   }
 
   .hero-title {
-    font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+    font-size: clamp(2.1rem, 4.5vw, 3.25rem);
     font-weight: 900;
-    line-height: 1.2;
-    margin: 0 0 1.5rem;
-    letter-spacing: -0.02em;
+    line-height: 1.28;
+    color: white;
+    margin: 0;
   }
 
-  .highlight {
-    color: var(--cyan);
+  .hero-gradient-text {
+    background: linear-gradient(135deg, #ffffff 40%, var(--cyan) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   .hero-description {
-    font-size: clamp(1.05rem, 2vw, 1.2rem);
-    line-height: 1.85;
-    color: #cadbd8;
-    margin: 0 0 2.25rem;
+    font-size: clamp(1rem, 1.8vw, 1.15rem);
+    line-height: 1.75;
+    color: #c9e4e2;
     max-width: 680px;
+    margin: 0;
   }
 
   .hero-actions {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
     gap: 1rem;
-    margin-bottom: 3rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
   }
 
-  .btn-primary {
+  .btn-hero-primary {
     background: var(--cyan);
-    color: var(--storm);
+    color: #07191d;
     font-weight: 800;
-    padding: 0.85rem 1.75rem;
-    border-radius: 0.5rem;
+    font-size: 1rem;
+    padding: 0.85rem 1.85rem;
+    border-radius: 0.65rem;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    transition: transform 160ms ease, filter 160ms ease;
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 24px rgba(2, 239, 240, 0.35);
+    transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
   }
 
-  .btn-primary:hover {
+  .btn-hero-primary:hover {
     transform: translateY(-2px);
-    filter: brightness(1.05);
+    box-shadow: 0 0 32px rgba(2, 239, 240, 0.55);
+    opacity: 0.98;
   }
 
-  .btn-secondary {
+  .hero-btn-arrow {
+    transition: transform 150ms ease;
+  }
+
+  .btn-hero-primary:hover .hero-btn-arrow {
+    transform: translateX(-3px);
+  }
+
+  .btn-hero-secondary {
     background: rgba(255, 255, 255, 0.08);
     color: white;
     font-weight: 700;
-    padding: 0.85rem 1.75rem;
-    border-radius: 0.5rem;
+    font-size: 1rem;
+    padding: 0.85rem 1.65rem;
+    border-radius: 0.65rem;
     text-decoration: none;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: background 160ms ease;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+    transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
   }
 
-  .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.16);
+  .btn-hero-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: white;
+    transform: translateY(-2px);
   }
 
-  .btn-secondary-light {
-    background: white;
-    color: var(--storm);
-    font-weight: 800;
-    padding: 0.85rem 1.75rem;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    transition: background 160ms ease;
-  }
-
-  .btn-secondary-light:hover {
-    background: #eef5f4;
-  }
-
-  .hero-stats {
+  /* Glassmorphic Stats Ribbon */
+  .stats-glass-bar {
     display: flex;
     align-items: center;
-    gap: 2rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-    padding-top: 1.75rem;
+    justify-content: space-around;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 740px;
+    margin-top: 1.5rem;
+    padding: 1.25rem 2rem;
+    background: rgba(15, 40, 47, 0.45);
+    border: 2px solid rgba(2, 239, 240, 0.25);
+    border-radius: 1.25rem;
+    backdrop-filter: blur(16px);
   }
 
-  .stat-item {
+  .stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .stat-icon-wrap {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+    background: rgba(2, 239, 240, 0.15);
+    color: var(--cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stat-details {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    align-items: flex-start;
+    text-align: right;
   }
 
-  .stat-item strong {
-    font-size: 1.6rem;
+  .stat-number {
+    font-size: 1.35rem;
     font-weight: 900;
-    color: var(--cyan);
+    color: white;
+    line-height: 1.1;
   }
 
-  .stat-item span {
-    font-size: 0.82rem;
-    color: #a7c0bc;
+  .stat-label {
+    font-size: 0.78rem;
+    color: #aed3d0;
   }
 
-  .stat-divider {
-    width: 1px;
+  .stat-separator {
+    width: 2px;
     height: 2.2rem;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.12);
   }
 
-  /* Section Headers */
-  .section-header {
-    text-align: center;
-    max-width: 650px;
-    margin: 0 auto 3rem;
-  }
-
-  .section-header-row {
+  /* ---------------- SECTION HEADINGS ---------------- */
+  .section-heading-center {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.6rem;
     margin-bottom: 2.5rem;
-    gap: 1.5rem;
   }
 
-  .eyebrow {
-    display: block;
+  .eyebrow-pill {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 800;
     color: var(--deep-cyan);
-    font-weight: 800;
-    font-size: 0.85rem;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
+    background: rgba(23, 119, 122, 0.1);
+    border: 1.5px solid rgba(23, 119, 122, 0.25);
+    padding: 0.25rem 0.85rem;
+    border-radius: 9999px;
   }
 
-  h2 {
-    font-size: clamp(1.8rem, 3.5vw, 2.5rem);
-    font-weight: 800;
+  :global(:root[data-theme='dark']) .eyebrow-pill {
+    color: var(--cyan);
+    background: rgba(2, 239, 240, 0.1);
+    border-color: rgba(2, 239, 240, 0.25);
+  }
+
+  .section-title {
+    font-size: clamp(1.6rem, 3.2vw, 2.25rem);
+    font-weight: 900;
     color: var(--storm);
-    margin: 0 0 0.5rem;
-    line-height: 1.25;
+    margin: 0;
+    line-height: 1.3;
   }
 
   .section-subtitle {
     color: var(--muted);
-    font-size: 1.05rem;
+    font-size: 1rem;
+    max-width: 580px;
     margin: 0;
+    line-height: 1.6;
   }
 
-  .link-all {
-    color: var(--deep-cyan);
-    text-decoration: none;
-    font-weight: 800;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.95rem;
-  }
-
-  .link-all:hover {
-    text-decoration: underline;
-  }
-
-  /* Steps Section */
+  /* ---------------- STEPS SECTION ---------------- */
   .steps-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -475,304 +612,537 @@
   }
 
   .step-card {
-    background: white;
+    background: var(--card);
     border: 2px solid var(--line);
-    border-radius: 1rem;
-    padding: 2rem;
+    border-radius: 1.25rem;
+    padding: 2rem 1.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
-    position: relative;
-    box-shadow: 0 4px 12px rgba(15, 40, 47, 0.03);
+    gap: 1rem;
+    box-shadow: var(--shadow-sm);
     transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
   }
 
   .step-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 24px -8px rgba(15, 40, 47, 0.08);
+    box-shadow: var(--shadow-md);
+    border-color: var(--deep-cyan);
   }
 
-  .step-number {
-    font-size: 2.2rem;
+  .step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .step-index {
+    font-size: 1.85rem;
     font-weight: 900;
     color: var(--deep-cyan);
-    opacity: 0.7;
-    line-height: 1;
+    opacity: 0.45;
   }
 
-  .step-card h3 {
-    font-size: 1.25rem;
+  .step-icon-wrap {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    background: var(--paper);
+    color: var(--deep-cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--line);
+  }
+
+  .featured-step-card {
+    border-color: rgba(2, 239, 240, 0.75);
+    background: linear-gradient(180deg, var(--card) 0%, rgba(2, 239, 240, 0.04) 100%);
+  }
+
+  .highlight-index {
+    color: var(--cyan);
+    opacity: 0.9;
+  }
+
+  .highlight-icon {
+    background: rgba(2, 239, 240, 0.15);
+    color: #0088cc;
+    border-color: rgba(2, 239, 240, 0.5);
+  }
+
+  .step-title {
+    font-size: 1.2rem;
     font-weight: 800;
     color: var(--storm);
     margin: 0;
   }
 
-  .step-card p {
+  .step-desc {
     color: var(--muted);
-    line-height: 1.7;
+    font-size: 0.92rem;
+    line-height: 1.65;
     margin: 0;
+  }
+
+  /* ---------------- COURSES SECTION ---------------- */
+  .section-header-flex {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .link-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--deep-cyan);
+    font-weight: 700;
     font-size: 0.95rem;
+    text-decoration: none;
+    transition: transform 150ms ease, color 150ms ease;
   }
 
-  .highlight-card {
-    border-color: rgba(2, 239, 240, 0.8);
-    background: linear-gradient(180deg, #ffffff 0%, #f1faf9 100%);
+  :global(:root[data-theme='dark']) .link-view-all {
+    color: var(--cyan);
   }
 
-  /* Courses Grid */
+  .link-view-all:hover {
+    transform: translateX(-3px);
+  }
+
   .courses-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.5rem;
   }
 
-  .course-card {
-    background: white;
+  .course-modern-card {
+    background: var(--card);
     border: 2px solid var(--line);
-    border-radius: 1rem;
+    border-radius: 1.25rem;
     padding: 1.75rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 240px;
-    box-shadow: 0 4px 12px rgba(15, 40, 47, 0.04);
-    transition: transform 160ms ease, border-color 160ms ease;
+    gap: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
   }
 
-  .course-card:hover {
+  .course-modern-card:hover {
     transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
     border-color: var(--deep-cyan);
   }
 
-  .course-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.25rem;
+  :global(:root[data-theme='dark']) .course-modern-card:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 8px 30px rgba(2, 239, 240, 0.12);
   }
 
-  .course-code {
-    font-size: 0.8rem;
+  .card-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .course-slug-badge {
+    font-size: 0.78rem;
     font-weight: 800;
     color: var(--deep-cyan);
-    background: #eef7f6;
-    padding: 0.25rem 0.6rem;
-    border-radius: 0.35rem;
+    background: var(--paper);
+    padding: 0.25rem 0.65rem;
+    border-radius: 0.4rem;
+    border: 1px solid var(--line);
+    text-transform: uppercase;
   }
 
-  .discount-tag {
-    font-size: 0.75rem;
+  :global(:root[data-theme='dark']) .course-slug-badge {
+    color: var(--cyan);
+    background: rgba(2, 239, 240, 0.1);
+    border-color: rgba(2, 239, 240, 0.25);
+  }
+
+  .discount-badge {
+    font-size: 0.72rem;
     font-weight: 800;
-    color: #c05621;
-    background: #feebc8;
-    padding: 0.2rem 0.5rem;
+    color: #92400e;
+    background: #fef3c7;
+    padding: 0.2rem 0.55rem;
     border-radius: 0.35rem;
   }
 
-  .course-title-ar {
+  .card-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .card-title-ar {
     font-size: 1.35rem;
     font-weight: 800;
     color: var(--storm);
-    margin: 0 0 0.4rem;
+    margin: 0;
   }
 
-  .course-title-en {
-    font-size: 0.88rem;
+  .card-title-en {
+    font-size: 0.85rem;
     color: var(--muted);
     margin: 0;
   }
 
-  .course-footer {
+  .card-bottom-row {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    border-top: 1px solid var(--line);
+    align-items: center;
     padding-top: 1.25rem;
-    margin-top: 1.5rem;
+    border-top: 2px solid var(--line);
   }
 
-  .price-box {
+  .price-stack {
     display: flex;
     flex-direction: column;
   }
 
-  .original-price {
-    font-size: 0.78rem;
+  .price-caption {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .price-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+  }
+
+  .strikethrough-price {
+    font-size: 0.82rem;
     color: var(--muted);
     text-decoration: line-through;
   }
 
-  .current-price {
-    font-size: 1.25rem;
+  .final-price {
+    font-size: 1.2rem;
     font-weight: 900;
     color: var(--storm);
   }
 
-  .btn-course-details {
-    background: #eef7f6;
-    color: var(--deep-cyan);
+  .btn-card-explore {
+    background: var(--storm);
+    color: var(--cyan);
     font-weight: 800;
-    padding: 0.5rem 1rem;
-    border-radius: 0.4rem;
+    font-size: 0.88rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: 0.5rem;
     text-decoration: none;
+    border: 2px solid var(--storm);
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    font-size: 0.88rem;
-    transition: background 160ms ease, color 160ms ease;
+    gap: 0.35rem;
+    transition: opacity 150ms ease, transform 120ms ease;
   }
 
-  .btn-course-details:hover {
-    background: var(--deep-cyan);
-    color: white;
+  .btn-card-explore:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
   }
 
-  /* Features Grid */
+  /* ---------------- FEATURES SECTION ---------------- */
   .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 1.5rem;
   }
 
-  .feature-card {
-    background: white;
+  .feature-item {
+    background: var(--card);
     border: 2px solid var(--line);
-    border-radius: 1rem;
-    padding: 1.75rem;
-    box-shadow: 0 4px 12px rgba(15, 40, 47, 0.03);
-  }
-
-  .feature-icon {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-  }
-
-  .feature-card h3 {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: var(--storm);
-    margin: 0 0 0.6rem;
-  }
-
-  .feature-card p {
-    color: var(--muted);
-    line-height: 1.7;
-    margin: 0;
-    font-size: 0.92rem;
-  }
-
-  /* FAQ Accordion */
-  .faq-accordion {
-    max-width: 800px;
-    margin: 0 auto;
+    border-radius: 1.25rem;
+    padding: 2rem 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform 160ms ease, border-color 160ms ease;
   }
 
-  .faq-item {
-    background: white;
-    border: 2px solid var(--line);
-    border-radius: 0.75rem;
-    overflow: hidden;
-    transition: border-color 160ms ease;
-  }
-
-  .faq-item.open {
+  .feature-item:hover {
+    transform: translateY(-3px);
     border-color: var(--deep-cyan);
   }
 
-  .faq-question {
-    width: 100%;
+  .feature-icon-box {
+    font-size: 2.2rem;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .feature-item h3 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--storm);
+    margin: 0;
+  }
+
+  .feature-item p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  /* ---------------- FAQ ACCORDION ---------------- */
+  .faq-accordion {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-width: 820px;
+    margin-inline: auto;
+    width: 100%;
+  }
+
+  .faq-card {
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 0.85rem;
+    overflow: hidden;
+    transition: border-color 150ms ease;
+  }
+
+  .faq-card:hover {
+    border-color: var(--deep-cyan);
+  }
+
+  .faq-card-open {
+    border-color: var(--deep-cyan);
+  }
+
+  :global(:root[data-theme='dark']) .faq-card-open {
+    border-color: var(--cyan);
+  }
+
+  .faq-trigger {
+    width: 100%;
     padding: 1.25rem 1.5rem;
     background: none;
     border: none;
-    text-align: start;
-    font-size: 1.05rem;
-    font-weight: 800;
-    color: var(--storm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
     cursor: pointer;
+    text-align: right;
     font-family: inherit;
   }
 
-  .faq-icon {
+  .faq-question {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--storm);
+  }
+
+  .faq-icon-arrow {
     font-size: 1.4rem;
-    color: var(--deep-cyan);
     font-weight: 700;
-    line-height: 1;
+    color: var(--deep-cyan);
+    flex-shrink: 0;
   }
 
-  .faq-answer {
-    padding: 0 1.5rem 1.5rem;
-    border-top: 1.5px solid #f0f5f4;
+  :global(:root[data-theme='dark']) .faq-icon-arrow {
+    color: var(--cyan);
   }
 
-  .faq-answer p {
+  .faq-content {
+    padding: 0 1.5rem 1.25rem;
+    border-top: 2px solid var(--line);
+  }
+
+  .faq-content p {
     color: var(--muted);
-    line-height: 1.8;
+    line-height: 1.75;
     margin: 0.75rem 0 0;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
   }
 
-  /* CTA Banner */
+  /* ---------------- CTA BANNER ---------------- */
   .cta-banner {
+    position: relative;
+    overflow: hidden;
     background: linear-gradient(135deg, var(--storm) 0%, #153c47 100%);
     color: white;
-    border-radius: 1.25rem;
+    border-radius: 1.75rem;
+    border: 2px solid var(--line);
     padding: clamp(2.5rem, 5vw, 4rem) 2rem;
     text-align: center;
-    box-shadow: 0 16px 32px -12px rgba(15, 40, 47, 0.35);
+    box-shadow: 0 20px 40px -10px rgba(15, 40, 47, 0.4);
   }
 
-  .cta-inner {
+  :global(:root[data-theme='dark']) .cta-banner {
+    background: linear-gradient(135deg, #10242b 0%, #081418 100%);
+    border-color: rgba(2, 239, 240, 0.3);
+  }
+
+  .cta-banner-bg {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(2, 239, 240, 0.18) 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.5;
+  }
+
+  .cta-content {
+    position: relative;
+    z-index: 2;
     max-width: 650px;
-    margin: 0 auto;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .cta-badge {
+    font-size: 0.78rem;
+    font-weight: 800;
+    background: rgba(2, 239, 240, 0.15);
+    color: var(--cyan);
+    padding: 0.25rem 0.85rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(2, 239, 240, 0.3);
   }
 
   .cta-banner h2 {
     color: white;
     font-size: clamp(1.8rem, 3.5vw, 2.4rem);
-    margin: 0 0 1rem;
+    font-weight: 900;
+    margin: 0;
   }
 
   .cta-banner p {
     color: #cadbd8;
     font-size: 1.05rem;
     line-height: 1.75;
-    margin: 0 0 2rem;
+    margin: 0;
   }
 
-  .cta-buttons {
+  .cta-actions {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     gap: 1rem;
+    margin-top: 0.75rem;
   }
 
-  .notice {
-    background: white;
+  .btn-cta-primary {
+    background: var(--cyan);
+    color: #07191d;
+    font-weight: 800;
+    padding: 0.75rem 1.65rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 20px rgba(2, 239, 240, 0.3);
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+
+  .btn-cta-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 28px rgba(2, 239, 240, 0.5);
+  }
+
+  .btn-cta-secondary {
+    background: transparent;
+    color: white;
+    font-weight: 700;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: background 150ms ease, border-color 150ms ease;
+  }
+
+  .btn-cta-secondary:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: white;
+  }
+
+  .notice-card {
+    background: var(--card);
     border: 2px solid var(--line);
-    border-radius: 0.75rem;
-    padding: 2rem;
+    border-radius: 1rem;
+    padding: 2.5rem;
     text-align: center;
     color: var(--muted);
   }
 
+  .notice-card.error {
+    border-color: #f87171;
+    color: #991b1b;
+  }
+
+  /* ---------------- RESPONSIVENESS ---------------- */
   @media (max-width: 860px) {
     .steps-grid {
       grid-template-columns: 1fr;
     }
 
-    .hero-stats {
-      flex-wrap: wrap;
+    .stats-glass-bar {
+      flex-direction: column;
+      align-items: stretch;
       gap: 1.25rem;
+      padding: 1.25rem 1.5rem;
     }
 
-    .stat-divider {
+    .stat-pill {
+      justify-content: flex-start;
+    }
+
+    .stat-separator {
       display: none;
+    }
+
+    .section-header-flex {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .courses-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .landing-container {
+      gap: 3.5rem;
+      padding: 1rem 0.75rem 3.5rem;
+    }
+
+    .hero-section {
+      border-radius: 1.25rem;
+      padding: 2.25rem 1.25rem;
+    }
+
+    .hero-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .btn-hero-primary, .btn-hero-secondary {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .cta-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .btn-cta-primary, .btn-cta-secondary {
+      width: 100%;
+      text-align: center;
     }
   }
 </style>

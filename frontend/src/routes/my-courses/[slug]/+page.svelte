@@ -29,36 +29,33 @@
 </script>
 
 <svelte:head>
-  <title>{content ? content.course.title.ar : 'محتوى المادة'} | منصة دورات حاسبات الأزهر</title>
+  <title>{content ? content.course.title.ar : 'محتوى المادة'} | منصة Codeera</title>
 </svelte:head>
 
-<div class="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-5xl mx-auto space-y-8">
+<div class="content-page" dir="rtl">
+  <div class="content-container">
     {#if loading}
-      <div class="space-y-4 animate-pulse">
-        <div class="h-10 bg-muted rounded-xl w-1/3"></div>
-        <div class="h-48 bg-muted rounded-2xl"></div>
-        <div class="h-64 bg-muted rounded-2xl"></div>
+      <div class="loading-shell">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>جاري تحميل محتوى المادة...</p>
       </div>
     {:else if errorMsg}
-      <div class="p-6 rounded-2xl bg-destructive/10 border border-destructive/20 text-center space-y-4">
-        <p class="text-sm font-medium text-destructive">{errorMsg}</p>
-        <a href="/courses/{slug}" class="inline-block px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">
-          العودة لصفحة المادة
-        </a>
+      <div class="error-card">
+        <p>{errorMsg}</p>
+        <a href="/courses/{slug}" class="btn-back">العودة لصفحة المادة</a>
       </div>
     {:else if content}
       <!-- Header -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
-        <div>
-          <nav class="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-            <a href="/courses" class="hover:underline">المواد</a>
-            <span>/</span>
-            <a href="/courses/{slug}" class="hover:underline">{content.course.title.ar}</a>
-            <span>/</span>
-            <span class="text-foreground">المحتوى التعليمي</span>
+      <div class="page-header">
+        <div class="header-main">
+          <nav class="breadcrumbs" aria-label="مسار التنقل">
+            <a href="/courses">المواد</a>
+            <span class="sep">/</span>
+            <a href="/courses/{slug}">{content.course.title.ar}</a>
+            <span class="sep">/</span>
+            <span class="current">المحتوى التعليمي</span>
           </nav>
-          <h1 class="text-3xl font-extrabold tracking-tight">{content.course.title.ar}</h1>
+          <h1>{content.course.title.ar}</h1>
         </div>
 
         {#if content.is_unlocked && content.course.telegram_invite_link}
@@ -66,93 +63,66 @@
             href={content.course.telegram_invite_link}
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-sky-500 text-white font-bold text-sm hover:bg-sky-600 transition shadow-sm"
+            class="btn-telegram"
           >
-            <svg class="h-5 w-5 fill-current" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
-            </svg>
             انضم لمجموعة التليجرام للمادة
           </a>
         {/if}
       </div>
 
-      <!-- Telegram Linking Reminder Card -->
+      <!-- Telegram Linking Reminder -->
       <TelegramLinkCard />
 
       <!-- Course Content Sections -->
-      <div class="space-y-6">
-        <h2 class="text-xl font-bold">الخطة الدراسية والمحتوى</h2>
+      <section class="sections-container">
+        <h2>الخطة الدراسية والمحتوى</h2>
 
         {#if content.sections.length === 0}
-          <div class="p-8 rounded-2xl border border-dashed border-border text-center text-muted-foreground">
+          <div class="empty-box">
             لم يتم رفع محتوى دراسي لهذه المادة بعد.
           </div>
         {:else}
           {#each content.sections as section}
-            <div class="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-              <div class="bg-muted/40 p-4 border-b border-border flex items-center justify-between">
-                <h3 class="font-bold text-base">{section.title.ar}</h3>
-                <span class="text-xs text-muted-foreground">{section.items.length} عنصر</span>
+            <div class="section-card">
+              <div class="section-header">
+                <h3>{section.title.ar}</h3>
+                <span class="item-count">{section.items.length} عنصر</span>
               </div>
 
               {#if section.items.length === 0}
-                <div class="p-4 text-xs text-muted-foreground text-center">لا توجد عناصر في هذا القسم حالياً.</div>
+                <div class="empty-section">لا توجد عناصر في هذا القسم حالياً.</div>
               {:else}
-                <div class="divide-y divide-border">
+                <div class="items-list">
                   {#each section.items as item}
-                    <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-muted/20 transition">
-                      <div class="flex items-start gap-3">
-                        <div class="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
-                          {#if item.type === 'lecture_link'}
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                          {:else if item.type === 'file'}
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                          {:else if item.type === 'quiz' || item.type === 'exam'}
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                          {:else}
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                          {/if}
+                    <div class="item-row">
+                      <div class="item-info">
+                        <div class="item-icon" aria-hidden="true">
+                          {#if item.type === 'lecture_link'}▶{:else if item.type === 'file'}📄{:else if item.type === 'quiz' || item.type === 'exam'}📝{:else}🔗{/if}
                         </div>
                         <div>
-                          <p class="font-bold text-sm text-foreground">{item.title.ar}</p>
+                          <p class="item-title">{item.title.ar}</p>
                           {#if item.description?.ar}
-                            <p class="text-xs text-muted-foreground mt-0.5">{item.description.ar}</p>
+                            <p class="item-desc">{item.description.ar}</p>
                           {/if}
                         </div>
                       </div>
 
-                      <div class="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                      <div class="item-actions">
                         {#if item.is_locked}
-                          <span class="inline-flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                            مغلق (اشترك للفتح)
-                          </span>
+                          <span class="locked-badge">🔒 مغلق (اشترك للفتح)</span>
                         {:else}
                           {#if item.type === 'lecture_link' || item.type === 'external_link'}
                             {#if item.url}
-                              <a
-                                href={item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 text-xs font-semibold transition"
-                              >
-                                فتح الرابط
-                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                              <a href={item.url} target="_blank" rel="noopener noreferrer" class="btn-item btn-link">
+                                فتح الرابط ↗
                               </a>
                             {/if}
                           {:else if item.type === 'file'}
-                            <a
-                              href="/api/v1/courses/{slug}/items/{item.id}/file"
-                              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs font-semibold transition"
-                            >
-                              تحميل الملف
-                              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <a href="/api/v1/courses/{slug}/items/{item.id}/file" class="btn-item btn-file">
+                              تحميل الملف ↓
                             </a>
                           {:else if (item.type === 'quiz' || item.type === 'exam') && item.quiz}
-                            <a
-                              href="/quizzes/{item.quiz.id}"
-                              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 text-xs font-semibold transition"
-                            >
+                            <a href="/quizzes/{item.quiz.id}" class="btn-item btn-quiz">
                               ابدأ {item.quiz.kind === 'exam' ? 'الامتحان' : 'الاختبار'}
                             </a>
                           {/if}
@@ -165,7 +135,291 @@
             </div>
           {/each}
         {/if}
-      </div>
+      </section>
     {/if}
   </div>
 </div>
+
+<style>
+  .content-page {
+    background-color: var(--paper);
+    min-height: calc(100vh - 140px);
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  .content-container {
+    max-width: 1100px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .loading-shell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    gap: 1rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--line);
+    border-top-color: var(--deep-cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-card {
+    background: #fef2f2;
+    border: 2px solid #fecaca;
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .error-card p {
+    color: #991b1b;
+    font-weight: 600;
+    margin: 0 0 1rem;
+  }
+
+  .btn-back {
+    display: inline-block;
+    background: var(--storm);
+    color: var(--cyan);
+    padding: 0.6rem 1.25rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  /* Page Header */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    border-bottom: 2px solid var(--line);
+    padding-bottom: 1.5rem;
+  }
+
+  .breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .breadcrumbs a { color: var(--muted); text-decoration: none; font-weight: 600; }
+  .breadcrumbs a:hover { color: var(--storm); text-decoration: underline; }
+  .breadcrumbs .sep { color: var(--line); }
+  .breadcrumbs .current { color: var(--storm); font-weight: 700; }
+
+  .page-header h1 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--storm);
+    margin: 0;
+  }
+
+  .btn-telegram {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #0088cc;
+    color: white;
+    padding: 0.65rem 1.25rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.88rem;
+    border: 2px solid #0088cc;
+    transition: opacity 150ms ease;
+  }
+
+  .btn-telegram:hover { opacity: 0.9; }
+
+  /* Sections */
+  .sections-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .sections-container h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--storm);
+    margin: 0;
+  }
+
+  .section-card {
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(15, 40, 47, 0.04);
+  }
+
+  .section-header {
+    background: #eef7f6;
+    padding: 1rem 1.25rem;
+    border-bottom: 2px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .section-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--storm);
+    margin: 0;
+  }
+
+  .item-count {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .empty-section, .empty-box {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .empty-box {
+    background: var(--paper);
+    border: 2px dashed var(--line);
+    border-radius: 1rem;
+    font-weight: 600;
+  }
+
+  /* Items */
+  .items-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    gap: 1rem;
+    flex-wrap: wrap;
+    transition: background 150ms ease;
+  }
+
+  .item-row:last-child { border-bottom: none; }
+  .item-row:hover { background: #f8faf9; }
+
+  .item-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .item-icon {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef7f6;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .item-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--storm);
+    margin: 0;
+  }
+
+  .item-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 0.2rem 0 0;
+  }
+
+  .item-actions {
+    flex-shrink: 0;
+  }
+
+  .locked-badge {
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: var(--paper);
+    border: 2px solid var(--line);
+    padding: 0.3rem 0.65rem;
+    border-radius: 9999px;
+    font-weight: 600;
+  }
+
+  .btn-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: opacity 150ms ease;
+  }
+
+  .btn-item:hover { opacity: 0.85; }
+
+  .btn-link {
+    background: #eef7f6;
+    color: var(--deep-cyan);
+    border: 2px solid var(--line);
+  }
+
+  .btn-file {
+    background: var(--paper);
+    color: var(--storm);
+    border: 2px solid var(--line);
+  }
+
+  .btn-quiz {
+    background: #059669;
+    color: white;
+    border: 2px solid #059669;
+  }
+
+  @media (max-width: 768px) {
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .item-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .item-actions {
+      align-self: flex-end;
+    }
+  }
+</style>

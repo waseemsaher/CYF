@@ -16,32 +16,32 @@ class ContentBlockSeeder extends Seeder
                 'key' => 'landing.hero',
                 'group' => 'landing',
                 'content' => [
-                    'ar' => 'منصة دورات كلية الحاسبات والمعلومات — جامعة الأزهر. مسارك الأكاديمي المباشر نحو التفوق.',
-                    'en' => 'Al-Azhar FCAI Course Platform. Your direct academic path to excellence in computing.',
+                    'ar' => 'منصة Codeera التعليمية. مسارك الأكاديمي المباشر نحو التفوق البرمجي.',
+                    'en' => 'Codeera Learning Platform. Your direct path to excellence in computing and programming.',
                 ],
             ],
             [
                 'key' => 'landing.why_us',
                 'group' => 'landing',
                 'content' => [
-                    'ar' => 'محتوى دراسي مخصص لمناهج الكلية، مجموعات تليجرام مقفولة وموثقة، شروحات وافية واختبارات تفاعلية مستمرة.',
-                    'en' => 'Curriculum tailored specifically to Al-Azhar FCAI courses, verified closed Telegram groups, and continuous interactive quizzes.',
+                    'ar' => 'محتوى دراسي منظم ومصور، مجموعات تليجرام مقفولة وموثقة، شروحات وافية واختبارات تفاعلية مستمرة.',
+                    'en' => 'Structured computing curriculum, verified closed Telegram groups, and continuous interactive quizzes.',
                 ],
             ],
             [
                 'key' => 'landing.faq',
                 'group' => 'landing',
                 'content' => [
-                    'ar' => 'س: كيف يمكنني الانضمام لمجموعة التليجرام للمادة؟\nج: بعد تأكيد اشتراكك، اربط حساب التليجرام الخاص بك عبر المنصة واضغط على رابط الانضمام وسيتم قبولك فورياً.',
-                    'en' => 'Q: How do I join the course Telegram group?\nA: After your payment is approved, link your Telegram account on the platform and send a join request.',
+                    'ar' => "س: كيف يمكنني الانضمام لمجموعة التليجرام للمادة؟\nج: بعد تأكيد اشتراكك، اربط حساب التليجرام الخاص بك عبر المنصة واضغط على رابط الانضمام وسيتم قبولك فورياً.",
+                    'en' => "Q: How do I join the course Telegram group?\nA: After your payment is approved, link your Telegram account on the platform and send a join request.",
                 ],
             ],
             [
                 'key' => 'legal.terms',
                 'group' => 'legal',
                 'content' => [
-                    'ar' => 'شروط الاستخدام: المنصة مخصصة لطلاب كلية الحاسبات والمعلومات بجامعة الأزهر. يُمنع تسريب المواد أو إعادة نشر الشروحات أو روابط التليجرام لأطراف خارجية دون إذن.',
-                    'en' => 'Terms of Use: This platform is exclusively for Al-Azhar FCAI students. Unauthorized redistribution of materials or links is prohibited.',
+                    'ar' => 'شروط الاستخدام: منصة Codeera مخصصة للطلاب المسجلين. يُمنع تسريب المواد أو إعادة نشر الشروحات أو روابط التليجرام لأطراف خارجية دون إذن.',
+                    'en' => 'Terms of Use: Codeera platform is exclusively for registered students. Unauthorized redistribution of materials or links is prohibited.',
                 ],
             ],
             [

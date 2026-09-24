@@ -16,7 +16,7 @@
 @endcomponent
 
 شكرًا لك،
-فريق FCAI Courses
+فريق Codeera
 
 @else
 # Your Payment Has Been Rejected
@@ -35,6 +35,6 @@ Go to Course
 @endcomponent
 
 Thanks,
-FCAI Courses Team
+Codeera Team
 @endif
 @endcomponent

@@ -193,7 +193,7 @@
 </script>
 
 <svelte:head>
-  <title>لوحة تحكم المسؤول | منصة FCAI COURSES</title>
+  <title>لوحة تحكم المسؤول | منصة Codeera</title>
   <meta name="description" content="لوحة تحكم إدارة المنصة الشاملة لإدارة المقررات والمحتوى والمدفوعات والطلاب." />
 </svelte:head>
 
@@ -585,7 +585,7 @@
 {#if isCourseModalOpen}
   <div class="modal-backdrop" onclick={closeCourseModal} role="presentation">
     <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div class="modal-card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl">
+    <div class="modal-card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl" tabindex="-1">
       <div class="modal-header">
         <h2>{isEditingCourse ? 'تعديل بيانات المقرر' : 'إضافة مقرر دراسي جديد'}</h2>
         <button type="button" class="btn-close-modal" onclick={closeCourseModal} aria-label="إغلاق">✕</button>
@@ -748,7 +748,7 @@
   }
 
   .admin-header {
-    background: white;
+    background: var(--card);
     border: 2.5px solid var(--line);
     border-radius: 1.25rem;
     padding: 1.75rem 2rem;
@@ -821,7 +821,7 @@
   }
 
   .btn-payments-queue {
-    background: white;
+    background: var(--card);
     color: var(--storm);
     border: 2px solid var(--line);
     font-weight: 800;
@@ -855,7 +855,7 @@
   }
 
   .btn-refresh {
-    background: white;
+    background: var(--card);
     border: 2px solid var(--line);
     padding: 0.65rem 0.85rem;
     border-radius: 0.5rem;
@@ -871,7 +871,7 @@
   }
 
   .kpi-card {
-    background: white;
+    background: var(--card);
     border: 2.5px solid var(--line);
     border-radius: 1rem;
     padding: 1.5rem;
@@ -941,7 +941,7 @@
   }
 
   .tab-btn {
-    background: white;
+    background: var(--card);
     border: 2px solid var(--line);
     border-bottom: none;
     border-radius: 0.6rem 0.6rem 0 0;
@@ -968,7 +968,7 @@
 
   /* Panels */
   .dash-panel {
-    background: white;
+    background: var(--card);
     border: 2.5px solid var(--line);
     border-radius: 1.25rem;
     padding: 1.75rem;
@@ -1091,25 +1091,25 @@
   .btn-edit {
     background: var(--storm);
     color: var(--cyan);
-    border: 1.5px solid var(--storm);
+    border: 2px solid var(--storm);
   }
 
   .btn-content {
     background: #eef7f6;
     color: var(--deep-cyan);
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
   }
 
   .btn-view {
-    background: white;
+    background: var(--card);
     color: var(--storm);
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
   }
 
   .btn-delete {
     background: #fee2e2;
     color: #991b1b;
-    border: 1.5px solid #f87171;
+    border: 2px solid #f87171;
   }
 
   .btn-sm:hover {
@@ -1144,7 +1144,7 @@
     align-items: flex-start;
     padding: 0.85rem 1rem;
     background: var(--paper);
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 0.75rem;
   }
 
@@ -1230,7 +1230,7 @@
   }
 
   .modal-card {
-    background: white;
+    background: var(--card);
     border: 2.5px solid var(--line);
     border-radius: 1.25rem;
     max-width: 600px;
@@ -1270,7 +1270,7 @@
     align-items: center;
     gap: 0.5rem;
     background: #fdf2f2;
-    border: 1.5px solid #f8b4b4;
+    border: 2px solid #f8b4b4;
     color: #9b1c1c;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
@@ -1322,7 +1322,7 @@
   }
 
   .btn-cancel {
-    background: white;
+    background: var(--paper);
     border: 2px solid var(--line);
     padding: 0.6rem 1.25rem;
     border-radius: 0.5rem;
@@ -1366,8 +1366,13 @@
   }
 
   @media (max-width: 768px) {
-    .header-actions { width: 100%; }
+    .admin-page { padding: 1.25rem 0.75rem 3rem; }
+    .admin-header { padding: 1.25rem 1rem; }
+    .header-actions { width: 100%; flex-direction: column; align-items: stretch; }
+    .header-actions button, .header-actions a { width: 100%; text-align: center; justify-content: center; }
     .form-row { grid-template-columns: 1fr; }
     .kpi-grid { grid-template-columns: 1fr; }
+    .admin-tabs { gap: 0.25rem; }
+    .tab-btn { padding: 0.6rem 0.9rem; font-size: 0.85rem; }
   }
 </style>

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { currentUser } from '$lib/api/auth';
-  import { createAdminCourse, updateAdminCourse, type AdminCourse } from '$lib/api/admin';
+  import { createAdminCourse, updateAdminCourse } from '$lib/api/admin';
 
   let { data }: { data: PageData } = $props();
 
@@ -26,6 +26,22 @@
   let formTelegramLink = $state('');
   let formAcademicYearId = $state<number | ''>('');
   let formDepartmentId = $state<number | ''>('');
+
+  // Client search filter
+  let searchQuery = $state('');
+
+  let filteredCourses = $derived(
+    data.courses.filter((course) => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase().trim();
+      return (
+        course.title?.ar?.toLowerCase().includes(q) ||
+        course.title?.en?.toLowerCase().includes(q) ||
+        course.slug?.toLowerCase().includes(q) ||
+        course.description?.ar?.toLowerCase().includes(q)
+      );
+    })
+  );
 
   const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
 
@@ -136,141 +152,231 @@
 </script>
 
 <svelte:head>
-  <title>الدورات | منصة FCAI</title>
-  <meta name="description" content="تصفح دورات كلية الحاسبات والذكاء الاصطناعي" />
+  <title>الدليل الأكاديمي للدورات | منصة Codeera</title>
+  <meta name="description" content="تصفح جميع المقررات الدراسية التخصصية في البرمجة وعلوم الحاسب في منصة Codeera." />
 </svelte:head>
 
 <div class="catalog-shell">
-  <!-- Intro Banner -->
-  <section class="intro">
-    <p class="kicker">دورات كلية الحاسبات والذكاء الاصطناعي</p>
-    <h1>اختَر مسارك الدراسي</h1>
-    <p class="lede">دورات مركزة تساعدك على بناء أساس قوي ومراجعة أهم موضوعات المقرر.</p>
+  <!-- Immersive Catalog Header -->
+  <header class="catalog-hero">
+    <div class="hero-mesh-overlay" aria-hidden="true"></div>
+    <div class="catalog-hero-inner">
+      <div class="header-top-pill">
+        <span class="pill-dot"></span>
+        <span>الدليل الأكاديمي الشامل لجميع الفرق والأقسام</span>
+      </div>
+      <h1 class="catalog-title">اختر مقررك الدراسي وابدأ رحلة التفوق</h1>
+      <p class="catalog-subtitle">
+        محتوى تعليمي أكاديمي دقيق، شروحات مسجلة، بنك أسئلة واختبارات تفاعلية، مع وصول فوري لمجموعات التليجرام الخاصة بكل مادة.
+      </p>
+
+      <!-- Admin Quick Action Toolbar -->
+      {#if isAdmin}
+        <div class="admin-toolbar-card">
+          <div class="admin-toolbar-info">
+            <span class="admin-shield-icon">🛡️</span>
+            <div>
+              <strong>صلاحيات إدارة المقررات</strong>
+              <p>يمكنك إنشاء مقررات جديدة أو تعديل المحتوى والأسعار مباشرة من هنا.</p>
+            </div>
+          </div>
+          <button type="button" class="btn-create-course" onclick={openCreateModal}>
+            <span>➕ إضافة مقرر دراسي جديد</span>
+          </button>
+        </div>
+      {/if}
+    </div>
+  </header>
+
+  <!-- Filter and Search Bar -->
+  <section class="controls-section" aria-label="أدوات البحث والتصفية">
+    <div class="search-box-wrap">
+      <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input
+        type="search"
+        class="search-input"
+        placeholder="ابحث بالاسم أو الرمز (مثال: برمجيات، ذكاء اصطناعي، CS)..."
+        bind:value={searchQuery}
+        aria-label="البحث في المقررات"
+      />
+    </div>
+
+    <form class="filters-form" method="GET" aria-label="تصفية الدورات حسب الفرقة والقسم">
+      <div class="select-group">
+        <label for="filter-year" class="filter-label">الفرقة الدراسية:</label>
+        <select id="filter-year" name="academic_year_id" class="filter-select">
+          <option value="">كل الفرق الدراسية</option>
+          {#each data.academicYears as year}
+            <option value={year.id} selected={String(year.id) === data.selectedAcademicYear}>{year.name.ar}</option>
+          {/each}
+        </select>
+      </div>
+
+      <div class="select-group">
+        <label for="filter-dept" class="filter-label">القسم الأكاديمي:</label>
+        <select id="filter-dept" name="department_id" class="filter-select">
+          <option value="">جميع الأقسام</option>
+          {#each data.departments as department}
+            <option value={department.id} selected={String(department.id) === data.selectedDepartment}>{department.name.ar}</option>
+          {/each}
+        </select>
+      </div>
+
+      <button type="submit" class="btn-apply-filters">
+        <span>تطبيق الفلتر</span>
+      </button>
+
+      {#if data.selectedAcademicYear || data.selectedDepartment}
+        <a href="/courses" class="btn-reset-filters">
+          <span>إلغاء التصفية ✕</span>
+        </a>
+      {/if}
+    </form>
   </section>
 
-  <!-- Admin Quick Actions Bar -->
-  {#if isAdmin}
-    <div class="admin-top-bar">
-      <div class="admin-top-info">
-        <span class="admin-badge">صلاحيات المسؤول</span>
-        <strong>لوحة التحكم في المقررات والمناهج</strong>
-      </div>
-      <button type="button" class="btn-create-course" onclick={openCreateModal}>
-        <span>➕ إضافة مقرر دراسي جديد</span>
-      </button>
-    </div>
-  {/if}
-
-  <!-- Filter Bar -->
-  <form class="filters" method="GET" aria-label="تصفية الدورات">
-    <label>
-      <span>السنة الدراسية</span>
-      <select name="academic_year_id">
-        <option value="">كل السنوات</option>
-        {#each data.academicYears as year}
-          <option value={year.id} selected={String(year.id) === data.selectedAcademicYear}>{year.name.ar}</option>
-        {/each}
-      </select>
-    </label>
-
-    <label>
-      <span>القسم</span>
-      <select name="department_id">
-        <option value="">كل الأقسام</option>
-        {#each data.departments as department}
-          <option value={department.id} selected={String(department.id) === data.selectedDepartment}>{department.name.ar}</option>
-        {/each}
-      </select>
-    </label>
-
-    <button type="submit">تطبيق الفلاتر</button>
-  </form>
-
+  <!-- Courses Grid or Empty State -->
   {#if data.error}
-    <p class="notice error" role="alert">{data.error}</p>
-  {:else if data.courses.length === 0}
-    <p class="notice">لا توجد دورات مطابقة للفلاتر الحالية.</p>
+    <div class="notice-box error" role="alert">
+      <span>⚠️</span>
+      <p>{data.error}</p>
+    </div>
+  {:else if filteredCourses.length === 0}
+    <div class="empty-catalog-box">
+      <div class="empty-icon" aria-hidden="true">🔍</div>
+      <h3>لا توجد مقررات مطابقة للبحث أو الفلتر المحدد</h3>
+      <p>جرب تغيير خيارات التصفية أو مسح كلمة البحث للعثور على المقررات المتاحة.</p>
+      {#if searchQuery || data.selectedAcademicYear || data.selectedDepartment}
+        <button
+          type="button"
+          class="btn-clear-search"
+          onclick={() => { searchQuery = ''; window.location.href = '/courses'; }}
+        >
+          عرض كافة المقررات
+        </button>
+      {/if}
+    </div>
   {:else}
-    <section class="course-grid" aria-label="الدورات المتاحة">
-      {#each data.courses as course}
-        <article class="course-card" class:admin-card={isAdmin}>
-          <div class="course-card-top">
-            <div class="course-mark" aria-hidden="true">
-              {course.title.en ? course.title.en.slice(0, 2).toUpperCase() : 'FC'}
+    <div class="catalog-results-header">
+      <span class="results-count">
+        تم العثور على <strong>{filteredCourses.length}</strong> مقرر دراسي
+      </span>
+    </div>
+
+    <section class="courses-card-grid" aria-label="قائمة المقررات">
+      {#each filteredCourses as course}
+        <article class="course-card-premium" class:course-admin-card={isAdmin}>
+          <div class="card-hero-stripe">
+            <div class="stripe-badge-left">
+              <span class="course-code-pill">{course.slug}</span>
+              {#if course.discount_cents > 0}
+                <span class="pill-discount">خصم خاص</span>
+              {/if}
             </div>
+
             {#if isAdmin}
-              <span class="admin-chip">مسؤول</span>
+              <span class="badge-admin-status" class:status-draft={course.status === 'draft'}>
+                {course.status === 'published' ? 'منشور' : 'مسودة'}
+              </span>
             {/if}
           </div>
 
-          <div class="course-copy">
-            <p class="course-label">{isAdmin ? 'إدارة المادة' : 'دورة متاحة'}</p>
-            <h2>{course.title.ar}</h2>
-            <p>{course.description.ar}</p>
+          <div class="card-main-content">
+            <div class="card-title-group">
+              <h2 class="course-title-ar">{course.title.ar}</h2>
+              {#if course.title.en}
+                <p class="course-title-en" dir="ltr">{course.title.en}</p>
+              {/if}
+            </div>
+
+            <p class="course-description">
+              {course.description.ar || 'محتوى دراسي منظم يتضمن شرحاً تفصيلياً لأهم محاور المقرر واختبارات تفاعلية دورية.'}
+            </p>
           </div>
 
+          <!-- Bottom Footer Bar -->
           {#if isAdmin}
-            <!-- Admin Controls on Course Card -->
-            <div class="admin-card-actions">
-              <div class="admin-card-meta">
-                <span>السعر: <strong>{formatPrice(course.amount_due_cents || course.price_cents || 0)}</strong></span>
-                <span class="badge-status">{course.status === 'published' ? 'منشورة' : 'مسودة'}</span>
+            <div class="admin-controls-footer">
+              <div class="admin-price-line">
+                <span class="price-lbl">سعر الاشتراك:</span>
+                <strong>{formatPrice(course.amount_due_cents || course.price_cents || 0)}</strong>
               </div>
-              <div class="admin-btn-row">
+              <div class="admin-action-buttons">
                 <button
                   type="button"
-                  class="btn-card-edit"
+                  class="btn-adm-edit"
                   onclick={() => openEditModal(course)}
+                  title="تعديل بيانات المقرر"
                 >
                   ✏️ تعديل
                 </button>
-                <a href={`/my-courses/${course.slug}`} class="btn-card-content">
+                <a href={`/my-courses/${course.slug}`} class="btn-adm-content" title="إدارة المحتوى">
                   📂 المحتوى
                 </a>
-                <a href={`/courses/${course.slug}`} class="btn-card-view">
+                <a href={`/courses/${course.slug}`} class="btn-adm-view" title="عرض كما يظهر للطلاب">
                   👁️ عرض
                 </a>
               </div>
             </div>
           {:else}
-            <!-- Student/Guest Footer -->
-            <div class="course-footer">
-              <div>
-                {#if course.discount_cents > 0}
-                  <span class="old-price">{formatPrice(course.list_price_cents)}</span>
-                {/if}
-                <strong>{formatPrice(course.amount_due_cents)}</strong>
+            <div class="student-pricing-footer">
+              <div class="price-container">
+                <span class="price-sub">رسوم المقرر</span>
+                <div class="price-figures">
+                  {#if course.discount_cents > 0}
+                    <span class="price-old">{formatPrice(course.list_price_cents)}</span>
+                  {/if}
+                  <strong class="price-current">{formatPrice(course.amount_due_cents)}</strong>
+                </div>
               </div>
-              <a href={`/courses/${course.slug}`}>التفاصيل <span aria-hidden="true">←</span></a>
+
+              <a href={`/courses/${course.slug}`} class="btn-explore-course">
+                <span>استكشف المقرر</span>
+                <span class="btn-arrow" aria-hidden="true">←</span>
+              </a>
             </div>
           {/if}
         </article>
       {/each}
     </section>
 
+    <!-- Pagination -->
     {#if data.pagination.last_page > 1}
-      <nav class="pagination" aria-label="صفحات الدورات">
+      <nav class="pagination-bar" aria-label="صفحات المقررات">
         {#if data.pagination.current_page > 1}
-          <a href={pageHref(data.pagination.current_page - 1)}>السابق</a>
+          <a href={pageHref(data.pagination.current_page - 1)} class="page-nav-btn">السابق</a>
         {:else}
-          <span class="disabled">السابق</span>
+          <span class="page-nav-btn disabled">السابق</span>
         {/if}
-        <span>صفحة {data.pagination.current_page} من {data.pagination.last_page}</span>
+
+        <span class="page-indicator">
+          صفحة <strong>{data.pagination.current_page}</strong> من <strong>{data.pagination.last_page}</strong>
+        </span>
+
         {#if data.pagination.current_page < data.pagination.last_page}
-          <a href={pageHref(data.pagination.current_page + 1)}>التالي</a>
+          <a href={pageHref(data.pagination.current_page + 1)} class="page-nav-btn">التالي</a>
         {:else}
-          <span class="disabled">التالي</span>
+          <span class="page-nav-btn disabled">التالي</span>
         {/if}
       </nav>
     {/if}
   {/if}
 </div>
 
-<!-- Add/Edit Course Modal for Admin -->
+<!-- Admin Modal: Create / Edit Course -->
 {#if isModalOpen}
   <div class="modal-backdrop" onclick={closeModal} role="presentation">
     <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div class="modal-card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl">
+    <div
+      class="modal-card"
+      onclick={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+      dir="rtl"
+      tabindex="-1"
+    >
       <div class="modal-header">
         <h2>{isEditing ? 'تعديل بيانات المقرر' : 'إضافة مقرر دراسي جديد'}</h2>
         <button type="button" class="btn-close-modal" onclick={closeModal} aria-label="إغلاق">✕</button>
@@ -407,358 +513,631 @@
 
 <style>
   .catalog-shell {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 2rem 1.25rem 4rem;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding: 1.5rem 1.25rem 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
   }
 
-  .intro {
-    max-width: 700px;
-    margin-bottom: 2rem;
-  }
-
-  .kicker, .course-label {
-    color: var(--deep-cyan);
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    margin: 0 0 0.5rem;
-  }
-
-  h1 {
-    font-size: clamp(2.2rem, 7vw, 4rem);
-    line-height: 1.1;
-    margin: 0;
-    color: var(--storm);
-    font-weight: 900;
-  }
-
-  .lede {
-    color: var(--muted);
-    font-size: 1.05rem;
-    line-height: 1.8;
-    margin: 1rem 0 0;
-  }
-
-  .admin-top-bar {
-    background: #eef7f6;
+  /* ---------------- HERO BANNER ---------------- */
+  .catalog-hero {
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(135% 120% at 50% 0%, #153842 0%, var(--storm) 100%);
     border: 2px solid var(--line);
-    border-radius: 0.75rem;
-    padding: 1rem 1.25rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
+    border-radius: 1.5rem;
+    padding: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 4vw, 3rem);
+    color: white;
+    box-shadow: var(--shadow-md);
   }
 
-  .admin-top-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+  :global(:root[data-theme='dark']) .catalog-hero {
+    background: radial-gradient(135% 120% at 50% 0%, #0d2830 0%, #081216 100%);
+    border-color: rgba(2, 239, 240, 0.25);
   }
 
-  .admin-badge {
-    background: var(--storm);
-    color: var(--cyan);
-    font-size: 0.75rem;
-    font-weight: 800;
-    padding: 0.2rem 0.6rem;
+  .hero-mesh-overlay {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(2, 239, 240, 0.15) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .catalog-hero-inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.25rem;
+    max-width: 800px;
+    margin-inline: auto;
+  }
+
+  .header-top-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(2, 239, 240, 0.12);
+    border: 1.5px solid rgba(2, 239, 240, 0.35);
+    padding: 0.35rem 0.95rem;
     border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #e2fbfb;
+    backdrop-filter: blur(8px);
+  }
+
+  .pill-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+  }
+
+  .catalog-title {
+    font-size: clamp(1.8rem, 3.8vw, 2.6rem);
+    font-weight: 900;
+    line-height: 1.3;
+    margin: 0;
+    color: white;
+  }
+
+  .catalog-subtitle {
+    font-size: clamp(0.95rem, 1.6vw, 1.05rem);
+    color: #c9e4e2;
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  /* Admin Toolbar in Hero */
+  .admin-toolbar-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    width: 100%;
+    background: rgba(15, 40, 47, 0.7);
+    border: 2px solid rgba(2, 239, 240, 0.4);
+    border-radius: 1rem;
+    padding: 1.25rem 1.5rem;
+    margin-top: 1rem;
+    text-align: right;
+    backdrop-filter: blur(12px);
+    flex-wrap: wrap;
+  }
+
+  .admin-toolbar-info {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .admin-shield-icon {
+    font-size: 1.75rem;
+  }
+
+  .admin-toolbar-info strong {
+    display: block;
+    color: var(--cyan);
+    font-size: 0.95rem;
+    font-weight: 800;
+  }
+
+  .admin-toolbar-info p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #c5dfdc;
   }
 
   .btn-create-course {
-    background: var(--storm);
-    color: var(--cyan);
-    border: 2px solid var(--storm);
+    background: var(--cyan);
+    color: var(--storm);
     font-weight: 800;
-    font-size: 0.88rem;
-    padding: 0.55rem 1.15rem;
+    font-size: 0.92rem;
+    padding: 0.65rem 1.25rem;
     border-radius: 0.5rem;
+    border: 2px solid var(--cyan);
     cursor: pointer;
-    transition: transform 150ms ease, opacity 150ms ease;
+    font-family: inherit;
+    transition: transform 120ms ease, box-shadow 120ms ease;
   }
 
   .btn-create-course:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 18px rgba(2, 239, 240, 0.5);
+  }
+
+  /* ---------------- CONTROLS & FILTERS ---------------- */
+  .controls-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .search-box-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  .search-icon {
+    position: absolute;
+    right: 1rem;
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.85rem 3rem 0.85rem 1rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    border: 2px solid var(--line);
+    border-radius: 0.75rem;
+    background: var(--paper);
+    color: var(--storm);
+    box-sizing: border-box;
+    transition: border-color 150ms ease, background-color 150ms ease;
+  }
+
+  .search-input:focus {
+    border-color: var(--deep-cyan);
+    background-color: var(--card);
+    outline: none;
+  }
+
+  .filters-form {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .select-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .filter-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .filter-select {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border-radius: 0.6rem;
+    border: 2px solid var(--line);
+    background: var(--paper);
+    color: var(--storm);
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .btn-apply-filters {
+    background: var(--storm);
+    color: var(--cyan);
+    border: 2px solid var(--storm);
+    padding: 0.65rem 1.35rem;
+    border-radius: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 120ms ease, opacity 120ms ease;
+  }
+
+  .btn-apply-filters:hover {
     transform: translateY(-1px);
     opacity: 0.95;
   }
 
-  .filters {
-    align-items: end;
-    background: #0f282f;
-    border: 2px solid var(--line);
-    border-radius: 0.75rem;
-    color: white;
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(3, 1fr);
-    margin-bottom: 2rem;
-    padding: 1rem;
-  }
-
-  label {
-    display: grid;
-    gap: 0.4rem;
-  }
-
-  label span {
-    font-size: 0.82rem;
+  .btn-reset-filters {
+    color: #e53e3e;
+    font-size: 0.85rem;
     font-weight: 700;
-  }
-
-  select, button {
-    border-radius: 0.35rem;
-    font: inherit;
-    min-height: 2.8rem;
-    padding: 0.5rem 0.75rem;
-  }
-
-  select {
-    background: white;
-    color: #0f282f;
-    border: 2px solid var(--line);
-  }
-
-  .filters button {
-    background: #02eff0;
-    color: #0f282f;
-    cursor: pointer;
-    font-weight: 800;
-    border: 2px solid #02eff0;
-  }
-
-  .course-grid {
-    display: grid;
-    gap: 1.25rem;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  }
-
-  .course-card {
-    background: white;
-    border: 2px solid var(--line) !important;
-    border-radius: 0.85rem;
-    display: flex;
-    flex-direction: column;
-    min-height: 320px;
-    padding: 1.25rem;
-    box-shadow: 0 4px 12px rgba(15, 40, 47, 0.05);
-    transition: transform 150ms ease, border-color 150ms ease;
-  }
-
-  .course-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--deep-cyan) !important;
-  }
-
-  .admin-card {
-    border-color: var(--line) !important;
-  }
-
-  .course-card-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .course-mark {
-    align-items: center;
-    background: #d9fafa;
-    border: 2px solid var(--line);
-    border-radius: 0.5rem;
-    color: #0f282f;
-    display: flex;
-    font-weight: 900;
-    height: 3.25rem;
-    justify-content: center;
-    width: 3.25rem;
-  }
-
-  .admin-chip {
-    font-size: 0.7rem;
-    font-weight: 800;
-    background: #fee2e2;
-    color: #991b1b;
-    padding: 0.2rem 0.55rem;
-    border-radius: 9999px;
-    border: 1px solid #f87171;
-  }
-
-  .course-copy {
-    flex: 1;
-    padding-top: 1.25rem;
-  }
-
-  h2 {
-    font-size: 1.3rem;
-    margin: 0 0 0.65rem;
-    color: var(--storm);
-    font-weight: 800;
-  }
-
-  .course-copy p:last-child {
-    color: var(--muted);
-    line-height: 1.6;
-    margin: 0;
-    font-size: 0.92rem;
-  }
-
-  .course-footer {
-    align-items: end;
-    border-top: 2px solid var(--line);
-    display: flex;
-    justify-content: space-between;
-    margin-top: 1.25rem;
-    padding-top: 1rem;
-  }
-
-  .course-footer strong {
-    display: block;
-    font-size: 1.15rem;
-    color: var(--storm);
-  }
-
-  .old-price {
-    color: #799095;
-    display: block;
-    font-size: 0.78rem;
-    text-decoration: line-through;
-  }
-
-  .course-footer a {
-    color: var(--deep-cyan);
-    font-weight: 800;
     text-decoration: none;
-    font-size: 0.95rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.5rem;
+    border: 1.5px solid #feb2b2;
+    background: #fff5f5;
   }
 
-  .admin-card-actions {
-    border-top: 2px solid var(--line);
-    margin-top: 1.25rem;
-    padding-top: 1rem;
+  /* ---------------- RESULTS & CARDS ---------------- */
+  .catalog-results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: -1rem;
+  }
+
+  .results-count {
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
+  .results-count strong {
+    color: var(--storm);
+  }
+
+  .courses-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .course-card-premium {
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    gap: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+
+  .course-card-premium:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--deep-cyan);
+  }
+
+  :global(:root[data-theme='dark']) .course-card-premium:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 10px 30px rgba(2, 239, 240, 0.12);
+  }
+
+  .course-admin-card {
+    border-left: 4px solid var(--deep-cyan);
+  }
+
+  .card-hero-stripe {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 0.75rem;
   }
 
-  .admin-card-meta {
+  .stripe-badge-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .course-code-pill {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--deep-cyan);
+    background: var(--paper);
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.35rem;
+    border: 1px solid var(--line);
+    text-transform: uppercase;
+  }
+
+  :global(:root[data-theme='dark']) .course-code-pill {
+    color: var(--cyan);
+    background: rgba(2, 239, 240, 0.1);
+    border-color: rgba(2, 239, 240, 0.25);
+  }
+
+  .pill-discount {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #92400e;
+    background: #fef3c7;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.35rem;
+  }
+
+  .badge-admin-status {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #065f46;
+    background: #d1fae5;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  .status-draft {
+    color: #991b1b;
+    background: #fee2e2;
+  }
+
+  .card-main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    flex: 1;
+  }
+
+  .card-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .course-title-ar {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--storm);
+    margin: 0;
+    line-height: 1.35;
+  }
+
+  .course-title-en {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin: 0;
+    font-family: inherit;
+  }
+
+  .course-description {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Student Pricing Footer */
+  .student-pricing-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--line);
+  }
+
+  .price-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .price-sub {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .price-figures {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+  }
+
+  .price-old {
+    font-size: 0.82rem;
+    color: var(--muted);
+    text-decoration: line-through;
+  }
+
+  .price-current {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--storm);
+  }
+
+  .btn-explore-course {
+    background: var(--storm);
+    color: var(--cyan);
+    font-size: 0.88rem;
+    font-weight: 800;
+    padding: 0.55rem 1.15rem;
+    border-radius: 0.5rem;
+    border: 2px solid var(--storm);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: transform 120ms ease, opacity 120ms ease;
+  }
+
+  .btn-explore-course:hover {
+    transform: translateY(-1px);
+    opacity: 0.95;
+  }
+
+  .btn-arrow {
+    transition: transform 120ms ease;
+  }
+
+  .btn-explore-course:hover .btn-arrow {
+    transform: translateX(-3px);
+  }
+
+  /* Admin Controls Footer */
+  .admin-controls-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--line);
+  }
+
+  .admin-price-line {
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 0.85rem;
+    color: var(--muted);
   }
 
-  .badge-status {
-    background: #d1fae5;
-    color: #065f46;
-    font-weight: 800;
-    font-size: 0.72rem;
-    padding: 0.15rem 0.45rem;
-    border-radius: 0.25rem;
+  .admin-price-line strong {
+    color: var(--storm);
   }
 
-  .admin-btn-row {
-    display: flex;
-    gap: 0.4rem;
+  .admin-action-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
   }
 
-  .btn-card-edit, .btn-card-content, .btn-card-view {
-    flex: 1;
-    text-align: center;
+  .btn-adm-edit, .btn-adm-content, .btn-adm-view {
     padding: 0.45rem 0.5rem;
-    border-radius: 0.4rem;
     font-size: 0.82rem;
-    font-weight: 700;
+    font-weight: 800;
+    border-radius: 0.4rem;
+    text-align: center;
     text-decoration: none;
     cursor: pointer;
     font-family: inherit;
-    transition: all 120ms ease;
+    transition: opacity 120ms ease;
   }
 
-  .btn-card-edit {
+  .btn-adm-edit {
     background: var(--storm);
     color: var(--cyan);
-    border: 1.5px solid var(--storm);
+    border: 2px solid var(--storm);
   }
 
-  .btn-card-content {
-    background: #eef7f6;
+  .btn-adm-content {
+    background: var(--paper);
     color: var(--deep-cyan);
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
   }
 
-  .btn-card-view {
-    background: white;
+  .btn-adm-view {
+    background: var(--card);
     color: var(--storm);
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
   }
 
-  .btn-card-edit:hover, .btn-card-content:hover, .btn-card-view:hover {
-    transform: translateY(-1px);
+  .btn-adm-edit:hover, .btn-adm-content:hover, .btn-adm-view:hover {
     opacity: 0.9;
   }
 
-  .notice {
-    background: white;
-    border: 2px solid var(--line);
-    border-radius: 0.6rem;
-    padding: 1.25rem;
-    font-weight: 600;
-  }
-
-  .error {
-    border-color: #b55a55;
-    color: #8a302b;
-  }
-
-  .pagination {
-    align-items: center;
+  /* ---------------- EMPTY STATE ---------------- */
+  .empty-catalog-box {
+    background: var(--card);
+    border: 2px dashed var(--line);
+    border-radius: 1.25rem;
+    padding: 3.5rem 1.5rem;
+    text-align: center;
     display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin-top: 2rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
   }
 
-  .pagination a, .pagination span {
-    color: var(--deep-cyan);
+  .empty-icon {
+    font-size: 2.5rem;
+  }
+
+  .empty-catalog-box h3 {
+    font-size: 1.25rem;
     font-weight: 800;
+    color: var(--storm);
+    margin: 0;
   }
 
-  .pagination a {
+  .empty-catalog-box p {
+    color: var(--muted);
+    font-size: 0.92rem;
+    max-width: 440px;
+    margin: 0;
+  }
+
+  .btn-clear-search {
+    background: var(--storm);
+    color: var(--cyan);
+    border: 2px solid var(--storm);
+    padding: 0.65rem 1.35rem;
+    border-radius: 0.5rem;
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 0.5rem;
+  }
+
+  /* ---------------- PAGINATION ---------------- */
+  .pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .page-nav-btn {
+    background: var(--card);
     border: 2px solid var(--line);
-    border-radius: 0.35rem;
-    padding: 0.55rem 0.85rem;
+    color: var(--storm);
+    padding: 0.55rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    font-size: 0.88rem;
     text-decoration: none;
+    transition: border-color 150ms ease;
   }
 
-  .pagination .disabled {
-    color: #9aaeb0;
+  .page-nav-btn:hover:not(.disabled) {
+    border-color: var(--deep-cyan);
   }
 
-  /* Modal Styles */
+  .page-nav-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .page-indicator {
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .page-indicator strong {
+    color: var(--storm);
+  }
+
+  /* ---------------- MODAL STYLES ---------------- */
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 40, 47, 0.6);
+    background: rgba(15, 40, 47, 0.65);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 999;
+    z-index: 1000;
     padding: 1rem;
   }
 
   .modal-card {
-    background: white;
-    border: 2.5px solid var(--line);
+    background: var(--card);
+    border: 2px solid var(--line);
     border-radius: 1.25rem;
-    max-width: 620px;
+    padding: 2rem;
     width: 100%;
+    max-width: 600px;
     max-height: 90vh;
     overflow-y: auto;
-    padding: 2rem;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   }
 
   .modal-header {
@@ -771,7 +1150,7 @@
   }
 
   .modal-header h2 {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     font-weight: 900;
     color: var(--storm);
     margin: 0;
@@ -783,7 +1162,6 @@
     font-size: 1.25rem;
     color: var(--muted);
     cursor: pointer;
-    padding: 0.25rem 0.5rem;
   }
 
   .modal-error-banner {
@@ -791,7 +1169,7 @@
     align-items: center;
     gap: 0.5rem;
     background: #fdf2f2;
-    border: 1.5px solid #f8b4b4;
+    border: 2px solid #f8b4b4;
     color: #9b1c1c;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
@@ -824,18 +1202,15 @@
   }
 
   .form-group input, .form-group select, .form-group textarea {
-    border: 2px solid var(--line) !important;
+    border: 2px solid var(--line);
     border-radius: 0.5rem;
     padding: 0.65rem 0.85rem;
     font-size: 0.92rem;
     font-family: inherit;
     width: 100%;
     box-sizing: border-box;
-  }
-
-  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-    border-color: var(--deep-cyan) !important;
-    outline: none;
+    background: var(--paper);
+    color: var(--storm);
   }
 
   .modal-actions {
@@ -848,13 +1223,14 @@
   }
 
   .btn-cancel {
-    background: white;
+    background: var(--paper);
     border: 2px solid var(--line);
     padding: 0.6rem 1.25rem;
     border-radius: 0.5rem;
     font-weight: 700;
     color: var(--storm);
     cursor: pointer;
+    font-family: inherit;
   }
 
   .btn-save {
@@ -865,11 +1241,58 @@
     border-radius: 0.5rem;
     font-weight: 800;
     cursor: pointer;
+    font-family: inherit;
   }
 
-  @media (max-width: 760px) {
-    .catalog-shell { padding-inline: 1rem; }
-    .filters, .course-grid, .form-row { grid-template-columns: 1fr; }
-    .filters button { width: 100%; }
+  .notice-box {
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .notice-box.error {
+    border-color: #f87171;
+    color: #991b1b;
+  }
+
+  /* ---------------- RESPONSIVENESS ---------------- */
+  @media (max-width: 768px) {
+    .catalog-shell {
+      padding: 1rem 0.75rem 3.5rem;
+      gap: 1.75rem;
+    }
+
+    .admin-toolbar-card {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .btn-create-course {
+      width: 100%;
+      text-align: center;
+    }
+
+    .filters-form {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .select-group {
+      width: 100%;
+    }
+
+    .btn-apply-filters {
+      width: 100%;
+    }
+
+    .courses-card-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

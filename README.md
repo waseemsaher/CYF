@@ -1,7 +1,7 @@
-# Al-Azhar FCAI Course Platform
-### منصة دورات كلية الحاسبات والذكاء الاصطناعي — جامعة الأزهر
+# Codeera Platform
+### منصة Codeera التعليمية للبرمجة والمقررات التخصصية
 
-An e-learning course management and enrollment platform specifically designed for students of the Faculty of Computers & Artificial Intelligence (FCAI) at Al-Azhar University, Egypt.
+An e-learning course management and enrollment platform for programming and computing education.
 
 ---
 
@@ -122,4 +122,4 @@ bash -n scripts/*.sh
 
 ## 🛡️ License
 
-Proprietary — Al-Azhar FCAI Course Platform. All rights reserved.
+Proprietary — Codeera Platform. All rights reserved.

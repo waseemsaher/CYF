@@ -73,10 +73,10 @@
 </script>
 
 <svelte:head>
-  <title>إنشاء حساب طالب جديد | منصة FCAI</title>
+  <title>إنشاء حساب طالب جديد | منصة Codeera</title>
   <meta
     name="description"
-    content="تسجيل حساب طالب جديد في منصة دورات كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر."
+    content="تسجيل حساب طالب جديد في منصة Codeera التعليمية للبرمجة وعلوم الحاسب."
   />
 </svelte:head>
 
@@ -256,7 +256,7 @@
   }
 
   .auth-card {
-    background: white;
+    background: var(--card);
     border: 2px solid var(--line);
     border-radius: 1.25rem;
     padding: clamp(1.75rem, 5vw, 2.75rem);
@@ -302,7 +302,7 @@
     align-items: center;
     gap: 0.6rem;
     background: #fff5f5;
-    border: 1.5px solid #feb2b2;
+    border: 2px solid #feb2b2;
     color: #c53030;
     padding: 0.85rem 1rem;
     border-radius: 0.5rem;
@@ -351,12 +351,13 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 0.5rem;
     padding: 0.75rem 0.9rem;
     font-size: 0.95rem;
     font-family: inherit;
-    background: white;
+    background: var(--paper);
+    color: var(--storm);
     transition: border-color 150ms ease, box-shadow 150ms ease;
   }
 
@@ -379,7 +380,7 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 0.65rem;
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 0.5rem;
     cursor: pointer;
     font-size: 0.92rem;

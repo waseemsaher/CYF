@@ -54,8 +54,8 @@
 </script>
 
 <svelte:head>
-  <title>تسجيل الدخول | منصة FCAI</title>
-  <meta name="description" content="تسجيل الدخول إلى حسابك في منصة دورات كلية الحاسبات والذكاء الاصطناعي." />
+  <title>تسجيل الدخول | منصة Codeera</title>
+  <meta name="description" content="تسجيل الدخول إلى حسابك في منصة Codeera التعليمية." />
 </svelte:head>
 
 <div class="auth-page">
@@ -174,7 +174,7 @@
   }
 
   .auth-card {
-    background: white;
+    background: var(--card);
     border: 2px solid var(--line);
     border-radius: 1.25rem;
     padding: clamp(2rem, 5vw, 3rem);
@@ -271,7 +271,7 @@
     align-items: center;
     gap: 0.6rem;
     background: #fdf2f2;
-    border: 1.5px solid #f8b4b4;
+    border: 2px solid #f8b4b4;
     color: #9b1c1c;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
@@ -314,7 +314,7 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 0.5rem;
     padding: 0.75rem 0.9rem;
     font-size: 0.95rem;
@@ -379,20 +379,20 @@
   }
 
   .btn-quick {
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: var(--paper);
+    border: 1px solid var(--line);
     border-radius: 0.45rem;
     padding: 0.45rem 0.75rem;
     font-size: 0.82rem;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--storm);
     cursor: pointer;
     text-align: right;
     transition: all 120ms ease;
   }
 
   .btn-quick:hover {
-    background: #f1f5f9;
+    background: var(--card-hover);
     border-color: #94a3b8;
   }
 

@@ -87,71 +87,64 @@
 </script>
 
 <svelte:head>
-  <title>{data ? data.quiz.title.ar : 'أداء الاختبار'} | منصة دورات حاسبات الأزهر</title>
+  <title>{data ? data.quiz.title.ar : 'أداء الاختبار'} | منصة Codeera</title>
 </svelte:head>
 
-<div class="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-3xl mx-auto space-y-8">
+<div class="quiz-page" dir="rtl">
+  <div class="quiz-container">
     {#if loading}
-      <div class="space-y-4 animate-pulse">
-        <div class="h-12 bg-muted rounded-2xl"></div>
-        <div class="h-64 bg-muted rounded-2xl"></div>
-        <div class="h-64 bg-muted rounded-2xl"></div>
+      <div class="loading-shell">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>جاري تحميل أسئلة الاختبار...</p>
       </div>
     {:else if errorMsg && !data}
-      <div class="p-6 rounded-2xl bg-destructive/10 border border-destructive/20 text-center space-y-4">
-        <p class="text-sm font-medium text-destructive">{errorMsg}</p>
-        <button onclick={() => history.back()} class="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">
-          العودة
-        </button>
+      <div class="error-card">
+        <p>{errorMsg}</p>
+        <button type="button" onclick={() => history.back()} class="btn-back">العودة</button>
       </div>
     {:else if data}
       <!-- Header bar with title and sticky timer -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border border-border bg-card shadow-sm sticky top-4 z-20">
+      <div class="quiz-header">
         <div>
-          <span class="text-xs font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary">
-            {data.quiz.kind === 'exam' ? 'امتحان' : 'اختبار'}
+          <span class="quiz-type-badge">
+            {data.quiz.kind === 'exam' ? '📝 امتحان' : '📝 اختبار'}
           </span>
-          <h1 class="text-xl font-bold mt-1">{data.quiz.title.ar}</h1>
+          <h1>{data.quiz.title.ar}</h1>
         </div>
 
         {#if data.attempt.duration_minutes}
-          <div class="flex items-center gap-2 self-start sm:self-auto px-4 py-2 rounded-xl border border-border bg-muted/50 font-mono font-bold text-sm {remainingSeconds < 180 ? 'text-destructive animate-pulse' : 'text-foreground'}">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span>{formatTime(remainingSeconds)}</span>
+          <div class="timer-badge" class:timer-warning={remainingSeconds < 180}>
+            ⏱ {formatTime(remainingSeconds)}
           </div>
         {/if}
       </div>
 
       {#if errorMsg}
-        <div class="p-4 rounded-xl bg-destructive/10 text-destructive text-sm font-medium">
-          {errorMsg}
-        </div>
+        <div class="inline-error" role="alert">{errorMsg}</div>
       {/if}
 
       <!-- Questions List -->
-      <div class="space-y-6">
+      <div class="questions-list">
         {#each data.questions as question, idx}
-          <div class="p-6 rounded-2xl border border-border bg-card shadow-sm space-y-4">
-            <div class="flex items-center justify-between gap-2 border-b border-border pb-3">
-              <span class="font-bold text-sm text-foreground">السؤال {idx + 1} من {data.questions.length}</span>
-              <span class="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">{question.points} درجة</span>
+          <div class="question-card">
+            <div class="question-header">
+              <span class="question-num">السؤال {idx + 1} من {data.questions.length}</span>
+              <span class="points-badge">{question.points} درجة</span>
             </div>
 
-            <p class="text-base font-semibold leading-relaxed">{question.text.ar}</p>
+            <p class="question-text">{question.text.ar}</p>
 
-            <div class="space-y-2 pt-2">
+            <div class="options-list">
               {#each question.options as option}
-                <label class="flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition select-none {answers[question.id] === option.id ? 'border-primary bg-primary/5 text-primary font-medium' : 'border-border hover:bg-muted/40'}">
+                <label class="option-label" class:selected={answers[question.id] === option.id}>
                   <input
                     type="radio"
                     name="q_{question.id}"
                     value={option.id}
                     checked={answers[question.id] === option.id}
                     onchange={() => { answers[question.id] = option.id; }}
-                    class="h-4 w-4 text-primary focus:ring-primary"
                   />
-                  <span class="text-sm">{option.text.ar}</span>
+                  <span>{option.text.ar}</span>
                 </label>
               {/each}
             </div>
@@ -160,11 +153,12 @@
       </div>
 
       <!-- Submit Footer -->
-      <div class="flex justify-end pt-4 pb-12">
+      <div class="submit-footer">
         <button
+          type="button"
           onclick={() => handleSubmit(false)}
           disabled={submitting}
-          class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-base hover:bg-primary/90 transition shadow-md disabled:opacity-50"
+          class="btn-submit-quiz"
         >
           {submitting ? 'جاري تصحيح الاختبار...' : 'تسليم الإجابات وإنهاء الاختبار'}
         </button>
@@ -172,3 +166,250 @@
     {/if}
   </div>
 </div>
+
+<style>
+  .quiz-page {
+    background-color: var(--paper);
+    min-height: calc(100vh - 140px);
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  .quiz-container {
+    max-width: 780px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .loading-shell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    gap: 1rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--line);
+    border-top-color: var(--deep-cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-card {
+    background: #fef2f2;
+    border: 2px solid #fecaca;
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .error-card p { color: #991b1b; font-weight: 600; margin: 0 0 1rem; }
+
+  .btn-back {
+    background: var(--storm);
+    color: var(--cyan);
+    padding: 0.6rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Quiz Header */
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 1rem;
+    padding: 1.25rem 1.5rem;
+    position: sticky;
+    top: 4.5rem;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(15, 40, 47, 0.06);
+  }
+
+  .quiz-type-badge {
+    font-size: 0.78rem;
+    font-weight: 700;
+    background: #eef7f6;
+    color: var(--deep-cyan);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  .quiz-header h1 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--storm);
+    margin: 0.25rem 0 0;
+  }
+
+  .timer-badge {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--storm);
+    font-feature-settings: "tnum";
+  }
+
+  .timer-warning {
+    color: #dc2626;
+    border-color: #fecaca;
+    background: #fef2f2;
+    animation: pulse-timer 1.5s infinite;
+  }
+
+  @keyframes pulse-timer {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .inline-error {
+    background: #fef2f2;
+    border: 2px solid #fecaca;
+    color: #991b1b;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  /* Questions */
+  .questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .question-card {
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(15, 40, 47, 0.04);
+  }
+
+  .question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--line);
+    padding-bottom: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .question-num {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--storm);
+  }
+
+  .points-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: var(--paper);
+    color: var(--muted);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+    border: 2px solid var(--line);
+  }
+
+  .question-text {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.7;
+    color: var(--storm);
+    margin: 0 0 1rem;
+  }
+
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .option-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border: 2px solid var(--line);
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: border-color 150ms ease, background 150ms ease;
+    font-size: 0.92rem;
+    color: var(--storm);
+  }
+
+  .option-label:hover {
+    background: #f8faf9;
+  }
+
+  .option-label.selected {
+    border-color: var(--deep-cyan);
+    background: #eef7f6;
+    font-weight: 600;
+    color: var(--deep-cyan);
+  }
+
+  .option-label input[type="radio"] {
+    accent-color: var(--deep-cyan);
+    margin: 0;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* Submit Footer */
+  .submit-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    padding-bottom: 3rem;
+  }
+
+  .btn-submit-quiz {
+    background: var(--storm);
+    color: var(--cyan);
+    font-weight: 800;
+    font-size: 1rem;
+    padding: 0.85rem 2rem;
+    border-radius: 0.5rem;
+    border: 2px solid var(--storm);
+    cursor: pointer;
+    transition: opacity 150ms ease, transform 150ms ease;
+    width: 100%;
+  }
+
+  .btn-submit-quiz:hover:not(:disabled) {
+    opacity: 0.95;
+    transform: translateY(-1px);
+  }
+
+  .btn-submit-quiz:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  @media (min-width: 640px) {
+    .btn-submit-quiz {
+      width: auto;
+    }
+  }
+</style>

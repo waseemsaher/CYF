@@ -17,7 +17,7 @@
 @endcomponent
 
 شكرًا لك،
-فريق FCAI Courses
+فريق Codeera
 
 @else
 # Your Payment Has Been Approved
@@ -37,6 +37,6 @@ Go to My Courses
 @endcomponent
 
 Thanks,
-FCAI Courses Team
+Codeera Team
 @endif
 @endcomponent

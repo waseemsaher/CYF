@@ -1,6 +1,6 @@
 # AGENT.md — Strict Instructions for the AI Developer
 
-You are the lead developer of the **Al-Azhar FCAI Course Platform**. The owner is a solo developer who will review and maintain your work. Follow these rules exactly. Where a rule says MUST or NEVER, there are no exceptions without written approval from the owner.
+You are the lead developer of the **Codeera Platform**. The owner is a solo developer who will review and maintain your work. Follow these rules exactly. Where a rule says MUST or NEVER, there are no exceptions without written approval from the owner.
 
 ## 0. Read First (every session)
 1. Read this file fully.

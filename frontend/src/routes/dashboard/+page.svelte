@@ -84,7 +84,7 @@
 </script>
 
 <svelte:head>
-  <title>لوحة تحكم الطالب | منصة FCAI COURSES</title>
+  <title>لوحة تحكم الطالب | منصة Codeera</title>
   <meta name="description" content="لوحة تحكم الطالب لمتابعة المقررات المسجلة والاشتراكات وحساب التليجرام." />
 </svelte:head>
 
@@ -353,7 +353,7 @@
   }
 
   .welcome-banner {
-    background: white;
+    background: var(--card);
     border: 2px solid var(--line);
     border-radius: 1.25rem;
     padding: 1.75rem 2rem;
@@ -383,6 +383,12 @@
     padding: 0.2rem 0.6rem;
     border-radius: 9999px;
     border: 1px solid rgba(23, 119, 122, 0.25);
+  }
+
+  :global([data-theme='dark']) .badge-role {
+    background: rgba(2, 239, 240, 0.12);
+    color: var(--cyan);
+    border-color: rgba(2, 239, 240, 0.3);
   }
 
   .user-greeting h1 {
@@ -424,7 +430,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    border: 1.5px solid var(--storm);
+    border: 2px solid var(--storm);
     transition: transform 150ms ease, opacity 150ms ease;
   }
 
@@ -434,14 +440,14 @@
   }
 
   .btn-secondary {
-    background: white;
+    background: var(--card);
     color: var(--storm);
     font-weight: 700;
     font-size: 0.92rem;
     padding: 0.65rem 1.15rem;
     border-radius: 0.5rem;
     text-decoration: none;
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     transition: background-color 150ms ease;
   }
 
@@ -455,11 +461,17 @@
     align-items: center;
     gap: 0.6rem;
     background: #fdf2f2;
-    border: 1.5px solid #f8b4b4;
+    border: 2px solid #f8b4b4;
     color: #9b1c1c;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
     font-size: 0.9rem;
+  }
+
+  :global([data-theme='dark']) .error-banner {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
   }
 
   .dashboard-grid {
@@ -476,7 +488,7 @@
   }
 
   .dash-section {
-    background: white;
+    background: var(--card);
     border: 2px solid var(--line);
     border-radius: 1.25rem;
     padding: 1.5rem 1.75rem;
@@ -512,9 +524,19 @@
     border-radius: 9999px;
   }
 
+  :global([data-theme='dark']) .counter-badge {
+    background: rgba(2, 239, 240, 0.15);
+    color: var(--cyan);
+  }
+
   .pending-badge {
     background: #fef3c7;
     color: #92400e;
+  }
+
+  :global([data-theme='dark']) .pending-badge {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fde68a;
   }
 
   .view-all-link {
@@ -543,7 +565,7 @@
 
   .course-card {
     background: var(--paper);
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 0.85rem;
     padding: 1.25rem;
     display: flex;
@@ -567,6 +589,12 @@
     border-radius: 0.25rem;
     display: inline-block;
     margin-bottom: 0.5rem;
+  }
+
+  :global([data-theme='dark']) .course-badge {
+    background: rgba(16, 185, 129, 0.18);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.3);
   }
 
   .course-title {
@@ -605,7 +633,7 @@
     text-align: center;
     padding: 2.5rem 1rem;
     background: var(--paper);
-    border: 1.5px dashed var(--line);
+    border: 2px dashed var(--line);
     border-radius: 1rem;
     display: flex;
     flex-direction: column;
@@ -655,8 +683,8 @@
   }
 
   .pending-item {
-    background: white;
-    border: 1.5px solid #fde68a;
+    background: var(--card);
+    border: 2px solid #fde68a;
     border-radius: 0.75rem;
     padding: 0.85rem 1.15rem;
     display: flex;
@@ -693,6 +721,12 @@
     border: 1px solid #fcd34d;
   }
 
+  :global([data-theme='dark']) .pending-status-chip {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fde68a;
+    border-color: rgba(245, 158, 11, 0.4);
+  }
+
   .grid-sidebar {
     display: flex;
     flex-direction: column;
@@ -700,7 +734,7 @@
   }
 
   .profile-card {
-    background: white;
+    background: var(--card);
     border: 2px solid var(--line);
     border-radius: 1.25rem;
     padding: 1.75rem 1.5rem;
@@ -744,7 +778,7 @@
 
   .profile-divider {
     border: none;
-    border-top: 1.5px solid var(--line);
+    border-top: 2px solid var(--line);
     margin: 1.25rem 0;
   }
 
@@ -782,7 +816,7 @@
 
   .btn-profile-link {
     background: var(--paper);
-    border: 1.5px solid var(--line);
+    border: 2px solid var(--line);
     border-radius: 0.5rem;
     padding: 0.6rem 0.85rem;
     font-size: 0.85rem;
@@ -794,12 +828,44 @@
   }
 
   .btn-profile-link:hover {
-    background-color: white;
-    border-color: var(--storm);
+    background-color: var(--card-hover);
+    border-color: var(--deep-cyan);
   }
 
   @media (max-width: 900px) {
     .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-page {
+      padding: 1.25rem 0.75rem 3rem;
+    }
+
+    .welcome-banner {
+      padding: 1.25rem 1rem;
+    }
+
+    .banner-content {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+    }
+
+    .banner-actions {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    .banner-actions a {
+      width: 100%;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .courses-grid {
       grid-template-columns: 1fr;
     }
   }
