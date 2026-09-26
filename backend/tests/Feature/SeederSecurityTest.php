@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoAccountsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\App;

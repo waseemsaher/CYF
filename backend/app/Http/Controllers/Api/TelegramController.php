@@ -93,10 +93,11 @@ class TelegramController extends Controller
         ProcessJoinRequest $processJoin,
     ): JsonResponse {
         $secretToken = (string) config('telegram.webhook_secret', '');
-        $receivedSecret = $request->header('X-Telegram-Bot-Api-Secret-Token');
+        $receivedSecret = (string) $request->header('X-Telegram-Bot-Api-Secret-Token', '');
 
-        if ($secretToken !== '' && $receivedSecret !== $secretToken) {
-            Log::warning('Telegram webhook rejected: invalid secret token header');
+        // Fail-closed: Reject all requests if webhook secret is unconfigured or does not match
+        if ($secretToken === '' || ! hash_equals($secretToken, $receivedSecret)) {
+            Log::warning('Telegram webhook rejected: secret token missing, unconfigured, or invalid');
 
             return response()->json(['error' => 'Unauthorized'], 403);
         }

@@ -39,6 +39,9 @@ php artisan migrate --force
 echo "--> Caching Laravel configurations, routes, and views..."
 php artisan optimize
 
+echo "--> Verifying production environment and security configurations..."
+php artisan production:verify
+
 echo "--> Restarting queue workers..."
 php artisan queue:restart
 
