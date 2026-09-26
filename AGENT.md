@@ -160,3 +160,4 @@ Keep `docs/API.md` updated with every endpoint (method, path, auth, request, res
 - `left/right` based layout, hardcoded UI text, hardcoded colors.
 - Silently changing architecture, dependencies, or requirements.
 - Skipping tests or checks "to save time".
+- Using the browser subagent or opening the browser (`browser_subagent`, `open_browser_url`). Validate via checks, build, tests, and curl.
