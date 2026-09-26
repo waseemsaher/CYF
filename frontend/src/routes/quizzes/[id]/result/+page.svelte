@@ -119,7 +119,7 @@
                     <span class:strikethrough={isSelected && !isCorrect}>{opt.text.ar}</span>
 
                     {#if isCorrect}
-                      <span class="tag-correct">✓ الإجابة الصحيحة</span>
+                      <span class="tag-correct">الإجابة الصحيحة</span>
                     {:else if isSelected}
                       <span class="tag-wrong">إجابتك</span>
                     {/if}
