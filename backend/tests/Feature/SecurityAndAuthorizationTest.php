@@ -33,7 +33,7 @@ test('api responses include standard security headers', function (): void {
         ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
         ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
         ->assertHeader('X-Permitted-Cross-Domain-Policies', 'none')
-        ->assertHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self'; connect-src 'self' http://localhost:8000 https:; frame-ancestors 'self'; form-action 'self'");
+        ->assertHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self'; connect-src 'self' http://localhost:8000 http://localhost:5173 http://127.0.0.1:8000 http://localhost:4173; frame-ancestors 'self'; form-action 'self'");
 });
 
 test('https requests return Strict-Transport-Security header', function (): void {
@@ -353,4 +353,58 @@ test('telegram webhook endpoint rate limits excessive requests per IP', function
 
     $response = $this->postJson('/api/v1/telegram/webhook', []);
     $response->assertStatus(429);
+});
+
+test('admin overview endpoint allows reviewers and admins but blocks students', function (): void {
+    Permission::findOrCreate('payments.review', 'web');
+
+    $student = User::factory()->create();
+    $student->assignRole('student');
+
+    $reviewer = User::factory()->create();
+    $reviewer->givePermissionTo('payments.review');
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    // Student is blocked
+    $this->actingAs($student)
+        ->getJson('/api/v1/admin/overview')
+        ->assertForbidden();
+
+    // Reviewer with payments.review is allowed
+    $this->actingAs($reviewer)
+        ->getJson('/api/v1/admin/overview')
+        ->assertOk();
+
+    // Admin is allowed
+    $this->actingAs($admin)
+        ->getJson('/api/v1/admin/overview')
+        ->assertOk();
+});
+
+test('teacher management endpoint requires admin or superadmin role', function (): void {
+    $student = User::factory()->create();
+    $student->assignRole('student');
+
+    $teacher = User::factory()->create();
+    $teacher->assignRole('teacher');
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    // Student is blocked
+    $this->actingAs($student)
+        ->getJson('/api/v1/admin/teachers')
+        ->assertForbidden();
+
+    // Teacher cannot manage other teachers
+    $this->actingAs($teacher)
+        ->getJson('/api/v1/admin/teachers')
+        ->assertForbidden();
+
+    // Admin is allowed
+    $this->actingAs($admin)
+        ->getJson('/api/v1/admin/teachers')
+        ->assertOk();
 });
