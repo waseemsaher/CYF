@@ -151,7 +151,12 @@
         <article class="queue-card" class:duplicate-warning={payment.has_duplicate_proof}>
           {#if payment.has_duplicate_proof}
             <div class="duplicate-banner" role="alert">
-              ⚠️ إثبات دفع مكرر — نفس الصورة مستخدمة في دفعة أخرى
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>إثبات دفع مكرر — نفس الصورة مستخدمة في دفعة أخرى</span>
             </div>
           {/if}
 
@@ -206,14 +211,14 @@
                   onclick={() => approvePayment(payment.id)}
                   disabled={actionLoading === payment.id}
                 >
-                  {actionLoading === payment.id ? 'جاري...' : '✓ موافقة'}
+                  {actionLoading === payment.id ? 'جاري...' : 'موافقة'}
                 </button>
                 <button
                   class="btn-reject"
                   onclick={() => { rejectingId = payment.id; }}
                   disabled={actionLoading === payment.id}
                 >
-                  ✕ رفض
+                  رفض
                 </button>
               {/if}
             </div>
@@ -248,7 +253,7 @@
   .payment-queue { display: grid; gap: 1rem; }
   .queue-card { background: var(--card); border: 2px solid var(--line); border-radius: 0.75rem; overflow: hidden; }
   .queue-card.duplicate-warning { border-color: #f59e0b; }
-  .duplicate-banner { background: #fef3c7; color: #92400e; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1.25rem; }
+  .duplicate-banner { background: #fef3c7; color: #92400e; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
   .card-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr 1.3fr; padding: 1.25rem; }
   .student-info h2 { font-size: 1.1rem; margin: 0 0 0.75rem; }
   dl { display: grid; gap: 0.3rem; grid-template-columns: 4rem 1fr; margin: 0; }
