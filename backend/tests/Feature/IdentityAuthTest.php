@@ -49,3 +49,23 @@ it('logs in an existing user with valid credentials', function (): void {
         ->assertJsonPath('data.user.email', 'login@example.com')
         ->assertJsonPath('data.token', fn ($value) => is_string($value) && $value !== '');
 });
+
+it('prevents deactivated user from logging in', function (): void {
+    Role::create(['name' => 'student']);
+
+    $user = User::factory()->create([
+        'email' => 'deactivated@example.com',
+        'password' => bcrypt('Password123!'),
+        'is_active' => false,
+    ]);
+
+    $user->assignRole('student');
+
+    $response = $this->postJson('/api/v1/login', [
+        'email' => 'deactivated@example.com',
+        'password' => 'Password123!',
+    ]);
+
+    $response->assertStatus(403)
+        ->assertJsonPath('message', 'This account has been deactivated.');
+});

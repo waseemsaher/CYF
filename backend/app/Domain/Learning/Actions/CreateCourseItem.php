@@ -7,7 +7,9 @@ namespace App\Domain\Learning\Actions;
 use App\Models\Course;
 use App\Models\CourseItem;
 use App\Models\CourseSection;
+use App\Models\Setting;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class CreateCourseItem
@@ -31,6 +33,14 @@ class CreateCourseItem
         $filePath = null;
 
         if ($type === 'file' && $file !== null) {
+            $maxSizeKb = (int) Setting::getValue('uploads', 'teacher_file_max_size_kb', 51200);
+
+            if ($file->getSize() > $maxSizeKb * 1024) {
+                throw ValidationException::withMessages([
+                    'file' => [__('The file size exceeds the allowed limit.')],
+                ]);
+            }
+
             $allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'png', 'jpg', 'jpeg', 'mp3', 'mp4'];
             $allowedMimes = [
                 'application/pdf',
@@ -56,7 +66,33 @@ class CreateCourseItem
                 ]);
             }
 
-            $filePath = $file->store("course_files/{$course->id}", 'local');
+            // Strip EXIF metadata from images if PNG or JPEG
+            if (in_array($mimeType, ['image/jpeg', 'image/png'], true)) {
+                $image = match ($mimeType) {
+                    'image/jpeg' => @imagecreatefromjpeg($file->getRealPath()),
+                    default => @imagecreatefrompng($file->getRealPath()),
+                };
+
+                if ($image !== false) {
+                    $randomName = bin2hex(random_bytes(16)).'.'.($mimeType === 'image/jpeg' ? 'jpg' : 'png');
+                    $filePath = "course_files/{$course->id}/{$randomName}";
+                    $tempPath = tempnam(sys_get_temp_dir(), 'course_img_');
+                    if ($tempPath !== false) {
+                        if ($mimeType === 'image/jpeg') {
+                            imagejpeg($image, $tempPath, 90);
+                        } else {
+                            imagepng($image, $tempPath, 9);
+                        }
+                        imagedestroy($image);
+                        Storage::disk('local')->put($filePath, (string) file_get_contents($tempPath));
+                        unlink($tempPath);
+                    }
+                }
+            }
+
+            if ($filePath === null) {
+                $filePath = $file->store("course_files/{$course->id}", 'local');
+            }
         }
 
         if ($position === null) {

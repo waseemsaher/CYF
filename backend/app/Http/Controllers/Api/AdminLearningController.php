@@ -12,6 +12,7 @@ use App\Models\CourseItem;
 use App\Models\CourseSection;
 use App\Models\Question;
 use App\Models\Quiz;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -86,6 +87,8 @@ class AdminLearningController extends Controller
     {
         $this->authorizeManage($request->user());
 
+        $maxSizeKb = (int) Setting::getValue('uploads', 'teacher_file_max_size_kb', 51200);
+
         $request->validate([
             'type' => ['required', 'in:lecture_link,external_link,file,quiz,exam,text'],
             'title' => ['required', 'array'],
@@ -93,7 +96,7 @@ class AdminLearningController extends Controller
             'title.en' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'array'],
             'url' => ['nullable', 'url', 'max:2048'],
-            'file' => ['nullable', 'file', 'max:51200'], // 50MB
+            'file' => ['nullable', 'file', "max:{$maxSizeKb}"],
             'quiz_id' => ['nullable', 'exists:quizzes,id'],
             'position' => ['nullable', 'integer'],
             'is_published' => ['nullable', 'boolean'],

@@ -23,9 +23,10 @@ class AdminEnrollmentController extends Controller
      */
     public function grant(GrantEnrollmentRequest $request, GrantEnrollment $grantEnrollment): JsonResponse
     {
+        $this->authorize('grant', Enrollment::class);
+
         /** @var User $admin */
         $admin = $request->user();
-        $this->authorizeAdmin($admin);
 
         /** @var User $student */
         $student = User::query()->findOrFail($request->validated('user_id'));
@@ -48,12 +49,13 @@ class AdminEnrollmentController extends Controller
      */
     public function revoke(int $id, RevokeEnrollment $revokeEnrollment): JsonResponse
     {
-        /** @var User $admin */
-        $admin = request()->user();
-        $this->authorizeAdmin($admin);
-
         /** @var Enrollment $enrollment */
         $enrollment = Enrollment::query()->findOrFail($id);
+
+        $this->authorize('revoke', $enrollment);
+
+        /** @var User $admin */
+        $admin = request()->user();
 
         $revokeEnrollment->handle($enrollment, $admin);
 
@@ -65,16 +67,17 @@ class AdminEnrollmentController extends Controller
      */
     public function extend(int $id, Request $request): JsonResponse
     {
+        /** @var Enrollment $enrollment */
+        $enrollment = Enrollment::query()->findOrFail($id);
+
+        $this->authorize('extend', $enrollment);
+
         /** @var User $admin */
         $admin = $request->user();
-        $this->authorizeAdmin($admin);
 
         $request->validate([
             'expires_at' => ['required', 'date', 'after:now'],
         ]);
-
-        /** @var Enrollment $enrollment */
-        $enrollment = Enrollment::query()->findOrFail($id);
 
         $enrollment->update([
             'expires_at' => $request->input('expires_at'),
@@ -90,12 +93,5 @@ class AdminEnrollmentController extends Controller
             ->log('enrollment_extended');
 
         return (new EnrollmentResource($enrollment->fresh()))->response();
-    }
-
-    private function authorizeAdmin(User $user): void
-    {
-        if (! $user->hasRole('superadmin') && ! $user->hasRole('admin')) {
-            abort(403);
-        }
     }
 }
