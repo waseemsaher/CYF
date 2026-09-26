@@ -43,8 +43,7 @@
   />
 </svelte:head>
 
-<div class="landing-container">
-  <!-- Immersive Tech-Forward Hero Section -->
+  <!-- Immersive Tech-Forward Full-Bleed Hero Section -->
   <section class="hero-section" aria-label="مقدمة المنصة">
     <HeroCanvas />
     <div class="hero-overlay" aria-hidden="true"></div>
@@ -122,8 +121,9 @@
     </div>
   </section>
 
-  <!-- How It Works Section -->
-  <section class="steps-section" aria-labelledby="steps-title">
+  <div class="landing-container">
+    <!-- How It Works Section -->
+    <section class="steps-section" aria-labelledby="steps-title">
     <div class="section-heading-center">
       <span class="eyebrow-pill">خطوات سريعة</span>
       <h2 id="steps-title" class="section-title">كيف تبدأ دراستك معنا؟</h2>
@@ -328,43 +328,50 @@
     gap: 5rem;
     max-width: 1200px;
     margin-inline: auto;
-    padding: 1.5rem 1.25rem 5rem;
+    padding: 5rem 1.25rem;
   }
 
-  /* ---------------- HERO SECTION (Storm Green + Vivid Cyan Tech Theme) ---------------- */
+  /* ---------------- HERO SECTION (Full-Bleed Layered Video + Particle Canvas) ---------------- */
   .hero-section {
     position: relative;
     overflow: hidden;
+    min-height: 100dvh;
+    width: 100%;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(4rem, 8vw, 6rem) clamp(1.5rem, 5vw, 3.5rem);
+    box-sizing: border-box;
     background-color: var(--storm-green, #0F282F);
-    border: 2px solid rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.28);
-    border-radius: 1.75rem;
-    padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 3.5rem);
     color: #FAF8F5;
-    box-shadow: 0 20px 50px -10px rgba(15, 40, 47, 0.7), 0 0 35px -5px rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.12);
   }
 
   :global(:root[data-theme='dark']) .hero-section {
-    border-color: rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.35);
-    box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.8), 0 0 40px -5px rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.15);
+    border: none;
+    box-shadow: none;
   }
 
-  /* Semi-transparent dark overlay for guaranteed WCAG AA+ contrast */
+  /* Semi-transparent Storm Green dark overlay for guaranteed WCAG AA+ contrast */
   .hero-overlay {
     position: absolute;
     inset: 0;
     background: radial-gradient(
-      ellipse at 50% 30%,
-      rgba(var(--storm-green-rgb, 15, 40, 47), 0.75) 0%,
+      ellipse at 50% 40%,
+      rgba(var(--storm-green-rgb, 15, 40, 47), 0.78) 0%,
       rgba(var(--storm-green-rgb, 15, 40, 47), 0.92) 100%
     );
     backdrop-filter: blur(2px);
     pointer-events: none;
-    z-index: 1;
+    z-index: 2;
   }
 
   .hero-content {
     position: relative;
-    z-index: 2;
+    z-index: 3;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -479,20 +486,20 @@
   }
 
   .btn-hero-secondary {
-    background: rgba(var(--storm-green-rgb, 15, 40, 47), 0.55);
-    color: #FAF8F5;
+    background: rgba(var(--storm-green-rgb, 15, 40, 47), 0.75);
+    color: #FFFFFF;
     font-weight: 700;
     font-size: 1.05rem;
     padding: 0.85rem 1.85rem;
     border-radius: 0.75rem;
     text-decoration: none;
-    border: 2px solid rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.45);
+    border: 2px solid rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.6);
     backdrop-filter: blur(8px);
     transition: background 150ms ease, border-color 150ms ease, transform 150ms ease, color 150ms ease;
   }
 
   .btn-hero-secondary:hover {
-    background: rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.12);
+    background: rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.18);
     border-color: var(--vivid-cyan, #02EFF0);
     color: var(--vivid-cyan, #02EFF0);
     transform: translateY(-2px);
@@ -1118,12 +1125,13 @@
   @media (max-width: 480px) {
     .landing-container {
       gap: 3.5rem;
-      padding: 1rem 0.75rem 3.5rem;
+      padding: 3rem 0.75rem 3.5rem;
     }
 
     .hero-section {
-      border-radius: 1.25rem;
-      padding: 2.25rem 1.25rem;
+      border-radius: 0;
+      border: none;
+      padding: 3.5rem 1.25rem;
     }
 
     .hero-actions {

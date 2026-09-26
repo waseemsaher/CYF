@@ -25,7 +25,7 @@ export interface Translations {
 export const translations: Record<Locale, Translations> = {
   ar: {
     hero: {
-      badge: 'المنصة التعليمية الرسمية لطلاب حاسبات الأزهر',
+      badge: 'منصة تعليمية لطلاب حاسبات الأزهر',
       titlePrefix: 'شروحات برمجية مركزة،',
       titleHighlight: 'خطوتك الواثقة نحو الامتياز الأكاديمي.',
       subheading: 'منصة Codeera توفر محتوى دراسي متخصص يغطي مناهج كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر، مع مجموعات تليجرام مقفولة ومتابعة مستمرة.',
@@ -41,7 +41,7 @@ export const translations: Record<Locale, Translations> = {
       secondaryCta: 'إنشاء حساب',
       dashboardCta: 'لوحة التحكم',
       stats: [
-        { value: '+10', label: 'مقررات تخصصية معتمدة' },
+        { value: '+10', label: 'مقررات تخصصية متكاملة' },
         { value: '100%', label: 'مجموعات تليجرام مقفولة' },
         { value: 'فوري', label: 'قبول آلي عبر البوت' }
       ],
@@ -51,7 +51,7 @@ export const translations: Record<Locale, Translations> = {
   },
   en: {
     hero: {
-      badge: 'Official Platform for FCAI Al-Azhar Students',
+      badge: 'Educational Platform for FCAI Al-Azhar Students',
       titlePrefix: 'Focused Tech Curriculum,',
       titleHighlight: 'Your Definitive Path to Academic Excellence.',
       subheading: 'Codeera provides specialized coursework tailored for Faculty of Computers & Artificial Intelligence Al-Azhar students, with private Telegram community groups and continuous academic support.',
@@ -67,7 +67,7 @@ export const translations: Record<Locale, Translations> = {
       secondaryCta: 'Create Account',
       dashboardCta: 'My Dashboard',
       stats: [
-        { value: '+10', label: 'Accredited Tech Courses' },
+        { value: '+10', label: 'Comprehensive Tech Courses' },
         { value: '100%', label: 'Private Telegram Groups' },
         { value: 'Instant', label: 'Automated Bot Verification' }
       ],
