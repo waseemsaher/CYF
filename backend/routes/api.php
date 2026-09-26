@@ -31,17 +31,22 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/content-blocks/{key}', [ContentBlockController::class, 'show']);
 
     Route::post('/register', [AuthController::class, 'register'])
-        ->middleware('throttle:10,1');
+        ->middleware('throttle:register');
     Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:10,1');
+        ->middleware('throttle:login');
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
+        ->middleware('throttle:password-reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+        ->middleware('throttle:password-reset');
 
     // Telegram bot webhook (rate-limited, protected by secret token header)
     Route::post('/telegram/webhook', [TelegramController::class, 'webhook'])
-        ->middleware('throttle:60,1');
+        ->middleware('throttle:telegram-webhook');
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/me', [ProfileController::class, 'show']);
         Route::put('/profile', [ProfileController::class, 'update']);
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
 
         // Course learning content private downloads
         Route::get('/courses/{slug}/items/{itemId}/file', [CourseContentController::class, 'downloadFile']);
@@ -71,7 +76,7 @@ Route::prefix('v1')->group(function (): void {
 
         // Student payments (rate-limited)
         Route::post('/payments', [PaymentController::class, 'store'])
-            ->middleware('throttle:10,1');
+            ->middleware('throttle:payment-submit');
         Route::get('/payments', [PaymentController::class, 'index']);
         Route::get('/payments/{id}', [PaymentController::class, 'show']);
         Route::post('/payments/{id}/cancel', [PaymentController::class, 'cancel']);
