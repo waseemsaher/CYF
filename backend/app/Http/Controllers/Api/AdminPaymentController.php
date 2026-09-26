@@ -22,9 +22,7 @@ class AdminPaymentController extends Controller
      */
     public function index(): JsonResponse
     {
-        /** @var User $user */
-        $user = request()->user();
-        $this->authorizeReview($user);
+        $this->authorize('review', Payment::class);
 
         $status = request()->query('status', 'pending');
         if (! is_string($status) || ! in_array($status, ['pending', 'approved', 'rejected', 'cancelled'], true)) {
@@ -54,9 +52,7 @@ class AdminPaymentController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        /** @var User $user */
-        $user = request()->user();
-        $this->authorizeReview($user);
+        $this->authorize('review', Payment::class);
 
         /** @var Payment $payment */
         $payment = Payment::query()
@@ -82,9 +78,10 @@ class AdminPaymentController extends Controller
      */
     public function approve(int $id, ApprovePayment $approvePayment): JsonResponse
     {
+        $this->authorize('review', Payment::class);
+
         /** @var User $user */
         $user = request()->user();
-        $this->authorizeReview($user);
 
         /** @var Payment $payment */
         $payment = Payment::query()->findOrFail($id);
@@ -101,9 +98,10 @@ class AdminPaymentController extends Controller
      */
     public function reject(int $id, RejectPaymentRequest $request, RejectPayment $rejectPayment): JsonResponse
     {
+        $this->authorize('review', Payment::class);
+
         /** @var User $user */
         $user = $request->user();
-        $this->authorizeReview($user);
 
         /** @var Payment $payment */
         $payment = Payment::query()->findOrFail($id);
@@ -111,12 +109,5 @@ class AdminPaymentController extends Controller
         $rejectPayment->handle($payment, $user, $request->validated('rejection_reason'));
 
         return (new PaymentResource($payment->fresh()))->response();
-    }
-
-    private function authorizeReview(User $user): void
-    {
-        if (! $user->hasRole('superadmin') && ! $user->can('payments.review')) {
-            abort(403);
-        }
     }
 }

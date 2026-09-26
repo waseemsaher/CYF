@@ -31,10 +31,26 @@ class CreateCourseItem
         $filePath = null;
 
         if ($type === 'file' && $file !== null) {
-            $allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'zip', 'rar', 'png', 'jpg', 'jpeg', 'mp3', 'mp4'];
-            $extension = strtolower($file->getClientOriginalExtension());
+            $allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'png', 'jpg', 'jpeg', 'mp3', 'mp4'];
+            $allowedMimes = [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.ms-powerpoint',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'text/plain',
+                'image/png',
+                'image/jpeg',
+                'audio/mpeg',
+                'video/mp4',
+            ];
 
-            if (! in_array($extension, $allowedExtensions, true)) {
+            $extension = strtolower($file->getClientOriginalExtension());
+            $mimeType = $file->getMimeType();
+
+            if (! in_array($extension, $allowedExtensions, true) || ! in_array($mimeType, $allowedMimes, true)) {
                 throw ValidationException::withMessages([
                     'file' => ["نوع الملف غير مسموح به ({$extension})."],
                 ]);

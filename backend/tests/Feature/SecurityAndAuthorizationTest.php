@@ -29,7 +29,15 @@ test('api responses include standard security headers', function (): void {
         ->assertHeader('X-Content-Type-Options', 'nosniff')
         ->assertHeader('X-XSS-Protection', '1; mode=block')
         ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
-        ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+        ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        ->assertHeader('X-Permitted-Cross-Domain-Policies', 'none')
+        ->assertHeader('Content-Security-Policy', "default-src 'self'; frame-ancestors 'self'; form-action 'self'");
+});
+
+test('https requests return Strict-Transport-Security header', function (): void {
+    $response = $this->get('https://localhost/api/v1/courses');
+
+    $response->assertHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 });
 
 test('cors preflight and headers handle allowed origins', function (): void {

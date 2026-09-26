@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -154,3 +155,32 @@ it('restricts file download to actively enrolled students', function (): void {
 
     $downloadResponse->assertOk();
 });
+
+it('rejects dangerous or archive file uploads for course items', function (string $filename, string $mimeType): void {
+    $course = Course::create([
+        'slug' => 'test-security-course',
+        'title' => ['ar' => 'دورة', 'en' => 'Course'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'status' => 'published',
+        'price_cents' => 10000,
+    ]);
+
+    $section = app(CreateSection::class)->handle($course, ['ar' => 'فصل', 'en' => 'Sec']);
+    $file = UploadedFile::fake()->create($filename, 200, $mimeType);
+
+    expect(fn () => app(CreateCourseItem::class)->handle(
+        $course,
+        $section,
+        'file',
+        ['ar' => 'ملف ضار', 'en' => 'Malicious'],
+        null,
+        null,
+        $file
+    ))->toThrow(ValidationException::class);
+})->with([
+    ['payload.zip', 'application/zip'],
+    ['archive.rar', 'application/x-rar-compressed'],
+    ['script.sh', 'application/x-sh'],
+    ['executable.exe', 'application/x-msdownload'],
+    ['spoofed.pdf', 'application/x-msdownload'], // mismatched mime
+]);
