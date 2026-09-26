@@ -82,7 +82,7 @@
       <!-- Page Header -->
       <div class="page-header">
         <div class="header-top">
-          <span class="role-badge">👨‍🏫 محاضر</span>
+          <span class="role-badge">محاضر</span>
         </div>
         <h1>لوحة تحكم المحاضر</h1>
         <p>متابعة المواد المكلف بتدريسها، أعداد الطلاب، وأرصدة الأرباح</p>

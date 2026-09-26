@@ -97,7 +97,26 @@
                     <div class="item-row">
                       <div class="item-info">
                         <div class="item-icon" aria-hidden="true">
-                          {#if item.type === 'lecture_link'}▶{:else if item.type === 'file'}📄{:else if item.type === 'quiz' || item.type === 'exam'}📝{:else}🔗{/if}
+                          {#if item.type === 'lecture_link'}
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                          {:else if item.type === 'file'}
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                          {:else if item.type === 'quiz' || item.type === 'exam'}
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                            </svg>
+                          {:else}
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            </svg>
+                          {/if}
                         </div>
                         <div>
                           <p class="item-title">{item.title.ar}</p>
@@ -109,7 +128,13 @@
 
                       <div class="item-actions">
                         {#if item.is_locked}
-                          <span class="locked-badge">🔒 مغلق (اشترك للفتح)</span>
+                          <span class="locked-badge">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <span>مغلق (اشترك للفتح)</span>
+                          </span>
                         {:else}
                           {#if item.type === 'lecture_link' || item.type === 'external_link'}
                             {#if item.url}

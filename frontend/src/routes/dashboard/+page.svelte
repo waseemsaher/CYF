@@ -110,7 +110,7 @@
         <div class="banner-content">
           <div class="user-greeting">
             <span class="badge-role">طالب بالكلية</span>
-            <h1>مرحباً بك، {user.name} 👋</h1>
+            <h1>مرحباً بك، {user.name}</h1>
             <p class="user-meta-summary">
               <span>{branchLabels[user.branch || ''] || 'كلية الحاسبات والذكاء الاصطناعي'}</span>
               <span class="dot">•</span>
@@ -133,7 +133,11 @@
 
       {#if errorMsg}
         <div class="error-banner" role="alert">
-          <span aria-hidden="true">⚠️</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
           <p>{errorMsg}</p>
         </div>
       {/if}
@@ -146,7 +150,7 @@
           <section class="dash-section">
             <div class="section-header">
               <div class="section-title">
-                <h2>📚 المواد المشترك بها</h2>
+                <h2>المواد المشترك بها</h2>
                 <span class="counter-badge">{approvedCourses.length}</span>
               </div>
               <a href="/courses" class="view-all-link">إضافة مادة جديدة</a>
@@ -174,7 +178,12 @@
               </div>
             {:else}
               <div class="empty-state-box">
-                <div class="empty-icon" aria-hidden="true">📖</div>
+                <div class="empty-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                  </svg>
+                </div>
                 <h3>لم تشترك في أي مواد دراسية بعد</h3>
                 <p>تصفح قائمة مقررات الفرقة الدراسية واشترك لفتح المحاضرات والملفات والتكليفات.</p>
                 <a href="/courses" class="btn-browse-courses">استعراض المواد الآن</a>
@@ -187,7 +196,7 @@
             <section class="dash-section pending-section">
               <div class="section-header">
                 <div class="section-title">
-                  <h2>⏳ اشتراكات قيد المراجعة والاعتماد</h2>
+                  <h2>اشتراكات قيد المراجعة والاعتماد</h2>
                   <span class="counter-badge pending-badge">{pendingPayments.length}</span>
                 </div>
                 <a href="/payments" class="view-all-link">عرض التفاصيل الكاملة</a>
@@ -219,7 +228,7 @@
           <section class="dash-section">
             <div class="section-header">
               <div class="section-title">
-                <h2>🤖 ربط حساب التليجرام الرسمي</h2>
+                <h2>ربط حساب التليجرام الرسمي</h2>
               </div>
             </div>
             <p class="section-desc">
@@ -273,10 +282,10 @@
 
             <div class="profile-actions">
               <a href="/payments" class="btn-profile-link">
-                💳 سجل عمليات الدفع
+                سجل عمليات الدفع
               </a>
               <a href="/courses" class="btn-profile-link">
-                📚 دليل المقررات
+                دليل المقررات
               </a>
             </div>
           </div>
