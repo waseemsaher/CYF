@@ -12,6 +12,8 @@ export type CourseItem = {
   description?: Translation | null;
   url?: string | null;
   has_file?: boolean;
+  telegram_message_id?: number | null;
+  has_telegram_video?: boolean;
   is_locked: boolean;
   position: number;
   quiz?: {

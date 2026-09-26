@@ -248,25 +248,45 @@
 
     <div class="features-grid">
       <div class="feature-item">
-        <div class="feature-icon-box">🎓</div>
+        <div class="feature-icon-box" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path>
+          </svg>
+        </div>
         <h3>تغطية شاملة لمقررات الكلية</h3>
         <p>محتوى مصور ومكتوب متوافق 100% مع توصيف المقررات الأكاديمية والمناهج المعتمدة.</p>
       </div>
 
       <div class="feature-item">
-        <div class="feature-icon-box">⚡</div>
+        <div class="feature-icon-box" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
         <h3>انضمام آلي وفوري للمجموعات</h3>
         <p>لا داعي لانتظار قبول المشرفين، بوت المنصة يفحص حالتك ويقبلك تلقائياً فور الاعتماد.</p>
       </div>
 
       <div class="feature-item">
-        <div class="feature-icon-box">🧠</div>
+        <div class="feature-icon-box" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
         <h3>اختبارات تقييم ذاتي ذكية</h3>
         <p>اختبر معلوماتك بعد كل باب دراسي عبر نظام كويزات تفاعلي يعرض نتيجتك وحلول الأسئلة.</p>
       </div>
 
       <div class="feature-item">
-        <div class="feature-icon-box">🔒</div>
+        <div class="feature-icon-box" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
         <h3>دفع آمن ومعالجة مباشرة</h3>
         <p>ادفع عبر المحافظ الإلكترونية المألوفة (فودافون كاش، إنستاباي) مع نظام توثيق فوري للإيصالات.</p>
       </div>
@@ -884,9 +904,20 @@
   }
 
   .feature-icon-box {
-    font-size: 2.2rem;
-    line-height: 1;
-    margin-bottom: 0.25rem;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 0.75rem;
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    color: var(--brand-navy);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.35rem;
+  }
+
+  :global([data-theme='dark']) .feature-icon-box {
+    background: rgba(91, 122, 199, 0.15);
+    color: var(--deep-cyan);
   }
 
   .feature-item h3 {

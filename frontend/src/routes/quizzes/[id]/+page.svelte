@@ -107,14 +107,18 @@
       <div class="quiz-header">
         <div>
           <span class="quiz-type-badge">
-            {data.quiz.kind === 'exam' ? '📝 امتحان' : '📝 اختبار'}
+            {data.quiz.kind === 'exam' ? 'امتحان' : 'اختبار'}
           </span>
           <h1>{data.quiz.title.ar}</h1>
         </div>
 
         {#if data.attempt.duration_minutes}
           <div class="timer-badge" class:timer-warning={remainingSeconds < 180}>
-            ⏱ {formatTime(remainingSeconds)}
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>{formatTime(remainingSeconds)}</span>
           </div>
         {/if}
       </div>
@@ -267,6 +271,9 @@
     font-size: 0.95rem;
     color: var(--storm);
     font-feature-settings: "tnum";
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
   }
 
   .timer-warning {

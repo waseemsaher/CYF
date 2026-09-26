@@ -174,14 +174,18 @@
       {#if isAdmin}
         <div class="admin-toolbar-card">
           <div class="admin-toolbar-info">
-            <span class="admin-shield-icon">🛡️</span>
+            <span class="admin-shield-icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </span>
             <div>
               <strong>صلاحيات إدارة المقررات</strong>
               <p>يمكنك إنشاء مقررات جديدة أو تعديل المحتوى والأسعار مباشرة من هنا.</p>
             </div>
           </div>
           <button type="button" class="btn-create-course" onclick={openCreateModal}>
-            <span>➕ إضافة مقرر دراسي جديد</span>
+            <span>إضافة مقرر دراسي جديد</span>
           </button>
         </div>
       {/if}
@@ -231,7 +235,7 @@
 
       {#if data.selectedAcademicYear || data.selectedDepartment}
         <a href="/courses" class="btn-reset-filters">
-          <span>إلغاء التصفية ✕</span>
+          <span>إلغاء التصفية</span>
         </a>
       {/if}
     </form>
@@ -240,12 +244,21 @@
   <!-- Courses Grid or Empty State -->
   {#if data.error}
     <div class="notice-box error" role="alert">
-      <span>⚠️</span>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
       <p>{data.error}</p>
     </div>
   {:else if filteredCourses.length === 0}
     <div class="empty-catalog-box">
-      <div class="empty-icon" aria-hidden="true">🔍</div>
+      <div class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
       <h3>لا توجد مقررات مطابقة للبحث أو الفلتر المحدد</h3>
       <p>جرب تغيير خيارات التصفية أو مسح كلمة البحث للعثور على المقررات المتاحة.</p>
       {#if searchQuery || data.selectedAcademicYear || data.selectedDepartment}
@@ -310,13 +323,13 @@
                   onclick={() => openEditModal(course)}
                   title="تعديل بيانات المقرر"
                 >
-                  ✏️ تعديل
+                  تعديل
                 </button>
                 <a href={`/my-courses/${course.slug}`} class="btn-adm-content" title="إدارة المحتوى">
-                  📂 المحتوى
+                  المحتوى
                 </a>
                 <a href={`/courses/${course.slug}`} class="btn-adm-view" title="عرض كما يظهر للطلاب">
-                  👁️ عرض
+                  عرض
                 </a>
               </div>
             </div>
@@ -379,12 +392,16 @@
     >
       <div class="modal-header">
         <h2>{isEditing ? 'تعديل بيانات المقرر' : 'إضافة مقرر دراسي جديد'}</h2>
-        <button type="button" class="btn-close-modal" onclick={closeModal} aria-label="إغلاق">✕</button>
+        <button type="button" class="btn-close-modal" onclick={closeModal} aria-label="إغلاق">&times;</button>
       </div>
 
       {#if modalError}
         <div class="modal-error-banner" role="alert">
-          <span>⚠️</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
           <p>{modalError}</p>
         </div>
       {/if}

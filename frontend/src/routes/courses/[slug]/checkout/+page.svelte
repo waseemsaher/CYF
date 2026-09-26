@@ -71,7 +71,11 @@
 
   {#if submitted}
     <section class="success-panel">
-      <div class="success-icon" aria-hidden="true">✓</div>
+      <div class="success-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
       <h1>تم إرسال الدفعة بنجاح</h1>
       <p>دفعتك قيد المراجعة الآن. سيتم إخطارك فور الموافقة عليها.</p>
       <p class="wait-note">عادةً ما تتم المراجعة خلال فترة قصيرة.</p>

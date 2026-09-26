@@ -117,11 +117,11 @@
 
         <div class="admin-buttons-stack">
           <a class="btn-panel-action btn-manage-content" href={`/my-courses/${data.course.slug}`}>
-            <span>📂 إدارة المحتوى والمحاضرات</span>
+            <span>إدارة المحتوى والمحاضرات</span>
             <span aria-hidden="true">←</span>
           </a>
           <button type="button" class="btn-panel-action btn-edit-course" onclick={openEditModal}>
-            <span>✏️ تعديل بيانات وسعر المقرر</span>
+            <span>تعديل بيانات وسعر المقرر</span>
           </button>
           <a class="btn-panel-action btn-back-dashboard" href="/admin">
             <span>لوحة تحكم الإدارة الرئيسية</span>
@@ -152,7 +152,7 @@
     
     {#if isAdmin}
       <div class="admin-inline-notice">
-        <p>💡 بصفتك مسؤولاً، يمكنك الوصول للمحتوى وإضافة المحاضرات والاختبارات بالضغط على زر "إدارة المحتوى والمحاضرات" بالأعلى.</p>
+        <p>بصفتك مسؤولاً، يمكنك الوصول للمحتوى وإضافة المحاضرات والاختبارات بالضغط على زر "إدارة المحتوى والمحاضرات" بالأعلى.</p>
         <a href={`/my-courses/${data.course.slug}`} class="btn-inline-manage">
           فتح المحتوى التعليمي الآن ←
         </a>
@@ -168,12 +168,16 @@
     <div class="modal-card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl" tabindex="-1">
       <div class="modal-header">
         <h2>تعديل بيانات المقرر ({data.course.title.ar})</h2>
-        <button type="button" class="btn-close-modal" onclick={closeEditModal} aria-label="إغلاق">✕</button>
+        <button type="button" class="btn-close-modal" onclick={closeEditModal} aria-label="إغلاق">&times;</button>
       </div>
 
       {#if modalError}
         <div class="modal-error-banner" role="alert">
-          <span>⚠️</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
           <p>{modalError}</p>
         </div>
       {/if}
