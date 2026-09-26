@@ -67,6 +67,7 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/link-token', [TelegramController::class, 'generateLinkToken']);
             Route::post('/unlink', [TelegramController::class, 'unlink']);
         });
+        Route::get('/lessons/{item}/watch', [TelegramController::class, 'watchLesson']);
 
         // Student payments (rate-limited)
         Route::post('/payments', [PaymentController::class, 'store'])
@@ -93,6 +94,7 @@ Route::prefix('v1')->group(function (): void {
             Route::post('/courses', [AdminCourseController::class, 'store']);
             Route::put('/courses/{course}', [AdminCourseController::class, 'update']);
             Route::delete('/courses/{course}', [AdminCourseController::class, 'destroy']);
+            Route::post('/courses/{course}/telegram/test', [AdminCourseController::class, 'testTelegramConnection']);
 
             // Learning content management
             Route::post('/courses/{course}/sections', [AdminLearningController::class, 'storeSection']);

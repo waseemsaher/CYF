@@ -25,7 +25,7 @@ it('approves join requests for students with active valid enrollments', function
         'description' => ['ar' => 'وصف', 'en' => 'Desc'],
         'status' => 'published',
         'price_cents' => 15000,
-        'telegram_chat_id' => -100555444333,
+        'telegram_channel_id' => -100555444333,
     ]);
 
     $term = Term::create([
@@ -61,7 +61,7 @@ it('declines join requests for users without enrollment', function (): void {
         'description' => ['ar' => 'وصف', 'en' => 'Desc'],
         'status' => 'published',
         'price_cents' => 15000,
-        'telegram_chat_id' => -100555444333,
+        'telegram_channel_id' => -100555444333,
     ]);
 
     $user = User::factory()->create(['telegram_user_id' => 999000111]);
@@ -80,7 +80,7 @@ it('declines join requests when enrollment is expired', function (): void {
         'description' => ['ar' => 'وصف', 'en' => 'Desc'],
         'status' => 'published',
         'price_cents' => 15000,
-        'telegram_chat_id' => -100555444333,
+        'telegram_channel_id' => -100555444333,
     ]);
 
     $term = Term::create([
@@ -118,7 +118,7 @@ it('approves join requests for admin staff even without an enrollment', function
         'description' => ['ar' => 'وصف', 'en' => 'Desc'],
         'status' => 'published',
         'price_cents' => 15000,
-        'telegram_chat_id' => -100555444333,
+        'telegram_channel_id' => -100555444333,
     ]);
 
     $admin = User::factory()->create(['telegram_user_id' => 12344321]);
@@ -129,4 +129,51 @@ it('approves join requests for admin staff even without an enrollment', function
 
     expect($result)->toBeTrue();
     Http::assertSent(fn ($req) => str_contains($req->url(), 'approveChatJoinRequest'));
+});
+
+it('approves join requests for students joining course discussion group', function (): void {
+    $course = Course::create([
+        'slug' => 'algo',
+        'title' => ['ar' => 'خوارزميات', 'en' => 'Algorithms'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'status' => 'published',
+        'price_cents' => 15000,
+        'telegram_channel_id' => -100555444333,
+        'telegram_group_id' => -100999888777,
+    ]);
+
+    $term = Term::create([
+        'name' => ['ar' => 'فصل', 'en' => 'Term'],
+        'starts_at' => now()->subMonth(),
+        'ends_at' => now()->addMonths(2),
+        'is_current' => true,
+    ]);
+
+    $student = User::factory()->create(['telegram_user_id' => 11223344]);
+
+    Enrollment::create([
+        'user_id' => $student->id,
+        'course_id' => $course->id,
+        'term_id' => $term->id,
+        'source' => 'payment',
+        'status' => 'active',
+        'starts_at' => now()->subDay(),
+        'expires_at' => now()->addMonth(),
+    ]);
+
+    $action = app(ProcessJoinRequest::class);
+    $result = $action->handle(-100999888777, 11223344, 'student_user');
+
+    expect($result)->toBeTrue();
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'approveChatJoinRequest'));
+});
+
+it('declines join requests for unknown chats', function (): void {
+    $student = User::factory()->create(['telegram_user_id' => 11223344]);
+
+    $action = app(ProcessJoinRequest::class);
+    $result = $action->handle(-100000000000, 11223344, 'student_user');
+
+    expect($result)->toBeFalse();
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'declineChatJoinRequest'));
 });

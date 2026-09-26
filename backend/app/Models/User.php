@@ -96,4 +96,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(TeacherPayout::class, 'teacher_id');
     }
+
+    /**
+     * @return HasMany<Enrollment, $this>
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
 }

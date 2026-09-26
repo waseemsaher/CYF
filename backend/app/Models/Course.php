@@ -31,7 +31,8 @@ class Course extends Model
         'cover_image_path',
         'price_cents',
         'status',
-        'telegram_chat_id',
+        'telegram_channel_id',
+        'telegram_group_id',
         'telegram_invite_link',
         'teacher_share_percent',
         'sort_order',
@@ -82,6 +83,14 @@ class Course extends Model
     public function items(): HasMany
     {
         return $this->hasMany(CourseItem::class)->orderBy('position');
+    }
+
+    /**
+     * @return HasMany<Enrollment, $this>
+     */
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
     }
 
     /**

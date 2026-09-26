@@ -24,7 +24,7 @@ it('removes members whose enrollments are expired or revoked', function (): void
         'description' => ['ar' => 'وصف', 'en' => 'Desc'],
         'status' => 'published',
         'price_cents' => 10000,
-        'telegram_chat_id' => -10099887766,
+        'telegram_channel_id' => -10099887766,
     ]);
 
     $term = Term::create([
@@ -92,7 +92,7 @@ it('does not remove member if they have another active enrollment for the same c
         'description' => ['ar' => 'وصف', 'en' => 'Desc'],
         'status' => 'published',
         'price_cents' => 10000,
-        'telegram_chat_id' => -10099887766,
+        'telegram_channel_id' => -10099887766,
     ]);
 
     $pastTerm = Term::create([

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Course;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -59,7 +60,7 @@ class DatabaseSeeder extends Seeder
             $teacher->assignRole('teacher');
         }
 
-        $firstCourse = \App\Models\Course::first();
+        $firstCourse = Course::first();
         if ($firstCourse && ! $teacher->taughtCourses()->where('courses.id', $firstCourse->id)->exists()) {
             $teacher->taughtCourses()->attach($firstCourse->id, [
                 'teacher_share_percent' => 70,
