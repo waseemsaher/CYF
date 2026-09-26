@@ -1264,14 +1264,14 @@
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 0.65rem;
-    background: rgba(var(--brand-navy-rgb), 0.08);
-    color: var(--brand-navy);
+    background: rgba(2, 239, 240, 0.12);
+    color: var(--deep-cyan);
     margin-bottom: 0.35rem;
   }
 
   :global([data-theme='dark']) .sys-icon {
-    background: rgba(91, 122, 199, 0.15);
-    color: var(--deep-cyan);
+    background: rgba(2, 239, 240, 0.18);
+    color: var(--cyan);
   }
 
   .sys-module-card h3 {

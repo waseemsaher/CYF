@@ -256,6 +256,14 @@
     --line-bold: #0f282f;
     --deep-cyan: #17777a;
     --border-width: 2px;
+
+    /* Brand Tokens (Storm Green & Vivid Cyan) */
+    --storm-green: #0F282F;
+    --storm-green-rgb: 15, 40, 47;
+    --vivid-cyan: #02EFF0;
+    --vivid-cyan-rgb: 2, 239, 240;
+    --vivid-cyan-hover: #3df3f4;
+    --vivid-cyan-dark: #00b6b7;
   }
 
   :global(:root[data-theme='dark']),
@@ -275,6 +283,14 @@
     --deep-cyan: #0bd5d6;
     --border-width: 2px;
     color-scheme: dark;
+
+    /* Brand Tokens (Storm Green & Vivid Cyan) */
+    --storm-green: #0F282F;
+    --storm-green-rgb: 15, 40, 47;
+    --vivid-cyan: #02EFF0;
+    --vivid-cyan-rgb: 2, 239, 240;
+    --vivid-cyan-hover: #3df3f4;
+    --vivid-cyan-dark: #00b6b7;
   }
 
   :global(body) {

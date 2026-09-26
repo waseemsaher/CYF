@@ -903,8 +903,8 @@
     width: 3.25rem;
     height: 3.25rem;
     border-radius: 0.75rem;
-    background: rgba(var(--brand-navy-rgb), 0.08);
-    color: var(--brand-navy);
+    background: rgba(2, 239, 240, 0.12);
+    color: var(--deep-cyan);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -912,8 +912,8 @@
   }
 
   :global([data-theme='dark']) .feature-icon-box {
-    background: rgba(91, 122, 199, 0.15);
-    color: var(--deep-cyan);
+    background: rgba(2, 239, 240, 0.18);
+    color: var(--cyan);
   }
 
   .feature-item h3 {
