@@ -137,8 +137,8 @@
     min-height: 2rem;
     padding: 0.35rem 1rem;
     border-radius: 9999px;
-    background: rgba(var(--storm-green-rgb, 15, 40, 47), 0.65);
-    border: 1px solid rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.3);
+    background: rgba(26, 25, 24, 0.65);
+    border: 1px solid rgba(213, 203, 193, 0.3);
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
     max-width: 100%;
@@ -147,7 +147,7 @@
   }
 
   .typewriter-prefix {
-    color: rgba(250, 248, 245, 0.7);
+    color: #D5CBC1;
     font-weight: 500;
     font-size: 0.9em;
   }
@@ -155,8 +155,8 @@
   .typewriter-text-wrapper {
     display: inline-flex;
     align-items: center;
-    color: var(--vivid-cyan, #02EFF0);
-    text-shadow: 0 0 16px rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.4);
+    color: #FAF8F5;
+    text-shadow: 0 0 16px rgba(200, 43, 52, 0.35);
   }
 
   .typewriter-text {
@@ -169,10 +169,10 @@
     display: inline-block;
     width: 2px;
     height: 1.15em;
-    background-color: var(--vivid-cyan, #02EFF0);
+    background-color: var(--brand-accent, #C82B34);
     margin-inline-start: 2px;
     border-radius: 1px;
-    box-shadow: 0 0 8px var(--vivid-cyan, #02EFF0);
+    box-shadow: 0 0 8px rgba(200, 43, 52, 0.7);
     animation: cursorBlink 1s infinite;
   }
 

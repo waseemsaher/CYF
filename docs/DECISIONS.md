@@ -187,10 +187,14 @@
   - Canvas background switched to `ctx.clearRect(0, 0, width, height)` (completely transparent), allowing the video layer to show through.
   - Particle and connection line base alpha reduced (`0.16` base line alpha, `0.30` base dot alpha) to provide subtle texture without competing with video content.
   - Desktop mouse interaction tracked via section `mousemove` listener with pre-cached bounding offsets (zero DOM queries per event/frame). When pointer is fine (desktop), lines and dots within a 160px radius visibly brighten (line alpha boosted up to `0.85`, particle radius expanded by up to `+1.8px`, alpha up to `1.0`).
-- **Dark Storm Green Overlay & WCAG Contrast Fixes**:
-  - Radial gradient overlay (`rgba(15, 40, 47, 0.78)` at center to `rgba(15, 40, 47, 0.92)` at outer edges with `backdrop-filter: blur(2px)`) layered between canvas and content guarantees >13:1 contrast for all heading and body copy regardless of underlying video frames.
-  - **Primary CTA Button Contrast Fix**: Vivid Cyan background (`#02EFF0`) with Storm Green text (`#0F282F`) and icon achieves an exact **10.70:1 contrast ratio**, exceeding WCAG AAA requirements (contrast ratio ≥ 7.0:1).
-  - **Secondary CTA Button Contrast Fix**: Translucent Storm Green background (`rgba(15, 40, 47, 0.75)`) with pure white text (`#FFFFFF`) achieves **15.39:1 contrast ratio**, transitioning on hover to Vivid Cyan text (`#02EFF0`) at **10.70:1 contrast ratio**.
+- **Color Identity Harmonization with New Platform Palette**:
+  - Re-aligned hero surface and components with the new 7-color palette (`#E5E2DD`, `#FAF8F5`, `#D5CBC1`, `#1A1918`, `#6B6864`, `#2A3B6A`, `#C82B34`).
+  - Dark overlay updated to deep navy (`rgba(30, 43, 77, 0.78)`) fading into charcoal (`rgba(26, 25, 24, 0.92)`).
+  - Canvas particles render in warm secondary tone (`#D5CBC1`) and dynamically brighten on cursor proximity to rich crimson accent (`#C82B34`).
+  - Primary CTA styled with Brand Crimson (`#C82B34`) and pure white text (`#FFFFFF`) with 4.89:1 AA contrast ratio.
+  - Secondary CTA styled with translucent Navy (`rgba(42, 59, 106, 0.4)`) and warm white text (`#FAF8F5`) with >12:1 AAA contrast ratio.
+  - Typewriter badge and stats ribbon harmonized with translucent charcoal (`#1A1918`), crimson badge accents, and warm card white typography.
+
 - **Compliance & Copy Rectification**:
   - Removed "official" / "الرسمية" and university product affiliation claims from hero badges across Arabic and English locales. Reworded to "منصة تعليمية لطلاب حاسبات الأزهر" / "Educational Platform for FCAI Al-Azhar Students".
   - Normalized stats copy to "مقررات تخصصية متكاملة" / "Comprehensive Tech Courses" to eliminate implied external accreditation.

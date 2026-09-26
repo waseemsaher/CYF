@@ -37,14 +37,17 @@
     active: false
   };
 
-  // Vivid Cyan token extracted from CSS variables
-  let vividCyanRgb = '2, 239, 240';
+  // Brand tokens extracted from CSS variables
+  let brandAccentRgb = '200, 43, 52';
+  let secondaryRgb = '213, 203, 193';
 
   function readBrandTokens() {
     if (typeof window === 'undefined') return;
     const styles = getComputedStyle(document.documentElement);
-    const cyanRgb = styles.getPropertyValue('--vivid-cyan-rgb').trim();
-    if (cyanRgb) vividCyanRgb = cyanRgb;
+    const accent = styles.getPropertyValue('--brand-accent-rgb').trim();
+    const sec = styles.getPropertyValue('--bg-secondary-rgb').trim();
+    if (accent) brandAccentRgb = accent;
+    if (sec) secondaryRgb = sec;
   }
 
   function shouldLoadVideo(): boolean {
@@ -142,6 +145,7 @@
           // Subtle base opacity as texture over video
           let lineAlpha = (1 - dist / maxDist) * 0.16;
           let lineWidth = 1;
+          let strokeRgb = secondaryRgb;
 
           if (isMouseInteractive) {
             const midX = (p1.x + p2.x) * 0.5;
@@ -155,11 +159,12 @@
               const mFactor = 1 - mDist / mouse.radius;
               lineAlpha = Math.min(0.85, lineAlpha + mFactor * 0.45);
               lineWidth = 1 + mFactor * 0.75;
+              strokeRgb = brandAccentRgb;
             }
           }
 
           ctx.beginPath();
-          ctx.strokeStyle = `rgba(${vividCyanRgb}, ${lineAlpha})`;
+          ctx.strokeStyle = `rgba(${strokeRgb}, ${lineAlpha})`;
           ctx.lineWidth = lineWidth;
           ctx.moveTo(p1.x, p1.y);
           ctx.lineTo(p2.x, p2.y);
@@ -185,6 +190,7 @@
 
       let currentRadius = p.baseRadius;
       let dotAlpha = p.alpha;
+      let fillRgb = secondaryRgb;
 
       if (isMouseInteractive) {
         const mdx = p.x - mouse.x;
@@ -196,12 +202,13 @@
           const mFactor = 1 - mDist / mouse.radius;
           currentRadius += mFactor * 1.8;
           dotAlpha = Math.min(1.0, dotAlpha + mFactor * 0.55);
+          fillRgb = brandAccentRgb;
         }
       }
 
       ctx.beginPath();
       ctx.arc(p.x, p.y, currentRadius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${vividCyanRgb}, ${dotAlpha})`;
+      ctx.fillStyle = `rgba(${fillRgb}, ${dotAlpha})`;
       ctx.fill();
     }
   }
@@ -409,7 +416,7 @@
     overflow: hidden;
     pointer-events: none;
     z-index: 0;
-    background-color: var(--storm-green, #0F282F);
+    background-color: var(--text-main, #1A1918);
     background-image: url('/images/hero-poster.jpg');
     background-size: cover;
     background-position: center;
