@@ -218,8 +218,8 @@
 
   .btn-back {
     display: inline-block;
-    background: var(--brand-navy);
-    color: #FAF8F5;
+    background: var(--storm);
+    color: var(--cyan);
     padding: 0.6rem 1.25rem;
     border-radius: 0.5rem;
     text-decoration: none;
@@ -299,7 +299,7 @@
   }
 
   .section-header {
-    background: var(--paper);
+    background: #eef7f6;
     padding: 1rem 1.25rem;
     border-bottom: 2px solid var(--line);
     display: flex;
@@ -367,8 +367,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(var(--brand-navy-rgb), 0.08);
-    color: var(--brand-navy);
+    background: #eef7f6;
     border-radius: 0.5rem;
     font-size: 0.9rem;
     flex-shrink: 0;
@@ -416,7 +415,7 @@
   .btn-item:hover { opacity: 0.85; }
 
   .btn-link {
-    background: var(--paper);
+    background: #eef7f6;
     color: var(--deep-cyan);
     border: 2px solid var(--line);
   }

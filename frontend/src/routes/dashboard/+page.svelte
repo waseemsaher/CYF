@@ -387,17 +387,17 @@
     align-self: flex-start;
     font-size: 0.72rem;
     font-weight: 800;
-    background: rgba(var(--brand-navy-rgb), 0.08);
-    color: var(--brand-navy);
+    background: #eef7f6;
+    color: var(--deep-cyan);
     padding: 0.2rem 0.6rem;
     border-radius: 9999px;
-    border: 1px solid rgba(var(--brand-navy-rgb), 0.25);
+    border: 1px solid rgba(23, 119, 122, 0.25);
   }
 
   :global([data-theme='dark']) .badge-role {
-    background: rgba(91, 122, 199, 0.15);
-    color: var(--deep-cyan);
-    border-color: rgba(91, 122, 199, 0.3);
+    background: rgba(2, 239, 240, 0.12);
+    color: var(--cyan);
+    border-color: rgba(2, 239, 240, 0.3);
   }
 
   .user-greeting h1 {
@@ -429,8 +429,8 @@
   }
 
   .btn-primary {
-    background: var(--brand-navy);
-    color: #FAF8F5;
+    background: var(--storm);
+    color: var(--cyan);
     font-weight: 800;
     font-size: 0.92rem;
     padding: 0.65rem 1.25rem;
@@ -439,16 +439,13 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    border: 2px solid var(--brand-navy);
-    transition: transform 150ms ease, opacity 150ms ease, background-color 150ms ease, border-color 150ms ease;
+    border: 2px solid var(--storm);
+    transition: transform 150ms ease, opacity 150ms ease;
   }
 
   .btn-primary:hover {
     transform: translateY(-1px);
     opacity: 0.95;
-    background-color: var(--brand-accent);
-    border-color: var(--brand-accent);
-    color: #ffffff;
   }
 
   .btn-secondary {
@@ -528,8 +525,8 @@
   }
 
   .counter-badge {
-    background: rgba(var(--brand-navy-rgb), 0.08);
-    color: var(--brand-navy);
+    background: #eef7f6;
+    color: var(--deep-cyan);
     font-weight: 800;
     font-size: 0.8rem;
     padding: 0.15rem 0.5rem;
@@ -537,8 +534,8 @@
   }
 
   :global([data-theme='dark']) .counter-badge {
-    background: rgba(91, 122, 199, 0.15);
-    color: var(--deep-cyan);
+    background: rgba(2, 239, 240, 0.15);
+    color: var(--cyan);
   }
 
   .pending-badge {
@@ -623,8 +620,8 @@
   }
 
   .btn-go-course {
-    background: var(--brand-navy);
-    color: #FAF8F5;
+    background: var(--storm);
+    color: var(--cyan);
     font-size: 0.85rem;
     font-weight: 800;
     padding: 0.5rem 0.85rem;
@@ -634,13 +631,11 @@
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    transition: opacity 150ms ease, background-color 150ms ease;
+    transition: opacity 150ms ease;
   }
 
   .btn-go-course:hover {
-    opacity: 0.95;
-    background-color: var(--brand-accent);
-    color: #ffffff;
+    opacity: 0.9;
   }
 
   .empty-state-box {
@@ -675,21 +670,14 @@
   }
 
   .btn-browse-courses {
-    background: var(--brand-navy);
-    color: #FAF8F5;
+    background: var(--storm);
+    color: var(--cyan);
     font-size: 0.9rem;
     font-weight: 800;
     padding: 0.6rem 1.25rem;
     border-radius: 0.5rem;
     text-decoration: none;
     margin-top: 0.5rem;
-    transition: opacity 150ms ease, background-color 150ms ease;
-  }
-
-  .btn-browse-courses:hover {
-    opacity: 0.95;
-    background-color: var(--brand-accent);
-    color: #ffffff;
   }
 
   .pending-section {

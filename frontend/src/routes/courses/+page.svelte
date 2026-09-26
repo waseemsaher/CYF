@@ -542,7 +542,7 @@
   .catalog-hero {
     position: relative;
     overflow: hidden;
-    background: radial-gradient(135% 120% at 50% 0%, #1E2B4D 0%, #1A1918 100%);
+    background: radial-gradient(135% 120% at 50% 0%, #153842 0%, var(--storm) 100%);
     border: 2px solid var(--line);
     border-radius: 1.5rem;
     padding: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 4vw, 3rem);
@@ -551,17 +551,17 @@
   }
 
   :global(:root[data-theme='dark']) .catalog-hero {
-    background: radial-gradient(135% 120% at 50% 0%, #17223D 0%, #121211 100%);
-    border-color: rgba(91, 122, 199, 0.25);
+    background: radial-gradient(135% 120% at 50% 0%, #0d2830 0%, #081216 100%);
+    border-color: rgba(2, 239, 240, 0.25);
   }
 
   .hero-mesh-overlay {
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(rgba(213, 203, 193, 0.15) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(2, 239, 240, 0.15) 1px, transparent 1px);
     background-size: 24px 24px;
     pointer-events: none;
-    opacity: 0.4;
+    opacity: 0.5;
   }
 
   .catalog-hero-inner {
@@ -580,13 +580,13 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1.5px solid rgba(200, 43, 52, 0.35);
+    background: rgba(2, 239, 240, 0.12);
+    border: 1.5px solid rgba(2, 239, 240, 0.35);
     padding: 0.35rem 0.95rem;
     border-radius: 9999px;
     font-size: 0.8rem;
     font-weight: 700;
-    color: #FAF8F5;
+    color: #e2fbfb;
     backdrop-filter: blur(8px);
   }
 
@@ -594,8 +594,8 @@
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 50%;
-    background: var(--brand-accent);
-    box-shadow: 0 0 6px var(--brand-accent);
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
   }
 
   .catalog-title {
@@ -608,7 +608,7 @@
 
   .catalog-subtitle {
     font-size: clamp(0.95rem, 1.6vw, 1.05rem);
-    color: #D5CBC1;
+    color: #c9e4e2;
     line-height: 1.7;
     margin: 0;
   }
@@ -620,8 +620,8 @@
     justify-content: space-between;
     gap: 1.25rem;
     width: 100%;
-    background: rgba(26, 25, 24, 0.7);
-    border: 2px solid rgba(213, 203, 193, 0.3);
+    background: rgba(15, 40, 47, 0.7);
+    border: 2px solid rgba(2, 239, 240, 0.4);
     border-radius: 1rem;
     padding: 1.25rem 1.5rem;
     margin-top: 1rem;
@@ -642,7 +642,7 @@
 
   .admin-toolbar-info strong {
     display: block;
-    color: var(--brand-accent);
+    color: var(--cyan);
     font-size: 0.95rem;
     font-weight: 800;
   }
@@ -650,17 +650,17 @@
   .admin-toolbar-info p {
     margin: 0;
     font-size: 0.82rem;
-    color: #D5CBC1;
+    color: #c5dfdc;
   }
 
   .btn-create-course {
-    background: var(--brand-accent);
-    color: #ffffff;
+    background: var(--cyan);
+    color: var(--storm);
     font-weight: 800;
     font-size: 0.92rem;
     padding: 0.65rem 1.25rem;
     border-radius: 0.5rem;
-    border: 2px solid var(--brand-accent);
+    border: 2px solid var(--cyan);
     cursor: pointer;
     font-family: inherit;
     transition: transform 120ms ease, box-shadow 120ms ease;
@@ -668,7 +668,7 @@
 
   .btn-create-course:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 18px rgba(var(--brand-accent-rgb), 0.5);
+    box-shadow: 0 0 18px rgba(2, 239, 240, 0.5);
   }
 
   /* ---------------- CONTROLS & FILTERS ---------------- */
@@ -751,22 +751,21 @@
   }
 
   .btn-apply-filters {
-    background: var(--brand-navy);
-    color: #FAF8F5;
-    border: 2px solid var(--brand-navy);
+    background: var(--storm);
+    color: var(--cyan);
+    border: 2px solid var(--storm);
     padding: 0.65rem 1.35rem;
     border-radius: 0.6rem;
     font-size: 0.9rem;
     font-weight: 800;
     cursor: pointer;
     font-family: inherit;
-    transition: transform 120ms ease, opacity 120ms ease, background-color 120ms ease;
+    transition: transform 120ms ease, opacity 120ms ease;
   }
 
   .btn-apply-filters:hover {
     transform: translateY(-1px);
     opacity: 0.95;
-    background-color: #1E2B4D;
   }
 
   .btn-reset-filters {
@@ -823,8 +822,8 @@
   }
 
   :global(:root[data-theme='dark']) .course-card-premium:hover {
-    border-color: var(--brand-accent);
-    box-shadow: 0 10px 30px rgba(var(--brand-accent-rgb), 0.15);
+    border-color: var(--cyan);
+    box-shadow: 0 10px 30px rgba(2, 239, 240, 0.12);
   }
 
   .course-admin-card {
@@ -856,9 +855,9 @@
   }
 
   :global(:root[data-theme='dark']) .course-code-pill {
-    color: var(--deep-cyan);
-    background: rgba(91, 122, 199, 0.15);
-    border-color: rgba(91, 122, 199, 0.3);
+    color: var(--cyan);
+    background: rgba(2, 239, 240, 0.1);
+    border-color: rgba(2, 239, 240, 0.25);
   }
 
   .pill-discount {
@@ -962,26 +961,23 @@
   }
 
   .btn-explore-course {
-    background: var(--brand-navy);
-    color: #FAF8F5;
+    background: var(--storm);
+    color: var(--cyan);
     font-size: 0.88rem;
     font-weight: 800;
     padding: 0.55rem 1.15rem;
     border-radius: 0.5rem;
-    border: 2px solid var(--brand-navy);
+    border: 2px solid var(--storm);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    transition: transform 120ms ease, opacity 120ms ease, background-color 120ms ease, border-color 120ms ease;
+    transition: transform 120ms ease, opacity 120ms ease;
   }
 
   .btn-explore-course:hover {
     transform: translateY(-1px);
     opacity: 0.95;
-    background-color: var(--brand-accent);
-    border-color: var(--brand-accent);
-    color: #ffffff;
   }
 
   .btn-arrow {
@@ -1032,9 +1028,9 @@
   }
 
   .btn-adm-edit {
-    background: var(--brand-navy);
-    color: #FAF8F5;
-    border: 2px solid var(--brand-navy);
+    background: var(--storm);
+    color: var(--cyan);
+    border: 2px solid var(--storm);
   }
 
   .btn-adm-content {
@@ -1085,9 +1081,9 @@
   }
 
   .btn-clear-search {
-    background: var(--brand-navy);
-    color: #FAF8F5;
-    border: 2px solid var(--brand-navy);
+    background: var(--storm);
+    color: var(--cyan);
+    border: 2px solid var(--storm);
     padding: 0.65rem 1.35rem;
     border-radius: 0.5rem;
     font-weight: 800;
@@ -1140,7 +1136,7 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(26, 25, 24, 0.65);
+    background: rgba(15, 40, 47, 0.65);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
@@ -1255,9 +1251,9 @@
   }
 
   .btn-save {
-    background: var(--brand-navy);
-    color: #FAF8F5;
-    border: 2px solid var(--brand-navy);
+    background: var(--storm);
+    color: var(--cyan);
+    border: 2px solid var(--storm);
     padding: 0.6rem 1.5rem;
     border-radius: 0.5rem;
     font-weight: 800;

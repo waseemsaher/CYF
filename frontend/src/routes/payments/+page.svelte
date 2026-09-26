@@ -136,20 +136,15 @@
     display: inline-block;
     margin-top: 1rem;
     padding: 0.65rem 1.6rem;
-    background: var(--brand-navy);
-    color: #FAF8F5;
+    background: var(--storm);
+    color: var(--cyan);
     text-decoration: none;
     border-radius: 0.5rem;
     font-weight: 700;
-    border: 2px solid var(--brand-navy);
-    transition: opacity 150ms ease, background-color 150ms ease;
+    border: 2px solid var(--storm);
+    transition: opacity 150ms ease;
   }
-  .btn-login-cta:hover {
-    opacity: 0.95;
-    background-color: var(--brand-accent);
-    border-color: var(--brand-accent);
-    color: #ffffff;
-  }
+  .btn-login-cta:hover { opacity: 0.9; }
   .payments-list { display: grid; gap: 0.75rem; }
   .payment-card { background: var(--card); border: 2px solid var(--line); border-radius: 0.75rem; padding: 1.25rem; }
   .payment-header { align-items: center; display: flex; justify-content: space-between; margin-bottom: 1rem; }

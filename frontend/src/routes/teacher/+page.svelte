@@ -221,13 +221,13 @@
   }
 
   .role-badge {
-    background: rgba(var(--brand-navy-rgb), 0.08);
-    color: var(--brand-navy);
+    background: #eef7f6;
+    color: var(--deep-cyan);
     font-weight: 700;
     font-size: 0.78rem;
     padding: 0.2rem 0.65rem;
     border-radius: 9999px;
-    border: 2px solid rgba(var(--brand-navy-rgb), 0.25);
+    border: 2px solid rgba(23, 119, 122, 0.25);
   }
 
   .page-header h1 {
@@ -337,8 +337,8 @@
   .share-badge {
     font-size: 0.75rem;
     font-weight: 700;
-    background: rgba(var(--brand-navy-rgb), 0.08);
-    color: var(--brand-navy);
+    background: #eef7f6;
+    color: var(--deep-cyan);
     padding: 0.2rem 0.5rem;
     border-radius: 0.25rem;
   }
@@ -415,14 +415,14 @@
   }
 
   .data-table th {
-    background: var(--paper);
+    background: #eef7f6;
     color: var(--storm);
     font-weight: 700;
     font-size: 0.82rem;
   }
 
   .data-table tr:hover td {
-    background: var(--card-hover);
+    background: #f8fafc;
   }
 
   .muted-cell {

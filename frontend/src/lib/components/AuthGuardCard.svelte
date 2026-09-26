@@ -160,9 +160,9 @@
   }
 
   .lock-bubble {
-    background: rgba(var(--brand-navy-rgb), 0.08);
-    color: var(--brand-navy);
-    border: 2px solid rgba(var(--brand-navy-rgb), 0.25);
+    background: #eef8f8;
+    color: #17777a;
+    border: 2px solid #bce1df;
   }
 
   .shield-bubble {
@@ -207,23 +207,20 @@
   }
 
   .btn-guard-primary {
-    background: var(--brand-navy);
-    color: #FAF8F5;
+    background: var(--storm);
+    color: var(--cyan);
     padding: 0.75rem 1.6rem;
     border-radius: 0.6rem;
     font-weight: 700;
     font-size: 0.95rem;
     text-decoration: none;
-    border: 2px solid var(--brand-navy);
+    border: 2px solid var(--storm);
     cursor: pointer;
-    transition: opacity 150ms ease, background-color 150ms ease;
+    transition: opacity 150ms ease;
   }
 
   .btn-guard-primary:hover {
-    opacity: 0.95;
-    background-color: var(--brand-accent);
-    border-color: var(--brand-accent);
-    color: #ffffff;
+    opacity: 0.9;
   }
 
   .btn-guard-secondary {
@@ -240,13 +237,13 @@
   }
 
   .btn-guard-secondary:hover {
-    background: var(--card-hover);
+    background: #e2edea;
   }
 
   .dev-hint-box {
     margin-top: 1rem;
     padding: 0.85rem 1rem;
-    background: var(--paper);
+    background: #f8fafc;
     border: 2px dashed var(--line);
     border-radius: 0.6rem;
     width: 100%;

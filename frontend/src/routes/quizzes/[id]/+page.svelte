@@ -249,8 +249,8 @@
   .quiz-type-badge {
     font-size: 0.78rem;
     font-weight: 700;
-    background: rgba(var(--brand-navy-rgb), 0.08);
-    color: var(--brand-navy);
+    background: #eef7f6;
+    color: var(--deep-cyan);
     padding: 0.2rem 0.5rem;
     border-radius: 0.25rem;
   }
@@ -371,7 +371,7 @@
 
   .option-label.selected {
     border-color: var(--deep-cyan);
-    background: rgba(var(--brand-navy-rgb), 0.08);
+    background: #eef7f6;
     font-weight: 600;
     color: var(--deep-cyan);
   }
@@ -392,22 +392,21 @@
   }
 
   .btn-submit-quiz {
-    background: var(--brand-navy);
-    color: #FAF8F5;
+    background: var(--storm);
+    color: var(--cyan);
     font-weight: 800;
     font-size: 1rem;
     padding: 0.85rem 2rem;
     border-radius: 0.5rem;
-    border: 2px solid var(--brand-navy);
+    border: 2px solid var(--storm);
     cursor: pointer;
-    transition: opacity 150ms ease, transform 150ms ease, background-color 150ms ease;
+    transition: opacity 150ms ease, transform 150ms ease;
     width: 100%;
   }
 
   .btn-submit-quiz:hover:not(:disabled) {
     opacity: 0.95;
     transform: translateY(-1px);
-    background-color: #1E2B4D;
   }
 
   .btn-submit-quiz:disabled {

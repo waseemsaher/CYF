@@ -280,10 +280,10 @@
     color: var(--deep-cyan);
     font-size: 0.8rem;
     font-weight: 800;
-    background: rgba(var(--brand-navy-rgb), 0.08);
+    background: #eef7f6;
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
-    border: 1px solid rgba(var(--brand-navy-rgb), 0.2);
+    border: 1px solid rgba(23, 119, 122, 0.2);
     margin-bottom: 0.75rem;
   }
 
@@ -369,7 +369,7 @@
   select:focus {
     border-color: var(--deep-cyan);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(var(--brand-navy-rgb), 0.15);
+    box-shadow: 0 0 0 3px rgba(23, 119, 122, 0.15);
   }
 
   .radio-toggle {
@@ -400,13 +400,13 @@
 
   .radio-label.selected {
     border-color: var(--deep-cyan);
-    background: rgba(var(--brand-navy-rgb), 0.08);
+    background: #eef7f6;
     color: var(--deep-cyan);
   }
 
   .btn-submit {
-    background: var(--brand-navy);
-    color: #FAF8F5;
+    background: var(--storm);
+    color: var(--cyan);
     border: none;
     font-weight: 800;
     font-size: 1.05rem;
@@ -418,13 +418,12 @@
     justify-content: center;
     gap: 0.5rem;
     margin-top: 0.75rem;
-    transition: opacity 150ms ease, transform 150ms ease, background-color 150ms ease;
+    transition: opacity 150ms ease, transform 150ms ease;
   }
 
   .btn-submit:hover:not(:disabled) {
     transform: translateY(-2px);
     opacity: 0.95;
-    background-color: #1E2B4D;
   }
 
   .btn-submit:disabled {
