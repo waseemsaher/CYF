@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Domain\Payments\Actions;
 
 use App\Jobs\SendTelegramNotificationJob;
+use App\Mail\PaymentApprovedMail;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class ApprovePayment
 {
@@ -81,8 +83,13 @@ class ApprovePayment
                 ])
                 ->log('payment_approved');
 
-            // Notify via Telegram if linked
+            // Dispatch queued approval email
             $student = $payment->user;
+            if ($student && $student->email) {
+                Mail::to($student->email)->queue(new PaymentApprovedMail($payment));
+            }
+
+            // Notify via Telegram if linked
             if ($student && $student->telegram_user_id) {
                 $course = $payment->course;
                 $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;

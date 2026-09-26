@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Mail\PaymentApprovedMail;
+use App\Mail\PaymentRejectedMail;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
@@ -9,6 +11,7 @@ use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -198,4 +201,36 @@ it('detects duplicate proof hashes', function (): void {
     foreach ($payments as $p) {
         expect($p['has_duplicate_proof'])->toBeTrue();
     }
+});
+
+it('queues PaymentApprovedMail when admin approves a payment', function (): void {
+    Mail::fake();
+    $data = setupAdminPaymentTestData();
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertOk();
+
+    Mail::assertQueued(PaymentApprovedMail::class, function (PaymentApprovedMail $mail) use ($data): bool {
+        return $mail->hasTo($data['student']->email)
+            && $mail->payment->is($data['payment']);
+    });
+});
+
+it('queues PaymentRejectedMail when admin rejects a payment', function (): void {
+    Mail::fake();
+    $data = setupAdminPaymentTestData();
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'Invalid transaction reference',
+        ]);
+
+    $response->assertOk();
+
+    Mail::assertQueued(PaymentRejectedMail::class, function (PaymentRejectedMail $mail) use ($data): bool {
+        return $mail->hasTo($data['student']->email)
+            && $mail->payment->is($data['payment']);
+    });
 });
