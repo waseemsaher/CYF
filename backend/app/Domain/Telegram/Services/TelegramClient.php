@@ -75,6 +75,16 @@ class TelegramClient
     }
 
     /**
+     * Get information about a chat (channel, group, etc.) to verify bot access.
+     */
+    public function getChat(int|string $chatId): Response
+    {
+        return $this->post('getChat', [
+            'chat_id' => $chatId,
+        ]);
+    }
+
+    /**
      * @param  list<string>  $allowedUpdates
      */
     public function setWebhook(string $url, string $secretToken, array $allowedUpdates = ['message', 'chat_join_request']): Response

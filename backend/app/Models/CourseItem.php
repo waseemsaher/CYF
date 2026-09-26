@@ -28,6 +28,7 @@ class CourseItem extends Model
         'url',
         'file_path',
         'quiz_id',
+        'telegram_message_id',
         'position',
         'is_published',
     ];
@@ -42,6 +43,7 @@ class CourseItem extends Model
             'description' => 'array',
             'position' => 'integer',
             'is_published' => 'boolean',
+            'telegram_message_id' => 'integer',
         ];
     }
 

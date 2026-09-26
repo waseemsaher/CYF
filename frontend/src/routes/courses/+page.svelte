@@ -174,14 +174,18 @@
       {#if isAdmin}
         <div class="admin-toolbar-card">
           <div class="admin-toolbar-info">
-            <span class="admin-shield-icon">🛡️</span>
+            <span class="admin-shield-icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </span>
             <div>
               <strong>صلاحيات إدارة المقررات</strong>
               <p>يمكنك إنشاء مقررات جديدة أو تعديل المحتوى والأسعار مباشرة من هنا.</p>
             </div>
           </div>
           <button type="button" class="btn-create-course" onclick={openCreateModal}>
-            <span>➕ إضافة مقرر دراسي جديد</span>
+            <span>إضافة مقرر دراسي جديد</span>
           </button>
         </div>
       {/if}
@@ -231,7 +235,7 @@
 
       {#if data.selectedAcademicYear || data.selectedDepartment}
         <a href="/courses" class="btn-reset-filters">
-          <span>إلغاء التصفية ✕</span>
+          <span>إلغاء التصفية</span>
         </a>
       {/if}
     </form>
@@ -240,12 +244,21 @@
   <!-- Courses Grid or Empty State -->
   {#if data.error}
     <div class="notice-box error" role="alert">
-      <span>⚠️</span>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
       <p>{data.error}</p>
     </div>
   {:else if filteredCourses.length === 0}
     <div class="empty-catalog-box">
-      <div class="empty-icon" aria-hidden="true">🔍</div>
+      <div class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
       <h3>لا توجد مقررات مطابقة للبحث أو الفلتر المحدد</h3>
       <p>جرب تغيير خيارات التصفية أو مسح كلمة البحث للعثور على المقررات المتاحة.</p>
       {#if searchQuery || data.selectedAcademicYear || data.selectedDepartment}
@@ -310,13 +323,13 @@
                   onclick={() => openEditModal(course)}
                   title="تعديل بيانات المقرر"
                 >
-                  ✏️ تعديل
+                  تعديل
                 </button>
                 <a href={`/my-courses/${course.slug}`} class="btn-adm-content" title="إدارة المحتوى">
-                  📂 المحتوى
+                  المحتوى
                 </a>
                 <a href={`/courses/${course.slug}`} class="btn-adm-view" title="عرض كما يظهر للطلاب">
-                  👁️ عرض
+                  عرض
                 </a>
               </div>
             </div>
@@ -379,12 +392,16 @@
     >
       <div class="modal-header">
         <h2>{isEditing ? 'تعديل بيانات المقرر' : 'إضافة مقرر دراسي جديد'}</h2>
-        <button type="button" class="btn-close-modal" onclick={closeModal} aria-label="إغلاق">✕</button>
+        <button type="button" class="btn-close-modal" onclick={closeModal} aria-label="إغلاق">&times;</button>
       </div>
 
       {#if modalError}
         <div class="modal-error-banner" role="alert">
-          <span>⚠️</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
           <p>{modalError}</p>
         </div>
       {/if}
@@ -525,7 +542,7 @@
   .catalog-hero {
     position: relative;
     overflow: hidden;
-    background: radial-gradient(135% 120% at 50% 0%, #153842 0%, var(--storm) 100%);
+    background: radial-gradient(135% 120% at 50% 0%, #1E2B4D 0%, #1A1918 100%);
     border: 2px solid var(--line);
     border-radius: 1.5rem;
     padding: clamp(2.5rem, 5vw, 4rem) clamp(1.5rem, 4vw, 3rem);
@@ -534,17 +551,17 @@
   }
 
   :global(:root[data-theme='dark']) .catalog-hero {
-    background: radial-gradient(135% 120% at 50% 0%, #0d2830 0%, #081216 100%);
-    border-color: rgba(2, 239, 240, 0.25);
+    background: radial-gradient(135% 120% at 50% 0%, #17223D 0%, #121211 100%);
+    border-color: rgba(91, 122, 199, 0.25);
   }
 
   .hero-mesh-overlay {
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(rgba(2, 239, 240, 0.15) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(213, 203, 193, 0.15) 1px, transparent 1px);
     background-size: 24px 24px;
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 0.4;
   }
 
   .catalog-hero-inner {
@@ -563,13 +580,13 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(2, 239, 240, 0.12);
-    border: 1.5px solid rgba(2, 239, 240, 0.35);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(200, 43, 52, 0.35);
     padding: 0.35rem 0.95rem;
     border-radius: 9999px;
     font-size: 0.8rem;
     font-weight: 700;
-    color: #e2fbfb;
+    color: #FAF8F5;
     backdrop-filter: blur(8px);
   }
 
@@ -577,8 +594,8 @@
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 50%;
-    background: var(--cyan);
-    box-shadow: 0 0 6px var(--cyan);
+    background: var(--brand-accent);
+    box-shadow: 0 0 6px var(--brand-accent);
   }
 
   .catalog-title {
@@ -591,7 +608,7 @@
 
   .catalog-subtitle {
     font-size: clamp(0.95rem, 1.6vw, 1.05rem);
-    color: #c9e4e2;
+    color: #D5CBC1;
     line-height: 1.7;
     margin: 0;
   }
@@ -603,8 +620,8 @@
     justify-content: space-between;
     gap: 1.25rem;
     width: 100%;
-    background: rgba(15, 40, 47, 0.7);
-    border: 2px solid rgba(2, 239, 240, 0.4);
+    background: rgba(26, 25, 24, 0.7);
+    border: 2px solid rgba(213, 203, 193, 0.3);
     border-radius: 1rem;
     padding: 1.25rem 1.5rem;
     margin-top: 1rem;
@@ -625,7 +642,7 @@
 
   .admin-toolbar-info strong {
     display: block;
-    color: var(--cyan);
+    color: var(--brand-accent);
     font-size: 0.95rem;
     font-weight: 800;
   }
@@ -633,17 +650,17 @@
   .admin-toolbar-info p {
     margin: 0;
     font-size: 0.82rem;
-    color: #c5dfdc;
+    color: #D5CBC1;
   }
 
   .btn-create-course {
-    background: var(--cyan);
-    color: var(--storm);
+    background: var(--brand-accent);
+    color: #ffffff;
     font-weight: 800;
     font-size: 0.92rem;
     padding: 0.65rem 1.25rem;
     border-radius: 0.5rem;
-    border: 2px solid var(--cyan);
+    border: 2px solid var(--brand-accent);
     cursor: pointer;
     font-family: inherit;
     transition: transform 120ms ease, box-shadow 120ms ease;
@@ -651,7 +668,7 @@
 
   .btn-create-course:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 18px rgba(2, 239, 240, 0.5);
+    box-shadow: 0 0 18px rgba(var(--brand-accent-rgb), 0.5);
   }
 
   /* ---------------- CONTROLS & FILTERS ---------------- */
@@ -734,21 +751,22 @@
   }
 
   .btn-apply-filters {
-    background: var(--storm);
-    color: var(--cyan);
-    border: 2px solid var(--storm);
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border: 2px solid var(--brand-navy);
     padding: 0.65rem 1.35rem;
     border-radius: 0.6rem;
     font-size: 0.9rem;
     font-weight: 800;
     cursor: pointer;
     font-family: inherit;
-    transition: transform 120ms ease, opacity 120ms ease;
+    transition: transform 120ms ease, opacity 120ms ease, background-color 120ms ease;
   }
 
   .btn-apply-filters:hover {
     transform: translateY(-1px);
     opacity: 0.95;
+    background-color: #1E2B4D;
   }
 
   .btn-reset-filters {
@@ -805,8 +823,8 @@
   }
 
   :global(:root[data-theme='dark']) .course-card-premium:hover {
-    border-color: var(--cyan);
-    box-shadow: 0 10px 30px rgba(2, 239, 240, 0.12);
+    border-color: var(--brand-accent);
+    box-shadow: 0 10px 30px rgba(var(--brand-accent-rgb), 0.15);
   }
 
   .course-admin-card {
@@ -838,9 +856,9 @@
   }
 
   :global(:root[data-theme='dark']) .course-code-pill {
-    color: var(--cyan);
-    background: rgba(2, 239, 240, 0.1);
-    border-color: rgba(2, 239, 240, 0.25);
+    color: var(--deep-cyan);
+    background: rgba(91, 122, 199, 0.15);
+    border-color: rgba(91, 122, 199, 0.3);
   }
 
   .pill-discount {
@@ -944,23 +962,26 @@
   }
 
   .btn-explore-course {
-    background: var(--storm);
-    color: var(--cyan);
+    background: var(--brand-navy);
+    color: #FAF8F5;
     font-size: 0.88rem;
     font-weight: 800;
     padding: 0.55rem 1.15rem;
     border-radius: 0.5rem;
-    border: 2px solid var(--storm);
+    border: 2px solid var(--brand-navy);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    transition: transform 120ms ease, opacity 120ms ease;
+    transition: transform 120ms ease, opacity 120ms ease, background-color 120ms ease, border-color 120ms ease;
   }
 
   .btn-explore-course:hover {
     transform: translateY(-1px);
     opacity: 0.95;
+    background-color: var(--brand-accent);
+    border-color: var(--brand-accent);
+    color: #ffffff;
   }
 
   .btn-arrow {
@@ -1011,9 +1032,9 @@
   }
 
   .btn-adm-edit {
-    background: var(--storm);
-    color: var(--cyan);
-    border: 2px solid var(--storm);
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border: 2px solid var(--brand-navy);
   }
 
   .btn-adm-content {
@@ -1064,9 +1085,9 @@
   }
 
   .btn-clear-search {
-    background: var(--storm);
-    color: var(--cyan);
-    border: 2px solid var(--storm);
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border: 2px solid var(--brand-navy);
     padding: 0.65rem 1.35rem;
     border-radius: 0.5rem;
     font-weight: 800;
@@ -1119,7 +1140,7 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 40, 47, 0.65);
+    background: rgba(26, 25, 24, 0.65);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
@@ -1234,9 +1255,9 @@
   }
 
   .btn-save {
-    background: var(--storm);
-    color: var(--cyan);
-    border: 2px solid var(--storm);
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border: 2px solid var(--brand-navy);
     padding: 0.6rem 1.5rem;
     border-radius: 0.5rem;
     font-weight: 800;

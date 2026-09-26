@@ -24,14 +24,21 @@ class RemoveExpiredMembers
     public function handle(): int
     {
         $coursesWithChats = Course::query()
-            ->whereNotNull('telegram_chat_id')
+            ->where(function ($query): void {
+                $query->whereNotNull('telegram_channel_id')
+                    ->orWhereNotNull('telegram_group_id');
+            })
             ->get();
 
         $removedCount = 0;
 
         foreach ($coursesWithChats as $course) {
-            $chatId = $course->telegram_chat_id;
-            if (! $chatId) {
+            $chatIds = array_filter([
+                $course->telegram_channel_id,
+                $course->telegram_group_id,
+            ]);
+
+            if (empty($chatIds)) {
                 continue;
             }
 
@@ -75,17 +82,23 @@ class RemoveExpiredMembers
                     continue;
                 }
 
-                // Kick the user from the Telegram group (ban + unban)
-                $success = $this->client->kickChatMember($chatId, (int) $user->telegram_user_id);
+                // Kick the user from all configured Telegram chats (channel + group)
+                $kicked = false;
+                foreach ($chatIds as $chatId) {
+                    $success = $this->client->kickChatMember($chatId, (int) $user->telegram_user_id);
+                    if ($success) {
+                        $kicked = true;
+                        Log::info("Removed expired user #{$user->id} from course #{$course->id} Telegram chat #{$chatId}");
+                    }
+                }
 
-                if ($success) {
+                if ($kicked) {
                     $removedCount++;
-                    Log::info("Removed expired user #{$user->id} from course #{$course->id} Telegram group #{$chatId}");
 
                     activity('telegram')
                         ->performedOn($course)
                         ->causedBy($user)
-                        ->log("Removed expired/revoked member User #{$user->id} from course Telegram chat");
+                        ->log("Removed expired/revoked member User #{$user->id} from course Telegram chats");
                 }
             }
         }

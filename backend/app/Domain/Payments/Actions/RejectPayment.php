@@ -32,7 +32,7 @@ class RejectPayment
         if ($student && $student->telegram_user_id) {
             $courseTitle = $payment->course->getTranslation('title', 'ar') ?: $payment->course->slug;
 
-            $msg = "⚠️ نأسف، تم رفض إيصال الدفع لمادة: <b>{$courseTitle}</b>.\nالسبب: <i>{$reason}</i>\nيمكنك إعادة رفع إيصال صحيح من حسابك.\n\nYour payment proof was rejected. Reason: {$reason}";
+            $msg = "نأسف، تم رفض إيصال الدفع لمادة: <b>{$courseTitle}</b>.\nالسبب: <i>{$reason}</i>\nيمكنك إعادة رفع إيصال صحيح من حسابك.\n\nYour payment proof was rejected. Reason: {$reason}";
 
             SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg);
         }

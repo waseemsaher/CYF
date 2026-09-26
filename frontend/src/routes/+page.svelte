@@ -1,5 +1,9 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import HeroCanvas from '$lib/components/HeroCanvas.svelte';
+  import HeroTypewriter from '$lib/components/HeroTypewriter.svelte';
+  import { currentHeroTranslations, currentLocale } from '$lib/i18n';
+  import { currentUser } from '$lib/api/auth';
 
   let { data }: { data: PageData } = $props();
 
@@ -39,90 +43,87 @@
   />
 </svelte:head>
 
-<div class="landing-container">
-  <!-- Immersive Hero Section -->
-  <section class="hero-section">
-    <div class="hero-bg-grid" aria-hidden="true"></div>
-    <div class="hero-glow-sphere top-glow" aria-hidden="true"></div>
-    <div class="hero-glow-sphere bottom-glow" aria-hidden="true"></div>
+  <!-- Immersive Tech-Forward Full-Bleed Hero Section -->
+  <section class="hero-section" aria-label="مقدمة المنصة">
+    <HeroCanvas />
+    <div class="hero-overlay" aria-hidden="true"></div>
 
     <div class="hero-content">
       <div class="badge-pill">
-        <span class="badge-pulse"></span>
-        <span class="badge-text">منصة Codeera التعليمية الرسمية</span>
+        <span class="badge-pulse" aria-hidden="true"></span>
+        <span class="badge-text">{$currentHeroTranslations.badge}</span>
       </div>
 
       <h1 class="hero-title">
-        شروحات برمجية مركزة، <br />
-        <span class="hero-gradient-text">خطوتك الواثقة نحو الامتياز الأكاديمي.</span>
+        <span>{$currentHeroTranslations.titlePrefix}</span><br />
+        <span class="hero-cyan-gradient">{$currentHeroTranslations.titleHighlight}</span>
       </h1>
 
+      <HeroTypewriter
+        prefix={$currentHeroTranslations.typewriterPrefix}
+        phrases={$currentHeroTranslations.typewriterPhrases}
+      />
+
       <p class="hero-description">
-        {data.whyUs?.ar ??
-          'محتوى دراسي منظم ومصور يغطي مناهج الكلية بدقة، مجموعات تليجرام مقفولة للمناقشة المستمرة مع المحاضرين، واختبارات تفاعلية تقيس استيعابك للمقرر أولاً بأول.'}
+        {$currentHeroTranslations.subheading}
       </p>
 
       <div class="hero-actions">
         <a href="/courses" class="btn-hero-primary">
-          <span>تصفح المقررات الدراسية</span>
-          <svg class="hero-btn-arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <span>{$currentHeroTranslations.primaryCta}</span>
+          <svg class="hero-btn-arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
         </a>
-        <a href="/login" class="btn-hero-secondary">
-          <span>تسجيل الدخول</span>
-        </a>
+
+        {#if $currentUser}
+          <a href="/dashboard" class="btn-hero-secondary">
+            <span>{$currentHeroTranslations.dashboardCta}</span>
+          </a>
+        {:else}
+          <a href="/register" class="btn-hero-secondary">
+            <span>{$currentHeroTranslations.secondaryCta}</span>
+          </a>
+        {/if}
       </div>
 
       <!-- Glassmorphic Stats Ribbon -->
       <div class="stats-glass-bar">
-        <div class="stat-pill">
-          <div class="stat-icon-wrap" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-            </svg>
+        {#each $currentHeroTranslations.stats as stat, i}
+          {#if i > 0}
+            <div class="stat-separator" aria-hidden="true"></div>
+          {/if}
+          <div class="stat-pill">
+            <div class="stat-icon-wrap" aria-hidden="true">
+              {#if i === 0}
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+              {:else if i === 1}
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              {:else}
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+              {/if}
+            </div>
+            <div class="stat-details">
+              <strong class="stat-number">{stat.value}</strong>
+              <span class="stat-label">{stat.label}</span>
+            </div>
           </div>
-          <div class="stat-details">
-            <strong class="stat-number">+10</strong>
-            <span class="stat-label">مقررات تخصصية معتمدة</span>
-          </div>
-        </div>
-
-        <div class="stat-separator" aria-hidden="true"></div>
-
-        <div class="stat-pill">
-          <div class="stat-icon-wrap" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-          </div>
-          <div class="stat-details">
-            <strong class="stat-number">100%</strong>
-            <span class="stat-label">مجموعات تليجرام مقفولة</span>
-          </div>
-        </div>
-
-        <div class="stat-separator" aria-hidden="true"></div>
-
-        <div class="stat-pill">
-          <div class="stat-icon-wrap" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-            </svg>
-          </div>
-          <div class="stat-details">
-            <strong class="stat-number">فوري</strong>
-            <span class="stat-label">قبول آلي عبر البوت</span>
-          </div>
-        </div>
+        {/each}
       </div>
     </div>
   </section>
 
-  <!-- How It Works Section -->
-  <section class="steps-section" aria-labelledby="steps-title">
+  <div class="landing-container">
+    <!-- How It Works Section -->
+    <section class="steps-section" aria-labelledby="steps-title">
     <div class="section-heading-center">
       <span class="eyebrow-pill">خطوات سريعة</span>
       <h2 id="steps-title" class="section-title">كيف تبدأ دراستك معنا؟</h2>
@@ -247,25 +248,45 @@
 
     <div class="features-grid">
       <div class="feature-item">
-        <div class="feature-icon-box">🎓</div>
+        <div class="feature-icon-box" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path>
+          </svg>
+        </div>
         <h3>تغطية شاملة لمقررات الكلية</h3>
         <p>محتوى مصور ومكتوب متوافق 100% مع توصيف المقررات الأكاديمية والمناهج المعتمدة.</p>
       </div>
 
       <div class="feature-item">
-        <div class="feature-icon-box">⚡</div>
+        <div class="feature-icon-box" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
         <h3>انضمام آلي وفوري للمجموعات</h3>
         <p>لا داعي لانتظار قبول المشرفين، بوت المنصة يفحص حالتك ويقبلك تلقائياً فور الاعتماد.</p>
       </div>
 
       <div class="feature-item">
-        <div class="feature-icon-box">🧠</div>
+        <div class="feature-icon-box" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
         <h3>اختبارات تقييم ذاتي ذكية</h3>
         <p>اختبر معلوماتك بعد كل باب دراسي عبر نظام كويزات تفاعلي يعرض نتيجتك وحلول الأسئلة.</p>
       </div>
 
       <div class="feature-item">
-        <div class="feature-icon-box">🔒</div>
+        <div class="feature-icon-box" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
         <h3>دفع آمن ومعالجة مباشرة</h3>
         <p>ادفع عبر المحافظ الإلكترونية المألوفة (فودافون كاش، إنستاباي) مع نظام توثيق فوري للإيصالات.</p>
       </div>
@@ -327,67 +348,56 @@
     gap: 5rem;
     max-width: 1200px;
     margin-inline: auto;
-    padding: 1.5rem 1.25rem 5rem;
+    padding: 5rem 1.25rem;
   }
 
-  /* ---------------- HERO SECTION ---------------- */
+  /* ---------------- HERO SECTION (Full-Bleed Layered Video + Particle Canvas) ---------------- */
   .hero-section {
     position: relative;
     overflow: hidden;
-    background: radial-gradient(135% 120% at 50% 0%, #153842 0%, var(--storm) 100%);
-    border: 2px solid var(--line);
-    border-radius: 1.75rem;
-    padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 3.5rem);
-    color: white;
-    box-shadow: 0 16px 40px -10px rgba(15, 40, 47, 0.4);
+    min-height: 100dvh;
+    width: 100%;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(4rem, 8vw, 6rem) clamp(1.5rem, 5vw, 3.5rem);
+    box-sizing: border-box;
+    background: radial-gradient(135% 120% at 50% 0%, #1E2B4D 0%, #1A1918 100%);
+    background-color: var(--text-main, #1A1918);
+    color: #FAF8F5;
   }
 
   :global(:root[data-theme='dark']) .hero-section {
-    background: radial-gradient(135% 120% at 50% 0%, #0d2830 0%, #081216 100%);
-    border-color: rgba(2, 239, 240, 0.25);
-    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
+    border: none;
+    box-shadow: none;
   }
 
-  .hero-bg-grid {
+  /* Semi-transparent Navy-to-Charcoal overlay for guaranteed WCAG AA+ contrast */
+  .hero-overlay {
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(rgba(2, 239, 240, 0.15) 1px, transparent 1px);
-    background-size: 28px 28px;
+    background: radial-gradient(
+      ellipse at 50% 40%,
+      rgba(30, 43, 77, 0.78) 0%,
+      rgba(26, 25, 24, 0.92) 100%
+    );
+    backdrop-filter: blur(2px);
     pointer-events: none;
-    opacity: 0.6;
-  }
-
-  .hero-glow-sphere {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(80px);
-  }
-
-  .top-glow {
-    width: 320px;
-    height: 320px;
-    top: -100px;
-    left: 10%;
-    background: rgba(2, 239, 240, 0.18);
-  }
-
-  .bottom-glow {
-    width: 350px;
-    height: 350px;
-    bottom: -120px;
-    right: 5%;
-    background: rgba(23, 119, 122, 0.25);
+    z-index: 2;
   }
 
   .hero-content {
     position: relative;
-    z-index: 2;
+    z-index: 3;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 1.75rem;
+    gap: 1.6rem;
     max-width: 860px;
     margin-inline: auto;
   }
@@ -396,19 +406,20 @@
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    padding: 0.4rem 1rem;
-    background: rgba(2, 239, 240, 0.1);
-    border: 1.5px solid rgba(2, 239, 240, 0.35);
+    padding: 0.4rem 1.1rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(200, 43, 52, 0.45);
     border-radius: 9999px;
     backdrop-filter: blur(8px);
+    box-shadow: 0 0 18px rgba(200, 43, 52, 0.18);
   }
 
   .badge-pulse {
     width: 0.55rem;
     height: 0.55rem;
     border-radius: 50%;
-    background: var(--cyan);
-    box-shadow: 0 0 0 3px rgba(2, 239, 240, 0.3);
+    background: var(--brand-accent, #C82B34);
+    box-shadow: 0 0 0 3px rgba(200, 43, 52, 0.35);
     animation: pulseGlow 2s infinite ease-in-out;
   }
 
@@ -418,30 +429,33 @@
   }
 
   .badge-text {
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     font-weight: 700;
-    color: #e2fbfb;
+    color: #FAF8F5;
+    letter-spacing: 0.01em;
   }
 
   .hero-title {
-    font-size: clamp(2.1rem, 4.5vw, 3.25rem);
+    font-size: clamp(2.1rem, 4.5vw, 3.4rem);
     font-weight: 900;
-    line-height: 1.28;
-    color: white;
+    line-height: 1.25;
+    color: #FAF8F5;
     margin: 0;
   }
 
-  .hero-gradient-text {
-    background: linear-gradient(135deg, #ffffff 40%, var(--cyan) 100%);
+  .hero-cyan-gradient {
+    background: linear-gradient(135deg, #FAF8F5 35%, #E8454F 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
+    color: #E8454F;
   }
 
   .hero-description {
-    font-size: clamp(1rem, 1.8vw, 1.15rem);
-    line-height: 1.75;
-    color: #c9e4e2;
-    max-width: 680px;
+    font-size: clamp(1rem, 1.8vw, 1.18rem);
+    line-height: 1.8;
+    color: #D5CBC1;
+    max-width: 700px;
     margin: 0;
   }
 
@@ -449,57 +463,66 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    gap: 1.1rem;
     flex-wrap: wrap;
     margin-top: 0.5rem;
   }
 
   .btn-hero-primary {
-    background: var(--cyan);
-    color: #07191d;
+    background: var(--brand-accent, #C82B34);
+    color: #FFFFFF;
     font-weight: 800;
-    font-size: 1rem;
-    padding: 0.85rem 1.85rem;
-    border-radius: 0.65rem;
+    font-size: 1.05rem;
+    padding: 0.85rem 2rem;
+    border-radius: 0.75rem;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 0.6rem;
-    border: 2px solid var(--cyan);
-    box-shadow: 0 0 24px rgba(2, 239, 240, 0.35);
-    transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+    gap: 0.65rem;
+    border: 2px solid var(--brand-accent, #C82B34);
+    box-shadow: 0 0 25px rgba(200, 43, 52, 0.4);
+    transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
   }
 
   .btn-hero-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 32px rgba(2, 239, 240, 0.55);
-    opacity: 0.98;
+    box-shadow: 0 0 35px rgba(200, 43, 52, 0.65);
+    background: #B5232B;
   }
 
   .hero-btn-arrow {
     transition: transform 150ms ease;
   }
 
-  .btn-hero-primary:hover .hero-btn-arrow {
-    transform: translateX(-3px);
+  :global([dir="rtl"]) .hero-btn-arrow {
+    transform: scaleX(-1);
+  }
+
+  :global([dir="rtl"]) .btn-hero-primary:hover .hero-btn-arrow {
+    transform: scaleX(-1) translateX(3px);
+  }
+
+  :global([dir="ltr"]) .btn-hero-primary:hover .hero-btn-arrow {
+    transform: translateX(3px);
   }
 
   .btn-hero-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    color: white;
+    background: rgba(42, 59, 106, 0.4);
+    color: #FAF8F5;
     font-weight: 700;
-    font-size: 1rem;
-    padding: 0.85rem 1.65rem;
-    border-radius: 0.65rem;
+    font-size: 1.05rem;
+    padding: 0.85rem 1.85rem;
+    border-radius: 0.75rem;
     text-decoration: none;
-    border: 2px solid rgba(255, 255, 255, 0.25);
+    border: 2px solid rgba(213, 203, 193, 0.4);
     backdrop-filter: blur(8px);
-    transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+    transition: background 150ms ease, border-color 150ms ease, transform 150ms ease, color 150ms ease;
   }
 
   .btn-hero-secondary:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: white;
+    background: rgba(42, 59, 106, 0.75);
+    border-color: rgba(213, 203, 193, 0.8);
+    color: #FFFFFF;
     transform: translateY(-2px);
   }
 
@@ -510,13 +533,14 @@
     justify-content: space-around;
     gap: 1.5rem;
     width: 100%;
-    max-width: 740px;
-    margin-top: 1.5rem;
+    max-width: 760px;
+    margin-top: 1.25rem;
     padding: 1.25rem 2rem;
-    background: rgba(15, 40, 47, 0.45);
-    border: 2px solid rgba(2, 239, 240, 0.25);
+    background: rgba(26, 25, 24, 0.65);
+    border: 1.5px solid rgba(213, 203, 193, 0.25);
     border-radius: 1.25rem;
     backdrop-filter: blur(16px);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
   }
 
   .stat-pill {
@@ -526,39 +550,41 @@
   }
 
   .stat-icon-wrap {
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 0.5rem;
-    background: rgba(2, 239, 240, 0.15);
-    color: var(--cyan);
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 0.6rem;
+    background: rgba(200, 43, 52, 0.15);
+    color: #E8454F;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 1px solid rgba(200, 43, 52, 0.3);
   }
 
   .stat-details {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    text-align: right;
+    text-align: start;
   }
 
   .stat-number {
-    font-size: 1.35rem;
-    font-weight: 900;
-    color: white;
-    line-height: 1.1;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--brand-accent, #C82B34);
+    line-height: 1.2;
   }
 
   .stat-label {
-    font-size: 0.78rem;
-    color: #aed3d0;
+    font-size: 0.82rem;
+    color: #FAF8F5;
+    opacity: 0.85;
+    font-weight: 500;
   }
 
   .stat-separator {
-    width: 2px;
-    height: 2.2rem;
-    background: rgba(255, 255, 255, 0.12);
+    width: 1px;
+    height: 2rem;
+    background: rgba(213, 203, 193, 0.2);
   }
 
   /* ---------------- SECTION HEADINGS ---------------- */
@@ -575,17 +601,17 @@
     display: inline-block;
     font-size: 0.78rem;
     font-weight: 800;
-    color: var(--deep-cyan);
-    background: rgba(23, 119, 122, 0.1);
-    border: 1.5px solid rgba(23, 119, 122, 0.25);
+    color: var(--brand-navy);
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    border: 1.5px solid rgba(var(--brand-navy-rgb), 0.25);
     padding: 0.25rem 0.85rem;
     border-radius: 9999px;
   }
 
   :global(:root[data-theme='dark']) .eyebrow-pill {
-    color: var(--cyan);
-    background: rgba(2, 239, 240, 0.1);
-    border-color: rgba(2, 239, 240, 0.25);
+    color: var(--brand-accent);
+    background: rgba(var(--brand-accent-rgb), 0.15);
+    border-color: rgba(var(--brand-accent-rgb), 0.35);
   }
 
   .section-title {
@@ -655,19 +681,19 @@
   }
 
   .featured-step-card {
-    border-color: rgba(2, 239, 240, 0.75);
-    background: linear-gradient(180deg, var(--card) 0%, rgba(2, 239, 240, 0.04) 100%);
+    border-color: var(--brand-accent);
+    background: linear-gradient(180deg, var(--card) 0%, rgba(var(--brand-accent-rgb), 0.04) 100%);
   }
 
   .highlight-index {
-    color: var(--cyan);
-    opacity: 0.9;
+    color: var(--brand-accent);
+    opacity: 0.95;
   }
 
   .highlight-icon {
-    background: rgba(2, 239, 240, 0.15);
-    color: #0088cc;
-    border-color: rgba(2, 239, 240, 0.5);
+    background: rgba(var(--brand-accent-rgb), 0.12);
+    color: var(--brand-accent);
+    border-color: rgba(var(--brand-accent-rgb), 0.4);
   }
 
   .step-title {
@@ -706,7 +732,7 @@
   }
 
   :global(:root[data-theme='dark']) .link-view-all {
-    color: var(--cyan);
+    color: var(--brand-accent);
   }
 
   .link-view-all:hover {
@@ -739,8 +765,8 @@
   }
 
   :global(:root[data-theme='dark']) .course-modern-card:hover {
-    border-color: var(--cyan);
-    box-shadow: 0 8px 30px rgba(2, 239, 240, 0.12);
+    border-color: var(--brand-accent);
+    box-shadow: 0 8px 30px rgba(var(--brand-accent-rgb), 0.15);
   }
 
   .card-top-row {
@@ -761,9 +787,9 @@
   }
 
   :global(:root[data-theme='dark']) .course-slug-badge {
-    color: var(--cyan);
-    background: rgba(2, 239, 240, 0.1);
-    border-color: rgba(2, 239, 240, 0.25);
+    color: var(--deep-cyan);
+    background: rgba(91, 122, 199, 0.15);
+    border-color: rgba(91, 122, 199, 0.3);
   }
 
   .discount-badge {
@@ -831,23 +857,26 @@
   }
 
   .btn-card-explore {
-    background: var(--storm);
-    color: var(--cyan);
+    background: var(--brand-navy);
+    color: #FAF8F5;
     font-weight: 800;
     font-size: 0.88rem;
     padding: 0.55rem 1.15rem;
     border-radius: 0.5rem;
     text-decoration: none;
-    border: 2px solid var(--storm);
+    border: 2px solid var(--brand-navy);
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    transition: opacity 150ms ease, transform 120ms ease;
+    transition: opacity 150ms ease, transform 120ms ease, background-color 150ms ease, border-color 150ms ease;
   }
 
   .btn-card-explore:hover {
-    opacity: 0.92;
+    opacity: 0.95;
     transform: translateY(-1px);
+    background-color: var(--brand-accent);
+    border-color: var(--brand-accent);
+    color: #ffffff;
   }
 
   /* ---------------- FEATURES SECTION ---------------- */
@@ -875,9 +904,20 @@
   }
 
   .feature-icon-box {
-    font-size: 2.2rem;
-    line-height: 1;
-    margin-bottom: 0.25rem;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 0.75rem;
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    color: var(--brand-navy);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.35rem;
+  }
+
+  :global([data-theme='dark']) .feature-icon-box {
+    background: rgba(91, 122, 199, 0.15);
+    color: var(--deep-cyan);
   }
 
   .feature-item h3 {
@@ -921,7 +961,7 @@
   }
 
   :global(:root[data-theme='dark']) .faq-card-open {
-    border-color: var(--cyan);
+    border-color: var(--brand-accent);
   }
 
   .faq-trigger {
@@ -952,7 +992,7 @@
   }
 
   :global(:root[data-theme='dark']) .faq-icon-arrow {
-    color: var(--cyan);
+    color: var(--brand-accent);
   }
 
   .faq-content {
@@ -971,26 +1011,26 @@
   .cta-banner {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, var(--storm) 0%, #153c47 100%);
+    background: linear-gradient(135deg, #1A1918 0%, #1E2B4D 100%);
     color: white;
     border-radius: 1.75rem;
     border: 2px solid var(--line);
     padding: clamp(2.5rem, 5vw, 4rem) 2rem;
     text-align: center;
-    box-shadow: 0 20px 40px -10px rgba(15, 40, 47, 0.4);
+    box-shadow: 0 20px 40px -10px rgba(26, 25, 24, 0.4);
   }
 
   :global(:root[data-theme='dark']) .cta-banner {
-    background: linear-gradient(135deg, #10242b 0%, #081418 100%);
-    border-color: rgba(2, 239, 240, 0.3);
+    background: linear-gradient(135deg, #121211 0%, #17223D 100%);
+    border-color: rgba(91, 122, 199, 0.3);
   }
 
   .cta-banner-bg {
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(rgba(2, 239, 240, 0.18) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(213, 203, 193, 0.18) 1px, transparent 1px);
     background-size: 24px 24px;
-    opacity: 0.5;
+    opacity: 0.4;
   }
 
   .cta-content {
@@ -1007,11 +1047,11 @@
   .cta-badge {
     font-size: 0.78rem;
     font-weight: 800;
-    background: rgba(2, 239, 240, 0.15);
-    color: var(--cyan);
+    background: rgba(var(--brand-accent-rgb), 0.15);
+    color: #FF7B82;
     padding: 0.25rem 0.85rem;
     border-radius: 9999px;
-    border: 1px solid rgba(2, 239, 240, 0.3);
+    border: 1px solid rgba(var(--brand-accent-rgb), 0.35);
   }
 
   .cta-banner h2 {
@@ -1022,7 +1062,7 @@
   }
 
   .cta-banner p {
-    color: #cadbd8;
+    color: #D5CBC1;
     font-size: 1.05rem;
     line-height: 1.75;
     margin: 0;
@@ -1037,20 +1077,20 @@
   }
 
   .btn-cta-primary {
-    background: var(--cyan);
-    color: #07191d;
+    background: var(--brand-accent);
+    color: #ffffff;
     font-weight: 800;
     padding: 0.75rem 1.65rem;
     border-radius: 0.6rem;
     text-decoration: none;
-    border: 2px solid var(--cyan);
-    box-shadow: 0 0 20px rgba(2, 239, 240, 0.3);
+    border: 2px solid var(--brand-accent);
+    box-shadow: 0 0 20px rgba(200, 43, 52, 0.35);
     transition: transform 150ms ease, box-shadow 150ms ease;
   }
 
   .btn-cta-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 28px rgba(2, 239, 240, 0.5);
+    box-shadow: 0 0 28px rgba(200, 43, 52, 0.55);
   }
 
   .btn-cta-secondary {
@@ -1117,12 +1157,13 @@
   @media (max-width: 480px) {
     .landing-container {
       gap: 3.5rem;
-      padding: 1rem 0.75rem 3.5rem;
+      padding: 3rem 0.75rem 3.5rem;
     }
 
     .hero-section {
-      border-radius: 1.25rem;
-      padding: 2.25rem 1.25rem;
+      border-radius: 0;
+      border: none;
+      padding: 3.5rem 1.25rem;
     }
 
     .hero-actions {

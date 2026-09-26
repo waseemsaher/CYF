@@ -25,3 +25,34 @@ export async function generateTelegramLink(fetcher: typeof fetch = fetch): Promi
 export async function unlinkTelegram(fetcher: typeof fetch = fetch): Promise<{ message: string }> {
   return apiPost<{ message: string }>(fetcher, '/telegram/unlink', {});
 }
+
+export async function watchLesson(itemId: number, fetcher: typeof fetch = fetch): Promise<{ url: string }> {
+  const res = await apiGet<{ data: { url: string } }>(fetcher, `/lessons/${itemId}/watch`);
+  return res.data;
+}
+
+export interface TelegramConnectionTestResult {
+  channel: {
+    connected: boolean;
+    title: string | null;
+    error: string | null;
+  };
+  group: {
+    connected: boolean;
+    title: string | null;
+    error: string | null;
+  };
+}
+
+export async function testTelegramConnection(
+  courseId: number,
+  fetcher: typeof fetch = fetch
+): Promise<TelegramConnectionTestResult> {
+  const res = await apiPost<{ data: TelegramConnectionTestResult }>(
+    fetcher,
+    `/admin/courses/${courseId}/telegram/test`,
+    {}
+  );
+  return res.data;
+}
+

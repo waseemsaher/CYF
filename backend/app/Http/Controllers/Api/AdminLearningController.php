@@ -134,6 +134,7 @@ class AdminLearningController extends Controller
             'title' => ['nullable', 'array'],
             'description' => ['nullable', 'array'],
             'url' => ['nullable', 'url', 'max:2048'],
+            'telegram_message_id' => ['nullable', 'integer', 'min:1'],
             'position' => ['nullable', 'integer'],
             'is_published' => ['nullable', 'boolean'],
         ]);
@@ -146,6 +147,9 @@ class AdminLearningController extends Controller
         }
         if ($request->has('url')) {
             $item->url = $request->input('url');
+        }
+        if ($request->has('telegram_message_id')) {
+            $item->telegram_message_id = $request->input('telegram_message_id');
         }
         if ($request->has('position')) {
             $item->position = (int) $request->input('position');

@@ -7,7 +7,9 @@ namespace App\Http\Controllers\Api;
 use App\Domain\Telegram\Actions\GenerateTelegramLinkToken;
 use App\Domain\Telegram\Actions\LinkTelegramUser;
 use App\Domain\Telegram\Actions\ProcessJoinRequest;
+use App\Domain\Telegram\Actions\WatchLesson;
 use App\Http\Controllers\Controller;
+use App\Models\CourseItem;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -62,6 +64,22 @@ class TelegramController extends Controller
 
         return response()->json([
             'message' => 'Telegram account unlinked successfully.',
+        ]);
+    }
+
+    /**
+     * Watch a lesson by generating the Telegram message URL.
+     * Requires active enrollment and linked Telegram account.
+     */
+    public function watchLesson(Request $request, CourseItem $item, WatchLesson $action): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $result = $action->handle($user, $item);
+
+        return response()->json([
+            'data' => $result,
         ]);
     }
 

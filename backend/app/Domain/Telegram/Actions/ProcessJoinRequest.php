@@ -20,8 +20,12 @@ class ProcessJoinRequest
     {
         /** @var Course|null $course */
         $course = Course::query()
-            ->where('telegram_chat_id', (string) $chatId)
-            ->orWhere('telegram_chat_id', (int) $chatId)
+            ->where(function ($query) use ($chatId): void {
+                $query->where('telegram_channel_id', (string) $chatId)
+                    ->orWhere('telegram_channel_id', (int) $chatId)
+                    ->orWhere('telegram_group_id', (string) $chatId)
+                    ->orWhere('telegram_group_id', (int) $chatId);
+            })
             ->first();
 
         if (! $course) {

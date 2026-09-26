@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Domain\Catalog\Actions\ManageCourseAction;
+use App\Domain\Telegram\Actions\TestTelegramConnection;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCourseRequest;
 use App\Http\Requests\UpdateCourseRequest;
@@ -64,6 +65,18 @@ class AdminCourseController extends Controller
     }
 
     /**
+     * Test the Telegram bot's connection to a course's channel and group.
+     */
+    public function testTelegramConnection(Course $course, TestTelegramConnection $action): JsonResponse
+    {
+        Gate::authorize('manage', Course::class);
+
+        $result = $action->handle($course);
+
+        return response()->json(['data' => $result]);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function payload(Course $course): array
@@ -79,7 +92,8 @@ class AdminCourseController extends Controller
             'cover_image_path' => $course->getAttribute('cover_image_path'),
             'price_cents' => (int) $course->getAttribute('price_cents'),
             'status' => $course->getAttribute('status'),
-            'telegram_chat_id' => $course->getAttribute('telegram_chat_id'),
+            'telegram_channel_id' => $course->getAttribute('telegram_channel_id'),
+            'telegram_group_id' => $course->getAttribute('telegram_group_id'),
             'telegram_invite_link' => $course->getAttribute('telegram_invite_link'),
             'teacher_share_percent' => $course->getAttribute('teacher_share_percent'),
             'sort_order' => (int) $course->getAttribute('sort_order'),

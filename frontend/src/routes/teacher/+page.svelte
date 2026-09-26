@@ -82,7 +82,7 @@
       <!-- Page Header -->
       <div class="page-header">
         <div class="header-top">
-          <span class="role-badge">👨‍🏫 محاضر</span>
+          <span class="role-badge">محاضر</span>
         </div>
         <h1>لوحة تحكم المحاضر</h1>
         <p>متابعة المواد المكلف بتدريسها، أعداد الطلاب، وأرصدة الأرباح</p>
@@ -221,13 +221,13 @@
   }
 
   .role-badge {
-    background: #eef7f6;
-    color: var(--deep-cyan);
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    color: var(--brand-navy);
     font-weight: 700;
     font-size: 0.78rem;
     padding: 0.2rem 0.65rem;
     border-radius: 9999px;
-    border: 2px solid rgba(23, 119, 122, 0.25);
+    border: 2px solid rgba(var(--brand-navy-rgb), 0.25);
   }
 
   .page-header h1 {
@@ -337,8 +337,8 @@
   .share-badge {
     font-size: 0.75rem;
     font-weight: 700;
-    background: #eef7f6;
-    color: var(--deep-cyan);
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    color: var(--brand-navy);
     padding: 0.2rem 0.5rem;
     border-radius: 0.25rem;
   }
@@ -415,14 +415,14 @@
   }
 
   .data-table th {
-    background: #eef7f6;
+    background: var(--paper);
     color: var(--storm);
     font-weight: 700;
     font-size: 0.82rem;
   }
 
   .data-table tr:hover td {
-    background: #f8fafc;
+    background: var(--card-hover);
   }
 
   .muted-cell {

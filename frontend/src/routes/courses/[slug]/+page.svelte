@@ -117,11 +117,11 @@
 
         <div class="admin-buttons-stack">
           <a class="btn-panel-action btn-manage-content" href={`/my-courses/${data.course.slug}`}>
-            <span>📂 إدارة المحتوى والمحاضرات</span>
+            <span>إدارة المحتوى والمحاضرات</span>
             <span aria-hidden="true">←</span>
           </a>
           <button type="button" class="btn-panel-action btn-edit-course" onclick={openEditModal}>
-            <span>✏️ تعديل بيانات وسعر المقرر</span>
+            <span>تعديل بيانات وسعر المقرر</span>
           </button>
           <a class="btn-panel-action btn-back-dashboard" href="/admin">
             <span>لوحة تحكم الإدارة الرئيسية</span>
@@ -152,7 +152,7 @@
     
     {#if isAdmin}
       <div class="admin-inline-notice">
-        <p>💡 بصفتك مسؤولاً، يمكنك الوصول للمحتوى وإضافة المحاضرات والاختبارات بالضغط على زر "إدارة المحتوى والمحاضرات" بالأعلى.</p>
+        <p>بصفتك مسؤولاً، يمكنك الوصول للمحتوى وإضافة المحاضرات والاختبارات بالضغط على زر "إدارة المحتوى والمحاضرات" بالأعلى.</p>
         <a href={`/my-courses/${data.course.slug}`} class="btn-inline-manage">
           فتح المحتوى التعليمي الآن ←
         </a>
@@ -168,12 +168,16 @@
     <div class="modal-card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl" tabindex="-1">
       <div class="modal-header">
         <h2>تعديل بيانات المقرر ({data.course.title.ar})</h2>
-        <button type="button" class="btn-close-modal" onclick={closeEditModal} aria-label="إغلاق">✕</button>
+        <button type="button" class="btn-close-modal" onclick={closeEditModal} aria-label="إغلاق">&times;</button>
       </div>
 
       {#if modalError}
         <div class="modal-error-banner" role="alert">
-          <span>⚠️</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
           <p>{modalError}</p>
         </div>
       {/if}
@@ -286,7 +290,7 @@
 
   .course-hero {
     align-items: end;
-    background: #0f282f;
+    background: radial-gradient(135% 120% at 50% 0%, #1E2B4D 0%, #1A1918 100%);
     border: 2px solid var(--line);
     border-radius: 1rem;
     color: white;
@@ -294,7 +298,7 @@
     gap: 2rem;
     grid-template-columns: 1fr minmax(280px, 360px);
     padding: clamp(1.5rem, 5vw, 3.5rem);
-    box-shadow: 0 10px 30px rgba(15, 40, 47, 0.12);
+    box-shadow: 0 10px 30px rgba(26, 25, 24, 0.2);
   }
 
   .hero-tag-row {
@@ -305,7 +309,7 @@
   }
 
   .kicker {
-    color: #02eff0;
+    color: var(--brand-accent);
     font-size: 0.82rem;
     font-weight: 800;
     letter-spacing: 0.04em;
@@ -422,13 +426,13 @@
   }
 
   .btn-manage-content {
-    background: var(--storm);
-    color: var(--cyan);
-    border: 2px solid var(--storm);
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border: 2px solid var(--brand-navy);
   }
 
   .btn-edit-course {
-    background: #eef7f6;
+    background: var(--paper);
     color: var(--deep-cyan);
     border: 2px solid var(--line);
   }
@@ -474,7 +478,7 @@
   }
 
   .free-label {
-    color: #17777a;
+    color: var(--brand-navy);
     display: block;
     font-weight: 800;
     margin-top: 0.35rem;
@@ -482,10 +486,10 @@
 
   .enroll-btn {
     align-items: center;
-    background: #02eff0;
-    border: 2px solid #02eff0;
+    background: var(--brand-accent);
+    border: 2px solid var(--brand-accent);
     border-radius: 0.5rem;
-    color: #0f282f;
+    color: #ffffff;
     display: flex;
     font: inherit;
     font-weight: 900;
@@ -500,13 +504,13 @@
   }
 
   .enroll-btn:hover {
-    opacity: 0.85;
+    opacity: 0.88;
   }
 
   .enroll-btn.free {
-    background: #17777a;
-    color: white;
-    border-color: #17777a;
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border-color: var(--brand-navy);
   }
 
   .outline {
@@ -518,7 +522,7 @@
   }
 
   .outline .kicker {
-    color: #17777a;
+    color: var(--brand-navy);
   }
 
   .outline h2 {
@@ -529,13 +533,13 @@
   }
 
   .outline p:last-child {
-    color: #49636a;
+    color: var(--muted);
     line-height: 1.8;
     margin: 0;
   }
 
   .admin-inline-notice {
-    background: #eef7f6;
+    background: var(--paper);
     border: 2px solid var(--line);
     border-radius: 0.75rem;
     padding: 1.25rem;
@@ -566,7 +570,7 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 40, 47, 0.6);
+    background: rgba(26, 25, 24, 0.65);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;

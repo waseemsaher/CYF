@@ -110,7 +110,7 @@
         <div class="banner-content">
           <div class="user-greeting">
             <span class="badge-role">طالب بالكلية</span>
-            <h1>مرحباً بك، {user.name} 👋</h1>
+            <h1>مرحباً بك، {user.name}</h1>
             <p class="user-meta-summary">
               <span>{branchLabels[user.branch || ''] || 'كلية الحاسبات والذكاء الاصطناعي'}</span>
               <span class="dot">•</span>
@@ -133,7 +133,11 @@
 
       {#if errorMsg}
         <div class="error-banner" role="alert">
-          <span aria-hidden="true">⚠️</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
           <p>{errorMsg}</p>
         </div>
       {/if}
@@ -146,7 +150,7 @@
           <section class="dash-section">
             <div class="section-header">
               <div class="section-title">
-                <h2>📚 المواد المشترك بها</h2>
+                <h2>المواد المشترك بها</h2>
                 <span class="counter-badge">{approvedCourses.length}</span>
               </div>
               <a href="/courses" class="view-all-link">إضافة مادة جديدة</a>
@@ -174,7 +178,12 @@
               </div>
             {:else}
               <div class="empty-state-box">
-                <div class="empty-icon" aria-hidden="true">📖</div>
+                <div class="empty-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                  </svg>
+                </div>
                 <h3>لم تشترك في أي مواد دراسية بعد</h3>
                 <p>تصفح قائمة مقررات الفرقة الدراسية واشترك لفتح المحاضرات والملفات والتكليفات.</p>
                 <a href="/courses" class="btn-browse-courses">استعراض المواد الآن</a>
@@ -187,7 +196,7 @@
             <section class="dash-section pending-section">
               <div class="section-header">
                 <div class="section-title">
-                  <h2>⏳ اشتراكات قيد المراجعة والاعتماد</h2>
+                  <h2>اشتراكات قيد المراجعة والاعتماد</h2>
                   <span class="counter-badge pending-badge">{pendingPayments.length}</span>
                 </div>
                 <a href="/payments" class="view-all-link">عرض التفاصيل الكاملة</a>
@@ -219,7 +228,7 @@
           <section class="dash-section">
             <div class="section-header">
               <div class="section-title">
-                <h2>🤖 ربط حساب التليجرام الرسمي</h2>
+                <h2>ربط حساب التليجرام الرسمي</h2>
               </div>
             </div>
             <p class="section-desc">
@@ -273,10 +282,10 @@
 
             <div class="profile-actions">
               <a href="/payments" class="btn-profile-link">
-                💳 سجل عمليات الدفع
+                سجل عمليات الدفع
               </a>
               <a href="/courses" class="btn-profile-link">
-                📚 دليل المقررات
+                دليل المقررات
               </a>
             </div>
           </div>
@@ -378,17 +387,17 @@
     align-self: flex-start;
     font-size: 0.72rem;
     font-weight: 800;
-    background: #eef7f6;
-    color: var(--deep-cyan);
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    color: var(--brand-navy);
     padding: 0.2rem 0.6rem;
     border-radius: 9999px;
-    border: 1px solid rgba(23, 119, 122, 0.25);
+    border: 1px solid rgba(var(--brand-navy-rgb), 0.25);
   }
 
   :global([data-theme='dark']) .badge-role {
-    background: rgba(2, 239, 240, 0.12);
-    color: var(--cyan);
-    border-color: rgba(2, 239, 240, 0.3);
+    background: rgba(91, 122, 199, 0.15);
+    color: var(--deep-cyan);
+    border-color: rgba(91, 122, 199, 0.3);
   }
 
   .user-greeting h1 {
@@ -420,8 +429,8 @@
   }
 
   .btn-primary {
-    background: var(--storm);
-    color: var(--cyan);
+    background: var(--brand-navy);
+    color: #FAF8F5;
     font-weight: 800;
     font-size: 0.92rem;
     padding: 0.65rem 1.25rem;
@@ -430,13 +439,16 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    border: 2px solid var(--storm);
-    transition: transform 150ms ease, opacity 150ms ease;
+    border: 2px solid var(--brand-navy);
+    transition: transform 150ms ease, opacity 150ms ease, background-color 150ms ease, border-color 150ms ease;
   }
 
   .btn-primary:hover {
     transform: translateY(-1px);
     opacity: 0.95;
+    background-color: var(--brand-accent);
+    border-color: var(--brand-accent);
+    color: #ffffff;
   }
 
   .btn-secondary {
@@ -516,8 +528,8 @@
   }
 
   .counter-badge {
-    background: #eef7f6;
-    color: var(--deep-cyan);
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    color: var(--brand-navy);
     font-weight: 800;
     font-size: 0.8rem;
     padding: 0.15rem 0.5rem;
@@ -525,8 +537,8 @@
   }
 
   :global([data-theme='dark']) .counter-badge {
-    background: rgba(2, 239, 240, 0.15);
-    color: var(--cyan);
+    background: rgba(91, 122, 199, 0.15);
+    color: var(--deep-cyan);
   }
 
   .pending-badge {
@@ -611,8 +623,8 @@
   }
 
   .btn-go-course {
-    background: var(--storm);
-    color: var(--cyan);
+    background: var(--brand-navy);
+    color: #FAF8F5;
     font-size: 0.85rem;
     font-weight: 800;
     padding: 0.5rem 0.85rem;
@@ -622,11 +634,13 @@
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    transition: opacity 150ms ease;
+    transition: opacity 150ms ease, background-color 150ms ease;
   }
 
   .btn-go-course:hover {
-    opacity: 0.9;
+    opacity: 0.95;
+    background-color: var(--brand-accent);
+    color: #ffffff;
   }
 
   .empty-state-box {
@@ -661,14 +675,21 @@
   }
 
   .btn-browse-courses {
-    background: var(--storm);
-    color: var(--cyan);
+    background: var(--brand-navy);
+    color: #FAF8F5;
     font-size: 0.9rem;
     font-weight: 800;
     padding: 0.6rem 1.25rem;
     border-radius: 0.5rem;
     text-decoration: none;
     margin-top: 0.5rem;
+    transition: opacity 150ms ease, background-color 150ms ease;
+  }
+
+  .btn-browse-courses:hover {
+    opacity: 0.95;
+    background-color: var(--brand-accent);
+    color: #ffffff;
   }
 
   .pending-section {

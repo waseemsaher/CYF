@@ -75,7 +75,7 @@ it('handles chat_join_request in webhook and approves eligible students', functi
         'description' => ['ar' => 'وصف', 'en' => 'Desc'],
         'status' => 'published',
         'price_cents' => 10000,
-        'telegram_chat_id' => -1001987654321,
+        'telegram_channel_id' => -1001987654321,
     ]);
 
     $term = Term::create([
@@ -122,4 +122,61 @@ it('handles chat_join_request in webhook and approves eligible students', functi
     Http::assertSent(fn ($req) => str_contains($req->url(), 'approveChatJoinRequest')
         && $req['chat_id'] == -1001987654321
         && $req['user_id'] === 777888999);
+});
+
+it('handles chat_join_request for group in webhook and approves eligible students', function (): void {
+    $course = Course::create([
+        'slug' => 'cs102',
+        'title' => ['ar' => 'برمجة 2', 'en' => 'Programming 2'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'status' => 'published',
+        'price_cents' => 10000,
+        'telegram_channel_id' => -1001111111111,
+        'telegram_group_id' => -1002222222222,
+    ]);
+
+    $term = Term::create([
+        'name' => ['ar' => 'فصل 1', 'en' => 'Term 1'],
+        'starts_at' => now()->subMonth(),
+        'ends_at' => now()->addMonths(2),
+        'is_current' => true,
+    ]);
+
+    $student = User::factory()->create([
+        'telegram_user_id' => 888999111,
+        'telegram_username' => 'group_student',
+    ]);
+
+    Enrollment::create([
+        'user_id' => $student->id,
+        'course_id' => $course->id,
+        'term_id' => $term->id,
+        'source' => 'payment',
+        'status' => 'active',
+        'starts_at' => now()->subDay(),
+        'expires_at' => now()->addMonth(),
+    ]);
+
+    $response = $this->withHeaders([
+        'X-Telegram-Bot-Api-Secret-Token' => 'my_secure_secret',
+    ])->postJson('/api/v1/telegram/webhook', [
+        'update_id' => 201,
+        'chat_join_request' => [
+            'chat' => [
+                'id' => -1002222222222,
+                'title' => 'CS102 Discussion Group',
+            ],
+            'from' => [
+                'id' => 888999111,
+                'username' => 'group_student',
+            ],
+            'date' => time(),
+        ],
+    ]);
+
+    $response->assertOk();
+
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'approveChatJoinRequest')
+        && $req['chat_id'] == -1002222222222
+        && $req['user_id'] === 888999111);
 });

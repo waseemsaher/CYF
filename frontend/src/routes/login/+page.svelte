@@ -62,7 +62,12 @@
   <div class="auth-card">
     {#if $currentUser}
       <div class="already-logged-in">
-        <div class="user-avatar" aria-hidden="true">👤</div>
+        <div class="user-avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
         <h2>أنت مسجل الدخول بالفعل</h2>
         <p>مرحباً بك مجدداً، <strong>{$currentUser.name}</strong> ({$currentUser.email})</p>
         <div class="already-actions">
@@ -82,7 +87,11 @@
 
       {#if errorMessage}
         <div class="error-banner" role="alert">
-          <span aria-hidden="true">⚠️</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
           <p>{errorMessage}</p>
         </div>
       {/if}
@@ -128,28 +137,28 @@
 
       <!-- Quick Credentials Box for Testing -->
       <div class="quick-credentials">
-        <span class="quick-title">⚡ حسابات تجريبية سريعة (اضغط للتعبئة):</span>
+        <span class="quick-title">حسابات تجريبية سريعة (اضغط للتعبئة):</span>
         <div class="quick-buttons">
           <button
             type="button"
             class="btn-quick admin-quick"
             onclick={() => fillCredentials('admin@example.com')}
           >
-            👑 مدير عام (Admin)
+            مدير عام (Admin)
           </button>
           <button
             type="button"
             class="btn-quick teacher-quick"
             onclick={() => fillCredentials('teacher@example.com')}
           >
-            👨‍🏫 محاضر (Teacher)
+            محاضر (Teacher)
           </button>
           <button
             type="button"
             class="btn-quick student-quick"
             onclick={() => fillCredentials('student@example.com')}
           >
-            🎓 طالب (Student)
+            طالب (Student)
           </button>
         </div>
       </div>
@@ -195,14 +204,14 @@
 
   .user-avatar {
     font-size: 3rem;
-    background: #eef7f6;
+    background: rgba(var(--brand-navy-rgb), 0.08);
     width: 5rem;
     height: 5rem;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid rgba(23, 119, 122, 0.2);
+    border: 2px solid rgba(var(--brand-navy-rgb), 0.2);
   }
 
   .already-logged-in h2 {
@@ -244,10 +253,10 @@
     color: var(--deep-cyan);
     font-size: 0.8rem;
     font-weight: 800;
-    background: #eef7f6;
+    background: rgba(var(--brand-navy-rgb), 0.08);
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
-    border: 1px solid rgba(23, 119, 122, 0.2);
+    border: 1px solid rgba(var(--brand-navy-rgb), 0.2);
     margin-bottom: 0.75rem;
   }
 
@@ -325,12 +334,12 @@
   input:focus {
     border-color: var(--deep-cyan);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(23, 119, 122, 0.15);
+    box-shadow: 0 0 0 3px rgba(var(--brand-navy-rgb), 0.15);
   }
 
   .btn-submit {
-    background: var(--storm);
-    color: var(--cyan);
+    background: var(--brand-navy);
+    color: #FAF8F5;
     border: none;
     font-weight: 800;
     font-size: 1.05rem;
@@ -342,13 +351,14 @@
     justify-content: center;
     gap: 0.5rem;
     margin-top: 0.5rem;
-    transition: opacity 150ms ease, transform 150ms ease;
+    transition: opacity 150ms ease, transform 150ms ease, background-color 150ms ease;
     width: 100%;
   }
 
   .btn-submit:hover:not(:disabled) {
     transform: translateY(-2px);
     opacity: 0.95;
+    background-color: #1E2B4D;
   }
 
   .btn-submit:disabled {
@@ -359,8 +369,8 @@
   .quick-credentials {
     margin-top: 1.5rem;
     padding: 1rem;
-    background: #f8fafc;
-    border: 1px dashed #cbd5e1;
+    background: var(--paper);
+    border: 1px dashed var(--line);
     border-radius: 0.75rem;
   }
 
@@ -368,7 +378,7 @@
     display: block;
     font-size: 0.8rem;
     font-weight: 700;
-    color: #475569;
+    color: var(--muted);
     margin-bottom: 0.6rem;
   }
 

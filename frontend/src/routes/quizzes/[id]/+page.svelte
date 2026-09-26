@@ -107,14 +107,18 @@
       <div class="quiz-header">
         <div>
           <span class="quiz-type-badge">
-            {data.quiz.kind === 'exam' ? '📝 امتحان' : '📝 اختبار'}
+            {data.quiz.kind === 'exam' ? 'امتحان' : 'اختبار'}
           </span>
           <h1>{data.quiz.title.ar}</h1>
         </div>
 
         {#if data.attempt.duration_minutes}
           <div class="timer-badge" class:timer-warning={remainingSeconds < 180}>
-            ⏱ {formatTime(remainingSeconds)}
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>{formatTime(remainingSeconds)}</span>
           </div>
         {/if}
       </div>
@@ -245,8 +249,8 @@
   .quiz-type-badge {
     font-size: 0.78rem;
     font-weight: 700;
-    background: #eef7f6;
-    color: var(--deep-cyan);
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    color: var(--brand-navy);
     padding: 0.2rem 0.5rem;
     border-radius: 0.25rem;
   }
@@ -267,6 +271,9 @@
     font-size: 0.95rem;
     color: var(--storm);
     font-feature-settings: "tnum";
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
   }
 
   .timer-warning {
@@ -364,7 +371,7 @@
 
   .option-label.selected {
     border-color: var(--deep-cyan);
-    background: #eef7f6;
+    background: rgba(var(--brand-navy-rgb), 0.08);
     font-weight: 600;
     color: var(--deep-cyan);
   }
@@ -385,21 +392,22 @@
   }
 
   .btn-submit-quiz {
-    background: var(--storm);
-    color: var(--cyan);
+    background: var(--brand-navy);
+    color: #FAF8F5;
     font-weight: 800;
     font-size: 1rem;
     padding: 0.85rem 2rem;
     border-radius: 0.5rem;
-    border: 2px solid var(--storm);
+    border: 2px solid var(--brand-navy);
     cursor: pointer;
-    transition: opacity 150ms ease, transform 150ms ease;
+    transition: opacity 150ms ease, transform 150ms ease, background-color 150ms ease;
     width: 100%;
   }
 
   .btn-submit-quiz:hover:not(:disabled) {
     opacity: 0.95;
     transform: translateY(-1px);
+    background-color: #1E2B4D;
   }
 
   .btn-submit-quiz:disabled {

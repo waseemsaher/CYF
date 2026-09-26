@@ -84,9 +84,15 @@ class ApprovePayment
             // Notify via Telegram if linked
             $student = $payment->user;
             if ($student && $student->telegram_user_id) {
-                $courseTitle = $payment->course->getTranslation('title', 'ar') ?: $payment->course->slug;
+                $course = $payment->course;
+                $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;
 
-                $msg = "🎉 تم قبول عملية الدفع وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\nيمكنك الآن الانضمام إلى مجموعة التليجرام الخاصة بالمادة.\n\nYour payment has been approved and your course access is now active!";
+                $msg = "تم قبول عملية الدفع وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\nيمكنك الآن الانضمام إلى مجموعة التليجرام الخاصة بالمادة.\n\nYour payment has been approved and your course access is now active!";
+
+                $inviteLink = $course->telegram_invite_link;
+                if ($inviteLink) {
+                    $msg .= "\n\n<a href=\"{$inviteLink}\">انضم إلى القناة / Join Channel</a>";
+                }
 
                 SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg);
             }

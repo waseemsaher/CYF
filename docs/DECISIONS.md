@@ -150,3 +150,53 @@
 - Zero-downtime deployment script (`scripts/deploy.sh`) with maintenance bypass token, asset compilation, migration enforcement, and health check validation.
 - Containerized alternative provided via `docker-compose.prod.yml`.
 
+---
+
+# Landing Page Hero Section Decisions
+
+## Particle Network Canvas Architecture
+- **Rendering & Tech**: Self-contained Svelte component (`src/lib/components/HeroCanvas.svelte`) using Plain HTML5 Canvas 2D context with zero external animation dependencies. Text and interactive DOM elements are server-rendered immediately, and canvas initializes asynchronously on mount to eliminate any impact on First Contentful Paint.
+- **Design Tokens**: Background color and particle/connection line stroke colors are dynamically read from root CSS custom properties (`--storm-green` / `#0F282F`, `--vivid-cyan-rgb` / `2, 239, 240`), ensuring zero hardcoded hex values in canvas rendering logic.
+- **Particle Count & Scale**: Tiered responsive particle count to preserve 60fps on mid-range and low-end mobile devices without degrading Lighthouse performance:
+  - Mobile (< 640px): 38 particles, connection distance threshold 85px.
+  - Tablet (640px – 1024px): 52 particles, distance threshold 105px.
+  - Desktop (> 1024px): 68 particles, distance threshold 125px.
+  - Performance optimization: squared-distance check (`dx*dx + dy*dy < maxDist*maxDist`) pre-filters non-connecting pairs prior to performing `Math.sqrt`.
+- **Line Opacity & Desktop Interaction**: Base connection alpha computed as `(1 - dist / maxDist) * 0.32`. On desktop, pointer coordinates tracked with a 140px proximity radius, applying subtle brightening (+0.28 alpha boost capped at 0.75, +1.5px particle radius expansion) without distracting from foreground readability.
+- **Motion & Battery Preservation**:
+  - `prefers-reduced-motion: reduce`: animation loop (`requestAnimationFrame`) is bypassed; a single static frame is rendered on mount/resize.
+  - `document.visibilityState`: tab switching immediately cancels `requestAnimationFrame` and cleanly resumes on visibility restore.
+  - Device pixel ratio capped at 2 (`Math.min(window.devicePixelRatio || 1, 2)`) to protect GPU fill-rate on high-DPI displays.
+
+## Typewriter Effect & Internationalization (i18n)
+- **Component**: Modular `src/lib/components/HeroTypewriter.svelte` cycling through 4 academic track phrases loaded from `src/lib/i18n/index.ts`.
+- **Timing Parameters**: Typing speed 75ms/char, phrase completion dwell 2200ms, backspace delete speed 38ms/char, phrase turnaround delay 350ms.
+- **Reduced Motion**: Directly falls back to statically displaying the primary phrase with the blinking cursor disabled.
+- **Bilingual & RTL/LTR**: First-class Arabic (default) and English support with logical CSS/Tailwind utilities (`margin-inline`, `padding-inline`, `text-start`, mirrored SVG arrow icon via `transform: scaleX(-1)` in RTL).
+
+## Full-Bleed Hero & Background Video Extension Decisions
+- **Full-Bleed Viewport Layout**:
+  - Hero container updated to `min-height: 100dvh` (accommodating mobile dynamic browser chrome), `width: 100%`, `margin: 0`, and `border-radius: 0; border: none; box-shadow: none;` on both desktop and mobile viewports.
+  - Video and canvas fill this full-bleed container edge-to-edge.
+  - Content elements (badge, heading, typewriter, description, CTA buttons, stats glass bar) remain centered within a `max-width: 860px` container with responsive padding (`clamp(4rem, 8vw, 6rem) clamp(1.5rem, 5vw, 3.5rem)`).
+- **Background Video Layer & Fallback Poster**:
+  - Video element (`<video autoplay muted loop playsinline poster="/images/hero-poster.jpg">`) points to `/videos/hero-bg.mp4`.
+  - Conditioned with `shouldLoadVideo()`: omitted when `prefers-reduced-motion: reduce`, viewports < 768px, or on slow data connections (`navigator.connection?.saveData` or `effectiveType` of `2g` / `slow-2g`). In those cases, `/images/hero-poster.jpg` is served directly without consuming video bandwidth.
+  - **Poster Frame Production**: Extracted from frame at 1-second mark of `hero-bg.mp4` (resolution: 2560x1080) using OpenCV at 92% JPEG quality to guarantee instantaneous visual fill before video playback begins. Owner may replace with custom still if desired.
+- **Transparent Canvas Particle Network & Desktop Mouse Interaction**:
+  - Canvas background switched to `ctx.clearRect(0, 0, width, height)` (completely transparent), allowing the video layer to show through.
+  - Particle and connection line base alpha reduced (`0.16` base line alpha, `0.30` base dot alpha) to provide subtle texture without competing with video content.
+  - Desktop mouse interaction tracked via section `mousemove` listener with pre-cached bounding offsets (zero DOM queries per event/frame). When pointer is fine (desktop), lines and dots within a 160px radius visibly brighten (line alpha boosted up to `0.85`, particle radius expanded by up to `+1.8px`, alpha up to `1.0`).
+- **Color Identity Harmonization with New Platform Palette**:
+  - Re-aligned hero surface and components with the new 7-color palette (`#E5E2DD`, `#FAF8F5`, `#D5CBC1`, `#1A1918`, `#6B6864`, `#2A3B6A`, `#C82B34`).
+  - Dark overlay updated to deep navy (`rgba(30, 43, 77, 0.78)`) fading into charcoal (`rgba(26, 25, 24, 0.92)`).
+  - Canvas particles render in warm secondary tone (`#D5CBC1`) and dynamically brighten on cursor proximity to rich crimson accent (`#C82B34`).
+  - Primary CTA styled with Brand Crimson (`#C82B34`) and pure white text (`#FFFFFF`) with 4.89:1 AA contrast ratio.
+  - Secondary CTA styled with translucent Navy (`rgba(42, 59, 106, 0.4)`) and warm white text (`#FAF8F5`) with >12:1 AAA contrast ratio.
+  - Typewriter badge and stats ribbon harmonized with translucent charcoal (`#1A1918`), crimson badge accents, and warm card white typography.
+
+- **Compliance & Copy Rectification**:
+  - Removed "official" / "الرسمية" and university product affiliation claims from hero badges across Arabic and English locales. Reworded to "منصة تعليمية لطلاب حاسبات الأزهر" / "Educational Platform for FCAI Al-Azhar Students".
+  - Normalized stats copy to "مقررات تخصصية متكاملة" / "Comprehensive Tech Courses" to eliminate implied external accreditation.
+
+

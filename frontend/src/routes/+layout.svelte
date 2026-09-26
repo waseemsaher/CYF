@@ -3,12 +3,15 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { currentUser, refreshUser, logout } from '$lib/api/auth';
+  import { initLocale, currentLocale, toggleLocale } from '$lib/i18n';
+  import { socialLinks } from '$lib/socials';
 
   let { children }: { children: Snippet } = $props();
 
   let isDark = $state(false);
 
   onMount(() => {
+    initLocale();
     refreshUser(fetch);
     if (typeof document !== 'undefined') {
       const activeTheme = document.documentElement.getAttribute('data-theme') ||
@@ -129,6 +132,16 @@
           {/if}
         </button>
 
+        <button
+          type="button"
+          class="btn-lang-toggle"
+          onclick={toggleLocale}
+          aria-label={$currentLocale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+          title={$currentLocale === 'ar' ? 'English' : 'العربية'}
+        >
+          {$currentLocale === 'ar' ? 'English' : 'عربي'}
+        </button>
+
         {#if $currentUser}
           <div class="user-badge">
             <span class="user-name">{$currentUser.name}</span>
@@ -160,6 +173,47 @@
         <span class="footer-tagline">منصة Codeera التعليمية</span>
       </div>
 
+      <div class="footer-social" aria-label="حسابات التواصل الاجتماعي">
+        <a
+          href={socialLinks[0].url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="social-btn social-facebook"
+          aria-label={socialLinks[0].ariaLabel}
+          title={socialLinks[0].nameAr}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+        </a>
+
+        <a
+          href={socialLinks[1].url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="social-btn social-youtube"
+          aria-label={socialLinks[1].ariaLabel}
+          title={socialLinks[1].nameAr}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+        </a>
+
+        <a
+          href={socialLinks[2].url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="social-btn social-whatsapp"
+          aria-label={socialLinks[2].ariaLabel}
+          title={socialLinks[2].nameAr}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+          </svg>
+        </a>
+      </div>
+
       <nav class="footer-links" aria-label="روابط المنصة القانونية">
         <a href="/terms">الشروط والأحكام</a>
         <span class="separator" aria-hidden="true">•</span>
@@ -177,17 +231,40 @@
 
 <style>
   :global(:root) {
-    --storm: #0f282f;
-    --cyan: #02eff0;
-    --ink: #12343b;
-    --muted: #476269;
-    --paper: #f3f7f6;
-    --card: #ffffff;
-    --card-hover: #f9fdfc;
-    --line: #2d544c;
-    --line-subtle: #4b736b;
-    --line-bold: #0f282f;
-    --deep-cyan: #17777a;
+    /* Brand Design Tokens (docs/REQUIREMENTS.md §14) */
+    --storm-green: #0F282F;
+    --storm-green-rgb: 15, 40, 47;
+    --vivid-cyan: #02EFF0;
+    --vivid-cyan-rgb: 2, 239, 240;
+    --vivid-cyan-hover: #3df3f4;
+    --vivid-cyan-dark: #00b6b7;
+
+    /* Primary User Color Identity Tokens */
+    --bg-primary: #E5E2DD;
+    --bg-card: #FAF8F5;
+    --bg-secondary: #D5CBC1;
+    --text-main: #1A1918;
+    --text-muted: #6B6864;
+    --brand-navy: #2A3B6A;
+    --brand-accent: #C82B34;
+
+    /* RGB triplets for opacity blending */
+    --brand-navy-rgb: 42, 59, 106;
+    --brand-accent-rgb: 200, 43, 52;
+    --bg-secondary-rgb: 213, 203, 193;
+
+    /* Semantic Aliases mapped directly to user tokens */
+    --storm: #1A1918;
+    --cyan: #C82B34;
+    --ink: #1A1918;
+    --muted: #6B6864;
+    --paper: #E5E2DD;
+    --card: #FAF8F5;
+    --card-hover: #F2ECE4;
+    --line: #D5CBC1;
+    --line-subtle: #E2DAD0;
+    --line-bold: #1A1918;
+    --deep-cyan: #2A3B6A;
     --border-width: 2px;
   }
 
@@ -195,17 +272,36 @@
   :global(html[data-theme='dark']),
   :global(html.dark),
   :global([data-theme='dark']) {
-    --storm: #f0fbfb;
-    --cyan: #02eff0;
-    --ink: #cde3e1;
-    --muted: #80a1a8;
-    --paper: #081115;
-    --card: #0e2026;
-    --card-hover: #142a32;
-    --line: #1c3d46;
-    --line-subtle: #254d58;
-    --line-bold: #02eff0;
-    --deep-cyan: #0bd5d6;
+    /* Brand Design Tokens (docs/REQUIREMENTS.md §14) */
+    --storm-green: #0F282F;
+    --storm-green-rgb: 15, 40, 47;
+    --vivid-cyan: #02EFF0;
+    --vivid-cyan-rgb: 2, 239, 240;
+    --vivid-cyan-hover: #3df3f4;
+    --vivid-cyan-dark: #00b6b7;
+
+    --bg-primary: #121211;
+    --bg-card: #1A1918;
+    --bg-secondary: #272523;
+    --text-main: #FAF8F5;
+    --text-muted: #9E9A94;
+    --brand-navy: #5B7AC7;
+    --brand-accent: #E8454F;
+
+    --brand-navy-rgb: 91, 122, 199;
+    --brand-accent-rgb: 232, 69, 79;
+
+    --storm: #FAF8F5;
+    --cyan: #E8454F;
+    --ink: #FAF8F5;
+    --muted: #9E9A94;
+    --paper: #121211;
+    --card: #1A1918;
+    --card-hover: #242220;
+    --line: #33302C;
+    --line-subtle: #292623;
+    --line-bold: #E8454F;
+    --deep-cyan: #5B7AC7;
     --border-width: 2px;
     color-scheme: dark;
   }
@@ -286,9 +382,9 @@
   :global([data-theme='dark']) .btn-go-course,
   :global([data-theme='dark']) .btn-browse-courses,
   :global([data-theme='dark']) .btn-view-content {
-    background-color: var(--cyan) !important;
-    color: #07191d !important;
-    border-color: var(--cyan) !important;
+    background-color: var(--brand-accent) !important;
+    color: #ffffff !important;
+    border-color: var(--brand-accent) !important;
     font-weight: 800 !important;
   }
 
@@ -310,66 +406,66 @@
   :global([data-theme='dark']) .btn-browse-courses:hover,
   :global([data-theme='dark']) .btn-view-content:hover {
     opacity: 0.92 !important;
-    box-shadow: 0 0 18px rgba(2, 239, 240, 0.45) !important;
+    box-shadow: 0 0 18px rgba(232, 69, 79, 0.45) !important;
   }
 
-  /* Universal Contrast: Text on Cyan MUST ALWAYS be dark (#07191d) */
+  /* Universal Contrast: Text on Accent buttons MUST ALWAYS be crisp white (#ffffff) */
   :global(.btn-hero-primary),
   :global(.btn-cta-primary),
   :global(.submit-btn),
   :global([data-theme='dark'] .btn-hero-primary),
   :global([data-theme='dark'] .btn-cta-primary),
   :global([data-theme='dark'] .submit-btn) {
-    color: #07191d !important;
+    color: #ffffff !important;
   }
 
   /* Dark mode active tabs */
   :global([data-theme='dark']) .status-tabs button.active,
   :global([data-theme='dark']) .tab-btn.active {
-    background-color: var(--cyan) !important;
-    color: #07191d !important;
-    border-color: var(--cyan) !important;
+    background-color: var(--brand-navy) !important;
+    color: #ffffff !important;
+    border-color: var(--brand-navy) !important;
     font-weight: 800 !important;
   }
 
   /* Dark mode summary and dark containers */
   :global([data-theme='dark']) .order-summary {
-    background: #0d1e24 !important;
-    color: #f0fbfb !important;
+    background: #141312 !important;
+    color: #FAF8F5 !important;
     border: 2px solid var(--line) !important;
   }
 
   /* Dark mode badges, avatars & chips */
   :global([data-theme='dark']) .profile-avatar {
-    background: rgba(2, 239, 240, 0.15) !important;
-    color: var(--cyan) !important;
-    border-color: var(--cyan) !important;
+    background: rgba(91, 122, 199, 0.15) !important;
+    color: var(--deep-cyan) !important;
+    border-color: var(--deep-cyan) !important;
   }
   :global([data-theme='dark']) .role-chip {
-    background: rgba(2, 239, 240, 0.12) !important;
-    color: var(--cyan) !important;
-    border: 1px solid rgba(2, 239, 240, 0.3) !important;
+    background: rgba(91, 122, 199, 0.12) !important;
+    color: var(--deep-cyan) !important;
+    border: 1px solid rgba(91, 122, 199, 0.3) !important;
   }
   :global([data-theme='dark']) .btn-edit-course,
   :global([data-theme='dark']) .btn-adm-content,
   :global([data-theme='dark']) .btn-link {
-    background: rgba(2, 239, 240, 0.1) !important;
-    color: var(--cyan) !important;
+    background: rgba(91, 122, 199, 0.1) !important;
+    color: var(--deep-cyan) !important;
     border-color: var(--line) !important;
   }
   :global([data-theme='dark']) .section-header {
-    background: #0b1a20 !important;
+    background: #141312 !important;
     border-color: var(--line) !important;
   }
   :global([data-theme='dark']) .item-icon {
-    background: #142a33 !important;
-    color: var(--cyan) !important;
+    background: #1F1D1B !important;
+    color: var(--deep-cyan) !important;
   }
   :global([data-theme='dark']) .item-row:hover {
     background: var(--card-hover) !important;
   }
   :global([data-theme='dark']) .data-table th {
-    background: #0b1a20 !important;
+    background: #141312 !important;
     color: var(--storm) !important;
   }
   :global([data-theme='dark']) .data-table tr:hover td {
@@ -390,16 +486,16 @@
     color: #6ee7b7 !important;
   }
   :global([data-theme='dark']) .deep-link-box {
-    background: rgba(0, 136, 204, 0.12) !important;
-    border-color: rgba(0, 136, 204, 0.35) !important;
+    background: rgba(42, 59, 106, 0.18) !important;
+    border-color: rgba(91, 122, 199, 0.35) !important;
   }
   :global([data-theme='dark']) .deep-link-hint {
-    color: #7dd3fc !important;
+    color: #9cb5f0 !important;
   }
   :global([data-theme='dark']) .lock-bubble {
-    background: rgba(2, 239, 240, 0.1) !important;
-    color: var(--cyan) !important;
-    border-color: rgba(2, 239, 240, 0.3) !important;
+    background: rgba(91, 122, 199, 0.1) !important;
+    color: var(--deep-cyan) !important;
+    border-color: rgba(91, 122, 199, 0.3) !important;
   }
   :global([data-theme='dark']) .shield-bubble {
     background: rgba(245, 158, 11, 0.12) !important;
@@ -437,8 +533,8 @@
   }
   :global([data-theme='dark']) .error-banner,
   :global([data-theme='dark']) .inline-error {
-    background: rgba(239, 68, 68, 0.12) !important;
-    border-color: rgba(239, 68, 68, 0.4) !important;
+    background: rgba(200, 43, 52, 0.12) !important;
+    border-color: rgba(200, 43, 52, 0.4) !important;
     color: #fca5a5 !important;
   }
   :global([data-theme='dark']) .badge-pending {
@@ -454,13 +550,13 @@
     color: #fca5a5 !important;
   }
   :global([data-theme='dark']) .badge-role {
-    background: rgba(2, 239, 240, 0.12) !important;
-    color: var(--cyan) !important;
-    border-color: rgba(2, 239, 240, 0.3) !important;
+    background: rgba(91, 122, 199, 0.12) !important;
+    color: var(--deep-cyan) !important;
+    border-color: rgba(91, 122, 199, 0.3) !important;
   }
   :global([data-theme='dark']) .counter-badge {
-    background: rgba(2, 239, 240, 0.15) !important;
-    color: var(--cyan) !important;
+    background: rgba(200, 43, 52, 0.15) !important;
+    color: var(--brand-accent) !important;
   }
   :global([data-theme='dark']) .counter-badge.pending-badge {
     background: rgba(245, 158, 11, 0.2) !important;
@@ -477,15 +573,15 @@
     border-color: rgba(245, 158, 11, 0.4) !important;
   }
   :global([data-theme='dark']) .telegram-icon-wrapper {
-    background: rgba(0, 136, 204, 0.2) !important;
-    color: #38bdf8 !important;
-    border: 1px solid rgba(0, 136, 204, 0.35) !important;
+    background: rgba(42, 59, 106, 0.25) !important;
+    color: #9cb5f0 !important;
+    border: 1px solid rgba(91, 122, 199, 0.35) !important;
   }
   :global([data-theme='dark']) .role-badge,
   :global([data-theme='dark']) .share-badge {
-    background: rgba(2, 239, 240, 0.12) !important;
-    color: var(--cyan) !important;
-    border-color: rgba(2, 239, 240, 0.3) !important;
+    background: rgba(91, 122, 199, 0.12) !important;
+    color: var(--deep-cyan) !important;
+    border-color: rgba(91, 122, 199, 0.3) !important;
   }
   :global([data-theme='dark']) .students-badge {
     background: rgba(16, 185, 129, 0.15) !important;
@@ -500,12 +596,12 @@
   }
   :global([data-theme='dark']) .option-label.selected,
   :global([data-theme='dark']) .radio-label.selected {
-    background: rgba(2, 239, 240, 0.12) !important;
-    border-color: var(--cyan) !important;
-    color: var(--cyan) !important;
+    background: rgba(91, 122, 199, 0.15) !important;
+    border-color: var(--deep-cyan) !important;
+    color: var(--deep-cyan) !important;
   }
   :global([data-theme='dark']) .quick-credentials {
-    background: #0a171d !important;
+    background: #141312 !important;
     border-color: var(--line) !important;
   }
   :global([data-theme='dark']) .quick-title {
@@ -518,7 +614,7 @@
   }
   :global([data-theme='dark']) .btn-quick:hover {
     background: var(--card-hover) !important;
-    border-color: var(--cyan) !important;
+    border-color: var(--deep-cyan) !important;
   }
   :global([data-theme='dark']) .btn-reset-filters {
     background: rgba(239, 68, 68, 0.12) !important;
@@ -529,7 +625,7 @@
     background: rgba(239, 68, 68, 0.18) !important;
   }
   :global([data-theme='dark']) .user-avatar {
-    background: #0f2127 !important;
+    background: #1F1D1B !important;
     border-color: var(--line) !important;
   }
   :global([data-theme='dark']) .btn-unlink {
@@ -544,14 +640,14 @@
   :global([data-theme='dark'] input),
   :global([data-theme='dark'] select),
   :global([data-theme='dark'] textarea) {
-    background-color: #0b1a20 !important;
+    background-color: #141312 !important;
     color: var(--storm) !important;
     border-color: var(--line) !important;
   }
 
   :global([data-theme='dark'] input::placeholder),
   :global([data-theme='dark'] textarea::placeholder) {
-    color: #557982 !important;
+    color: #7A756E !important;
   }
 
   :global([data-theme='dark'] h1),
@@ -646,13 +742,13 @@
     position: absolute;
     top: -3rem;
     inset-inline-start: 1rem;
-    background: var(--storm);
-    color: var(--cyan);
+    background: var(--brand-navy);
+    color: #FAF8F5;
     padding: 0.5rem 1rem;
     font-weight: 700;
     z-index: 1000;
     text-decoration: none;
-    border: 2px solid var(--cyan);
+    border: 2px solid var(--brand-accent);
     transition: top 150ms ease;
   }
 
@@ -693,14 +789,14 @@
   }
 
   .brand-fcai {
-    color: var(--storm);
+    color: var(--brand-navy);
     font-size: 1.25rem;
     font-weight: 900;
     letter-spacing: 0.04em;
   }
 
   .brand-courses {
-    color: var(--deep-cyan);
+    color: var(--brand-accent);
     font-size: 1.25rem;
     font-weight: 900;
     letter-spacing: 0.04em;
@@ -762,6 +858,29 @@
     color: var(--deep-cyan);
   }
 
+  .btn-lang-toggle {
+    background: var(--paper);
+    color: var(--storm);
+    border: 2px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0 0.75rem;
+    height: 2.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: background-color 150ms ease, border-color 150ms ease, transform 120ms ease, color 150ms ease;
+  }
+
+  .btn-lang-toggle:hover {
+    border-color: var(--deep-cyan);
+    transform: translateY(-1px);
+    color: var(--deep-cyan);
+  }
+
   .theme-icon {
     display: block;
     stroke: currentColor;
@@ -790,11 +909,11 @@
   .role-chip {
     font-size: 0.7rem;
     font-weight: 800;
-    background: #eef7f6;
-    color: var(--deep-cyan);
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    color: var(--brand-navy);
     padding: 0.15rem 0.45rem;
     border-radius: 0.25rem;
-    border: 1px solid rgba(23, 119, 122, 0.25);
+    border: 1px solid rgba(var(--brand-navy-rgb), 0.25);
   }
 
   .btn-logout {
@@ -830,20 +949,21 @@
   }
 
   .btn-auth-register {
-    background-color: var(--storm);
-    color: var(--cyan);
+    background-color: var(--brand-navy);
+    color: #FAF8F5;
     font-weight: 800;
     font-size: 0.85rem;
     text-decoration: none;
     padding: 0.45rem 1rem;
     border-radius: 0.375rem;
-    border: 2px solid var(--storm);
-    transition: transform 150ms ease, opacity 150ms ease;
+    border: 2px solid var(--brand-navy);
+    transition: transform 150ms ease, opacity 150ms ease, background-color 150ms ease;
   }
 
   .btn-auth-register:hover {
     transform: translateY(-1px);
-    opacity: 0.95;
+    opacity: 0.92;
+    background-color: #1E2B4D;
   }
 
   .main-content {
@@ -896,14 +1016,14 @@
   .footer-logo-fcai {
     font-size: 0.95rem;
     font-weight: 900;
-    color: var(--storm);
+    color: var(--brand-navy);
     letter-spacing: 0.04em;
   }
 
   .footer-logo-courses {
     font-size: 0.95rem;
     font-weight: 900;
-    color: var(--deep-cyan);
+    color: var(--brand-accent);
     letter-spacing: 0.04em;
   }
 
@@ -937,13 +1057,13 @@
   }
 
   .footer-links a:hover {
-    color: var(--deep-cyan);
-    background: rgba(2, 239, 240, 0.08);
+    color: var(--brand-accent);
+    background: rgba(var(--brand-accent-rgb), 0.08);
   }
 
   :global([data-theme='dark']) .footer-links a:hover {
-    color: var(--cyan);
-    background: rgba(2, 239, 240, 0.12);
+    color: var(--brand-accent);
+    background: rgba(var(--brand-accent-rgb), 0.15);
   }
 
   .separator {
@@ -958,6 +1078,60 @@
     font-weight: 500;
   }
 
+  .footer-social {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .social-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 0.45rem;
+    background: var(--paper);
+    color: var(--muted);
+    border: 1.5px solid var(--line);
+    text-decoration: none;
+    transition: transform 150ms ease, background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .social-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .social-facebook:hover {
+    color: #1877F2;
+    border-color: #1877F2;
+    background: rgba(24, 119, 242, 0.08);
+  }
+
+  .social-youtube:hover {
+    color: #FF0000;
+    border-color: #FF0000;
+    background: rgba(255, 0, 0, 0.08);
+  }
+
+  .social-whatsapp:hover {
+    color: #25D366;
+    border-color: #25D366;
+    background: rgba(37, 211, 102, 0.08);
+  }
+
+  :global([data-theme='dark']) .social-facebook:hover {
+    background: rgba(24, 119, 242, 0.16);
+  }
+
+  :global([data-theme='dark']) .social-youtube:hover {
+    background: rgba(255, 0, 0, 0.16);
+  }
+
+  :global([data-theme='dark']) .social-whatsapp:hover {
+    background: rgba(37, 211, 102, 0.16);
+  }
+
   @media (max-width: 860px) {
     .global-footer {
       padding: 1.15rem 1rem;
@@ -966,11 +1140,15 @@
     .footer-inner {
       flex-direction: column;
       text-align: center;
-      gap: 0.65rem;
+      gap: 0.75rem;
       justify-content: center;
     }
 
     .footer-start {
+      justify-content: center;
+    }
+
+    .footer-social {
       justify-content: center;
     }
 

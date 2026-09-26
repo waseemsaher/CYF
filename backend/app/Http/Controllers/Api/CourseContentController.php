@@ -69,6 +69,8 @@ class CourseContentController extends Controller
                     $itemData['description'] = $item->getTranslations('description');
                     $itemData['url'] = $item->url;
                     $itemData['has_file'] = $item->file_path !== null;
+                    $itemData['telegram_message_id'] = $item->telegram_message_id;
+                    $itemData['has_telegram_video'] = $item->telegram_message_id !== null;
                     if ($item->quiz !== null) {
                         $itemData['quiz'] = [
                             'id' => $item->quiz->id,

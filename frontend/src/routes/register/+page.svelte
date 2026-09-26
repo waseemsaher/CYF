@@ -90,7 +90,11 @@
 
     {#if errorMessage}
       <div class="error-banner" role="alert">
-        <span aria-hidden="true">⚠️</span>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
         <p>{errorMessage}</p>
       </div>
     {/if}
@@ -276,10 +280,10 @@
     color: var(--deep-cyan);
     font-size: 0.8rem;
     font-weight: 800;
-    background: #eef7f6;
+    background: rgba(var(--brand-navy-rgb), 0.08);
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
-    border: 1px solid rgba(23, 119, 122, 0.2);
+    border: 1px solid rgba(var(--brand-navy-rgb), 0.2);
     margin-bottom: 0.75rem;
   }
 
@@ -365,7 +369,7 @@
   select:focus {
     border-color: var(--deep-cyan);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(23, 119, 122, 0.15);
+    box-shadow: 0 0 0 3px rgba(var(--brand-navy-rgb), 0.15);
   }
 
   .radio-toggle {
@@ -396,13 +400,13 @@
 
   .radio-label.selected {
     border-color: var(--deep-cyan);
-    background: #eef7f6;
+    background: rgba(var(--brand-navy-rgb), 0.08);
     color: var(--deep-cyan);
   }
 
   .btn-submit {
-    background: var(--storm);
-    color: var(--cyan);
+    background: var(--brand-navy);
+    color: #FAF8F5;
     border: none;
     font-weight: 800;
     font-size: 1.05rem;
@@ -414,12 +418,13 @@
     justify-content: center;
     gap: 0.5rem;
     margin-top: 0.75rem;
-    transition: opacity 150ms ease, transform 150ms ease;
+    transition: opacity 150ms ease, transform 150ms ease, background-color 150ms ease;
   }
 
   .btn-submit:hover:not(:disabled) {
     transform: translateY(-2px);
     opacity: 0.95;
+    background-color: #1E2B4D;
   }
 
   .btn-submit:disabled {
