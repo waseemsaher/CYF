@@ -41,6 +41,14 @@ test('cors preflight and headers handle allowed origins', function (): void {
         ->assertHeader('Access-Control-Allow-Credentials', 'true');
 });
 
+test('cors rejects untrusted origins', function (): void {
+    $response = $this->withHeaders([
+        'Origin' => 'https://malicious-site.attacker.com',
+    ])->getJson('/api/v1/courses');
+
+    $response->assertHeaderMissing('Access-Control-Allow-Origin');
+});
+
 test('unauthenticated users cannot access protected student or admin routes', function (): void {
     $this->getJson('/api/v1/me')->assertUnauthorized();
     $this->getJson('/api/v1/payments')->assertUnauthorized();

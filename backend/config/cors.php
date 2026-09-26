@@ -1,5 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
+$allowedOrigins = array_filter(array_map('trim', explode(',', (string) env('CORS_ALLOWED_ORIGINS', ''))));
+
+if (env('FRONTEND_URL')) {
+    $allowedOrigins[] = rtrim((string) env('FRONTEND_URL'), '/');
+}
+
+// In local or testing environments, include local Vite dev and preview URLs
+if (env('APP_ENV', 'production') !== 'production') {
+    $localDefaults = [
+        'http://localhost:5173',
+        'http://localhost:4173',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:4173',
+    ];
+    $allowedOrigins = array_merge($allowedOrigins, $localDefaults);
+}
+
 return [
 
     /*
@@ -7,11 +26,8 @@ return [
     | Cross-Origin Resource Sharing (CORS) Configuration
     |--------------------------------------------------------------------------
     |
-    | Here you may configure your settings for cross-origin resource sharing
-    | or "CORS". This determines what cross-origin operations may execute
-    | in web browsers. You are free to adjust these settings as needed.
-    |
-    | To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+    | Strictly limited to explicitly approved origins. Wildcard patterns
+    | are completely disallowed to prevent cross-origin credentials leakage.
     |
     */
 
@@ -19,17 +35,9 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => array_filter([
-        env('FRONTEND_URL', 'http://localhost:5173'),
-        'http://localhost:5173',
-        'http://localhost:4173',
-        'http://127.0.0.1:5173',
-        'http://127.0.0.1:4173',
-    ]),
+    'allowed_origins' => array_values(array_unique(array_filter($allowedOrigins))),
 
-    'allowed_origins_patterns' => [
-        '#^https?://.*#',
-    ],
+    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 
