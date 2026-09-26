@@ -30,7 +30,7 @@ class LinkTelegramUser
         if (! $linkToken || ! $linkToken->user) {
             $this->client->sendMessage(
                 $telegramUserId,
-                "❌ الرابط غير صالح أو انتهت صلاحيته. يرجى طلب رابط جديد من حسابك على الموقع.\n\nInvalid or expired link. Please request a new link from the website."
+                "الرابط غير صالح أو انتهت صلاحيته. يرجى طلب رابط جديد من حسابك على الموقع.\n\nInvalid or expired link. Please request a new link from the website."
             );
 
             return false;
@@ -56,7 +56,7 @@ class LinkTelegramUser
         $userName = $linkToken->user->name;
         $this->client->sendMessage(
             $telegramUserId,
-            "✅ أهلاً بك يا <b>{$userName}</b>!\nتم ربط حسابك بنجاح في منصة Codeera.\n\nYour Telegram account has been linked successfully!"
+            "أهلاً بك يا <b>{$userName}</b>!\nتم ربط حسابك بنجاح في منصة Codeera.\n\nYour Telegram account has been linked successfully!"
         );
 
         return true;

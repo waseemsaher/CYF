@@ -231,7 +231,7 @@
       <header class="admin-header">
         <div class="header-titles">
           <div class="badge-row">
-            <span class="role-badge">👑 مسؤول المنصة</span>
+            <span class="role-badge">مسؤول المنصة</span>
             <span class="role-sub">نظام إدارة الدورات والمدفوعات</span>
           </div>
           <h1>لوحة تحكم الإدارة العامة</h1>
@@ -240,16 +240,18 @@
 
         <div class="header-actions">
           <button type="button" class="btn-create-course-header" onclick={openCreateCourseModal}>
-            <span>➕ إضافة مقرر جديد</span>
+            <span>إضافة مقرر جديد</span>
           </button>
           <a href="/admin/payments" class="btn-payments-queue">
-            <span>💳 طابور مراجعة الإيصالات</span>
+            <span>طابور مراجعة الإيصالات</span>
             {#if overview.pending_payments_count > 0}
               <span class="badge-count-pulse">{overview.pending_payments_count}</span>
             {/if}
           </a>
-          <button type="button" class="btn-refresh" onclick={loadData} title="تحديث البيانات">
-            🔄
+          <button type="button" class="btn-refresh" onclick={loadData} title="تحديث البيانات" aria-label="تحديث البيانات">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
           </button>
         </div>
       </header>
@@ -270,7 +272,12 @@
         <div class="kpi-card enroll-kpi">
           <div class="kpi-card-head">
             <span class="kpi-label">الاشتراكات الفعالة</span>
-            <span class="kpi-icon" aria-hidden="true">🎓</span>
+            <span class="kpi-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path>
+              </svg>
+            </span>
           </div>
           <strong class="kpi-value enroll-val">{overview.active_enrollments_count}</strong>
           <span class="kpi-hint">طالب مشترك بمقررات الفصل</span>
@@ -280,7 +287,13 @@
         <div class="kpi-card revenue-kpi">
           <div class="kpi-card-head">
             <span class="kpi-label">إيرادات هذا الفصل</span>
-            <span class="kpi-icon" aria-hidden="true">💰</span>
+            <span class="kpi-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                <circle cx="12" cy="12" r="2"></circle>
+                <path d="M6 12h.01M18 12h.01"></path>
+              </svg>
+            </span>
           </div>
           <strong class="kpi-value revenue-val">{formatPrice(overview.term_revenue_cents)}</strong>
           <span class="kpi-hint">إجمالي المبيعات المعتمدة</span>
@@ -290,7 +303,14 @@
         <div class="kpi-card students-kpi">
           <div class="kpi-card-head">
             <span class="kpi-label">إجمالي الطلاب المسجلين</span>
-            <span class="kpi-icon" aria-hidden="true">👥</span>
+            <span class="kpi-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </span>
           </div>
           <strong class="kpi-value students-val">{overview.total_students_count}</strong>
           <span class="kpi-hint">حساب طالب نشط بالمنصة</span>
@@ -305,7 +325,7 @@
           class:active={activeTab === 'courses'}
           onclick={() => activeTab = 'courses'}
         >
-          📚 إدارة المقررات ({courses.length})
+          إدارة المقررات ({courses.length})
         </button>
         <button
           type="button"
@@ -313,7 +333,7 @@
           class:active={activeTab === 'students'}
           onclick={() => activeTab = 'students'}
         >
-          🎓 دليل الطلاب ({students.length})
+          دليل الطلاب ({students.length})
         </button>
         <button
           type="button"
@@ -321,7 +341,7 @@
           class:active={activeTab === 'activity'}
           onclick={() => activeTab = 'activity'}
         >
-          📜 سجل العمليات والتدقيق
+          سجل العمليات والتدقيق
         </button>
         <button
           type="button"
@@ -329,7 +349,7 @@
           class:active={activeTab === 'system'}
           onclick={() => activeTab = 'system'}
         >
-          ⚙️ إعدادات المنصة والصفحات
+          إعدادات المنصة والصفحات
         </button>
       </nav>
 
@@ -338,11 +358,11 @@
         <section class="dash-panel">
           <div class="panel-top-bar">
             <div>
-              <h2>📚 قائمة المقررات الدراسية ({courses.length})</h2>
+              <h2>قائمة المقررات الدراسية ({courses.length})</h2>
               <p>إمكانية إضافة المقررات، تعديل الأسعار والبيانات، وحذف المواد غير المطلوبة.</p>
             </div>
             <button type="button" class="btn-create-course-header" onclick={openCreateCourseModal}>
-              ➕ إضافة مقرر جديد
+              إضافة مقرر جديد
             </button>
           </div>
 
@@ -407,29 +427,33 @@
                             onclick={() => openEditCourseModal(course)}
                             title="تعديل بيانات وسعر المادة"
                           >
-                            ✏️ تعديل
+                            تعديل
                           </button>
                           <a
                             href={`/my-courses/${course.slug}`}
                             class="btn-sm btn-content"
                             title="إدارة فصول ومحاضرات واختبارات المادة"
                           >
-                            📂 المحتوى
+                            المحتوى
                           </a>
                           <a
                             href={`/courses/${course.slug}`}
                             class="btn-sm btn-view"
                             title="معاينة صفحة المادة العامة"
                           >
-                            👁️ عرض
+                            عرض
                           </a>
                           <button
                             type="button"
                             class="btn-sm btn-delete"
                             onclick={() => handleDeleteCourse(course)}
                             title="حذف المقرر"
+                            aria-label="حذف المقرر"
                           >
-                            🗑️
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <polyline points="3 6 5 6 21 6"></polyline>
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
                           </button>
                         </div>
                       </td>
@@ -446,7 +470,7 @@
         <section class="dash-panel">
           <div class="panel-top-bar">
             <div>
-              <h2>🎓 دليل الطلاب المسجلين ({students.length})</h2>
+              <h2>دليل الطلاب المسجلين ({students.length})</h2>
               <p>استعراض بيانات الطلاب، الفرق الدراسية، والأقسام الأكاديمية.</p>
             </div>
           </div>
@@ -498,7 +522,7 @@
         <section class="dash-panel">
           <div class="panel-top-bar">
             <div>
-              <h2>📜 سجل العمليات والتدقيق (Activity Log)</h2>
+              <h2>سجل العمليات والتدقيق (Activity Log)</h2>
               <p>سجل زمني لجميع عمليات الدفع، تعديل البيانات، والاعتمادات بالمنصة.</p>
             </div>
           </div>
@@ -533,44 +557,76 @@
         <section class="dash-panel">
           <div class="panel-top-bar">
             <div>
-              <h2>⚙️ إعدادات المنصة والروابط الإدارية</h2>
+              <h2>إعدادات المنصة والروابط الإدارية</h2>
               <p>روابط مباشرة للأقسام التشغيلية والصفحات العامة.</p>
             </div>
           </div>
 
           <div class="system-modules-grid">
             <a href="/admin/payments" class="sys-module-card">
-              <span class="sys-icon">💳</span>
+              <span class="sys-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                  <line x1="2" y1="10" x2="22" y2="10"></line>
+                </svg>
+              </span>
               <h3>طابور مراجعة الإيصالات</h3>
               <p>مراجعة صور إيصالات فودافون كاش وإنستاباي والتحقق من التكرارات.</p>
             </a>
 
             <a href="/courses" class="sys-module-card">
-              <span class="sys-icon">📚</span>
+              <span class="sys-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+              </span>
               <h3>كتالوج المقررات العام</h3>
               <p>استعراض المقررات كما تظهر للطلاب مع إمكانية التعديل السريع.</p>
             </a>
 
             <a href="/teacher" class="sys-module-card">
-              <span class="sys-icon">👨‍🏫</span>
+              <span class="sys-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <polyline points="16 11 18 13 22 9"></polyline>
+                </svg>
+              </span>
               <h3>لوحة المحاضرين</h3>
               <p>أرصدة المحاضرين، نسب الأرباح، وسجلات التحويل المالي.</p>
             </a>
 
             <a href="/terms" class="sys-module-card">
-              <span class="sys-icon">📄</span>
+              <span class="sys-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+              </span>
               <h3>الشروط والأحكام</h3>
               <p>معاينة صفحة بنود وشروط الاستخدام وسياسات المنصة.</p>
             </a>
 
             <a href="/privacy" class="sys-module-card">
-              <span class="sys-icon">🔒</span>
+              <span class="sys-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </span>
               <h3>سياسة الخصوصية</h3>
               <p>معاينة بنود حماية خصوصية بيانات الطلاب وأرقام الهواتف.</p>
             </a>
 
             <a href="/refund" class="sys-module-card">
-              <span class="sys-icon">🔄</span>
+              <span class="sys-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38l-5.67-5.67"></path>
+                </svg>
+              </span>
               <h3>سياسة الاسترداد</h3>
               <p>معاينة شروط وإجراءات طلبات استرداد الرسوم الدراسية.</p>
             </a>
@@ -588,12 +644,16 @@
     <div class="modal-card" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl" tabindex="-1">
       <div class="modal-header">
         <h2>{isEditingCourse ? 'تعديل بيانات المقرر' : 'إضافة مقرر دراسي جديد'}</h2>
-        <button type="button" class="btn-close-modal" onclick={closeCourseModal} aria-label="إغلاق">✕</button>
+        <button type="button" class="btn-close-modal" onclick={closeCourseModal} aria-label="إغلاق">&times;</button>
       </div>
 
       {#if modalError}
         <div class="modal-error-banner" role="alert">
-          <span>⚠️</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
           <p>{modalError}</p>
         </div>
       {/if}
@@ -1198,8 +1258,20 @@
   }
 
   .sys-icon {
-    font-size: 1.8rem;
-    margin-bottom: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.65rem;
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    color: var(--brand-navy);
+    margin-bottom: 0.35rem;
+  }
+
+  :global([data-theme='dark']) .sys-icon {
+    background: rgba(91, 122, 199, 0.15);
+    color: var(--deep-cyan);
   }
 
   .sys-module-card h3 {
