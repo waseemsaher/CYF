@@ -334,24 +334,24 @@
   .hero-section {
     position: relative;
     overflow: hidden;
-    background: radial-gradient(135% 120% at 50% 0%, #153842 0%, var(--storm) 100%);
+    background: radial-gradient(135% 120% at 50% 0%, #1E2B4D 0%, #1A1918 100%);
     border: 2px solid var(--line);
     border-radius: 1.75rem;
     padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 3.5rem);
     color: white;
-    box-shadow: 0 16px 40px -10px rgba(15, 40, 47, 0.4);
+    box-shadow: 0 16px 40px -10px rgba(26, 25, 24, 0.4);
   }
 
   :global(:root[data-theme='dark']) .hero-section {
-    background: radial-gradient(135% 120% at 50% 0%, #0d2830 0%, #081216 100%);
-    border-color: rgba(2, 239, 240, 0.25);
+    background: radial-gradient(135% 120% at 50% 0%, #17223D 0%, #121211 100%);
+    border-color: rgba(91, 122, 199, 0.25);
     box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
   }
 
   .hero-bg-grid {
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(rgba(2, 239, 240, 0.15) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(213, 203, 193, 0.15) 1px, transparent 1px);
     background-size: 28px 28px;
     pointer-events: none;
     opacity: 0.6;
@@ -369,7 +369,7 @@
     height: 320px;
     top: -100px;
     left: 10%;
-    background: rgba(2, 239, 240, 0.18);
+    background: rgba(200, 43, 52, 0.2);
   }
 
   .bottom-glow {
@@ -377,7 +377,7 @@
     height: 350px;
     bottom: -120px;
     right: 5%;
-    background: rgba(23, 119, 122, 0.25);
+    background: rgba(42, 59, 106, 0.35);
   }
 
   .hero-content {
@@ -397,8 +397,8 @@
     align-items: center;
     gap: 0.6rem;
     padding: 0.4rem 1rem;
-    background: rgba(2, 239, 240, 0.1);
-    border: 1.5px solid rgba(2, 239, 240, 0.35);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px solid rgba(200, 43, 52, 0.35);
     border-radius: 9999px;
     backdrop-filter: blur(8px);
   }
@@ -407,8 +407,8 @@
     width: 0.55rem;
     height: 0.55rem;
     border-radius: 50%;
-    background: var(--cyan);
-    box-shadow: 0 0 0 3px rgba(2, 239, 240, 0.3);
+    background: var(--brand-accent);
+    box-shadow: 0 0 0 3px rgba(200, 43, 52, 0.3);
     animation: pulseGlow 2s infinite ease-in-out;
   }
 
@@ -420,7 +420,7 @@
   .badge-text {
     font-size: 0.82rem;
     font-weight: 700;
-    color: #e2fbfb;
+    color: #FAF8F5;
   }
 
   .hero-title {
@@ -432,7 +432,7 @@
   }
 
   .hero-gradient-text {
-    background: linear-gradient(135deg, #ffffff 40%, var(--cyan) 100%);
+    background: linear-gradient(135deg, #FAF8F5 45%, #E8454F 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
@@ -440,7 +440,7 @@
   .hero-description {
     font-size: clamp(1rem, 1.8vw, 1.15rem);
     line-height: 1.75;
-    color: #c9e4e2;
+    color: #D5CBC1;
     max-width: 680px;
     margin: 0;
   }
@@ -455,8 +455,8 @@
   }
 
   .btn-hero-primary {
-    background: var(--cyan);
-    color: #07191d;
+    background: var(--brand-accent);
+    color: #ffffff;
     font-weight: 800;
     font-size: 1rem;
     padding: 0.85rem 1.85rem;
@@ -465,14 +465,14 @@
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    border: 2px solid var(--cyan);
-    box-shadow: 0 0 24px rgba(2, 239, 240, 0.35);
+    border: 2px solid var(--brand-accent);
+    box-shadow: 0 0 24px rgba(200, 43, 52, 0.35);
     transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
   }
 
   .btn-hero-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 32px rgba(2, 239, 240, 0.55);
+    box-shadow: 0 0 32px rgba(200, 43, 52, 0.55);
     opacity: 0.98;
   }
 
@@ -513,8 +513,8 @@
     max-width: 740px;
     margin-top: 1.5rem;
     padding: 1.25rem 2rem;
-    background: rgba(15, 40, 47, 0.45);
-    border: 2px solid rgba(2, 239, 240, 0.25);
+    background: rgba(26, 25, 24, 0.55);
+    border: 2px solid rgba(213, 203, 193, 0.25);
     border-radius: 1.25rem;
     backdrop-filter: blur(16px);
   }
@@ -529,8 +529,8 @@
     width: 2.25rem;
     height: 2.25rem;
     border-radius: 0.5rem;
-    background: rgba(2, 239, 240, 0.15);
-    color: var(--cyan);
+    background: rgba(200, 43, 52, 0.15);
+    color: var(--brand-accent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -552,7 +552,7 @@
 
   .stat-label {
     font-size: 0.78rem;
-    color: #aed3d0;
+    color: #D5CBC1;
   }
 
   .stat-separator {
@@ -575,17 +575,17 @@
     display: inline-block;
     font-size: 0.78rem;
     font-weight: 800;
-    color: var(--deep-cyan);
-    background: rgba(23, 119, 122, 0.1);
-    border: 1.5px solid rgba(23, 119, 122, 0.25);
+    color: var(--brand-navy);
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    border: 1.5px solid rgba(var(--brand-navy-rgb), 0.25);
     padding: 0.25rem 0.85rem;
     border-radius: 9999px;
   }
 
   :global(:root[data-theme='dark']) .eyebrow-pill {
-    color: var(--cyan);
-    background: rgba(2, 239, 240, 0.1);
-    border-color: rgba(2, 239, 240, 0.25);
+    color: var(--brand-accent);
+    background: rgba(var(--brand-accent-rgb), 0.15);
+    border-color: rgba(var(--brand-accent-rgb), 0.35);
   }
 
   .section-title {
@@ -655,19 +655,19 @@
   }
 
   .featured-step-card {
-    border-color: rgba(2, 239, 240, 0.75);
-    background: linear-gradient(180deg, var(--card) 0%, rgba(2, 239, 240, 0.04) 100%);
+    border-color: var(--brand-accent);
+    background: linear-gradient(180deg, var(--card) 0%, rgba(var(--brand-accent-rgb), 0.04) 100%);
   }
 
   .highlight-index {
-    color: var(--cyan);
-    opacity: 0.9;
+    color: var(--brand-accent);
+    opacity: 0.95;
   }
 
   .highlight-icon {
-    background: rgba(2, 239, 240, 0.15);
-    color: #0088cc;
-    border-color: rgba(2, 239, 240, 0.5);
+    background: rgba(var(--brand-accent-rgb), 0.12);
+    color: var(--brand-accent);
+    border-color: rgba(var(--brand-accent-rgb), 0.4);
   }
 
   .step-title {
@@ -706,7 +706,7 @@
   }
 
   :global(:root[data-theme='dark']) .link-view-all {
-    color: var(--cyan);
+    color: var(--brand-accent);
   }
 
   .link-view-all:hover {
@@ -739,8 +739,8 @@
   }
 
   :global(:root[data-theme='dark']) .course-modern-card:hover {
-    border-color: var(--cyan);
-    box-shadow: 0 8px 30px rgba(2, 239, 240, 0.12);
+    border-color: var(--brand-accent);
+    box-shadow: 0 8px 30px rgba(var(--brand-accent-rgb), 0.15);
   }
 
   .card-top-row {
@@ -761,9 +761,9 @@
   }
 
   :global(:root[data-theme='dark']) .course-slug-badge {
-    color: var(--cyan);
-    background: rgba(2, 239, 240, 0.1);
-    border-color: rgba(2, 239, 240, 0.25);
+    color: var(--deep-cyan);
+    background: rgba(91, 122, 199, 0.15);
+    border-color: rgba(91, 122, 199, 0.3);
   }
 
   .discount-badge {
@@ -831,23 +831,26 @@
   }
 
   .btn-card-explore {
-    background: var(--storm);
-    color: var(--cyan);
+    background: var(--brand-navy);
+    color: #FAF8F5;
     font-weight: 800;
     font-size: 0.88rem;
     padding: 0.55rem 1.15rem;
     border-radius: 0.5rem;
     text-decoration: none;
-    border: 2px solid var(--storm);
+    border: 2px solid var(--brand-navy);
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    transition: opacity 150ms ease, transform 120ms ease;
+    transition: opacity 150ms ease, transform 120ms ease, background-color 150ms ease, border-color 150ms ease;
   }
 
   .btn-card-explore:hover {
-    opacity: 0.92;
+    opacity: 0.95;
     transform: translateY(-1px);
+    background-color: var(--brand-accent);
+    border-color: var(--brand-accent);
+    color: #ffffff;
   }
 
   /* ---------------- FEATURES SECTION ---------------- */
@@ -921,7 +924,7 @@
   }
 
   :global(:root[data-theme='dark']) .faq-card-open {
-    border-color: var(--cyan);
+    border-color: var(--brand-accent);
   }
 
   .faq-trigger {
@@ -952,7 +955,7 @@
   }
 
   :global(:root[data-theme='dark']) .faq-icon-arrow {
-    color: var(--cyan);
+    color: var(--brand-accent);
   }
 
   .faq-content {
@@ -971,26 +974,26 @@
   .cta-banner {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, var(--storm) 0%, #153c47 100%);
+    background: linear-gradient(135deg, #1A1918 0%, #1E2B4D 100%);
     color: white;
     border-radius: 1.75rem;
     border: 2px solid var(--line);
     padding: clamp(2.5rem, 5vw, 4rem) 2rem;
     text-align: center;
-    box-shadow: 0 20px 40px -10px rgba(15, 40, 47, 0.4);
+    box-shadow: 0 20px 40px -10px rgba(26, 25, 24, 0.4);
   }
 
   :global(:root[data-theme='dark']) .cta-banner {
-    background: linear-gradient(135deg, #10242b 0%, #081418 100%);
-    border-color: rgba(2, 239, 240, 0.3);
+    background: linear-gradient(135deg, #121211 0%, #17223D 100%);
+    border-color: rgba(91, 122, 199, 0.3);
   }
 
   .cta-banner-bg {
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(rgba(2, 239, 240, 0.18) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(213, 203, 193, 0.18) 1px, transparent 1px);
     background-size: 24px 24px;
-    opacity: 0.5;
+    opacity: 0.4;
   }
 
   .cta-content {
@@ -1007,11 +1010,11 @@
   .cta-badge {
     font-size: 0.78rem;
     font-weight: 800;
-    background: rgba(2, 239, 240, 0.15);
-    color: var(--cyan);
+    background: rgba(var(--brand-accent-rgb), 0.15);
+    color: #FF7B82;
     padding: 0.25rem 0.85rem;
     border-radius: 9999px;
-    border: 1px solid rgba(2, 239, 240, 0.3);
+    border: 1px solid rgba(var(--brand-accent-rgb), 0.35);
   }
 
   .cta-banner h2 {
@@ -1022,7 +1025,7 @@
   }
 
   .cta-banner p {
-    color: #cadbd8;
+    color: #D5CBC1;
     font-size: 1.05rem;
     line-height: 1.75;
     margin: 0;
@@ -1037,20 +1040,20 @@
   }
 
   .btn-cta-primary {
-    background: var(--cyan);
-    color: #07191d;
+    background: var(--brand-accent);
+    color: #ffffff;
     font-weight: 800;
     padding: 0.75rem 1.65rem;
     border-radius: 0.6rem;
     text-decoration: none;
-    border: 2px solid var(--cyan);
-    box-shadow: 0 0 20px rgba(2, 239, 240, 0.3);
+    border: 2px solid var(--brand-accent);
+    box-shadow: 0 0 20px rgba(200, 43, 52, 0.35);
     transition: transform 150ms ease, box-shadow 150ms ease;
   }
 
   .btn-cta-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 28px rgba(2, 239, 240, 0.5);
+    box-shadow: 0 0 28px rgba(200, 43, 52, 0.55);
   }
 
   .btn-cta-secondary {

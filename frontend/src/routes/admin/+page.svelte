@@ -804,9 +804,9 @@
   }
 
   .btn-create-course-header {
-    background: var(--storm);
-    color: var(--cyan);
-    border: 2px solid var(--storm);
+    background: var(--brand-accent);
+    color: #ffffff;
+    border: 2px solid var(--brand-accent);
     font-weight: 800;
     font-size: 0.92rem;
     padding: 0.65rem 1.25rem;
@@ -961,9 +961,9 @@
   }
 
   .tab-btn.active {
-    background: var(--storm);
-    color: var(--cyan);
-    border-color: var(--storm);
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border-color: var(--brand-navy);
   }
 
   /* Panels */
@@ -1019,14 +1019,14 @@
   }
 
   .admin-table th {
-    background: #eef7f6;
+    background: var(--paper);
     color: var(--storm);
     font-weight: 800;
     font-size: 0.82rem;
   }
 
   .admin-table tr:hover td {
-    background: #f8fafc;
+    background: var(--card-hover);
   }
 
   .en-sub {
@@ -1089,13 +1089,13 @@
   }
 
   .btn-edit {
-    background: var(--storm);
-    color: var(--cyan);
-    border: 2px solid var(--storm);
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border: 2px solid var(--brand-navy);
   }
 
   .btn-content {
-    background: #eef7f6;
+    background: var(--paper);
     color: var(--deep-cyan);
     border: 2px solid var(--line);
   }
@@ -1220,7 +1220,7 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 40, 47, 0.65);
+    background: rgba(26, 25, 24, 0.65);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
@@ -1332,9 +1332,9 @@
   }
 
   .btn-save {
-    background: var(--storm);
-    color: var(--cyan);
-    border: 2px solid var(--storm);
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border: 2px solid var(--brand-navy);
     padding: 0.6rem 1.5rem;
     border-radius: 0.5rem;
     font-weight: 800;

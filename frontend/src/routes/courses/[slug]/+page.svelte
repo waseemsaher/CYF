@@ -286,7 +286,7 @@
 
   .course-hero {
     align-items: end;
-    background: #0f282f;
+    background: radial-gradient(135% 120% at 50% 0%, #1E2B4D 0%, #1A1918 100%);
     border: 2px solid var(--line);
     border-radius: 1rem;
     color: white;
@@ -294,7 +294,7 @@
     gap: 2rem;
     grid-template-columns: 1fr minmax(280px, 360px);
     padding: clamp(1.5rem, 5vw, 3.5rem);
-    box-shadow: 0 10px 30px rgba(15, 40, 47, 0.12);
+    box-shadow: 0 10px 30px rgba(26, 25, 24, 0.2);
   }
 
   .hero-tag-row {
@@ -305,7 +305,7 @@
   }
 
   .kicker {
-    color: #02eff0;
+    color: var(--brand-accent);
     font-size: 0.82rem;
     font-weight: 800;
     letter-spacing: 0.04em;
@@ -422,13 +422,13 @@
   }
 
   .btn-manage-content {
-    background: var(--storm);
-    color: var(--cyan);
-    border: 2px solid var(--storm);
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border: 2px solid var(--brand-navy);
   }
 
   .btn-edit-course {
-    background: #eef7f6;
+    background: var(--paper);
     color: var(--deep-cyan);
     border: 2px solid var(--line);
   }
@@ -474,7 +474,7 @@
   }
 
   .free-label {
-    color: #17777a;
+    color: var(--brand-navy);
     display: block;
     font-weight: 800;
     margin-top: 0.35rem;
@@ -482,10 +482,10 @@
 
   .enroll-btn {
     align-items: center;
-    background: #02eff0;
-    border: 2px solid #02eff0;
+    background: var(--brand-accent);
+    border: 2px solid var(--brand-accent);
     border-radius: 0.5rem;
-    color: #0f282f;
+    color: #ffffff;
     display: flex;
     font: inherit;
     font-weight: 900;
@@ -500,13 +500,13 @@
   }
 
   .enroll-btn:hover {
-    opacity: 0.85;
+    opacity: 0.88;
   }
 
   .enroll-btn.free {
-    background: #17777a;
-    color: white;
-    border-color: #17777a;
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border-color: var(--brand-navy);
   }
 
   .outline {
@@ -518,7 +518,7 @@
   }
 
   .outline .kicker {
-    color: #17777a;
+    color: var(--brand-navy);
   }
 
   .outline h2 {
@@ -529,13 +529,13 @@
   }
 
   .outline p:last-child {
-    color: #49636a;
+    color: var(--muted);
     line-height: 1.8;
     margin: 0;
   }
 
   .admin-inline-notice {
-    background: #eef7f6;
+    background: var(--paper);
     border: 2px solid var(--line);
     border-radius: 0.75rem;
     padding: 1.25rem;
@@ -566,7 +566,7 @@
   .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 40, 47, 0.6);
+    background: rgba(26, 25, 24, 0.65);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
