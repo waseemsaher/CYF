@@ -31,5 +31,12 @@ export const socialLinks: SocialLink[] = [
     nameAr: 'واتساب',
     url: '#', // Provide your WhatsApp link or group link here
     ariaLabel: 'تواصل معنا عبر واتساب'
+  },
+  {
+    id: 'telegram',
+    name: 'Telegram',
+    nameAr: 'تليجرام',
+    url: '#', // Provide your Telegram channel or bot link here
+    ariaLabel: 'قناة منصة Codeera على تليجرام'
   }
 ];
