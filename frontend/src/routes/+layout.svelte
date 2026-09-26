@@ -3,12 +3,14 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { currentUser, refreshUser, logout } from '$lib/api/auth';
+  import { initLocale, currentLocale, toggleLocale } from '$lib/i18n';
 
   let { children }: { children: Snippet } = $props();
 
   let isDark = $state(false);
 
   onMount(() => {
+    initLocale();
     refreshUser(fetch);
     if (typeof document !== 'undefined') {
       const activeTheme = document.documentElement.getAttribute('data-theme') ||
@@ -129,6 +131,16 @@
           {/if}
         </button>
 
+        <button
+          type="button"
+          class="btn-lang-toggle"
+          onclick={toggleLocale}
+          aria-label={$currentLocale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
+          title={$currentLocale === 'ar' ? 'English' : 'العربية'}
+        >
+          {$currentLocale === 'ar' ? 'English' : 'عربي'}
+        </button>
+
         {#if $currentUser}
           <div class="user-badge">
             <span class="user-name">{$currentUser.name}</span>
@@ -177,6 +189,14 @@
 
 <style>
   :global(:root) {
+    /* Brand Design Tokens (docs/REQUIREMENTS.md §14) */
+    --storm-green: #0F282F;
+    --storm-green-rgb: 15, 40, 47;
+    --vivid-cyan: #02EFF0;
+    --vivid-cyan-rgb: 2, 239, 240;
+    --vivid-cyan-hover: #3df3f4;
+    --vivid-cyan-dark: #00b6b7;
+
     /* Primary User Color Identity Tokens */
     --bg-primary: #E5E2DD;
     --bg-card: #FAF8F5;
@@ -210,6 +230,14 @@
   :global(html[data-theme='dark']),
   :global(html.dark),
   :global([data-theme='dark']) {
+    /* Brand Design Tokens (docs/REQUIREMENTS.md §14) */
+    --storm-green: #0F282F;
+    --storm-green-rgb: 15, 40, 47;
+    --vivid-cyan: #02EFF0;
+    --vivid-cyan-rgb: 2, 239, 240;
+    --vivid-cyan-hover: #3df3f4;
+    --vivid-cyan-dark: #00b6b7;
+
     --bg-primary: #121211;
     --bg-card: #1A1918;
     --bg-secondary: #272523;
@@ -783,6 +811,29 @@
   }
 
   .btn-theme-toggle:hover {
+    border-color: var(--deep-cyan);
+    transform: translateY(-1px);
+    color: var(--deep-cyan);
+  }
+
+  .btn-lang-toggle {
+    background: var(--paper);
+    color: var(--storm);
+    border: 2px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0 0.75rem;
+    height: 2.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: background-color 150ms ease, border-color 150ms ease, transform 120ms ease, color 150ms ease;
+  }
+
+  .btn-lang-toggle:hover {
     border-color: var(--deep-cyan);
     transform: translateY(-1px);
     color: var(--deep-cyan);

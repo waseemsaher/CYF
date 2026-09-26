@@ -1,5 +1,9 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import HeroCanvas from '$lib/components/HeroCanvas.svelte';
+  import HeroTypewriter from '$lib/components/HeroTypewriter.svelte';
+  import { currentHeroTranslations, currentLocale } from '$lib/i18n';
+  import { currentUser } from '$lib/api/auth';
 
   let { data }: { data: PageData } = $props();
 
@@ -40,83 +44,80 @@
 </svelte:head>
 
 <div class="landing-container">
-  <!-- Immersive Hero Section -->
-  <section class="hero-section">
-    <div class="hero-bg-grid" aria-hidden="true"></div>
-    <div class="hero-glow-sphere top-glow" aria-hidden="true"></div>
-    <div class="hero-glow-sphere bottom-glow" aria-hidden="true"></div>
+  <!-- Immersive Tech-Forward Hero Section -->
+  <section class="hero-section" aria-label="مقدمة المنصة">
+    <HeroCanvas />
+    <div class="hero-overlay" aria-hidden="true"></div>
 
     <div class="hero-content">
       <div class="badge-pill">
-        <span class="badge-pulse"></span>
-        <span class="badge-text">منصة Codeera التعليمية الرسمية</span>
+        <span class="badge-pulse" aria-hidden="true"></span>
+        <span class="badge-text">{$currentHeroTranslations.badge}</span>
       </div>
 
       <h1 class="hero-title">
-        شروحات برمجية مركزة، <br />
-        <span class="hero-gradient-text">خطوتك الواثقة نحو الامتياز الأكاديمي.</span>
+        <span>{$currentHeroTranslations.titlePrefix}</span><br />
+        <span class="hero-cyan-gradient">{$currentHeroTranslations.titleHighlight}</span>
       </h1>
 
+      <HeroTypewriter
+        prefix={$currentHeroTranslations.typewriterPrefix}
+        phrases={$currentHeroTranslations.typewriterPhrases}
+      />
+
       <p class="hero-description">
-        {data.whyUs?.ar ??
-          'محتوى دراسي منظم ومصور يغطي مناهج الكلية بدقة، مجموعات تليجرام مقفولة للمناقشة المستمرة مع المحاضرين، واختبارات تفاعلية تقيس استيعابك للمقرر أولاً بأول.'}
+        {$currentHeroTranslations.subheading}
       </p>
 
       <div class="hero-actions">
         <a href="/courses" class="btn-hero-primary">
-          <span>تصفح المقررات الدراسية</span>
-          <svg class="hero-btn-arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <span>{$currentHeroTranslations.primaryCta}</span>
+          <svg class="hero-btn-arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
         </a>
-        <a href="/login" class="btn-hero-secondary">
-          <span>تسجيل الدخول</span>
-        </a>
+
+        {#if $currentUser}
+          <a href="/dashboard" class="btn-hero-secondary">
+            <span>{$currentHeroTranslations.dashboardCta}</span>
+          </a>
+        {:else}
+          <a href="/register" class="btn-hero-secondary">
+            <span>{$currentHeroTranslations.secondaryCta}</span>
+          </a>
+        {/if}
       </div>
 
       <!-- Glassmorphic Stats Ribbon -->
       <div class="stats-glass-bar">
-        <div class="stat-pill">
-          <div class="stat-icon-wrap" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-            </svg>
+        {#each $currentHeroTranslations.stats as stat, i}
+          {#if i > 0}
+            <div class="stat-separator" aria-hidden="true"></div>
+          {/if}
+          <div class="stat-pill">
+            <div class="stat-icon-wrap" aria-hidden="true">
+              {#if i === 0}
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+              {:else if i === 1}
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+              {:else}
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+              {/if}
+            </div>
+            <div class="stat-details">
+              <strong class="stat-number">{stat.value}</strong>
+              <span class="stat-label">{stat.label}</span>
+            </div>
           </div>
-          <div class="stat-details">
-            <strong class="stat-number">+10</strong>
-            <span class="stat-label">مقررات تخصصية معتمدة</span>
-          </div>
-        </div>
-
-        <div class="stat-separator" aria-hidden="true"></div>
-
-        <div class="stat-pill">
-          <div class="stat-icon-wrap" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-          </div>
-          <div class="stat-details">
-            <strong class="stat-number">100%</strong>
-            <span class="stat-label">مجموعات تليجرام مقفولة</span>
-          </div>
-        </div>
-
-        <div class="stat-separator" aria-hidden="true"></div>
-
-        <div class="stat-pill">
-          <div class="stat-icon-wrap" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-            </svg>
-          </div>
-          <div class="stat-details">
-            <strong class="stat-number">فوري</strong>
-            <span class="stat-label">قبول آلي عبر البوت</span>
-          </div>
-        </div>
+        {/each}
       </div>
     </div>
   </section>
@@ -330,54 +331,35 @@
     padding: 1.5rem 1.25rem 5rem;
   }
 
-  /* ---------------- HERO SECTION ---------------- */
+  /* ---------------- HERO SECTION (Storm Green + Vivid Cyan Tech Theme) ---------------- */
   .hero-section {
     position: relative;
     overflow: hidden;
-    background: radial-gradient(135% 120% at 50% 0%, #1E2B4D 0%, #1A1918 100%);
-    border: 2px solid var(--line);
+    background-color: var(--storm-green, #0F282F);
+    border: 2px solid rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.28);
     border-radius: 1.75rem;
     padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 5vw, 3.5rem);
-    color: white;
-    box-shadow: 0 16px 40px -10px rgba(26, 25, 24, 0.4);
+    color: #FAF8F5;
+    box-shadow: 0 20px 50px -10px rgba(15, 40, 47, 0.7), 0 0 35px -5px rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.12);
   }
 
   :global(:root[data-theme='dark']) .hero-section {
-    background: radial-gradient(135% 120% at 50% 0%, #17223D 0%, #121211 100%);
-    border-color: rgba(91, 122, 199, 0.25);
-    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7);
+    border-color: rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.35);
+    box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.8), 0 0 40px -5px rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.15);
   }
 
-  .hero-bg-grid {
+  /* Semi-transparent dark overlay for guaranteed WCAG AA+ contrast */
+  .hero-overlay {
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(rgba(213, 203, 193, 0.15) 1px, transparent 1px);
-    background-size: 28px 28px;
+    background: radial-gradient(
+      ellipse at 50% 30%,
+      rgba(var(--storm-green-rgb, 15, 40, 47), 0.75) 0%,
+      rgba(var(--storm-green-rgb, 15, 40, 47), 0.92) 100%
+    );
+    backdrop-filter: blur(2px);
     pointer-events: none;
-    opacity: 0.6;
-  }
-
-  .hero-glow-sphere {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(80px);
-  }
-
-  .top-glow {
-    width: 320px;
-    height: 320px;
-    top: -100px;
-    left: 10%;
-    background: rgba(200, 43, 52, 0.2);
-  }
-
-  .bottom-glow {
-    width: 350px;
-    height: 350px;
-    bottom: -120px;
-    right: 5%;
-    background: rgba(42, 59, 106, 0.35);
+    z-index: 1;
   }
 
   .hero-content {
@@ -387,7 +369,7 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 1.75rem;
+    gap: 1.6rem;
     max-width: 860px;
     margin-inline: auto;
   }
@@ -396,19 +378,20 @@
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    padding: 0.4rem 1rem;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1.5px solid rgba(200, 43, 52, 0.35);
+    padding: 0.4rem 1.1rem;
+    background: rgba(var(--storm-green-rgb, 15, 40, 47), 0.85);
+    border: 1.5px solid rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.45);
     border-radius: 9999px;
     backdrop-filter: blur(8px);
+    box-shadow: 0 0 18px rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.18);
   }
 
   .badge-pulse {
     width: 0.55rem;
     height: 0.55rem;
     border-radius: 50%;
-    background: var(--brand-accent);
-    box-shadow: 0 0 0 3px rgba(200, 43, 52, 0.3);
+    background: var(--vivid-cyan, #02EFF0);
+    box-shadow: 0 0 0 3px rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.35);
     animation: pulseGlow 2s infinite ease-in-out;
   }
 
@@ -418,30 +401,33 @@
   }
 
   .badge-text {
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     font-weight: 700;
     color: #FAF8F5;
+    letter-spacing: 0.01em;
   }
 
   .hero-title {
-    font-size: clamp(2.1rem, 4.5vw, 3.25rem);
+    font-size: clamp(2.1rem, 4.5vw, 3.4rem);
     font-weight: 900;
-    line-height: 1.28;
-    color: white;
+    line-height: 1.25;
+    color: #FAF8F5;
     margin: 0;
   }
 
-  .hero-gradient-text {
-    background: linear-gradient(135deg, #FAF8F5 45%, #E8454F 100%);
+  .hero-cyan-gradient {
+    background: linear-gradient(135deg, #FAF8F5 35%, var(--vivid-cyan, #02EFF0) 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
+    color: var(--vivid-cyan, #02EFF0);
   }
 
   .hero-description {
-    font-size: clamp(1rem, 1.8vw, 1.15rem);
-    line-height: 1.75;
+    font-size: clamp(1rem, 1.8vw, 1.18rem);
+    line-height: 1.8;
     color: #D5CBC1;
-    max-width: 680px;
+    max-width: 700px;
     margin: 0;
   }
 
@@ -449,57 +435,66 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    gap: 1.1rem;
     flex-wrap: wrap;
     margin-top: 0.5rem;
   }
 
   .btn-hero-primary {
-    background: var(--brand-accent);
-    color: #ffffff;
+    background: var(--vivid-cyan, #02EFF0);
+    color: var(--storm-green, #0F282F);
     font-weight: 800;
-    font-size: 1rem;
-    padding: 0.85rem 1.85rem;
-    border-radius: 0.65rem;
+    font-size: 1.05rem;
+    padding: 0.85rem 2rem;
+    border-radius: 0.75rem;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 0.6rem;
-    border: 2px solid var(--brand-accent);
-    box-shadow: 0 0 24px rgba(200, 43, 52, 0.35);
-    transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+    gap: 0.65rem;
+    border: 2px solid var(--vivid-cyan, #02EFF0);
+    box-shadow: 0 0 25px rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.45);
+    transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
   }
 
   .btn-hero-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0 32px rgba(200, 43, 52, 0.55);
-    opacity: 0.98;
+    box-shadow: 0 0 35px rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.7);
+    background: var(--vivid-cyan-hover, #3df3f4);
   }
 
   .hero-btn-arrow {
     transition: transform 150ms ease;
   }
 
-  .btn-hero-primary:hover .hero-btn-arrow {
-    transform: translateX(-3px);
+  :global([dir="rtl"]) .hero-btn-arrow {
+    transform: scaleX(-1);
+  }
+
+  :global([dir="rtl"]) .btn-hero-primary:hover .hero-btn-arrow {
+    transform: scaleX(-1) translateX(3px);
+  }
+
+  :global([dir="ltr"]) .btn-hero-primary:hover .hero-btn-arrow {
+    transform: translateX(3px);
   }
 
   .btn-hero-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    color: white;
+    background: rgba(var(--storm-green-rgb, 15, 40, 47), 0.55);
+    color: #FAF8F5;
     font-weight: 700;
-    font-size: 1rem;
-    padding: 0.85rem 1.65rem;
-    border-radius: 0.65rem;
+    font-size: 1.05rem;
+    padding: 0.85rem 1.85rem;
+    border-radius: 0.75rem;
     text-decoration: none;
-    border: 2px solid rgba(255, 255, 255, 0.25);
+    border: 2px solid rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.45);
     backdrop-filter: blur(8px);
-    transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+    transition: background 150ms ease, border-color 150ms ease, transform 150ms ease, color 150ms ease;
   }
 
   .btn-hero-secondary:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: white;
+    background: rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.12);
+    border-color: var(--vivid-cyan, #02EFF0);
+    color: var(--vivid-cyan, #02EFF0);
     transform: translateY(-2px);
   }
 
@@ -510,13 +505,14 @@
     justify-content: space-around;
     gap: 1.5rem;
     width: 100%;
-    max-width: 740px;
-    margin-top: 1.5rem;
+    max-width: 760px;
+    margin-top: 1.25rem;
     padding: 1.25rem 2rem;
-    background: rgba(26, 25, 24, 0.55);
-    border: 2px solid rgba(213, 203, 193, 0.25);
+    background: rgba(var(--storm-green-rgb, 15, 40, 47), 0.72);
+    border: 1.5px solid rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.25);
     border-radius: 1.25rem;
     backdrop-filter: blur(16px);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
   }
 
   .stat-pill {
@@ -526,39 +522,41 @@
   }
 
   .stat-icon-wrap {
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 0.5rem;
-    background: rgba(200, 43, 52, 0.15);
-    color: var(--brand-accent);
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 0.6rem;
+    background: rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.15);
+    color: var(--vivid-cyan, #02EFF0);
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 1px solid rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.25);
   }
 
   .stat-details {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    text-align: right;
+    text-align: start;
   }
 
   .stat-number {
-    font-size: 1.35rem;
-    font-weight: 900;
-    color: white;
-    line-height: 1.1;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--vivid-cyan, #02EFF0);
+    line-height: 1.2;
   }
 
   .stat-label {
-    font-size: 0.78rem;
-    color: #D5CBC1;
+    font-size: 0.82rem;
+    color: #FAF8F5;
+    opacity: 0.85;
+    font-weight: 500;
   }
 
   .stat-separator {
-    width: 2px;
-    height: 2.2rem;
-    background: rgba(255, 255, 255, 0.12);
+    width: 1px;
+    height: 2rem;
+    background: rgba(var(--vivid-cyan-rgb, 2, 239, 240), 0.2);
   }
 
   /* ---------------- SECTION HEADINGS ---------------- */

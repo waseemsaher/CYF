@@ -150,3 +150,28 @@
 - Zero-downtime deployment script (`scripts/deploy.sh`) with maintenance bypass token, asset compilation, migration enforcement, and health check validation.
 - Containerized alternative provided via `docker-compose.prod.yml`.
 
+---
+
+# Landing Page Hero Section Decisions
+
+## Particle Network Canvas Architecture
+- **Rendering & Tech**: Self-contained Svelte component (`src/lib/components/HeroCanvas.svelte`) using Plain HTML5 Canvas 2D context with zero external animation dependencies. Text and interactive DOM elements are server-rendered immediately, and canvas initializes asynchronously on mount to eliminate any impact on First Contentful Paint.
+- **Design Tokens**: Background color and particle/connection line stroke colors are dynamically read from root CSS custom properties (`--storm-green` / `#0F282F`, `--vivid-cyan-rgb` / `2, 239, 240`), ensuring zero hardcoded hex values in canvas rendering logic.
+- **Particle Count & Scale**: Tiered responsive particle count to preserve 60fps on mid-range and low-end mobile devices without degrading Lighthouse performance:
+  - Mobile (< 640px): 38 particles, connection distance threshold 85px.
+  - Tablet (640px – 1024px): 52 particles, distance threshold 105px.
+  - Desktop (> 1024px): 68 particles, distance threshold 125px.
+  - Performance optimization: squared-distance check (`dx*dx + dy*dy < maxDist*maxDist`) pre-filters non-connecting pairs prior to performing `Math.sqrt`.
+- **Line Opacity & Desktop Interaction**: Base connection alpha computed as `(1 - dist / maxDist) * 0.32`. On desktop, pointer coordinates tracked with a 140px proximity radius, applying subtle brightening (+0.28 alpha boost capped at 0.75, +1.5px particle radius expansion) without distracting from foreground readability.
+- **Motion & Battery Preservation**:
+  - `prefers-reduced-motion: reduce`: animation loop (`requestAnimationFrame`) is bypassed; a single static frame is rendered on mount/resize.
+  - `document.visibilityState`: tab switching immediately cancels `requestAnimationFrame` and cleanly resumes on visibility restore.
+  - Device pixel ratio capped at 2 (`Math.min(window.devicePixelRatio || 1, 2)`) to protect GPU fill-rate on high-DPI displays.
+
+## Typewriter Effect & Internationalization (i18n)
+- **Component**: Modular `src/lib/components/HeroTypewriter.svelte` cycling through 4 academic track phrases loaded from `src/lib/i18n/index.ts`.
+- **Timing Parameters**: Typing speed 75ms/char, phrase completion dwell 2200ms, backspace delete speed 38ms/char, phrase turnaround delay 350ms.
+- **Reduced Motion**: Directly falls back to statically displaying the primary phrase with the blinking cursor disabled.
+- **Bilingual & RTL/LTR**: First-class Arabic (default) and English support with logical CSS/Tailwind utilities (`margin-inline`, `padding-inline`, `text-start`, mirrored SVG arrow icon via `transform: scaleX(-1)` in RTL).
+- **Accessibility & Contrast**: Semi-transparent dark radial overlay (`rgba(15, 40, 47, 0.75)` to `rgba(15, 40, 47, 0.92)`) positioned between canvas and text guarantees WCAG AAA contrast ratio (>12:1) for all typography and CTA buttons.
+
