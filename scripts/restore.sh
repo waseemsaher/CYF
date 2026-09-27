@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Database Restore Script for Al-Azhar FCAI Course Platform
-# Restores a compressed MySQL backup created by backup.sh.
+# Database Restore Script for Codeera Platform
+# Restores a compressed MySQL backup from local storage or AWS S3.
 # ==============================================================================
 
 set -euo pipefail
 
+BACKEND_DIR="${BACKEND_DIR:-/var/www/cyf/backend}"
+
+# 1. Prefer Laravel Artisan db:restore if backend directory exists
+if [[ -f "${BACKEND_DIR}/artisan" ]]; then
+    cd "${BACKEND_DIR}"
+    php artisan db:restore "$@"
+    exit $?
+fi
+
+# 2. Standalone fallback: gunzip + mysql import
 if [[ $# -lt 1 ]]; then
     echo "Usage: $0 <path-to-backup.sql.gz> [--force]"
     exit 1
@@ -55,11 +65,3 @@ else
 fi
 
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Database restored successfully."
-
-# Clear cache after restoring data
-if [[ -d "/var/www/cyf/backend" ]]; then
-    cd /var/www/cyf/backend
-    php artisan optimize:clear || true
-fi
-
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Restore finished."

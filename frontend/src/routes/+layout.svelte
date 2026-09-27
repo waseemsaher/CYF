@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { currentUser, refreshUser, logout } from '$lib/api/auth';
-  import { initLocale, currentLocale, toggleLocale } from '$lib/i18n';
+  import { initLocale, currentLocale, toggleLocale, t } from '$lib/i18n';
   import { socialLinks } from '$lib/socials';
 
   let { children }: { children: Snippet } = $props();
@@ -42,36 +42,36 @@
     window.location.href = '/';
   }
 
-  const baseLinks = [
-    { href: '/', label: 'الرئيسية' },
-    { href: '/courses', label: 'الدورات' },
-  ];
-
   let navLinks = $derived.by(() => {
-    const links = [...baseLinks];
+    const tr = $t.nav;
+    const links = [
+      { href: '/', label: tr.home },
+      { href: '/courses', label: tr.courses },
+    ];
     const user = $currentUser;
     if (!user) return links;
 
     const role = user.role || (user.roles && user.roles[0]) || '';
 
     if (role === 'superadmin' || role === 'admin') {
-      links.push({ href: '/admin', label: 'لوحة الإدارة' });
-      links.push({ href: '/admin/payments', label: 'طابور المراجعة' });
+      links.push({ href: '/admin', label: tr.admin });
+      links.push({ href: '/admin/payments', label: tr.reviewQueue });
     } else if (role === 'teacher') {
-      links.push({ href: '/teacher', label: 'لوحة المعلم' });
+      links.push({ href: '/teacher', label: tr.teacher });
     } else {
-      links.push({ href: '/dashboard', label: 'لوحة الطالب' });
-      links.push({ href: '/payments', label: 'مدفوعاتي' });
+      links.push({ href: '/dashboard', label: tr.dashboard });
+      links.push({ href: '/payments', label: tr.payments });
     }
 
     return links;
   });
 
   function getRoleLabel(role?: string): string {
-    if (role === 'superadmin') return 'مدير عام';
-    if (role === 'admin') return 'مسؤول';
-    if (role === 'teacher') return 'محاضر';
-    return 'طالب';
+    const roles = $t.nav.roles;
+    if (role === 'superadmin') return roles.superadmin;
+    if (role === 'admin') return roles.admin;
+    if (role === 'teacher') return roles.teacher;
+    return roles.student;
   }
 
   function isActive(href: string): boolean {
@@ -82,17 +82,17 @@
   }
 </script>
 
-<a href="#main-content" class="skip-link">انتقل إلى المحتوى الرئيسي</a>
+<a href="#main-content" class="skip-link">{$t.nav.skipLink}</a>
 
 <div class="layout-container">
   <header class="global-header">
     <div class="header-inner">
-      <a class="brand" href="/" aria-label="الصفحة الرئيسية لمنصة Codeera">
+      <a class="brand" href="/" aria-label={$t.nav.brandAria}>
         <span class="brand-fcai">CODE</span>
         <span class="brand-courses">ERA</span>
       </a>
 
-      <nav aria-label="التنقل الرئيسي" class="nav-menu">
+      <nav aria-label={$t.nav.mainNavAria} class="nav-menu">
         {#each navLinks as link}
           <a
             href={link.href}
@@ -110,8 +110,8 @@
           type="button"
           class="btn-theme-toggle"
           onclick={toggleTheme}
-          aria-label={isDark ? 'التبديل إلى الوضع الفاتح' : 'التبديل إلى الوضع الداكن'}
-          title={isDark ? 'الوضع الفاتح' : 'الوضع الداكن'}
+          aria-label={isDark ? $t.nav.themeToggleAriaLight : $t.nav.themeToggleAriaDark}
+          title={isDark ? $t.nav.themeLight : $t.nav.themeDark}
         >
           {#if isDark}
             <svg class="theme-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -136,23 +136,23 @@
           type="button"
           class="btn-lang-toggle"
           onclick={toggleLocale}
-          aria-label={$currentLocale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'}
-          title={$currentLocale === 'ar' ? 'English' : 'العربية'}
+          aria-label={$t.nav.langToggleAria}
+          title={$t.nav.langToggleLabel}
         >
-          {$currentLocale === 'ar' ? 'English' : 'عربي'}
+          {$t.nav.langToggleLabel}
         </button>
 
         {#if $currentUser}
           <div class="user-badge">
             <span class="user-name">{$currentUser.name}</span>
             <span class="role-chip">{getRoleLabel($currentUser.role)}</span>
-            <button type="button" class="btn-logout" onclick={handleLogout} title="تسجيل الخروج">
-              خروج
+            <button type="button" class="btn-logout" onclick={handleLogout} title={$t.nav.logout}>
+              {$t.nav.logout}
             </button>
           </div>
         {:else}
-          <a href="/login" class="btn-auth-login">دخول</a>
-          <a href="/register" class="btn-auth-register">حساب جديد</a>
+          <a href="/login" class="btn-auth-login">{$t.nav.login}</a>
+          <a href="/register" class="btn-auth-register">{$t.nav.register}</a>
         {/if}
       </div>
     </div>
@@ -165,15 +165,15 @@
   <footer class="global-footer">
     <div class="footer-inner">
       <div class="footer-start">
-        <a href="/" class="footer-brand" aria-label="الصفحة الرئيسية لمنصة Codeera">
+        <a href="/" class="footer-brand" aria-label={$t.nav.brandAria}>
           <span class="footer-logo-fcai">CODE</span>
           <span class="footer-logo-courses">ERA</span>
         </a>
         <span class="footer-sep" aria-hidden="true">|</span>
-        <span class="footer-tagline">منصة Codeera التعليمية</span>
+        <span class="footer-tagline">{$t.nav.footer.tagline}</span>
       </div>
 
-      <div class="footer-social" aria-label="حسابات التواصل الاجتماعي">
+      <div class="footer-social" aria-label={$t.nav.footer.socialAria}>
         <a
           href={socialLinks[0].url}
           target="_blank"
@@ -227,16 +227,16 @@
         </a>
       </div>
 
-      <nav class="footer-links" aria-label="روابط المنصة القانونية">
-        <a href="/terms">الشروط والأحكام</a>
+      <nav class="footer-links" aria-label={$t.nav.footer.legalNavAria}>
+        <a href="/terms">{$t.nav.footer.terms}</a>
         <span class="separator" aria-hidden="true">•</span>
-        <a href="/privacy">الخصوصية</a>
+        <a href="/privacy">{$t.nav.footer.privacy}</a>
         <span class="separator" aria-hidden="true">•</span>
-        <a href="/refund">الاسترداد</a>
+        <a href="/refund">{$t.nav.footer.refund}</a>
       </nav>
 
       <div class="footer-copy">
-        <small>© 2026 Codeera. جميع الحقوق محفوظة</small>
+        <small>© 2026 Codeera. {$t.nav.footer.rights}</small>
       </div>
     </div>
   </footer>
@@ -612,22 +612,6 @@
     background: rgba(91, 122, 199, 0.15) !important;
     border-color: var(--deep-cyan) !important;
     color: var(--deep-cyan) !important;
-  }
-  :global([data-theme='dark']) .quick-credentials {
-    background: #141312 !important;
-    border-color: var(--line) !important;
-  }
-  :global([data-theme='dark']) .quick-title {
-    color: var(--muted) !important;
-  }
-  :global([data-theme='dark']) .btn-quick {
-    background: var(--card) !important;
-    color: var(--storm) !important;
-    border-color: var(--line) !important;
-  }
-  :global([data-theme='dark']) .btn-quick:hover {
-    background: var(--card-hover) !important;
-    border-color: var(--deep-cyan) !important;
   }
   :global([data-theme='dark']) .btn-reset-filters {
     background: rgba(239, 68, 68, 0.12) !important;

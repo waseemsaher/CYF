@@ -143,12 +143,13 @@ class CourseContentController extends Controller
             ->where('course_id', $course->id)
             ->firstOrFail();
 
-        if (! $item->file_path || ! Storage::disk('local')->exists($item->file_path)) {
+        $disk = config('filesystems.default', 'local');
+        if (! $item->file_path || ! Storage::disk($disk)->exists($item->file_path)) {
             return response()->json(['message' => 'File not found.'], 404);
         }
 
         $filename = basename($item->file_path);
 
-        return Storage::disk('local')->download($item->file_path, $filename);
+        return Storage::disk($disk)->download($item->file_path, $filename);
     }
 }

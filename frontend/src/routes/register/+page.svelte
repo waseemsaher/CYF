@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { register } from '$lib/api/auth';
-  import { goto } from '$app/navigation';
+  import { t, currentLocale } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
 
@@ -16,7 +16,17 @@
   let phone = $state('');
 
   let loading = $state(false);
-  let errorMessage = $state('');
+  let errorType = $state<'passwordMismatch' | 'passwordMinLength' | 'failed' | 'generic' | 'custom' | null>(null);
+  let customError = $state('');
+
+  let errorMessage = $derived.by(() => {
+    if (!errorType) return '';
+    if (errorType === 'passwordMismatch') return $t.auth.register.errors.passwordMismatch;
+    if (errorType === 'passwordMinLength') return $t.auth.register.errors.passwordMinLength;
+    if (errorType === 'failed') return $t.auth.register.errors.failed;
+    if (errorType === 'generic') return $t.auth.register.errors.generic;
+    return customError;
+  });
 
   // Default dropdown selections when loaded
   $effect(() => {
@@ -30,15 +40,16 @@
 
   async function handleRegister(e: SubmitEvent) {
     e.preventDefault();
-    errorMessage = '';
+    errorType = null;
+    customError = '';
 
     if (password !== passwordConfirmation) {
-      errorMessage = 'كلمة المرور وتأكيدها غير متطابقين.';
+      errorType = 'passwordMismatch';
       return;
     }
 
     if (password.length < 8) {
-      errorMessage = 'يجب ألا تقل كلمة المرور عن 8 أحرف.';
+      errorType = 'passwordMinLength';
       return;
     }
 
@@ -61,10 +72,11 @@
         window.location.href = '/dashboard';
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        errorMessage = err.message || 'تعذر إنشاء الحساب، يرجى مراجعة البيانات المدخلة.';
+      if (err instanceof Error && err.message) {
+        customError = err.message;
+        errorType = 'custom';
       } else {
-        errorMessage = 'حدث خطأ أثناء إنشاء الحساب.';
+        errorType = 'failed';
       }
     } finally {
       loading = false;
@@ -73,19 +85,16 @@
 </script>
 
 <svelte:head>
-  <title>إنشاء حساب طالب جديد | منصة Codeera</title>
-  <meta
-    name="description"
-    content="تسجيل حساب طالب جديد في منصة Codeera التعليمية للبرمجة وعلوم الحاسب."
-  />
+  <title>{$t.auth.register.metaTitle}</title>
+  <meta name="description" content={$t.auth.register.metaDesc} />
 </svelte:head>
 
 <div class="auth-page">
   <div class="auth-card">
     <div class="auth-header">
-      <span class="auth-badge">انضم لزملائك</span>
-      <h1>إنشاء حساب طالب</h1>
-      <p>سجل بياناتك الأكاديمية للوصول إلى مقرراتك وشروحات المناهج واختباراتها.</p>
+      <span class="auth-badge">{$t.auth.register.badge}</span>
+      <h1>{$t.auth.register.title}</h1>
+      <p>{$t.auth.register.subtitle}</p>
     </div>
 
     {#if errorMessage}
@@ -101,59 +110,59 @@
 
     <form class="auth-form" onsubmit={handleRegister}>
       <div class="form-group">
-        <label for="name">الاسم بالكامل (ثلاثي أو رباعي)</label>
+        <label for="name">{$t.auth.register.nameLabel}</label>
         <input
           id="name"
           type="text"
           bind:value={name}
           required
-          placeholder="محمد أحمد علي"
+          placeholder={$t.auth.register.namePlaceholder}
           autocomplete="name"
         />
       </div>
 
       <div class="form-group">
-        <label for="email">البريد الإلكتروني</label>
+        <label for="email">{$t.auth.register.emailLabel}</label>
         <input
           id="email"
           type="email"
           bind:value={email}
           required
           dir="ltr"
-          placeholder="student@example.com"
+          placeholder={$t.auth.register.emailPlaceholder}
           autocomplete="email"
         />
       </div>
 
       <div class="form-group">
-        <label for="password">كلمة المرور</label>
+        <label for="password">{$t.auth.register.passwordLabel}</label>
         <input
           id="password"
           type="password"
           bind:value={password}
           required
           dir="ltr"
-          placeholder="8 أحرف على الأقل"
+          placeholder={$t.auth.register.passwordPlaceholder}
           autocomplete="new-password"
         />
       </div>
 
       <div class="form-group">
-        <label for="password_confirmation">تأكيد كلمة المرور</label>
+        <label for="password_confirmation">{$t.auth.register.confirmPasswordLabel}</label>
         <input
           id="password_confirmation"
           type="password"
           bind:value={passwordConfirmation}
           required
           dir="ltr"
-          placeholder="أعد إدخال كلمة المرور"
+          placeholder={$t.auth.register.confirmPasswordPlaceholder}
           autocomplete="new-password"
         />
       </div>
 
       <div class="form-group">
-        <span class="field-label">فرع الكلية</span>
-        <div class="radio-toggle" role="radiogroup" aria-label="فرع الكلية">
+        <span class="field-label">{$t.auth.register.branchLabel}</span>
+        <div class="radio-toggle" role="radiogroup" aria-label={$t.auth.register.branchLabel}>
           <label class="radio-label" class:selected={branch === 'azhar_boys'}>
             <input
               type="radio"
@@ -161,7 +170,7 @@
               value="azhar_boys"
               bind:group={branch}
             />
-            <span>بنين (القاهرة)</span>
+            <span>{$t.auth.register.branchBoys}</span>
           </label>
           <label class="radio-label" class:selected={branch === 'azhar_girls'}>
             <input
@@ -170,37 +179,41 @@
               value="azhar_girls"
               bind:group={branch}
             />
-            <span>بنات (القاهرة)</span>
+            <span>{$t.auth.register.branchGirls}</span>
           </label>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label for="academic_year">السنة الدراسية</label>
+          <label for="academic_year">{$t.auth.register.academicYearLabel}</label>
           <select id="academic_year" bind:value={academicYear} required>
             {#if data.academicYears.length === 0}
-              <option value="السنة الأولى">السنة الأولى</option>
-              <option value="السنة الثانية">السنة الثانية</option>
+              <option value="السنة الأولى">{$t.auth.register.years.first}</option>
+              <option value="السنة الثانية">{$t.auth.register.years.second}</option>
             {:else}
               {#each data.academicYears as year}
-                <option value={year.name.ar}>{year.name.ar} ({year.name.en})</option>
+                <option value={year.name.ar}>
+                  {$currentLocale === 'en' ? (year.name.en || year.name.ar) : (year.name.ar + (year.name.en ? ` (${year.name.en})` : ''))}
+                </option>
               {/each}
             {/if}
           </select>
         </div>
 
         <div class="form-group">
-          <label for="department">القسم الأكاديمي</label>
+          <label for="department">{$t.auth.register.departmentLabel}</label>
           <select id="department" bind:value={department} required>
             {#if data.departments.length === 0}
-              <option value="علوم الحاسب">علوم الحاسب (CS)</option>
-              <option value="الأمن السيبراني">الأمن السيبراني (CY)</option>
-              <option value="علم البيانات">علم البيانات (DS)</option>
-              <option value="الذكاء الاصطناعي">الذكاء الاصطناعي (AI)</option>
+              <option value="علوم الحاسب">{$t.auth.register.departments.cs}</option>
+              <option value="الأمن السيبراني">{$t.auth.register.departments.cy}</option>
+              <option value="علم البيانات">{$t.auth.register.departments.ds}</option>
+              <option value="الذكاء الاصطناعي">{$t.auth.register.departments.ai}</option>
             {:else}
               {#each data.departments as dept}
-                <option value={dept.name.ar}>{dept.name.ar} ({dept.name.en})</option>
+                <option value={dept.name.ar}>
+                  {$currentLocale === 'en' ? (dept.name.en || dept.name.ar) : (dept.name.ar + (dept.name.en ? ` (${dept.name.en})` : ''))}
+                </option>
               {/each}
             {/if}
           </select>
@@ -209,42 +222,42 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label for="telegram">اسم مستخدم تليجرام (اختياري)</label>
+          <label for="telegram">{$t.auth.register.telegramLabel}</label>
           <input
             id="telegram"
             type="text"
             bind:value={telegramUsername}
             dir="ltr"
-            placeholder="@username"
+            placeholder={$t.auth.register.telegramPlaceholder}
           />
         </div>
 
         <div class="form-group">
-          <label for="phone">رقم الهاتف / واتساب (اختياري)</label>
+          <label for="phone">{$t.auth.register.phoneLabel}</label>
           <input
             id="phone"
             type="tel"
             bind:value={phone}
             dir="ltr"
-            placeholder="01XXXXXXXXX"
+            placeholder={$t.auth.register.phonePlaceholder}
           />
         </div>
       </div>
 
       <button type="submit" class="btn-submit" disabled={loading}>
         {#if loading}
-          <span>جاري إنشاء الحساب...</span>
+          <span>{$t.auth.register.submitting}</span>
         {:else}
-          <span>إنشاء الحساب وبدء التعلم</span>
-          <span aria-hidden="true">←</span>
+          <span>{$t.auth.register.submit}</span>
+          <span aria-hidden="true">{$currentLocale === 'ar' ? '←' : '→'}</span>
         {/if}
       </button>
     </form>
 
     <div class="auth-footer">
       <p>
-        لديك حساب بالفعل؟
-        <a href="/login">تسجيل الدخول</a>
+        {$t.auth.register.hasAccount}
+        <a href="/login">{$t.auth.register.loginLink}</a>
       </p>
     </div>
   </div>

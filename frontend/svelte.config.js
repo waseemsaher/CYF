@@ -1,8 +1,8 @@
-import adapter from '@sveltejs/adapter-node';
+import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 const isDev = process.env.NODE_ENV !== 'production';
-const connectSrc = ["'self'"];
+const connectSrc = ["'self'", 'https://api.codeera.tech'];
 if (process.env.PUBLIC_API_BASE_URL) {
   try {
     const parsed = new URL(process.env.PUBLIC_API_BASE_URL);
@@ -17,19 +17,16 @@ if (isDev) {
 const config = {
   preprocess: vitePreprocess(),
   kit: {
-    adapter: adapter({
-      out: 'build',
-      precompress: true
-    }),
+    adapter: adapter(),
     csp: {
       mode: 'auto',
       directives: {
         'script-src': ['self'],
         'style-src': ['self', 'unsafe-inline', 'https://fonts.googleapis.com'],
         'font-src': ['self', 'https://fonts.gstatic.com', 'data:'],
-        'img-src': ['self', 'data:', 'blob:'],
+        'img-src': ['self', 'data:', 'blob:', 'https:'],
         'media-src': ['self'],
-        'connect-src': connectSrc,
+        'connect-src': Array.from(new Set(connectSrc)),
         'frame-ancestors': ['self'],
         'form-action': ['self']
       }

@@ -2,7 +2,15 @@
 
 declare(strict_types=1);
 
-$allowedOrigins = array_filter(array_map('trim', explode(',', (string) env('CORS_ALLOWED_ORIGINS', ''))));
+$allowedOrigins = [
+    'https://codeera.tech',
+    'https://app.codeera.tech',
+];
+
+$configuredOrigins = array_filter(array_map('trim', explode(',', (string) env('CORS_ALLOWED_ORIGINS', ''))));
+if (! empty($configuredOrigins)) {
+    $allowedOrigins = array_merge($allowedOrigins, $configuredOrigins);
+}
 
 if (env('FRONTEND_URL')) {
     $allowedOrigins[] = rtrim((string) env('FRONTEND_URL'), '/');

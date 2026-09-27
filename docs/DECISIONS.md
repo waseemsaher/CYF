@@ -199,4 +199,43 @@
   - Removed "official" / "الرسمية" and university product affiliation claims from hero badges across Arabic and English locales. Reworded to "منصة تعليمية لطلاب حاسبات الأزهر" / "Educational Platform for FCAI Al-Azhar Students".
   - Normalized stats copy to "مقررات تخصصية متكاملة" / "Comprehensive Tech Courses" to eliminate implied external accreditation.
 
+---
+
+# Hosting Pivot Decisions: Vercel Frontend + Temporary AWS EC2 Backend
+
+## 1. Hosting Architecture Split
+- **Frontend on Vercel**:
+  - SvelteKit adapter switched to `@sveltejs/adapter-vercel`.
+  - Outputs to standard `.vercel/output`, providing global CDN edge deployment, instantaneous SSR, and automated TLS certificates.
+  - Custom domains: apex `codeera.tech` and primary application subdomain `app.codeera.tech`.
+  - Completely eliminates any Node.js runtime process, PM2, or SvelteKit proxy blocks from self-managed servers.
+- **Backend on AWS EC2**:
+  - Self-managed Ubuntu VPS on AWS EC2 (`t3.micro` / `t2.micro`) on `api.codeera.tech`.
+  - Temporary hosting using AWS Free Plan credits ($200 cap, 6-month validity).
+  - Explicit owner plan to migrate to Oracle Cloud Always Free tier prior to the AWS credit expiration date (~March 22, 2027).
+
+## 2. Portability Goal & Anti-Lock-in Constraint
+- To guarantee that the upcoming migration to Oracle Cloud is fast, low-risk, and requires zero architectural rewrites:
+  - **Self-Managed MySQL 8 & Redis**: Running directly on the EC2 instance, bound strictly to `127.0.0.1`. AWS RDS and ElastiCache were deliberately evaluated and rejected to prevent proprietary cloud lock-in.
+  - **Provider-Agnostic Tooling**: All deployment configurations (`deploy/nginx/cyf.conf`, `deploy/supervisor/`, `scripts/`) rely on standard Linux utilities (systemd, Nginx, Supervisor, UFW), avoiding CloudFormation, Elastic Beanstalk, or AWS Systems Manager.
+  - The exact same configuration files and provisioning scripts work with minimal edits on the Oracle VM.
+
+## 3. Storage Abstraction (AWS S3 to Oracle Object Storage)
+- File storage uses Laravel's `Storage::disk('s3')` (via `league/flysystem-aws-s3-v3`).
+- Bucket permissions are strictly private (no public ACLs), with short-lived signed URLs (15-minute TTL) for payment proof verification and protected course content downloads.
+- Storage calls throughout domain actions (`SubmitPayment`, `CreateCourseItem`, `AdminPaymentController`, `CourseContentController`) use Laravel's filesystem abstraction (`config('filesystems.default')`) instead of hardcoded disk names.
+- Transitioning to Oracle Object Storage (or any S3-compatible provider) later requires only updating `.env` credentials (`AWS_ENDPOINT`, `AWS_BUCKET`, `AWS_ACCESS_KEY_ID`), with zero application code changes.
+
+## 4. Cross-Origin Sanctum Cookie Authentication
+- Frontend and backend share the parent domain (`codeera.tech`).
+- Cross-domain cookie authentication is configured to provide seamless session-based SPA auth:
+  - `sanctum.stateful`: Includes `codeera.tech` and `app.codeera.tech`.
+  - `session.domain`: Set to `.codeera.tech` (with leading dot), sharing session cookies across subdomains.
+  - `session.secure`: `true` (enforced for HTTPS).
+  - `session.same_site`: `lax` (permits same-parent-domain cookie transmission while protecting against CSRF).
+  - `cors.allowed_origins`: Explicitly allows `https://codeera.tech` and `https://app.codeera.tech`.
+  - `cors.supports_credentials`: `true`.
+  - Frontend client uses `credentials: 'include'` on all API requests.
+
+
 

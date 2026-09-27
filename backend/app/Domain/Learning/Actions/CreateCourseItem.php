@@ -84,14 +84,16 @@ class CreateCourseItem
                             imagepng($image, $tempPath, 9);
                         }
                         imagedestroy($image);
-                        Storage::disk('local')->put($filePath, (string) file_get_contents($tempPath));
+                        $disk = config('filesystems.default', 'local');
+                        Storage::disk($disk)->put($filePath, (string) file_get_contents($tempPath));
                         unlink($tempPath);
                     }
                 }
             }
 
             if ($filePath === null) {
-                $filePath = $file->store("course_files/{$course->id}", 'local');
+                $disk = config('filesystems.default', 'local');
+                $filePath = $file->store("course_files/{$course->id}", $disk);
             }
         }
 

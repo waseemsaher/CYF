@@ -2,6 +2,7 @@
   import type { PageData } from './$types';
   import { currentUser } from '$lib/api/auth';
   import { createAdminCourse, updateAdminCourse } from '$lib/api/admin';
+  import { currentLocale, t, formatPrice, getLocalizedText } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
 
@@ -42,8 +43,6 @@
       );
     })
   );
-
-  const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
 
   const pageHref = (page: number) => {
     const params = new URLSearchParams();
@@ -152,8 +151,8 @@
 </script>
 
 <svelte:head>
-  <title>الدليل الأكاديمي للدورات | منصة Codeera</title>
-  <meta name="description" content="تصفح جميع المقررات الدراسية التخصصية في البرمجة وعلوم الحاسب في منصة Codeera." />
+  <title>{$t.courses.metaTitle}</title>
+  <meta name="description" content={$t.courses.metaDesc} />
 </svelte:head>
 
 <div class="catalog-shell">
@@ -163,11 +162,11 @@
     <div class="catalog-hero-inner">
       <div class="header-top-pill">
         <span class="pill-dot"></span>
-        <span>الدليل الأكاديمي الشامل لجميع الفرق والأقسام</span>
+        <span>{$t.courses.subtitle}</span>
       </div>
-      <h1 class="catalog-title">اختر مقررك الدراسي وابدأ رحلة التفوق</h1>
+      <h1 class="catalog-title">{$t.courses.title}</h1>
       <p class="catalog-subtitle">
-        محتوى تعليمي أكاديمي دقيق، شروحات مسجلة، بنك أسئلة واختبارات تفاعلية، مع وصول فوري لمجموعات التليجرام الخاصة بكل مادة.
+        {$t.courses.desc}
       </p>
 
       <!-- Admin Quick Action Toolbar -->
@@ -180,12 +179,12 @@
               </svg>
             </span>
             <div>
-              <strong>صلاحيات إدارة المقررات</strong>
-              <p>يمكنك إنشاء مقررات جديدة أو تعديل المحتوى والأسعار مباشرة من هنا.</p>
+              <strong>{$t.courses.adminTitle}</strong>
+              <p>{$t.courses.adminDesc}</p>
             </div>
           </div>
           <button type="button" class="btn-create-course" onclick={openCreateModal}>
-            <span>إضافة مقرر دراسي جديد</span>
+            <span>{$t.courses.addCourse}</span>
           </button>
         </div>
       {/if}
@@ -193,7 +192,7 @@
   </header>
 
   <!-- Filter and Search Bar -->
-  <section class="controls-section" aria-label="أدوات البحث والتصفية">
+  <section class="controls-section" aria-label={$t.courses.filterSectionAria}>
     <div class="search-box-wrap">
       <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8"></circle>
@@ -202,40 +201,40 @@
       <input
         type="search"
         class="search-input"
-        placeholder="ابحث بالاسم أو الرمز (مثال: برمجيات، ذكاء اصطناعي، CS)..."
+        placeholder={$t.courses.searchPlaceholder}
         bind:value={searchQuery}
-        aria-label="البحث في المقررات"
+        aria-label={$t.courses.searchAria}
       />
     </div>
 
-    <form class="filters-form" method="GET" aria-label="تصفية الدورات حسب الفرقة والقسم">
+    <form class="filters-form" method="GET" aria-label={$t.courses.filterFormAria}>
       <div class="select-group">
-        <label for="filter-year" class="filter-label">الفرقة الدراسية:</label>
+        <label for="filter-year" class="filter-label">{$t.courses.yearLabel}</label>
         <select id="filter-year" name="academic_year_id" class="filter-select">
-          <option value="">كل الفرق الدراسية</option>
+          <option value="">{$t.courses.allYears}</option>
           {#each data.academicYears as year}
-            <option value={year.id} selected={String(year.id) === data.selectedAcademicYear}>{year.name.ar}</option>
+            <option value={year.id} selected={String(year.id) === data.selectedAcademicYear}>{getLocalizedText(year.name, $currentLocale)}</option>
           {/each}
         </select>
       </div>
 
       <div class="select-group">
-        <label for="filter-dept" class="filter-label">القسم الأكاديمي:</label>
+        <label for="filter-dept" class="filter-label">{$t.courses.deptLabel}</label>
         <select id="filter-dept" name="department_id" class="filter-select">
-          <option value="">جميع الأقسام</option>
+          <option value="">{$t.courses.allDepts}</option>
           {#each data.departments as department}
-            <option value={department.id} selected={String(department.id) === data.selectedDepartment}>{department.name.ar}</option>
+            <option value={department.id} selected={String(department.id) === data.selectedDepartment}>{getLocalizedText(department.name, $currentLocale)}</option>
           {/each}
         </select>
       </div>
 
       <button type="submit" class="btn-apply-filters">
-        <span>تطبيق الفلتر</span>
+        <span>{$t.courses.applyFilter}</span>
       </button>
 
       {#if data.selectedAcademicYear || data.selectedDepartment}
         <a href="/courses" class="btn-reset-filters">
-          <span>إلغاء التصفية</span>
+          <span>{$t.courses.resetFilter}</span>
         </a>
       {/if}
     </form>
@@ -259,53 +258,59 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
       </div>
-      <h3>لا توجد مقررات مطابقة للبحث أو الفلتر المحدد</h3>
-      <p>جرب تغيير خيارات التصفية أو مسح كلمة البحث للعثور على المقررات المتاحة.</p>
+      <h3>{$t.courses.emptyTitle}</h3>
+      <p>{$t.courses.emptyDesc}</p>
       {#if searchQuery || data.selectedAcademicYear || data.selectedDepartment}
         <button
           type="button"
           class="btn-clear-search"
           onclick={() => { searchQuery = ''; window.location.href = '/courses'; }}
         >
-          عرض كافة المقررات
+          {$t.courses.clearFilters}
         </button>
       {/if}
     </div>
   {:else}
     <div class="catalog-results-header">
       <span class="results-count">
-        تم العثور على <strong>{filteredCourses.length}</strong> مقرر دراسي
+        {#if $currentLocale === 'en'}
+          Found <strong>{filteredCourses.length}</strong> {filteredCourses.length === 1 ? 'course' : 'courses'}
+        {:else}
+          تم العثور على <strong>{filteredCourses.length}</strong> مقرر دراسي
+        {/if}
       </span>
     </div>
 
-    <section class="courses-card-grid" aria-label="قائمة المقررات">
+    <section class="courses-card-grid" aria-label={$currentLocale === 'en' ? 'Courses Catalog' : 'قائمة المقررات'}>
       {#each filteredCourses as course}
         <article class="course-card-premium" class:course-admin-card={isAdmin}>
           <div class="card-hero-stripe">
             <div class="stripe-badge-left">
               <span class="course-code-pill">{course.slug}</span>
               {#if course.discount_cents > 0}
-                <span class="pill-discount">خصم خاص</span>
+                <span class="pill-discount">{$t.courses.onSale}</span>
               {/if}
             </div>
 
             {#if isAdmin}
               <span class="badge-admin-status" class:status-draft={course.status === 'draft'}>
-                {course.status === 'published' ? 'منشور' : 'مسودة'}
+                {course.status === 'published' ? ($currentLocale === 'en' ? 'Published' : 'منشور') : ($currentLocale === 'en' ? 'Draft' : 'مسودة')}
               </span>
             {/if}
           </div>
 
           <div class="card-main-content">
             <div class="card-title-group">
-              <h2 class="course-title-ar">{course.title.ar}</h2>
-              {#if course.title.en}
+              <h2 class="course-title-ar">{getLocalizedText(course.title, $currentLocale)}</h2>
+              {#if $currentLocale === 'ar' && course.title?.en}
                 <p class="course-title-en" dir="ltr">{course.title.en}</p>
+              {:else if $currentLocale === 'en' && course.title?.ar}
+                <p class="course-title-en" dir="rtl">{course.title.ar}</p>
               {/if}
             </div>
 
             <p class="course-description">
-              {course.description.ar || 'محتوى دراسي منظم يتضمن شرحاً تفصيلياً لأهم محاور المقرر واختبارات تفاعلية دورية.'}
+              {getLocalizedText(course.description, $currentLocale) || ($currentLocale === 'en' ? 'Structured curriculum with detailed lectures and interactive quizzes.' : 'محتوى دراسي منظم يتضمن شرحاً تفصيلياً لأهم محاور المقرر واختبارات تفاعلية دورية.')}
             </p>
           </div>
 
@@ -313,41 +318,41 @@
           {#if isAdmin}
             <div class="admin-controls-footer">
               <div class="admin-price-line">
-                <span class="price-lbl">سعر الاشتراك:</span>
-                <strong>{formatPrice(course.amount_due_cents || course.price_cents || 0)}</strong>
+                <span class="price-lbl">{$t.courses.priceCaption}:</span>
+                <strong>{formatPrice(course.amount_due_cents || course.price_cents || 0, $currentLocale)}</strong>
               </div>
               <div class="admin-action-buttons">
                 <button
                   type="button"
                   class="btn-adm-edit"
                   onclick={() => openEditModal(course)}
-                  title="تعديل بيانات المقرر"
+                  title={$currentLocale === 'en' ? 'Edit course details' : 'تعديل بيانات المقرر'}
                 >
-                  تعديل
+                  {$currentLocale === 'en' ? 'Edit' : 'تعديل'}
                 </button>
-                <a href={`/my-courses/${course.slug}`} class="btn-adm-content" title="إدارة المحتوى">
-                  المحتوى
+                <a href={`/my-courses/${course.slug}`} class="btn-adm-content" title={$currentLocale === 'en' ? 'Manage content' : 'إدارة المحتوى'}>
+                  {$currentLocale === 'en' ? 'Content' : 'المحتوى'}
                 </a>
-                <a href={`/courses/${course.slug}`} class="btn-adm-view" title="عرض كما يظهر للطلاب">
-                  عرض
+                <a href={`/courses/${course.slug}`} class="btn-adm-view" title={$currentLocale === 'en' ? 'Preview course' : 'عرض كما يظهر للطلاب'}>
+                  {$currentLocale === 'en' ? 'View' : 'عرض'}
                 </a>
               </div>
             </div>
           {:else}
             <div class="student-pricing-footer">
               <div class="price-container">
-                <span class="price-sub">رسوم المقرر</span>
+                <span class="price-sub">{$t.courses.priceCaption}</span>
                 <div class="price-figures">
                   {#if course.discount_cents > 0}
-                    <span class="price-old">{formatPrice(course.list_price_cents)}</span>
+                    <span class="price-old">{formatPrice(course.list_price_cents, $currentLocale)}</span>
                   {/if}
-                  <strong class="price-current">{formatPrice(course.amount_due_cents)}</strong>
+                  <strong class="price-current">{formatPrice(course.amount_due_cents, $currentLocale)}</strong>
                 </div>
               </div>
 
               <a href={`/courses/${course.slug}`} class="btn-explore-course">
-                <span>استكشف المقرر</span>
-                <span class="btn-arrow" aria-hidden="true">←</span>
+                <span>{$t.courses.exploreDetails}</span>
+                <span class="btn-arrow" aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
               </a>
             </div>
           {/if}
@@ -357,21 +362,25 @@
 
     <!-- Pagination -->
     {#if data.pagination.last_page > 1}
-      <nav class="pagination-bar" aria-label="صفحات المقررات">
+      <nav class="pagination-bar" aria-label={$currentLocale === 'en' ? 'Pagination' : 'صفحات المقررات'}>
         {#if data.pagination.current_page > 1}
-          <a href={pageHref(data.pagination.current_page - 1)} class="page-nav-btn">السابق</a>
+          <a href={pageHref(data.pagination.current_page - 1)} class="page-nav-btn">{$currentLocale === 'en' ? 'Previous' : 'السابق'}</a>
         {:else}
-          <span class="page-nav-btn disabled">السابق</span>
+          <span class="page-nav-btn disabled">{$currentLocale === 'en' ? 'Previous' : 'السابق'}</span>
         {/if}
 
         <span class="page-indicator">
-          صفحة <strong>{data.pagination.current_page}</strong> من <strong>{data.pagination.last_page}</strong>
+          {#if $currentLocale === 'en'}
+            Page <strong>{data.pagination.current_page}</strong> of <strong>{data.pagination.last_page}</strong>
+          {:else}
+            صفحة <strong>{data.pagination.current_page}</strong> من <strong>{data.pagination.last_page}</strong>
+          {/if}
         </span>
 
         {#if data.pagination.current_page < data.pagination.last_page}
-          <a href={pageHref(data.pagination.current_page + 1)} class="page-nav-btn">التالي</a>
+          <a href={pageHref(data.pagination.current_page + 1)} class="page-nav-btn">{$currentLocale === 'en' ? 'Next' : 'التالي'}</a>
         {:else}
-          <span class="page-nav-btn disabled">التالي</span>
+          <span class="page-nav-btn disabled">{$currentLocale === 'en' ? 'Next' : 'التالي'}</span>
         {/if}
       </nav>
     {/if}

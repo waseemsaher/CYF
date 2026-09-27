@@ -64,7 +64,8 @@ class AdminPaymentController extends Controller
         // Generate signed URL for proof image
         $proofPath = $payment->getAttribute('proof_path');
         if (is_string($proofPath) && $proofPath !== '') {
-            $data['proof_url'] = Storage::disk('local')->temporaryUrl(
+            $disk = config('filesystems.default', 'local');
+            $data['proof_url'] = Storage::disk($disk)->temporaryUrl(
                 $proofPath,
                 now()->addMinutes(15),
             );

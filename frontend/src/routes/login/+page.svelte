@@ -1,11 +1,20 @@
 <script lang="ts">
   import { login, currentUser } from '$lib/api/auth';
-  import { goto } from '$app/navigation';
+  import { t, currentLocale } from '$lib/i18n';
 
   let email = $state('');
   let password = $state('');
   let loading = $state(false);
-  let errorMessage = $state('');
+  let errorType = $state<'required' | 'invalid' | 'generic' | 'custom' | null>(null);
+  let customError = $state('');
+
+  let errorMessage = $derived.by(() => {
+    if (!errorType) return '';
+    if (errorType === 'required') return $t.auth.login.errors.required;
+    if (errorType === 'invalid') return $t.auth.login.errors.invalid;
+    if (errorType === 'generic') return $t.auth.login.errors.generic;
+    return customError;
+  });
 
   function redirectUser(role?: string) {
     let dest = '/dashboard';
@@ -17,18 +26,13 @@
     window.location.href = dest;
   }
 
-  function fillCredentials(testEmail: string) {
-    email = testEmail;
-    password = 'password';
-    errorMessage = '';
-  }
-
   async function handleLogin(e: SubmitEvent) {
     e.preventDefault();
-    errorMessage = '';
+    errorType = null;
+    customError = '';
 
     if (!email || !password) {
-      errorMessage = 'يرجى إدخال البريد الإلكتروني وكلمة المرور.';
+      errorType = 'required';
       return;
     }
 
@@ -42,10 +46,11 @@
         redirectUser(role);
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        errorMessage = err.message || 'بيانات الدخول غير صحيحة، يرجى المحاولة مرة أخرى.';
+      if (err instanceof Error && err.message) {
+        customError = err.message;
+        errorType = 'custom';
       } else {
-        errorMessage = 'حدث خطأ أثناء تسجيل الدخول.';
+        errorType = 'invalid';
       }
     } finally {
       loading = false;
@@ -54,8 +59,8 @@
 </script>
 
 <svelte:head>
-  <title>تسجيل الدخول | منصة Codeera</title>
-  <meta name="description" content="تسجيل الدخول إلى حسابك في منصة Codeera التعليمية." />
+  <title>{$t.auth.login.metaTitle}</title>
+  <meta name="description" content={$t.auth.login.metaDesc} />
 </svelte:head>
 
 <div class="auth-page">
@@ -68,21 +73,21 @@
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
         </div>
-        <h2>أنت مسجل الدخول بالفعل</h2>
-        <p>مرحباً بك مجدداً، <strong>{$currentUser.name}</strong> ({$currentUser.email})</p>
+        <h2>{$t.auth.login.alreadyLoggedInTitle}</h2>
+        <p>{$t.auth.login.alreadyLoggedInWelcome} <strong>{$currentUser.name}</strong> ({$currentUser.email})</p>
         <div class="already-actions">
           <button type="button" class="btn-submit" onclick={() => redirectUser($currentUser?.role)}>
-            <span>الدخول إلى لوحة التحكم</span>
-            <span aria-hidden="true">←</span>
+            <span>{$t.auth.login.goToDashboard}</span>
+            <span aria-hidden="true">{$currentLocale === 'ar' ? '←' : '→'}</span>
           </button>
-          <a href="/courses" class="btn-secondary-link">تصفح المقررات</a>
+          <a href="/courses" class="btn-secondary-link">{$t.auth.login.browseCourses}</a>
         </div>
       </div>
     {:else}
       <div class="auth-header">
-        <span class="auth-badge">بوابة الطلاب والمعلمين والإدارة</span>
-        <h1>تسجيل الدخول</h1>
-        <p>أدخل بريدك الإلكتروني وكلمة المرور لمتابعة حسابك ومقرراتك.</p>
+        <span class="auth-badge">{$t.auth.login.badge}</span>
+        <h1>{$t.auth.login.title}</h1>
+        <p>{$t.auth.login.subtitle}</p>
       </div>
 
       {#if errorMessage}
@@ -98,21 +103,21 @@
 
       <form class="auth-form" onsubmit={handleLogin}>
         <div class="form-group">
-          <label for="email">البريد الإلكتروني</label>
+          <label for="email">{$t.auth.login.emailLabel}</label>
           <input
             id="email"
             type="email"
             bind:value={email}
             required
             dir="ltr"
-            placeholder="admin@example.com"
+            placeholder={$t.auth.login.emailPlaceholder}
             autocomplete="email"
           />
         </div>
 
         <div class="form-group">
           <div class="label-row">
-            <label for="password">كلمة المرور</label>
+            <label for="password">{$t.auth.login.passwordLabel}</label>
           </div>
           <input
             id="password"
@@ -120,53 +125,25 @@
             bind:value={password}
             required
             dir="ltr"
-            placeholder="••••••••"
+            placeholder={$t.auth.login.passwordPlaceholder}
             autocomplete="current-password"
           />
         </div>
 
         <button type="submit" class="btn-submit" disabled={loading}>
           {#if loading}
-            <span>جاري تسجيل الدخول...</span>
+            <span>{$t.auth.login.submitting}</span>
           {:else}
-            <span>دخول</span>
-            <span aria-hidden="true">←</span>
+            <span>{$t.auth.login.submit}</span>
+            <span aria-hidden="true">{$currentLocale === 'ar' ? '←' : '→'}</span>
           {/if}
         </button>
       </form>
 
-      <!-- Quick Credentials Box for Testing -->
-      <div class="quick-credentials">
-        <span class="quick-title">حسابات تجريبية سريعة (اضغط للتعبئة):</span>
-        <div class="quick-buttons">
-          <button
-            type="button"
-            class="btn-quick admin-quick"
-            onclick={() => fillCredentials('admin@example.com')}
-          >
-            مدير عام (Admin)
-          </button>
-          <button
-            type="button"
-            class="btn-quick teacher-quick"
-            onclick={() => fillCredentials('teacher@example.com')}
-          >
-            محاضر (Teacher)
-          </button>
-          <button
-            type="button"
-            class="btn-quick student-quick"
-            onclick={() => fillCredentials('student@example.com')}
-          >
-            طالب (Student)
-          </button>
-        </div>
-      </div>
-
       <div class="auth-footer">
         <p>
-          ليس لديك حساب بعد؟
-          <a href="/register">إنشاء حساب طالب جديد</a>
+          {$t.auth.login.noAccount}
+          <a href="/register">{$t.auth.login.registerLink}</a>
         </p>
       </div>
     {/if}
@@ -364,46 +341,6 @@
   .btn-submit:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-  }
-
-  .quick-credentials {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background: var(--paper);
-    border: 1px dashed var(--line);
-    border-radius: 0.75rem;
-  }
-
-  .quick-title {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--muted);
-    margin-bottom: 0.6rem;
-  }
-
-  .quick-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-
-  .btn-quick {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 0.45rem;
-    padding: 0.45rem 0.75rem;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--storm);
-    cursor: pointer;
-    text-align: right;
-    transition: all 120ms ease;
-  }
-
-  .btn-quick:hover {
-    background: var(--card-hover);
-    border-color: #94a3b8;
   }
 
   .auth-footer {

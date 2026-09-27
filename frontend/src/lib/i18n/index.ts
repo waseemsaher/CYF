@@ -18,8 +18,214 @@ export interface HeroTranslations {
   langToggleLabel: string;
 }
 
+export interface NavTranslations {
+  home: string;
+  courses: string;
+  admin: string;
+  reviewQueue: string;
+  teacher: string;
+  dashboard: string;
+  payments: string;
+  login: string;
+  register: string;
+  logout: string;
+  skipLink: string;
+  mainNavAria: string;
+  brandAria: string;
+  themeLight: string;
+  themeDark: string;
+  themeToggleAriaLight: string;
+  themeToggleAriaDark: string;
+  langToggleAria: string;
+  langToggleLabel: string;
+  roles: {
+    superadmin: string;
+    admin: string;
+    teacher: string;
+    student: string;
+  };
+  footer: {
+    tagline: string;
+    socialAria: string;
+    terms: string;
+    privacy: string;
+    refund: string;
+    rights: string;
+    legalNavAria: string;
+  };
+}
+
+export interface HomeTranslations {
+  metaTitle: string;
+  metaDesc: string;
+  steps: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    step1Title: string;
+    step1Desc: string;
+    step2Title: string;
+    step2Desc: string;
+    step3Title: string;
+    step3Desc: string;
+  };
+  courses: {
+    eyebrow: string;
+    title: string;
+    viewAll: string;
+    priceCaption: string;
+    onSale: string;
+    details: string;
+    currency: string;
+    emptyNotice: string;
+  };
+  features: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    items: Array<{ title: string; desc: string }>;
+  };
+  faq: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    items: Array<{ q: string; a: string }>;
+  };
+  cta: {
+    badge: string;
+    title: string;
+    desc: string;
+    primary: string;
+    secondary: string;
+  };
+}
+
+export interface CoursesTranslations {
+  metaTitle: string;
+  metaDesc: string;
+  title: string;
+  subtitle: string;
+  desc: string;
+  adminTitle: string;
+  adminDesc: string;
+  addCourse: string;
+  searchPlaceholder: string;
+  searchAria: string;
+  filterSectionAria: string;
+  filterFormAria: string;
+  yearLabel: string;
+  allYears: string;
+  deptLabel: string;
+  allDepts: string;
+  applyFilter: string;
+  resetFilter: string;
+  priceCaption: string;
+  currency: string;
+  exploreDetails: string;
+  onSale: string;
+  emptyTitle: string;
+  emptyDesc: string;
+  clearFilters: string;
+}
+
+export interface AuthTranslations {
+  login: {
+    metaTitle: string;
+    metaDesc: string;
+    badge: string;
+    title: string;
+    subtitle: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    passwordLabel: string;
+    passwordPlaceholder: string;
+    submit: string;
+    submitting: string;
+    noAccount: string;
+    registerLink: string;
+    alreadyLoggedInTitle: string;
+    alreadyLoggedInWelcome: string;
+    goToDashboard: string;
+    browseCourses: string;
+    errors: {
+      required: string;
+      invalid: string;
+      generic: string;
+    };
+  };
+  register: {
+    metaTitle: string;
+    metaDesc: string;
+    badge: string;
+    title: string;
+    subtitle: string;
+    nameLabel: string;
+    namePlaceholder: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    passwordLabel: string;
+    passwordPlaceholder: string;
+    confirmPasswordLabel: string;
+    confirmPasswordPlaceholder: string;
+    branchLabel: string;
+    branchBoys: string;
+    branchGirls: string;
+    academicYearLabel: string;
+    departmentLabel: string;
+    telegramLabel: string;
+    telegramPlaceholder: string;
+    phoneLabel: string;
+    phonePlaceholder: string;
+    submit: string;
+    submitting: string;
+    hasAccount: string;
+    loginLink: string;
+    years: {
+      first: string;
+      second: string;
+    };
+    departments: {
+      cs: string;
+      cy: string;
+      ds: string;
+      ai: string;
+    };
+    errors: {
+      passwordMismatch: string;
+      passwordMinLength: string;
+      failed: string;
+      generic: string;
+    };
+  };
+  guard: {
+    loginRequiredTitle: string;
+    loginRequiredDescPrefix: string;
+    loginRequiredDescSuffix: string;
+    accessDeniedTitle: string;
+    accessDeniedDescCurrent: string;
+    accessDeniedDescRequired: string;
+    cannotAccessTitle: string;
+    defaultError: string;
+    loginBtn: string;
+    homeBtn: string;
+    browseCoursesBtn: string;
+    switchAccountBtn: string;
+    retryBtn: string;
+    roles: {
+      admin: string;
+      teacher: string;
+      student: string;
+      superadmin: string;
+    };
+  };
+}
+
 export interface Translations {
   hero: HeroTranslations;
+  nav: NavTranslations;
+  home: HomeTranslations;
+  courses: CoursesTranslations;
+  auth: AuthTranslations;
 }
 
 export const translations: Record<Locale, Translations> = {
@@ -45,8 +251,240 @@ export const translations: Record<Locale, Translations> = {
         { value: '100%', label: 'مجموعات تليجرام مقفولة' },
         { value: 'فوري', label: 'قبول آلي عبر البوت' }
       ],
-      langToggleAria: 'التبديل إلى اللغة الإنجليزية',
+      langToggleAria: 'Switch to English',
       langToggleLabel: 'English'
+    },
+    nav: {
+      home: 'الرئيسية',
+      courses: 'الدورات',
+      admin: 'لوحة الإدارة',
+      reviewQueue: 'طابور المراجعة',
+      teacher: 'لوحة المعلم',
+      dashboard: 'لوحة الطالب',
+      payments: 'مدفوعاتي',
+      login: 'دخول',
+      register: 'حساب جديد',
+      logout: 'خروج',
+      skipLink: 'انتقل إلى المحتوى الرئيسي',
+      mainNavAria: 'التنقل الرئيسي',
+      brandAria: 'الصفحة الرئيسية لمنصة Codeera',
+      themeLight: 'الوضع الفاتح',
+      themeDark: 'الوضع الداكن',
+      themeToggleAriaLight: 'التبديل إلى الوضع الفاتح',
+      themeToggleAriaDark: 'التبديل إلى الوضع الداكن',
+      langToggleAria: 'Switch to English',
+      langToggleLabel: 'English',
+      roles: {
+        superadmin: 'مدير عام',
+        admin: 'مسؤول',
+        teacher: 'محاضر',
+        student: 'طالب'
+      },
+      footer: {
+        tagline: 'منصة Codeera التعليمية',
+        socialAria: 'حسابات التواصل الاجتماعي',
+        terms: 'الشروط والأحكام',
+        privacy: 'الخصوصية',
+        refund: 'الاسترداد',
+        rights: 'جميع الحقوق محفوظة',
+        legalNavAria: 'روابط المنصة القانونية'
+      }
+    },
+    home: {
+      metaTitle: 'منصة Codeera | شروحات ومقررات برمجية تفاعلية',
+      metaDesc: 'منصة Codeera التعليمية التفاعلية لشروحات ومقررات واختبارات البرمجة والذكاء الاصطناعي.',
+      steps: {
+        eyebrow: 'خطوات سريعة',
+        title: 'كيف تبدأ دراستك معنا؟',
+        subtitle: 'ثلاث خطوات بسيطة ومباشرة تفصلك عن المحتوى الأكاديمي ومجموعات المناقشة.',
+        step1Title: 'اختر مقررك الدراسي',
+        step1Desc: 'تصفح المقررات المتاحة لفرقتك وقسمك (علوم حاسب، نظم، ذكاء اصطناعي)، واطلع على تفاصيل المنهج وشروحاته.',
+        step2Title: 'سدد الرسوم وارفع الإيصال',
+        step2Desc: 'حول الرسوم بسهولة عبر فودافون كاش أو إنستاباي، ثم ارفع لقطة شاشة للإيصال في نموذج الاشتراك المباشر.',
+        step3Title: 'اربط تليجرام وابدأ الدراسة',
+        step3Desc: 'فور اعتماد الدفع، يفتح لك المحتوى التعليمي فوراً ويتم قبولك آلياً في مجموعة التليجرام عبر البوت الذكي.'
+      },
+      courses: {
+        eyebrow: 'المقررات الدراسية',
+        title: 'أحدث المقررات المتاحة',
+        viewAll: 'عرض كامل الدليل الأكاديمي',
+        priceCaption: 'رسوم المقرر',
+        onSale: 'خصم ساري',
+        details: 'التفاصيل',
+        currency: 'ج.م',
+        emptyNotice: 'ستظهر المقررات الدراسية المتاحة هنا فور إطلاقها.'
+      },
+      features: {
+        eyebrow: 'لماذا Codeera؟',
+        title: 'بيئة أكاديمية متكاملة لطلاب الحاسبات',
+        subtitle: 'صممت منصة Codeera خصيصاً لتلائم طبيعة ومناهج كلية الحاسبات بجامعة الأزهر.',
+        items: [
+          {
+            title: 'تغطية شاملة لمقررات الكلية',
+            desc: 'محتوى مصور ومكتوب متوافق 100% مع توصيف المقررات الأكاديمية والمناهج المعتمدة.'
+          },
+          {
+            title: 'انضمام آلي وفوري للمجموعات',
+            desc: 'لا داعي لانتظار قبول المشرفين، بوت المنصة يفحص حالتك ويقبلك تلقائياً فور الاعتماد.'
+          },
+          {
+            title: 'اختبارات تقييم ذاتي ذكية',
+            desc: 'اختبر معلوماتك بعد كل باب دراسي عبر نظام كويزات تفاعلي يعرض نتيجتك وحلول الأسئلة.'
+          },
+          {
+            title: 'دفع آمن ومعالجة مباشرة',
+            desc: 'ادفع عبر المحافظ الإلكترونية المألوفة (فودافون كاش، إنستاباي) مع نظام توثيق فوري للإيصالات.'
+          }
+        ]
+      },
+      faq: {
+        eyebrow: 'الأسئلة الشائعة',
+        title: 'كل ما تريد معرفته عن المنصة',
+        subtitle: 'إجابات واضحة ومباشرة عن كافة تساؤلات الطلاب.',
+        items: [
+          {
+            q: 'كيف يمكنني الانضمام لمجموعة التليجرام الخاصة بالمقرر؟',
+            a: 'بعد اعتماد إيصال السداد الخاص بك، ادخل إلى صفحة المقرر أو لوحة التحكم واضغط على "ربط حساب تليجرام" لتوليد رابط الدخول الخاص بك. عند إرسال طلب الانضمام لمجموعة المقرر، يقوم بوت المنصة بالتحقق من اشتراكك وقبولك فوراً وبشكل آلي.'
+          },
+          {
+            q: 'ما هي طرق الدفع المتاحة للاشتراك؟',
+            a: 'نوفر الدفع السهل والمباشر عبر فودافون كاش (Vodafone Cash)، أو إنستاباي (InstaPay)، أو أي محفظة إلكترونية بنكية. بعد إتمام التحويل، تقوم برفع صورة إيصال التحويل في صفحة إتمام الطلب لتأكيد اشتراكك.'
+          },
+          {
+            q: 'كم يستغرق وقت مراجعة وتأكيد الاشتراك؟',
+            a: 'تتم مراجعة إيصالات الدفع بواسطة فريق الإدارة بانتظام وفي أسرع وقت ممكن (عادة خلال دقائق إلى ساعات معدودة). ستصلك رسالة تأكيد عبر البريد الإلكتروني فور الاعتماد مع فتح صلاحيات المادة فوراً.'
+          },
+          {
+            q: 'ما مدة صلاحية اشتراكي في المادة؟',
+            a: 'يستمر اشتراكك فعالاً ومتاحاً لك حتى نهاية الفصل الدراسي الرسمي للمقرر، مع فترة سماح إضافية لمراجعة المحتوى والاختبارات حتى انتهاء موسم الامتحانات النهائية.'
+          }
+        ]
+      },
+      cta: {
+        badge: 'ابدأ دراستك الآن',
+        title: 'جاهز للتفوق في فصلك الدراسي؟',
+        desc: 'انضم لزملائك في كلية الحاسبات والذكاء الاصطناعي واستفد من شروحات المقررات ومجموعات التليجرام المقفولة اليوم.',
+        primary: 'استكشف جميع المقررات',
+        secondary: 'إنشاء حساب طالب'
+      }
+    },
+    courses: {
+      metaTitle: 'دليل المقررات الأكاديمية | منصة Codeera',
+      metaDesc: 'تصفح المقررات الدراسية المتاحة لطلاب كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر.',
+      title: 'دليل المقررات الأكاديمية',
+      subtitle: 'تصفح جميع المواد الدراسية التخصصية لكلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر.',
+      desc: 'محتوى تعليمي أكاديمي دقيق، شروحات مسجلة، بنك أسئلة واختبارات تفاعلية، مع وصول فوري لمجموعات التليجرام الخاصة بكل مادة.',
+      adminTitle: 'صلاحيات إدارة المقررات',
+      adminDesc: 'يمكنك إنشاء مقررات جديدة أو تعديل المحتوى والأسعار مباشرة من هنا.',
+      addCourse: 'إضافة مقرر دراسي جديد',
+      searchPlaceholder: 'ابحث بالاسم أو الرمز (مثال: برمجيات، ذكاء اصطناعي، CS)...',
+      searchAria: 'البحث في المقررات',
+      filterSectionAria: 'أدوات البحث والتصفية',
+      filterFormAria: 'تصفية الدورات حسب الفرقة والقسم',
+      yearLabel: 'الفرقة الدراسية:',
+      allYears: 'كل الفرق الدراسية',
+      deptLabel: 'القسم الأكاديمي:',
+      allDepts: 'جميع الأقسام',
+      applyFilter: 'تطبيق الفلتر',
+      resetFilter: 'إلغاء التصفية',
+      priceCaption: 'رسوم المقرر',
+      currency: 'جنيه',
+      exploreDetails: 'التفاصيل والتسجيل',
+      onSale: 'خصم ساري',
+      emptyTitle: 'لا توجد مقررات دراسية تطابق خيارات البحث الحالية.',
+      emptyDesc: 'جرب تغيير معايير البحث أو اختيار قسم وفرقة دراسية أخرى لعرض المواد المتاحة.',
+      clearFilters: 'مسح خيارات التصفية والبحث'
+    },
+    auth: {
+      login: {
+        metaTitle: 'تسجيل الدخول | منصة Codeera',
+        metaDesc: 'تسجيل الدخول إلى حسابك في منصة Codeera التعليمية.',
+        badge: 'بوابة الطلاب والمعلمين والإدارة',
+        title: 'تسجيل الدخول',
+        subtitle: 'أدخل بريدك الإلكتروني وكلمة المرور لمتابعة حسابك ومقرراتك.',
+        emailLabel: 'البريد الإلكتروني',
+        emailPlaceholder: 'name@example.com',
+        passwordLabel: 'كلمة المرور',
+        passwordPlaceholder: '••••••••',
+        submit: 'دخول',
+        submitting: 'جاري تسجيل الدخول...',
+        noAccount: 'ليس لديك حساب بعد؟',
+        registerLink: 'إنشاء حساب طالب جديد',
+        alreadyLoggedInTitle: 'أنت مسجل الدخول بالفعل',
+        alreadyLoggedInWelcome: 'مرحباً بك مجدداً،',
+        goToDashboard: 'الدخول إلى لوحة التحكم',
+        browseCourses: 'تصفح المقررات',
+        errors: {
+          required: 'يرجى إدخال البريد الإلكتروني وكلمة المرور.',
+          invalid: 'بيانات الدخول غير صحيحة، يرجى المحاولة مرة أخرى.',
+          generic: 'حدث خطأ أثناء تسجيل الدخول.'
+        }
+      },
+      register: {
+        metaTitle: 'إنشاء حساب طالب جديد | منصة Codeera',
+        metaDesc: 'تسجيل حساب طالب جديد في منصة Codeera التعليمية للبرمجة وعلوم الحاسب.',
+        badge: 'انضم لزملائك',
+        title: 'إنشاء حساب طالب',
+        subtitle: 'سجل بياناتك الأكاديمية للوصول إلى مقرراتك وشروحات المناهج واختباراتها.',
+        nameLabel: 'الاسم بالكامل (ثلاثي أو رباعي)',
+        namePlaceholder: 'محمد أحمد علي',
+        emailLabel: 'البريد الإلكتروني',
+        emailPlaceholder: 'name@example.com',
+        passwordLabel: 'كلمة المرور',
+        passwordPlaceholder: '8 أحرف على الأقل',
+        confirmPasswordLabel: 'تأكيد كلمة المرور',
+        confirmPasswordPlaceholder: 'أعد إدخال كلمة المرور',
+        branchLabel: 'فرع الكلية',
+        branchBoys: 'بنين (القاهرة)',
+        branchGirls: 'بنات (القاهرة)',
+        academicYearLabel: 'السنة الدراسية',
+        departmentLabel: 'القسم الأكاديمي',
+        telegramLabel: 'اسم مستخدم تليجرام (اختياري)',
+        telegramPlaceholder: '@username',
+        phoneLabel: 'رقم الهاتف / واتساب (اختياري)',
+        phonePlaceholder: '01XXXXXXXXX',
+        submit: 'إنشاء الحساب وبدء التعلم',
+        submitting: 'جاري إنشاء الحساب...',
+        hasAccount: 'لديك حساب بالفعل؟',
+        loginLink: 'تسجيل الدخول',
+        years: {
+          first: 'السنة الأولى',
+          second: 'السنة الثانية'
+        },
+        departments: {
+          cs: 'علوم الحاسب (CS)',
+          cy: 'الأمن السيبراني (CY)',
+          ds: 'علم البيانات (DS)',
+          ai: 'الذكاء الاصطناعي (AI)'
+        },
+        errors: {
+          passwordMismatch: 'كلمة المرور وتأكيدها غير متطابقين.',
+          passwordMinLength: 'يجب ألا تقل كلمة المرور عن 8 أحرف.',
+          failed: 'تعذر إنشاء الحساب، يرجى مراجعة البيانات المدخلة.',
+          generic: 'حدث خطأ أثناء إنشاء الحساب.'
+        }
+      },
+      guard: {
+        loginRequiredTitle: 'تسجيل الدخول مطلوب',
+        loginRequiredDescPrefix: 'هذه الصفحة مخصصة لـ',
+        loginRequiredDescSuffix: 'فقط. يرجى تسجيل الدخول بحساب معتمد للوصول إلى لوحة التحكم.',
+        accessDeniedTitle: 'غير مصرح لك بالوصول',
+        accessDeniedDescCurrent: 'أنت مسجل حالياً بحساب',
+        accessDeniedDescRequired: 'وهذه اللوحة مخصصة حصرياً لـ',
+        cannotAccessTitle: 'تعذر الوصول إلى اللوحة',
+        defaultError: 'حدث خطأ أثناء التحقق من الصلاحيات أو تحميل البيانات.',
+        loginBtn: 'تسجيل الدخول',
+        homeBtn: 'العودة للرئيسية',
+        browseCoursesBtn: 'تصفح المقررات الدراسية',
+        switchAccountBtn: 'تبديل الحساب (خروج)',
+        retryBtn: 'إعادة المحاولة',
+        roles: {
+          admin: 'المسؤولين',
+          teacher: 'أعضاء هيئة التدريس والمحاضرين',
+          student: 'الطلاب المسجلين',
+          superadmin: 'المدير العام'
+        }
+      }
     }
   },
   en: {
@@ -71,8 +509,240 @@ export const translations: Record<Locale, Translations> = {
         { value: '100%', label: 'Private Telegram Groups' },
         { value: 'Instant', label: 'Automated Bot Verification' }
       ],
-      langToggleAria: 'Switch to Arabic',
-      langToggleLabel: 'العربية'
+      langToggleAria: 'التبديل إلى العربية',
+      langToggleLabel: 'عربي'
+    },
+    nav: {
+      home: 'Home',
+      courses: 'Courses',
+      admin: 'Admin Panel',
+      reviewQueue: 'Review Queue',
+      teacher: 'Teacher Panel',
+      dashboard: 'Dashboard',
+      payments: 'My Payments',
+      login: 'Sign In',
+      register: 'Register',
+      logout: 'Logout',
+      skipLink: 'Skip to main content',
+      mainNavAria: 'Main navigation',
+      brandAria: 'Codeera Platform Home',
+      themeLight: 'Light Mode',
+      themeDark: 'Dark Mode',
+      themeToggleAriaLight: 'Switch to light mode',
+      themeToggleAriaDark: 'Switch to dark mode',
+      langToggleAria: 'التبديل إلى العربية',
+      langToggleLabel: 'عربي',
+      roles: {
+        superadmin: 'Superadmin',
+        admin: 'Admin',
+        teacher: 'Instructor',
+        student: 'Student'
+      },
+      footer: {
+        tagline: 'Codeera Educational Platform',
+        socialAria: 'Social media links',
+        terms: 'Terms & Conditions',
+        privacy: 'Privacy Policy',
+        refund: 'Refund Policy',
+        rights: 'All rights reserved',
+        legalNavAria: 'Legal Links'
+      }
+    },
+    home: {
+      metaTitle: 'Codeera Platform | Interactive Programming & CS Courses',
+      metaDesc: 'Codeera is an interactive educational platform for programming, computer science, and AI curriculum with private Telegram groups.',
+      steps: {
+        eyebrow: 'Quick Steps',
+        title: 'How to Start Learning With Us',
+        subtitle: 'Three direct steps connecting you to accredited academic content and private discussion groups.',
+        step1Title: 'Choose Your Course',
+        step1Desc: 'Browse courses tailored to your academic year and department (CS, IS, AI) and preview syllabus outlines.',
+        step2Title: 'Pay Fees & Upload Receipt',
+        step2Desc: 'Transfer securely via Vodafone Cash, InstaPay, or mobile wallets, then upload the receipt screenshot.',
+        step3Title: 'Connect Telegram & Study',
+        step3Desc: 'Once payment is approved, course materials unlock immediately and our smart bot auto-admits you to the Telegram group.'
+      },
+      courses: {
+        eyebrow: 'Course Catalog',
+        title: 'Latest Available Courses',
+        viewAll: 'View Full Academic Catalog',
+        priceCaption: 'Course Fee',
+        onSale: 'On Sale',
+        details: 'Details',
+        currency: 'EGP',
+        emptyNotice: 'Available courses will appear here once released.'
+      },
+      features: {
+        eyebrow: 'Why Codeera?',
+        title: 'Integrated Academic Platform for Tech Students',
+        subtitle: 'Codeera is designed specifically around the syllabus and exam standards of the Faculty of Computers & AI at Al-Azhar University.',
+        items: [
+          {
+            title: 'Full Curriculum Coverage',
+            desc: 'Video lectures and notes 100% aligned with verified academic course specifications.'
+          },
+          {
+            title: 'Instant Automated Group Access',
+            desc: 'No waiting for admin approvals; the platform bot checks your enrollment and approves you instantly.'
+          },
+          {
+            title: 'Smart Self-Assessment Quizzes',
+            desc: 'Test your understanding after each module with interactive quizzes, instant scores, and answer keys.'
+          },
+          {
+            title: 'Direct & Secure Payment',
+            desc: 'Pay with popular local payment methods (Vodafone Cash, InstaPay) with streamlined receipt verification.'
+          }
+        ]
+      },
+      faq: {
+        eyebrow: 'Frequently Asked Questions',
+        title: 'Everything You Need to Know',
+        subtitle: 'Direct and clear answers to common student inquiries.',
+        items: [
+          {
+            q: 'How do I join the course Telegram group?',
+            a: 'After your payment receipt is approved, visit the course page or your dashboard and click "Connect Telegram" to generate your personal join link. When you request to join the group, the platform bot verifies your enrollment and admits you instantly and automatically.'
+          },
+          {
+            q: 'What payment methods are supported?',
+            a: 'We support straightforward payments via Vodafone Cash, InstaPay, and standard Egyptian bank digital wallets. Once you transfer, submit a screenshot of your transfer receipt to confirm your subscription.'
+          },
+          {
+            q: 'How long does subscription verification take?',
+            a: 'Payment receipts are reviewed regularly by administrators as quickly as possible (usually within minutes to a few hours). You will receive an email confirmation and immediate access upon approval.'
+          },
+          {
+            q: 'How long does my course subscription remain valid?',
+            a: 'Your access remains active through the end of the official academic semester, plus a generous extension period for review and exam preparation until finals finish.'
+          }
+        ]
+      },
+      cta: {
+        badge: 'Start Learning Now',
+        title: 'Ready to Excel This Semester?',
+        desc: 'Join your classmates in the Faculty of Computers & Artificial Intelligence and gain access to comprehensive courses and private Telegram communities today.',
+        primary: 'Explore All Courses',
+        secondary: 'Create Student Account'
+      }
+    },
+    courses: {
+      metaTitle: 'Academic Course Catalog | Codeera',
+      metaDesc: 'Browse available courses for Faculty of Computers & Artificial Intelligence Al-Azhar University students.',
+      title: 'Academic Course Catalog',
+      subtitle: 'Explore specialized coursework for the Faculty of Computers & Artificial Intelligence, Al-Azhar University.',
+      desc: 'Precise academic curriculum, recorded lectures, question banks, and interactive quizzes with instant access to course Telegram groups.',
+      adminTitle: 'Course Management Privileges',
+      adminDesc: 'You can create new courses or update content and pricing directly from here.',
+      addCourse: 'Add New Course',
+      searchPlaceholder: 'Search by title or code (e.g. Software, AI, CS)...',
+      searchAria: 'Search courses',
+      filterSectionAria: 'Search and filter tools',
+      filterFormAria: 'Filter courses by academic year and department',
+      yearLabel: 'Academic Year:',
+      allYears: 'All Academic Years',
+      deptLabel: 'Department:',
+      allDepts: 'All Departments',
+      applyFilter: 'Apply Filters',
+      resetFilter: 'Reset Filters',
+      priceCaption: 'Course Fee',
+      currency: 'EGP',
+      exploreDetails: 'Details & Enroll',
+      onSale: 'On Sale',
+      emptyTitle: 'No courses match your current search filters.',
+      emptyDesc: 'Try adjusting your search query or selecting a different year and department to view courses.',
+      clearFilters: 'Clear filters and search'
+    },
+    auth: {
+      login: {
+        metaTitle: 'Sign In | Codeera Platform',
+        metaDesc: 'Sign in to your account on Codeera educational platform.',
+        badge: 'Portal for Students, Instructors & Staff',
+        title: 'Sign In',
+        subtitle: 'Enter your email and password to access your account and coursework.',
+        emailLabel: 'Email Address',
+        emailPlaceholder: 'name@example.com',
+        passwordLabel: 'Password',
+        passwordPlaceholder: '••••••••',
+        submit: 'Sign In',
+        submitting: 'Signing in...',
+        noAccount: "Don't have an account yet?",
+        registerLink: 'Create a new student account',
+        alreadyLoggedInTitle: 'You are already signed in',
+        alreadyLoggedInWelcome: 'Welcome back,',
+        goToDashboard: 'Go to Dashboard',
+        browseCourses: 'Browse Courses',
+        errors: {
+          required: 'Please enter your email and password.',
+          invalid: 'Invalid credentials, please try again.',
+          generic: 'An error occurred during sign in.'
+        }
+      },
+      register: {
+        metaTitle: 'Create Student Account | Codeera Platform',
+        metaDesc: 'Create a student account on Codeera educational platform for computer science and programming.',
+        badge: 'Join Your Peers',
+        title: 'Create Student Account',
+        subtitle: 'Enter your academic information to access courses, lecture notes, and quizzes.',
+        nameLabel: 'Full Name',
+        namePlaceholder: 'e.g. John Doe',
+        emailLabel: 'Email Address',
+        emailPlaceholder: 'name@example.com',
+        passwordLabel: 'Password',
+        passwordPlaceholder: 'At least 8 characters',
+        confirmPasswordLabel: 'Confirm Password',
+        confirmPasswordPlaceholder: 'Re-enter your password',
+        branchLabel: 'Faculty Branch',
+        branchBoys: 'Boys (Cairo)',
+        branchGirls: 'Girls (Cairo)',
+        academicYearLabel: 'Academic Year',
+        departmentLabel: 'Academic Department',
+        telegramLabel: 'Telegram Username (optional)',
+        telegramPlaceholder: '@username',
+        phoneLabel: 'Phone / WhatsApp (optional)',
+        phonePlaceholder: '01XXXXXXXXX',
+        submit: 'Create Account & Start Learning',
+        submitting: 'Creating account...',
+        hasAccount: 'Already have an account?',
+        loginLink: 'Sign In',
+        years: {
+          first: 'First Year',
+          second: 'Second Year'
+        },
+        departments: {
+          cs: 'Computer Science (CS)',
+          cy: 'Cybersecurity (CY)',
+          ds: 'Data Science (DS)',
+          ai: 'Artificial Intelligence (AI)'
+        },
+        errors: {
+          passwordMismatch: 'Passwords do not match.',
+          passwordMinLength: 'Password must be at least 8 characters long.',
+          failed: 'Could not create account, please check the entered details.',
+          generic: 'An error occurred while creating your account.'
+        }
+      },
+      guard: {
+        loginRequiredTitle: 'Sign In Required',
+        loginRequiredDescPrefix: 'This page is restricted to',
+        loginRequiredDescSuffix: 'only. Please sign in with an authorized account to access this panel.',
+        accessDeniedTitle: 'Access Denied',
+        accessDeniedDescCurrent: 'You are currently signed in as',
+        accessDeniedDescRequired: 'and this panel is exclusively for',
+        cannotAccessTitle: 'Unable to Access Panel',
+        defaultError: 'An error occurred while verifying permissions or loading data.',
+        loginBtn: 'Sign In',
+        homeBtn: 'Back to Home',
+        browseCoursesBtn: 'Browse Courses',
+        switchAccountBtn: 'Switch Account (Logout)',
+        retryBtn: 'Retry',
+        roles: {
+          admin: 'Administrators',
+          teacher: 'Faculty Members & Instructors',
+          student: 'Enrolled Students',
+          superadmin: 'Super Admin'
+        }
+      }
     }
   }
 };
@@ -129,4 +799,24 @@ function applyDocumentLocale(locale: Locale): void {
   document.documentElement.classList.toggle('locale-en', locale === 'en');
 }
 
+export const t = derived(currentLocale, ($locale) => translations[$locale]);
 export const currentHeroTranslations = derived(currentLocale, ($locale) => translations[$locale].hero);
+
+export function formatPrice(cents: number, locale: Locale = 'ar'): string {
+  if (locale === 'en') {
+    return `${(cents / 100).toLocaleString('en-US')} EGP`;
+  }
+  return `${(cents / 100).toLocaleString('ar-EG')} ج.م`;
+}
+
+export function getLocalizedText(
+  field: { ar?: string; en?: string } | string | undefined | null,
+  locale: Locale = 'ar'
+): string {
+  if (!field) return '';
+  if (typeof field === 'string') return field;
+  if (locale === 'en') {
+    return field.en || field.ar || '';
+  }
+  return field.ar || field.en || '';
+}
