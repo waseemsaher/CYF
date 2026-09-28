@@ -1,240 +1,240 @@
-# Provisioning the Backend VM (Provider-Agnostic Guide)
+# Provisioning the Backend VM (Docker Compose Deployment Guide)
 
-> **Purpose**: This guide provides exact, step-by-step instructions for provisioning the Codeera Laravel API backend on any plain Ubuntu VPS. It applies equally to **AWS EC2 (current temporary host)** and **Oracle Cloud Always Free (future permanent host)** without using provider-specific managed conveniences.
-
----
-
-## 1. Instance Specification & Security Rules
-
-### Sizing Guidance:
-- **AWS EC2**: `t3.micro` (recommended: 2 vCPUs, 1 GiB RAM on Nitro) or `t2.micro` (1 vCPU, 1 GiB RAM). Add a 2GB swap file to prevent OOM errors during composer/migration runs.
-- **Oracle Cloud**: Ampere A1 (ARM64, 2–4 OCPUs, 12–24 GiB RAM Always Free) or AMD E2.1.Micro (1 OCPU, 1 GiB RAM).
-
-### Security Group / Firewall Rules (Public Inbound):
-Only the following ports may be open to the public internet:
-- `22/tcp` (SSH — recommended to restrict to owner's management IP)
-- `80/tcp` (HTTP — redirects to HTTPS and Let's Encrypt validation)
-- `443/tcp` (HTTPS — TLS encrypted web traffic)
-
-All other services (MySQL, Redis, PHP-FPM) **MUST** be bound strictly to `127.0.0.1` or UNIX sockets and never exposed to the public internet.
+> [!IMPORTANT]
+> **Infrastructure Status Notice**: This pull request prepares and verifies all **application code, Docker configuration, and deployment automation**. No AWS EC2 or Oracle Cloud virtual machine has been provisioned yet. The repository owner must provision the server manually using the exact provider-agnostic steps detailed below before pointing DNS.
 
 ---
 
-## 2. Base System & Swap Setup
+## 1. Instance Specification & Security Group
 
-Connect via SSH and update packages:
+### Instance Sizing
+* **Operating System**: Ubuntu 24.04 LTS (x86_64 or ARM64).
+* **AWS EC2 (Phase 1 — Temporary)**: `t2.micro` or `t3.micro` (1 vCPU, 1 GB RAM) or `t4g.micro` (ARM64).
+* **Oracle Cloud Always Free (Phase 2 — Permanent)**: `VM.Standard.A1.Flex` (1–4 OCPUs, 6–24 GB RAM, ARM64) or `VM.Standard.E2.1.Micro`.
+* **Storage**: 20–30 GB gp3 / Standard SSD volume.
+
+### Security Group / Ingress Firewall Rules
+Configure the cloud firewall (AWS Security Group / Oracle Security List) strictly as follows:
+
+| Protocol | Port | Source | Purpose |
+| :--- | :--- | :--- | :--- |
+| **TCP** | `22` | `<OWNER_MANAGEMENT_IP>/32` | Administrative SSH access (Owner IP only) |
+| **TCP** | `80` | `0.0.0.0/0`, `::/0` | Let's Encrypt HTTP-01 ACME challenges & HTTPS redirect |
+| **TCP** | `443` | `0.0.0.0/0`, `::/0` | Encrypted REST API traffic (Caddy Reverse Proxy) |
+
+> [!CAUTION]
+> **Strict Internal Port Isolation**: Never expose port `3306` (MySQL), port `6379` (Redis), or port `9000` (FastCGI) to the public internet. The `docker-compose.prod.yml` configuration deliberately publishes **only ports 80 and 443** on the `web` reverse proxy. All database, cache, and application communication occurs exclusively over the isolated internal Docker bridge network (`cyf-network`).
+
+---
+
+## 2. Allocate and Attach a Static Public IP
+
+Before configuring DNS, allocate a static public IP:
+* **AWS EC2**: Allocate an **Elastic IP (EIP)** and associate it with the EC2 instance.
+* **Oracle Cloud**: Allocate a **Reserved Public IP** and associate it with the instance VNIC.
+
+> [!WARNING]
+> Default cloud public IPs are ephemeral. If an instance is stopped and started without an attached Elastic IP / Reserved IP, its public IP address changes, which immediately severs public DNS resolution for `api.codeera.tech`.
+
+---
+
+## 3. Server Hardening & 2GB Swap Configuration
+
+Connect to the instance via SSH:
 ```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y curl wget git unzip zip software-properties-common ufw certbot python3-certbot-nginx supervisor
+ssh -i /path/to/private-key.pem ubuntu@<STATIC_PUBLIC_IP>
 ```
 
-Configure 2GB swap space (essential for 1GB RAM micro instances):
+### Update Packages & Configure 2GB Swap File
+On 1–2 GB RAM instances, a swap file provides essential memory headroom during composer builds and database maintenance routines:
+
 ```bash
+sudo apt-get update && sudo apt-get upgrade -y
+
+# Allocate 2GB Swap File
 sudo fallocate -l 2G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
+
+# Make swap persistent across reboots
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-```
 
-Configure Host Firewall (UFW):
-```bash
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw allow 22/tcp
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw enable
+# Verify swap activation
+free -h
 ```
 
 ---
 
-## 3. Install Web Server, PHP 8.3, MySQL 8, Redis
+## 4. Install Docker Engine & Compose Plugin
 
-### 3.1 Install Nginx & Redis
+Install the official Docker Engine and Docker Compose v2:
+
 ```bash
-sudo apt install -y nginx redis-server
-sudo systemctl enable nginx redis-server
-sudo systemctl start nginx redis-server
-```
+# Install prerequisites
+sudo apt-get install -y ca-certificates curl gnupg
 
-Verify Redis is bound to localhost:
-```bash
-grep "^bind" /etc/redis/redis.conf
-# Expected: bind 127.0.0.1 ::1
-```
+# Add Docker official GPG key
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-### 3.2 Install PHP 8.3 & Extensions
-```bash
-sudo add-apt-repository ppa:ondrej/php -y
-sudo apt update
-sudo apt install -y php8.3-fpm php8.3-cli php8.3-common php8.3-mysql \
-  php8.3-redis php8.3-xml php8.3-mbstring php8.3-curl php8.3-zip \
-  php8.3-gd php8.3-bcmath php8.3-intl
-sudo systemctl enable php8.3-fpm
-sudo systemctl start php8.3-fpm
-```
+# Add Docker APT repository
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-Verify PHP-FPM socket:
-```bash
-ls -la /run/php/php8.3-fpm.sock
-```
+# Install Docker Engine and Compose Plugin
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-### 3.3 Install Composer
-```bash
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-rm composer-setup.php
-```
+# Allow current user to run docker without sudo
+sudo usermod -aG docker "$USER"
+newgrp docker
 
-### 3.4 Install & Configure MySQL 8 (Self-Managed)
-```bash
-sudo apt install -y mysql-server
-sudo systemctl enable mysql
-sudo systemctl start mysql
-```
-
-Verify MySQL binds to localhost only:
-```bash
-grep -E "bind-address" /etc/mysql/mysql.conf.d/mysqld.cnf
-# Should be: bind-address = 127.0.0.1
-```
-
-Create application database and user:
-```sql
-sudo mysql
-CREATE DATABASE cyf CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'cyf'@'localhost' IDENTIFIED BY 'STRONG_RANDOM_PASSWORD_HERE';
-GRANT ALL PRIVILEGES ON cyf.* TO 'cyf'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
+# Verify installation
+docker --version
+docker compose version
 ```
 
 ---
 
-## 4. Application Deployment Setup
+## 5. Clone Repository and Configure Production Secrets
 
-### 4.1 Clone Repository & Set Permissions
 ```bash
+# Create application directory
 sudo mkdir -p /var/www/cyf
-sudo chown -R $USER:www-data /var/www/cyf
+sudo chown -R "$USER":"$USER" /var/www/cyf
+
+# Clone repository
 git clone https://github.com/waseemsaher/CYF.git /var/www/cyf
-cd /var/www/cyf/backend
+cd /var/www/cyf
+
+# Create production environment file from template
+cp backend/.env.production.example .env
 ```
 
-### 4.2 Configure Environment
+Edit `/var/www/cyf/.env` with your secure credentials:
 ```bash
-cp .env.example .env
 nano .env
 ```
-Fill in the production values:
-- `APP_ENV=production`
-- `APP_DEBUG=false`
-- `APP_URL=https://api.codeera.tech`
-- `FRONTEND_URL=https://codeera.tech`
-- `CORS_ALLOWED_ORIGINS="https://codeera.tech,https://app.codeera.tech"`
-- `SANCTUM_STATEFUL_DOMAINS="codeera.tech,app.codeera.tech"`
-- `SESSION_DOMAIN=.codeera.tech`
-- `SESSION_SECURE_COOKIE=true`
-- `SESSION_SAME_SITE=lax`
-- `DB_CONNECTION=mysql`
-- `DB_DATABASE=cyf`
-- `DB_USERNAME=cyf`
-- `DB_PASSWORD=YOUR_STRONG_PASSWORD`
-- `CACHE_STORE=redis`
-- `QUEUE_CONNECTION=redis`
-- `SESSION_DRIVER=redis`
-- `MAIL_MAILER=smtp`
-- `MAIL_HOST=smtp.sendgrid.net`
-- `MAIL_PORT=587`
-- `MAIL_USERNAME=apikey`
-- `MAIL_PASSWORD=YOUR_SENDGRID_API_KEY`
-- `FILESYSTEM_DISK=s3`
-- `AWS_ACCESS_KEY_ID=YOUR_KEY`
-- `AWS_SECRET_ACCESS_KEY=YOUR_SECRET`
-- `AWS_DEFAULT_REGION=us-east-1`
-- `AWS_BUCKET=codeera-media`
-- `TELEGRAM_BOT_TOKEN=...`
-- `TELEGRAM_WEBHOOK_SECRET=...`
 
-### 4.3 Install Dependencies & Initialize Backend
-```bash
-cd /var/www/cyf/backend
-composer install --no-dev --optimize-autoloader --no-interaction
-php artisan key:generate --force
-php artisan migrate --force
-php artisan db:seed --force
-php artisan optimize
-php artisan production:verify
-```
+Ensure the following variables are set:
+```dotenv
+APP_NAME=Codeera
+APP_ENV=production
+APP_KEY=                          # Generate with: docker compose -f docker-compose.prod.yml run --rm app php artisan key:generate --show
+APP_DEBUG=false
+APP_URL=https://api.codeera.tech
 
-Fix storage permissions:
-```bash
-sudo chown -R www-data:www-data /var/www/cyf/backend/storage /var/www/cyf/backend/bootstrap/cache
-sudo chmod -R 775 /var/www/cyf/backend/storage /var/www/cyf/backend/bootstrap/cache
-```
+FRONTEND_URL=https://codeera.tech
+CORS_ALLOWED_ORIGINS="https://codeera.tech,https://app.codeera.tech"
+SANCTUM_STATEFUL_DOMAINS="codeera.tech,app.codeera.tech"
 
----
+SESSION_DRIVER=redis
+SESSION_DOMAIN=.codeera.tech
+SESSION_SECURE_COOKIE=true
+SESSION_SAME_SITE=lax
 
-## 5. Web Server (Nginx) & SSL
+SERVER_NAME=api.codeera.tech
+ACME_EMAIL=admin@codeera.tech
 
-### 5.1 Link Nginx Configuration
-```bash
-sudo cp /var/www/cyf/deploy/nginx/cyf.conf /etc/nginx/sites-available/cyf
-sudo ln -sf /etc/nginx/sites-available/cyf /etc/nginx/sites-enabled/cyf
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t
-sudo systemctl reload nginx
-```
+# Database (Internal Docker network hostname)
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=cyf
+DB_USERNAME=cyf_user
+DB_PASSWORD=<STRONG_GENERATED_APP_PASSWORD>
+DB_ROOT_PASSWORD=<STRONG_GENERATED_ROOT_PASSWORD>
 
-### 5.2 Obtain Let's Encrypt Certificate
-Before running certbot, ensure the DNS A record for `api.codeera.tech` points to this VM's public IP:
-```bash
-sudo certbot --nginx -d api.codeera.tech --non-interactive --agree-tos -m admin@codeera.tech
+# Redis (Internal Docker network hostname)
+REDIS_CLIENT=phpredis
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=<STRONG_GENERATED_REDIS_PASSWORD>
+
+# Object Storage (AWS S3)
+FILESYSTEM_DISK=s3
+AWS_ACCESS_KEY_ID=<AWS_S3_ACCESS_KEY>
+AWS_SECRET_ACCESS_KEY=<AWS_S3_SECRET_KEY>
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=codeera-media
+AWS_BACKUP_BUCKET=codeera-backups
+
+# Transactional Email (SendGrid SMTP)
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.sendgrid.net
+MAIL_PORT=587
+MAIL_ENCRYPTION=tls
+MAIL_USERNAME=apikey
+MAIL_PASSWORD=<SENDGRID_API_KEY>
+MAIL_FROM_ADDRESS="noreply@codeera.tech"
+MAIL_FROM_NAME="Codeera"
 ```
 
 ---
 
-## 6. Supervisor (Queue Workers & Scheduler)
+## 6. Build and Deploy the Docker Stack
+
+Ensure DNS for `api.codeera.tech` is pointed to `<STATIC_PUBLIC_IP>` at your domain registrar, then run:
 
 ```bash
-sudo cp /var/www/cyf/deploy/supervisor/cyf-worker.conf /etc/supervisor/conf.d/
-sudo cp /var/www/cyf/deploy/supervisor/cyf-scheduler.conf /etc/supervisor/conf.d/
+cd /var/www/cyf
+./scripts/deploy.sh
+```
 
-sudo supervisorctl reread
-sudo supervisorctl update
-sudo supervisorctl start all
-sudo supervisorctl status
-```
-Expected output:
-```text
-cyf-scheduler                    RUNNING   pid ...
-cyf-worker:cyf-worker_00         RUNNING   pid ...
-cyf-worker:cyf-worker_01         RUNNING   pid ...
-```
+The deployment script executes the following automated pipeline:
+1. `docker compose -f docker-compose.prod.yml build`: Natively builds the multi-stage PHP 8.4 FPM production image on the target host (supporting x86_64 EC2 or ARM64 Oracle transparently).
+2. `docker compose -f docker-compose.prod.yml run --rm app php artisan migrate --force`: Runs all database migrations.
+3. `docker compose -f docker-compose.prod.yml up -d`: Launches `web` (Caddy), `app` (PHP-FPM), `queue` (Worker), `scheduler` (Artisan Scheduler), `mysql` (MySQL 8), and `redis` (Redis 7).
+4. `docker compose -f docker-compose.prod.yml exec -T app php artisan optimize`: Caches configuration, routes, and views.
+5. Performs automated `/up` health checks.
 
 ---
 
-## 7. Daily Database Backup to S3
+## 7. Operational Verification & Monitoring
 
-Install crontab for automated daily backups at 03:00 AM:
+### Check Container Status
 ```bash
-sudo cp /var/www/cyf/deploy/cron/cyf-cron /etc/cron.d/cyf-cron
-sudo chmod 644 /etc/cron.d/cyf-cron
+docker compose -f docker-compose.prod.yml ps
+```
+All containers should display status `Up (healthy)`.
+
+### Check Resource Usage (Memory Budget)
+```bash
+docker stats --no-stream
+```
+*Expected baseline memory usage*:
+* Caddy (`cyf-prod-web`): ~17 MiB
+* PHP-FPM (`cyf-prod-app`): ~48 MiB
+* Queue Worker (`cyf-prod-queue`): ~33 MiB
+* Scheduler (`cyf-prod-scheduler`): ~34 MiB
+* MySQL 8 (`cyf-prod-mysql`): ~167 MiB
+* Redis 7 (`cyf-prod-redis`): ~6 MiB
+* **Total Stack Baseline**: **~305 MiB** (easily fits within 1 GB RAM).
+
+### Verify Public Health Check Endpoint
+```bash
+curl -I https://api.codeera.tech/up
+```
+Expected response:
+```http
+HTTP/2 200
+content-type: text/html; charset=utf-8
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: DENY
 ```
 
-Test backup manually:
+### Create Initial Superadmin User
 ```bash
-sudo -u www-data bash /var/www/cyf/scripts/backup.sh
+docker compose -f docker-compose.prod.yml exec -T app php artisan cyf:create-superadmin admin@codeera.tech "Platform Owner"
 ```
 
----
-
-## 8. Swapping to Oracle Cloud (When Migrating)
-
-Because everything above uses standard Ubuntu packages, migrating to Oracle Cloud later is simple:
-1. Repeat sections 1 through 7 on the Oracle VM.
-2. Transfer database: `php artisan db:restore --from-s3 --force`.
-3. Repoint DNS `api.codeera.tech` A record to the Oracle VM IP.
-4. Run Certbot to issue SSL on the new VM.
-5. Done!
+### Trigger On-Demand Backup Drill
+```bash
+./scripts/backup.sh
+```
+This dumps MySQL, gzips the archive, and uploads to `s3://${AWS_BUCKET}/backups/cyf_db_<timestamp>.sql.gz`.

@@ -1,67 +1,34 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Database Restore Script for Codeera Platform
-# Restores a compressed MySQL backup from local storage or AWS S3.
+# Database Restore Script for Codeera Platform (Docker Compose Flow)
+# ==============================================================================
+# Executes 'php artisan db:restore' inside the running 'app' container.
+# Restores a compressed MySQL backup from S3 object storage or local storage.
+#
+# Examples:
+#   ./scripts/restore.sh --from-s3 --force
+#   ./scripts/restore.sh backups/cyf_db_20260928_120000.sql.gz --force
 # ==============================================================================
 
 set -euo pipefail
 
-BACKEND_DIR="${BACKEND_DIR:-/var/www/cyf/backend}"
+APP_DIR="${APP_DIR:-/var/www/cyf}"
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
 
-# 1. Prefer Laravel Artisan db:restore if backend directory exists
-if [[ -f "${BACKEND_DIR}/artisan" ]]; then
-    cd "${BACKEND_DIR}"
+cd "${APP_DIR}"
+
+if command -v docker &> /dev/null && [[ -f "${COMPOSE_FILE}" ]]; then
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Executing database restore inside Docker 'app' container..."
+    docker compose -f "${COMPOSE_FILE}" exec -T app php artisan db:restore "$@"
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Restore complete."
+    exit 0
+fi
+
+# Fallback if executed directly inside the container
+if [[ -f "artisan" ]]; then
     php artisan db:restore "$@"
-    exit $?
+    exit 0
 fi
 
-# 2. Standalone fallback: gunzip + mysql import
-if [[ $# -lt 1 ]]; then
-    echo "Usage: $0 <path-to-backup.sql.gz> [--force]"
-    exit 1
-fi
-
-BACKUP_FILE="$1"
-FORCE="${2:-}"
-ENV_FILE="${ENV_FILE:-/var/www/cyf/backend/.env}"
-
-if [[ ! -f "${BACKUP_FILE}" ]]; then
-    echo "Error: Backup file '${BACKUP_FILE}' not found."
-    exit 1
-fi
-
-if [[ "${FORCE}" != "--force" ]]; then
-    echo "WARNING: This will overwrite the existing database with '${BACKUP_FILE}'."
-    read -r -p "Are you sure you want to proceed? [y/N]: " CONFIRM
-    if [[ "${CONFIRM}" != "y" && "${CONFIRM}" != "Y" ]]; then
-        echo "Restore cancelled."
-        exit 0
-    fi
-fi
-
-# Extract DB credentials
-if [[ -f "${ENV_FILE}" ]]; then
-    DB_DATABASE=$(grep "^DB_DATABASE=" "${ENV_FILE}" | cut -d '=' -f2- | tr -d ' "' || echo "cyf")
-    DB_USERNAME=$(grep "^DB_USERNAME=" "${ENV_FILE}" | cut -d '=' -f2- | tr -d ' "' || echo "cyf")
-    DB_PASSWORD=$(grep "^DB_PASSWORD=" "${ENV_FILE}" | cut -d '=' -f2- | tr -d ' "' || echo "")
-    DB_HOST=$(grep "^DB_HOST=" "${ENV_FILE}" | cut -d '=' -f2- | tr -d ' "' || echo "127.0.0.1")
-    DB_PORT=$(grep "^DB_PORT=" "${ENV_FILE}" | cut -d '=' -f2- | tr -d ' "' || echo "3306")
-fi
-
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Restoring database from '${BACKUP_FILE}'..."
-
-if [[ -n "${DB_PASSWORD:-}" ]]; then
-    MYSQL_PWD="${DB_PASSWORD}" gunzip -c "${BACKUP_FILE}" | mysql \
-        --host="${DB_HOST}" \
-        --port="${DB_PORT}" \
-        --user="${DB_USERNAME}" \
-        "${DB_DATABASE}"
-else
-    gunzip -c "${BACKUP_FILE}" | mysql \
-        --host="${DB_HOST}" \
-        --port="${DB_PORT}" \
-        --user="${DB_USERNAME}" \
-        "${DB_DATABASE}"
-fi
-
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Database restored successfully."
+echo "Error: Unable to locate docker compose or artisan."
+exit 1

@@ -48,66 +48,57 @@ re-architecting anything.
 
 ## 4. Migration steps
 
-### 4.1 Provision the Oracle VM (same stack, different provider)
-Follow the same provider-agnostic provisioning steps used for the AWS EC2 setup (Nginx, PHP-FPM,
-MySQL 8, Redis, Composer, Supervisor — self-managed, nothing Oracle-managed). If
-`docs/` has a "Provisioning the backend VM" doc from the AWS setup, reuse it almost unchanged;
-update only provider-specific bits (security group → Oracle's equivalent network security rules:
-only 22/80/443 open, everything else bound to localhost).
+### 4.1 Provision the Oracle VM & Install Docker
+Follow [`docs/PROVISIONING_BACKEND_VM.md`](file:///home/kaminari0x/cyf/docs/PROVISIONING_BACKEND_VM.md):
+1. Launch Ubuntu 24.04 on Oracle Ampere A1 (or standard VM).
+2. Configure Security List: open ports 22 (owner IP only), 80, 443. Never expose 3306 or 6379.
+3. Attach an Oracle Reserved Public IP.
+4. Configure 2GB swap file.
+5. Install Docker Engine and the Docker Compose plugin.
+6. Clone the repository into `/var/www/cyf`.
 
-### 4.2 Move the database
-1. On AWS: `mysqldump` a fresh full backup of the production database.
-2. Transfer that dump file securely to the Oracle VM (`scp`, or via the same S3 bucket already
-   used for backups — download from S3 on the Oracle side).
-3. On Oracle: create the database and import the dump.
-4. Spot-check row counts on a few key tables (users, courses, payments, enrollments) against the
-   AWS source to confirm the import is complete and matches.
+### 4.2 Copy Production Environment Configuration
+- Securely copy the production `.env` file from the AWS instance to the Oracle instance at `/var/www/cyf/.env` (`scp` between instances out-of-band).
+- All domain, Sanctum, CORS, SendGrid, and Telegram credentials carry over identically.
+- If switching storage from S3 to Oracle Object Storage, update `AWS_ENDPOINT` and bucket credentials in `.env`.
 
-### 4.3 Move file storage
-Depends on what was decided in `docs/DECISIONS.md` for the AWS phase (either AWS S3 stayed as the
-storage driver, or it was already Oracle-ready):
-- If still using AWS S3: either keep using S3 as the storage backend even after the app server
-  moves to Oracle (S3 access isn't tied to running on AWS — this is the simplest option and
-  avoids a file migration entirely), OR migrate files to Oracle Object Storage if the goal is to
-  leave AWS completely. Decide this explicitly, don't leave it ambiguous.
-- If migrating storage too: copy every file from the S3 bucket to Oracle Object Storage (or local
-  disk on the Oracle VM, matching whatever the smaller/simpler option was for file storage),
-  update `backend/config/filesystems.php`'s active disk, and re-verify signed URLs still work
-  correctly.
+### 4.3 Build Stack & Migrate Database
+Because the entire backend is Dockerized, migration is straightforward:
+1. On AWS EC2: Run `./scripts/backup.sh` to upload a final consistent database snapshot to S3 (`backups/cyf_db_<timestamp>.sql.gz`).
+2. On Oracle VM: Build and start the stack:
+   ```bash
+   cd /var/www/cyf
+   docker compose -f docker-compose.prod.yml build
+   docker compose -f docker-compose.prod.yml up -d
+   ```
+3. Restore the database directly from S3 into the MySQL container:
+   ```bash
+   ./scripts/restore.sh --from-s3 --force
+   ```
+4. Verify data integrity by spot-checking table counts inside the container:
+   ```bash
+   docker compose -f docker-compose.prod.yml exec -T app php artisan tinker --execute="echo 'Users: ' . App\Models\User::count(); echo ' Courses: ' . App\Models\Course::count();"
+   ```
 
-### 4.4 Environment and secrets
-- Recreate `.env` on the Oracle VM with the same values as AWS (database credentials will differ
-  since it's a new local MySQL instance; storage credentials depend on 4.3's decision; app key,
-  Sanctum/session/CORS domain settings, SendGrid, Telegram bot token/webhook secret all carry
-  over unchanged since the domain itself isn't changing).
-- Do NOT commit the `.env` file anywhere — copy it directly, out of band (e.g. `scp` between the
-  two servers directly, not through git or chat).
+### 4.4 Automated SSL via Caddy
+- No manual Certbot or Nginx configuration is needed. Caddy in `docker-compose.prod.yml` manages TLS certificate issuance and renewal automatically via Let's Encrypt / ZeroSSL as soon as DNS points to the server.
 
-### 4.5 Point Nginx and SSL at the new server
-- Set up Nginx on Oracle the same way as on AWS (API-only reverse proxy to PHP-FPM).
-- Get a fresh SSL certificate for `api.codeera.tech` on the Oracle VM via Certbot — don't try to
-  copy the AWS certificate over; issuing a new one is simpler and more reliable.
+### 4.5 Verify Before Cutover
+Before changing public DNS:
+- Temporarily test the Oracle server:
+  ```bash
+  docker compose -f docker-compose.prod.yml exec -T app php artisan test
+  docker compose -f docker-compose.prod.yml exec -T web wget -qO- http://127.0.0.1:80/up
+  ```
+- Confirm the `queue` and `scheduler` containers are healthy and running:
+  ```bash
+  docker compose -f docker-compose.prod.yml ps
+  ```
 
-### 4.6 Verify before cutting over — this is the most important step
-Before touching DNS, verify the Oracle server fully works while AWS is still live and still the
-one serving real traffic:
-- Temporarily hit the Oracle server directly by IP (or a temporary test subdomain) and run through
-  the full critical path: register/login, browse courses, submit a payment, admin approval flow,
-  Telegram linking, quiz attempt.
-- Confirm the queue workers and scheduled jobs (enrollment expiry, Telegram membership removal)
-  are actually running under Supervisor on the Oracle VM.
-- Confirm backups are configured and working on the new server too, from day one — don't let a
-  gap in backup coverage happen during the transition.
-
-### 4.7 Cut over
-1. Update the `api.codeera.tech` DNS A record to point to the Oracle VM's IP.
-2. Watch traffic shift over (the lowered TTL from the pre-migration checklist should make this
-   fast — usually minutes, not hours).
-3. Keep the AWS instance running, untouched, for a few more days as a fallback in case something
-   unexpected shows up under real traffic that testing didn't catch.
-4. Monitor error logs and the Telegram webhook specifically in the hours right after cutover —
-   Telegram will keep trying the old server's IP briefly if there's any DNS caching on their end,
-   so confirm webhook deliveries are landing on Oracle successfully.
+### 4.6 Cut Over DNS
+1. Update the `api.codeera.tech` DNS A record to point to the Oracle Reserved Public IP.
+2. Watch traffic shift over (the lowered TTL from the pre-migration checklist ensures propagation within minutes).
+3. Keep the AWS instance running for 3–5 days as a fallback before terminating.
 
 ### 4.8 Decommission AWS
 Once a few days have passed with no issues:

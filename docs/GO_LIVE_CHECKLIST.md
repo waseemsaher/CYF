@@ -39,20 +39,30 @@ Before routing traffic, configure the following DNS records at the domain regist
 
 ---
 
-## 2. Network & Port Exposure Verification on EC2 (CRITICAL)
+## 2. Network & Port Exposure Verification on VM (CRITICAL)
 
 The only ports publicly reachable from the internet MUST be `22` (SSH), `80` (HTTP), and `443` (HTTPS). Internal application runtimes (PHP-FPM, MySQL, Redis) must NEVER be exposed.
 
-### 2.1 Verify Listening Sockets
-Run on the EC2 VM:
+### 2.1 Verify Listening Sockets & Docker Container Isolation
+Run on the backend VM:
 ```bash
-sudo ss -tlnp
+# Verify Docker port mapping
+docker port cyf-prod-web
+# Expected: 80/tcp and 443/tcp
+
+# Verify database and cache have NO exposed host ports
+docker port cyf-prod-mysql
+# Expected: empty output (no published ports)
+
+docker port cyf-prod-redis
+# Expected: empty output (no published ports)
+
+# Check host listening sockets
+ss -tlnp
 ```
 **Expected Output**:
-- `nginx` is listening on `*:80` and `*:443` (or `0.0.0.0:80` and `0.0.0.0:443`).
-- `php-fpm` is listening strictly on UNIX socket `/run/php/php8.3-fpm.sock` (NOT on TCP `9000`).
-- `mysql` is bound to `127.0.0.1:3306`.
-- `redis-server` is bound to `127.0.0.1:6379`.
+- Docker proxy / Caddy is listening on `*:80` and `*:443`.
+- MySQL and Redis have NO published ports on the host. Docker-published ports bypass ufw, so avoiding `ports:` in `docker-compose.prod.yml` guarantees zero host network exposure.
 - **NO Node.js process** is running or listening on port `3000` (frontend is 100% on Vercel).
 
 ### 2.2 Verify AWS Security Group

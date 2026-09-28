@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('telegram:remove-expired')->daily();
+Schedule::command('db:backup')->dailyAt('02:00');

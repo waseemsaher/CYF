@@ -1,112 +1,266 @@
-version: '3.9'
+# ==============================================================================
+# Production Docker Compose Configuration for Codeera Backend
+# Provider-Agnostic: Runs on AWS EC2 or Oracle Cloud Always Free
+# ==============================================================================
 
 services:
-  nginx:
-    image: nginx:alpine
-    container_name: cyf-prod-nginx
+  web:
+    image: caddy:2-alpine
+    container_name: cyf-prod-web
     restart: unless-stopped
     ports:
-      - '80:80'
-      - '443:443'
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-api.codeera.tech}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@codeera.tech}
     volumes:
-      - ./docker/nginx/api-prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./backend/public:/var/www/html/public:ro
-      - cyf-storage-data:/var/www/html/storage/app:ro
+      - cyf_storage_data:/var/www/html/storage:ro
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
-      - backend
+      app:
+        condition: service_healthy
     networks:
       - cyf-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:80/up || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
-  backend:
+  app:
     build:
       context: ./backend
       dockerfile: Dockerfile
     image: cyf-backend:prod
-    container_name: cyf-prod-backend
+    container_name: cyf-prod-app
     restart: unless-stopped
     working_dir: /var/www/html
-    volumes:
-      - ./backend:/var/www/html
-      - cyf-storage-data:/var/www/html/storage/app
-      - ./deploy/php/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+    env_file:
+      - path: ${ENV_FILE:-.env}
+        required: false
+      - path: ./backend/.env
+        required: false
     environment:
-      APP_ENV: production
-      APP_DEBUG: 'false'
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
       DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_PORT: 3306
       DB_DATABASE: ${DB_DATABASE:-cyf}
-      DB_USERNAME: ${DB_USERNAME:-cyf}
+      DB_USERNAME: ${DB_USERNAME:-cyf_user}
       DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_CLIENT: phpredis
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       QUEUE_CONNECTION: redis
       CACHE_STORE: redis
       SESSION_DRIVER: redis
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-s3}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+      AWS_BUCKET: ${AWS_BUCKET:-codeera-media}
+      AWS_BACKUP_BUCKET: ${AWS_BACKUP_BUCKET:-codeera-backups}
+      AWS_ENDPOINT: ${AWS_ENDPOINT:-}
+      AWS_USE_PATH_STYLE_ENDPOINT: ${AWS_USE_PATH_STYLE_ENDPOINT:-false}
+    volumes:
+      - cyf_storage_data:/var/www/html/storage
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - cyf-network
+    healthcheck:
+      test: ["CMD-SHELL", "cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
-  queue-worker:
+  queue:
     image: cyf-backend:prod
-    container_name: cyf-prod-worker
+    container_name: cyf-prod-queue
     restart: unless-stopped
     working_dir: /var/www/html
+    command: ["php", "artisan", "queue:work", "redis", "--tries=3", "--max-time=3600", "--timeout=90"]
+    env_file:
+      - path: ${ENV_FILE:-.env}
+        required: false
+      - path: ./backend/.env
+        required: false
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-cyf}
+      DB_USERNAME: ${DB_USERNAME:-cyf_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_CLIENT: phpredis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-s3}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+      AWS_BUCKET: ${AWS_BUCKET:-codeera-media}
+      AWS_BACKUP_BUCKET: ${AWS_BACKUP_BUCKET:-codeera-backups}
+      AWS_ENDPOINT: ${AWS_ENDPOINT:-}
+      AWS_USE_PATH_STYLE_ENDPOINT: ${AWS_USE_PATH_STYLE_ENDPOINT:-false}
     volumes:
-      - ./backend:/var/www/html
-      - cyf-storage-data:/var/www/html/storage/app
-    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --timeout=90
+      - cyf_storage_data:/var/www/html/storage
     depends_on:
-      - backend
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_healthy
     networks:
       - cyf-network
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'queue:work' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   scheduler:
     image: cyf-backend:prod
     container_name: cyf-prod-scheduler
     restart: unless-stopped
     working_dir: /var/www/html
+    command: ["php", "artisan", "schedule:work"]
+    env_file:
+      - path: ${ENV_FILE:-.env}
+        required: false
+      - path: ./backend/.env
+        required: false
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-cyf}
+      DB_USERNAME: ${DB_USERNAME:-cyf_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_CLIENT: phpredis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-s3}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+      AWS_BUCKET: ${AWS_BUCKET:-codeera-media}
+      AWS_BACKUP_BUCKET: ${AWS_BACKUP_BUCKET:-codeera-backups}
+      AWS_ENDPOINT: ${AWS_ENDPOINT:-}
+      AWS_USE_PATH_STYLE_ENDPOINT: ${AWS_USE_PATH_STYLE_ENDPOINT:-false}
     volumes:
-      - ./backend:/var/www/html
-    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+      - cyf_storage_data:/var/www/html/storage
     depends_on:
-      - backend
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_healthy
     networks:
       - cyf-network
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'schedule:work' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   mysql:
-    image: mysql:8.4
+    image: mysql:8.0
     container_name: cyf-prod-mysql
     restart: unless-stopped
+    command:
+      - mysqld
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=128M
+      - --innodb-log-file-size=32M
+      - --max-connections=40
+      - --performance-schema=OFF
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-cyf}
-      MYSQL_USER: ${DB_USERNAME:-cyf}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE:-cyf}
+      MYSQL_USER: ${DB_USERNAME:-cyf_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - mysql-prod-data:/var/lib/mysql
+      - cyf_mysql_data:/var/lib/mysql
     networks:
       - cyf-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   redis:
     image: redis:7-alpine
     container_name: cyf-prod-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--maxmemory", "128mb", "--maxmemory-policy", "volatile-lru", "--appendonly", "yes"]
     volumes:
-      - redis-prod-data:/data
+      - cyf_redis_data:/data
     networks:
       - cyf-network
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $${REDIS_PASSWORD} ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  s3:
+    image: adobe/s3mock:latest
+    container_name: cyf-test-s3
+    profiles: ["test", "drill"]
+    restart: unless-stopped
+    environment:
+      initialBuckets: codeera-media,codeera-backups
+    networks:
+      - cyf-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:9090/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
 networks:
   cyf-network:
     driver: bridge
 
 volumes:
-  mysql-prod-data:
-  redis-prod-data:
-  cyf-storage-data:
+  cyf_mysql_data:
+  cyf_redis_data:
+  cyf_storage_data:
+  caddy_data:
+  caddy_config:

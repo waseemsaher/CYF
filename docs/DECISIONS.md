@@ -237,5 +237,47 @@
   - `cors.supports_credentials`: `true`.
   - Frontend client uses `credentials: 'include'` on all API requests.
 
+---
+
+# Docker Compose Backend Deployment Decisions
+
+## 1. Containerized Stack vs. Bare-VM Deployment
+- **Decision**: Deploy all backend services (`web`, `app`, `queue`, `scheduler`, `mysql`, `redis`) via Docker Compose (`docker-compose.prod.yml`) instead of bare-metal / bare-VM host package installation (Nginx, PHP-FPM, Supervisor, MySQL, Redis).
+- **Rationale**:
+  - **Eliminates Host Configuration Drift**: Packaging all PHP extensions (`pdo_mysql`, `redis`, `gd`, `bcmath`, `intl`, `opcache`, `pcntl`, `zip`, `exif`) and system dependencies (`mariadb-client`, `gzip`, `fcgi`) in a multi-stage Dockerfile guarantees 100% parity between development, testing, AWS EC2, and Oracle Cloud VMs.
+  - **Seamless Cross-Architecture Migration (x86 EC2 to ARM64 Oracle Cloud)**: Building the container image directly on the target host (`docker compose -f docker-compose.prod.yml build`) compiles natively for the target CPU architecture without cross-compilation complexity or registry dependency. When migrating from x86_64 AWS EC2 to ARM64 (Oracle Cloud Ampere A1), the exact same Compose file and Dockerfile build natively without modification.
+  - **Zero Host Package Pollution**: The host VM requires only Docker Engine and the Docker Compose plugin. Upgrades, rollbacks, and clean tear-downs are isolated from host system packages.
+
+## 2. Rejection of Cloud-Managed Services (RDS / ElastiCache)
+- **Decision**: MySQL 8.0 and Redis 7 run as self-managed Docker containers on the same VM using named volumes (`mysql_data`, `redis_data`), on an internal bridge network (`cyf-network`).
+- **Rationale**:
+  - Managed database and cache services (AWS RDS, AWS ElastiCache) create cloud lock-in, add non-negligible cost, and complicate the planned migration to Oracle Cloud.
+  - Containerized MySQL and Redis provide full portability: moving to Oracle Cloud requires only restoring the SQL dump into the container on the new VM.
+
+## 3. Network Isolation & Security Hardening
+- **Decision**: Only the `web` (Caddy) container publishes ports to the host (`80:80`, `443:443`). Never publish ports for `mysql`, `redis`, or `app`.
+- **Rationale**:
+  - Docker published ports (`ports:`) automatically inject iptables `PREROUTING` rules that bypass Ubuntu UFW firewall configurations. By omitting `ports:` and using only internal service discovery on `cyf-network`, MySQL (port 3306), Redis (port 6379), and PHP-FPM (port 9000) are physically unreachable from the host's public and local network interfaces.
+  - Redis is further hardened with `requirepass` authentication.
+  - MySQL is configured with a strong root password and a dedicated application user (`cyf_user`) granted access strictly to `cyf_production`.
+  - Application processes execute as non-root `www-data:www-data` inside the container.
+
+## 4. Reverse Proxy: Caddy over Nginx
+- **Decision**: Use Caddy (`caddy:2-alpine`) as the production reverse proxy instead of Nginx.
+- **Rationale**:
+  - **Automated TLS Lifecycle**: Caddy manages ACME certificate issuance and renewal with Let's Encrypt / ZeroSSL automatically with zero external dependencies (no Certbot, no cron jobs, no renewal hooks, no systemd timers).
+  - **Minimal Declarative Configuration**: Caddy's `reverse_proxy app:9000 transport fastcgi` provides native FastCGI handling with split-path routing for PHP-FPM.
+  - **Centralized Security Headers**: Standard HTTP security headers (`Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) are applied at the proxy level. Content Security Policy (CSP) is intentionally omitted from the proxy because Laravel's `SecurityHeaders` middleware owns the CSP lifecycle, preventing duplicate header conflicts.
+  - **Upload Limit & Compression**: Proxy enforces a 55MB request body limit to match Laravel's 50MB course upload limit and enables Gzip/Zstandard encoding.
+
+## 5. Small-RAM VM Budget (1–2 GB Hosts)
+- **Decision**: Apply conservative memory limits across all containers, backed by a 2GB host swap file.
+- **Configuration**:
+  - `mysql:8.0`: `--innodb-buffer-pool-size=128M`, `--innodb-log-buffer-size=16M`, `--max-connections=40`, `--performance-schema=OFF`. Reduces MySQL memory consumption from default ~450MB+ down to ~166MB.
+  - `redis:7-alpine`: `--maxmemory 128mb --maxmemory-policy volatile-lru`. The `volatile-lru` eviction policy specifically evicts only keys with an expiration TTL (cache keys) while protecting keys without TTL (Laravel queued jobs).
+  - `app` (PHP-FPM): `pm = static`, `pm.max_children = 4`, `pm.max_requests = 500`. Limits PHP-FPM worker baseline to ~47MB.
+  - **Measured Baseline**: Full running production stack (`web`, `app`, `queue`, `scheduler`, `mysql`, `redis`) consumes **~304 MiB** of RAM under idle state, operating comfortably within 1GB and 2GB VM boundaries.
+
+
 
 

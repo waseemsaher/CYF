@@ -1,0 +1,45 @@
+{
+    # Global options
+    # Uncomment acme_ca below during initial deployment if you want to test against Let's Encrypt staging
+    # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+    email {$ACME_EMAIL:admin@codeera.tech}
+}
+
+{$SERVER_NAME:api.codeera.tech} {
+    root * /var/www/html/public
+    encode zstd gzip
+
+    # Request body limit matching Laravel 55MB (50MB uploads + metadata)
+    request_body {
+        max_size 55MB
+    }
+
+    # Security Headers (CSP is managed exclusively by Laravel SecurityHeaders middleware)
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
+    }
+
+    # Public storage files (avatars, uploads, static assets)
+    handle /storage/* {
+        file_server
+    }
+
+    # FastCGI proxy to PHP-FPM app container
+    handle {
+        php_fastcgi app:9000 {
+            resolve_root_symlink
+        }
+    }
+
+    # Logging
+    log {
+        output stdout
+        format console
+        level INFO
+    }
+}

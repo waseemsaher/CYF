@@ -32,7 +32,7 @@ A course-selling platform for students of the Faculty of Computers & AI (FCAI), 
 | Telegram | One bot, Bot API via webhook |
 | Domain | `codeera.tech` (via GitHub Student Developer Pack), split as `codeera.tech` / `app.codeera.tech` (frontend, Vercel) and `api.codeera.tech` (backend, AWS) |
 | Frontend hosting | **Vercel** (`@sveltejs/adapter-vercel` or `adapter-auto`). Vercel owns the frontend build, CDN, and SSL entirely — no Node process to manage on a server |
-| Backend hosting | **AWS EC2** (free-plan credits, ~6 months — see migration note below), Ubuntu, Nginx (reverse proxy to PHP-FPM only), Supervisor for queue workers. **MySQL and Redis run self-managed on the same EC2 instance — deliberately NOT RDS/ElastiCache** — to keep the setup portable |
+| Backend hosting | **AWS EC2** (free-plan credits, ~6 months — see migration note below), Ubuntu, **Docker Compose** (`caddy` reverse proxy with auto-TLS, `app` PHP 8.4 FPM, `queue`, `scheduler`, `mysql:8`, `redis:7-alpine`). **MySQL and Redis run as self-managed containers on the same EC2 instance — deliberately NOT RDS/ElastiCache** — to keep the setup portable |
 | Testing | Pest (backend), Vitest + Playwright (frontend, critical flows) |
 
 **Hosting decision history (for context, not re-litigation):** DigitalOcean was the original plan.
