@@ -19,12 +19,40 @@ beforeEach(function (): void {
     Http::fake();
 });
 
-it('rejects webhook requests without valid secret token header', function (): void {
+it('rejects webhook requests without secret token header', function (): void {
     $response = $this->postJson('/api/v1/telegram/webhook', [
         'message' => ['text' => '/start 12345'],
     ]);
 
     $response->assertStatus(403);
+});
+
+it('rejects webhook requests when secret token header is wrong', function (): void {
+    $response = $this->withHeaders([
+        'X-Telegram-Bot-Api-Secret-Token' => 'wrong_secret_token',
+    ])->postJson('/api/v1/telegram/webhook', [
+        'message' => ['text' => '/start 12345'],
+    ]);
+
+    $response->assertStatus(403);
+});
+
+it('rejects webhook requests when configured secret is empty string (fail closed)', function (): void {
+    config()->set('telegram.webhook_secret', '');
+
+    $response = $this->withHeaders([
+        'X-Telegram-Bot-Api-Secret-Token' => 'some_token',
+    ])->postJson('/api/v1/telegram/webhook', [
+        'message' => ['text' => '/start 12345'],
+    ]);
+
+    $response->assertStatus(403);
+
+    $responseWithoutHeader = $this->postJson('/api/v1/telegram/webhook', [
+        'message' => ['text' => '/start 12345'],
+    ]);
+
+    $responseWithoutHeader->assertStatus(403);
 });
 
 it('accepts webhook requests with valid secret token header', function (): void {

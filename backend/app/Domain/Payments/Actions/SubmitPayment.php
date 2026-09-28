@@ -117,7 +117,8 @@ class SubmitPayment
         imagejpeg($image, $tempPath, 85);
         imagedestroy($image);
 
-        Storage::disk('local')->put($filename, (string) file_get_contents($tempPath));
+        $disk = config('filesystems.default', 'local');
+        Storage::disk($disk)->put($filename, (string) file_get_contents($tempPath));
         unlink($tempPath);
 
         return $filename;

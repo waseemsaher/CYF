@@ -15,28 +15,28 @@ export const socialLinks: SocialLink[] = [
     id: 'facebook',
     name: 'Facebook',
     nameAr: 'فيسبوك',
-    url: '#', // Provide your Facebook page link here
+    url: 'https://www.facebook.com/profile.php?id=61594746782523',
     ariaLabel: 'صفحة منصة Codeera على فيسبوك'
   },
   {
     id: 'youtube',
     name: 'YouTube',
     nameAr: 'يوتيوب',
-    url: '#', // Provide your YouTube channel link here
+    url: 'https://www.youtube.com/channel/UC6XPPHNpQJU2MpBhSPVarvA',
     ariaLabel: 'قناة منصة Codeera على يوتيوب'
   },
   {
     id: 'whatsapp',
     name: 'WhatsApp',
     nameAr: 'واتساب',
-    url: '#', // Provide your WhatsApp link or group link here
+    url: 'https://wa.me/201555444726',
     ariaLabel: 'تواصل معنا عبر واتساب'
   },
   {
     id: 'telegram',
     name: 'Telegram',
     nameAr: 'تليجرام',
-    url: '#', // Provide your Telegram channel or bot link here
+    url: 'https://t.me/code_eraa',
     ariaLabel: 'قناة منصة Codeera على تليجرام'
   }
 ];

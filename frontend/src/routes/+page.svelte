@@ -2,49 +2,25 @@
   import type { PageData } from './$types';
   import HeroCanvas from '$lib/components/HeroCanvas.svelte';
   import HeroTypewriter from '$lib/components/HeroTypewriter.svelte';
-  import { currentHeroTranslations, currentLocale } from '$lib/i18n';
+  import { currentHeroTranslations, currentLocale, t, formatPrice, getLocalizedText } from '$lib/i18n';
   import { currentUser } from '$lib/api/auth';
 
   let { data }: { data: PageData } = $props();
-
-  const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} ج.م`;
 
   let openFaqIndex = $state<number | null>(0);
 
   function toggleFaq(index: number) {
     openFaqIndex = openFaqIndex === index ? null : index;
   }
-
-  const defaultFaqs = [
-    {
-      q: 'كيف يمكنني الانضمام لمجموعة التليجرام الخاصة بالمقرر؟',
-      a: 'بعد اعتماد إيصال السداد الخاص بك، ادخل إلى صفحة المقرر أو لوحة التحكم واضغط على "ربط حساب تليجرام" لتوليد رابط الدخول الخاص بك. عند إرسال طلب الانضمام لمجموعة المقرر، يقوم بوت المنصة بالتحقق من اشتراكك وقبولك فوراً وبشكل آلي.'
-    },
-    {
-      q: 'ما هي طرق الدفع المتاحة للاشتراك؟',
-      a: 'نوفر الدفع السهل والمباشر عبر فودافون كاش (Vodafone Cash)، أو إنستاباي (InstaPay)، أو أي محفظة إلكترونية بنكية. بعد إتمام التحويل، تقوم برفع صورة إيصال التحويل في صفحة إتمام الطلب لتأكيد اشتراكك.'
-    },
-    {
-      q: 'كم يستغرق وقت مراجعة وتأكيد الاشتراك؟',
-      a: 'تتم مراجعة إيصالات الدفع بواسطة فريق الإدارة بانتظام وفي أسرع وقت ممكن (عادة خلال دقائق إلى ساعات معدودة). ستصلك رسالة تأكيد عبر البريد الإلكتروني فور الاعتماد مع فتح صلاحيات المادة فوراً.'
-    },
-    {
-      q: 'ما مدة صلاحية اشتراكي في المادة؟',
-      a: 'يستمر اشتراكك فعالاً ومتاحاً لك حتى نهاية الفصل الدراسي الرسمي للمقرر، مع فترة سماح إضافية لمراجعة المحتوى والاختبارات حتى انتهاء موسم الامتحانات النهائية.'
-    }
-  ];
 </script>
 
 <svelte:head>
-  <title>منصة Codeera | شروحات ومقررات برمجية تفاعلية</title>
-  <meta
-    name="description"
-    content="منصة Codeera التعليمية التفاعلية لشروحات ومقررات واختبارات البرمجة والذكاء الاصطناعي."
-  />
+  <title>{$t.home.metaTitle}</title>
+  <meta name="description" content={$t.home.metaDesc} />
 </svelte:head>
 
   <!-- Immersive Tech-Forward Full-Bleed Hero Section -->
-  <section class="hero-section" aria-label="مقدمة المنصة">
+  <section class="hero-section" aria-label={$currentLocale === 'en' ? 'Platform Introduction' : 'مقدمة المنصة'}>
     <HeroCanvas />
     <div class="hero-overlay" aria-hidden="true"></div>
 
@@ -72,8 +48,13 @@
         <a href="/courses" class="btn-hero-primary">
           <span>{$currentHeroTranslations.primaryCta}</span>
           <svg class="hero-btn-arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+            {#if $currentLocale === 'en'}
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            {:else}
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            {/if}
           </svg>
         </a>
 
@@ -125,9 +106,9 @@
     <!-- How It Works Section -->
     <section class="steps-section" aria-labelledby="steps-title">
     <div class="section-heading-center">
-      <span class="eyebrow-pill">خطوات سريعة</span>
-      <h2 id="steps-title" class="section-title">كيف تبدأ دراستك معنا؟</h2>
-      <p class="section-subtitle">ثلاث خطوات بسيطة ومباشرة تفصلك عن المحتوى الأكاديمي ومجموعات المناقشة.</p>
+      <span class="eyebrow-pill">{$t.home.steps.eyebrow}</span>
+      <h2 id="steps-title" class="section-title">{$t.home.steps.title}</h2>
+      <p class="section-subtitle">{$t.home.steps.subtitle}</p>
     </div>
 
     <div class="steps-grid">
@@ -141,8 +122,8 @@
             </svg>
           </div>
         </div>
-        <h3 class="step-title">اختر مقررك الدراسي</h3>
-        <p class="step-desc">تصفح المقررات المتاحة لفرقتك وقسمك (علوم حاسب، نظم، ذكاء اصطناعي)، واطلع على تفاصيل المنهج وشروحاته.</p>
+        <h3 class="step-title">{$t.home.steps.step1Title}</h3>
+        <p class="step-desc">{$t.home.steps.step1Desc}</p>
       </div>
 
       <div class="step-card">
@@ -155,8 +136,8 @@
             </svg>
           </div>
         </div>
-        <h3 class="step-title">سدد الرسوم وارفع الإيصال</h3>
-        <p class="step-desc">حول الرسوم بسهولة عبر فودافون كاش أو إنستاباي، ثم ارفع لقطة شاشة للإيصال في نموذج الاشتراك المباشر.</p>
+        <h3 class="step-title">{$t.home.steps.step2Title}</h3>
+        <p class="step-desc">{$t.home.steps.step2Desc}</p>
       </div>
 
       <div class="step-card featured-step-card">
@@ -168,8 +149,8 @@
             </svg>
           </div>
         </div>
-        <h3 class="step-title">اربط تليجرام وابدأ الدراسة</h3>
-        <p class="step-desc">فور اعتماد الدفع، يفتح لك المحتوى التعليمي فوراً ويتم قبولك آلياً في مجموعة التليجرام عبر البوت الذكي.</p>
+        <h3 class="step-title">{$t.home.steps.step3Title}</h3>
+        <p class="step-desc">{$t.home.steps.step3Desc}</p>
       </div>
     </div>
   </section>
@@ -178,14 +159,19 @@
   <section class="courses-section" aria-labelledby="courses-title">
     <div class="section-header-flex">
       <div>
-        <span class="eyebrow-pill">المقررات الدراسية</span>
-        <h2 id="courses-title" class="section-title">أحدث المقررات المتاحة</h2>
+        <span class="eyebrow-pill">{$t.home.courses.eyebrow}</span>
+        <h2 id="courses-title" class="section-title">{$t.home.courses.title}</h2>
       </div>
       <a href="/courses" class="link-view-all">
-        <span>عرض كامل الدليل الأكاديمي</span>
+        <span>{$t.home.courses.viewAll}</span>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
+          {#if $currentLocale === 'en'}
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          {:else}
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          {/if}
         </svg>
       </a>
     </div>
@@ -196,7 +182,7 @@
       </div>
     {:else if data.courses.length === 0}
       <div class="notice-card">
-        <p>ستظهر المقررات الدراسية المتاحة هنا فور إطلاقها.</p>
+        <p>{$t.home.courses.emptyNotice}</p>
       </div>
     {:else}
       <div class="courses-grid">
@@ -205,31 +191,33 @@
             <div class="card-top-row">
               <span class="course-slug-badge">{course.slug}</span>
               {#if course.discount_cents > 0}
-                <span class="discount-badge">خصم ساري</span>
+                <span class="discount-badge">{$t.home.courses.onSale}</span>
               {/if}
             </div>
 
             <div class="card-titles">
-              <h3 class="card-title-ar">{course.title.ar}</h3>
-              {#if course.title.en}
+              <h3 class="card-title-ar">{getLocalizedText(course.title, $currentLocale)}</h3>
+              {#if $currentLocale === 'ar' && course.title?.en}
                 <p class="card-title-en">{course.title.en}</p>
+              {:else if $currentLocale === 'en' && course.title?.ar}
+                <p class="card-title-en">{course.title.ar}</p>
               {/if}
             </div>
 
             <div class="card-bottom-row">
               <div class="price-stack">
-                <span class="price-caption">رسوم المقرر</span>
+                <span class="price-caption">{$t.home.courses.priceCaption}</span>
                 <div class="price-value-row">
                   {#if course.discount_cents > 0}
-                    <span class="strikethrough-price">{formatPrice(course.list_price_cents)}</span>
+                    <span class="strikethrough-price">{formatPrice(course.list_price_cents, $currentLocale)}</span>
                   {/if}
-                  <strong class="final-price">{formatPrice(course.amount_due_cents)}</strong>
+                  <strong class="final-price">{formatPrice(course.amount_due_cents, $currentLocale)}</strong>
                 </div>
               </div>
 
               <a href={`/courses/${course.slug}`} class="btn-card-explore">
-                <span>التفاصيل</span>
-                <span aria-hidden="true">←</span>
+                <span>{$t.home.courses.details}</span>
+                <span aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
               </a>
             </div>
           </article>
@@ -241,68 +229,54 @@
   <!-- Platform Features Grid -->
   <section class="features-section" aria-labelledby="features-title">
     <div class="section-heading-center">
-      <span class="eyebrow-pill">لماذا Codeera؟</span>
-      <h2 id="features-title" class="section-title">بيئة أكاديمية متكاملة لطلاب الحاسبات</h2>
-      <p class="section-subtitle">صممت منصة Codeera خصيصاً لتلائم طبيعة ومناهج كلية الحاسبات بجامعة الأزهر.</p>
+      <span class="eyebrow-pill">{$t.home.features.eyebrow}</span>
+      <h2 id="features-title" class="section-title">{$t.home.features.title}</h2>
+      <p class="section-subtitle">{$t.home.features.subtitle}</p>
     </div>
 
     <div class="features-grid">
-      <div class="feature-item">
-        <div class="feature-icon-box" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
-            <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path>
-          </svg>
+      {#each $t.home.features.items as feature, i}
+        <div class="feature-item">
+          <div class="feature-icon-box" aria-hidden="true">
+            {#if i === 0}
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path>
+              </svg>
+            {:else if i === 1}
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            {:else if i === 2}
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            {:else}
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            {/if}
+          </div>
+          <h3>{feature.title}</h3>
+          <p>{feature.desc}</p>
         </div>
-        <h3>تغطية شاملة لمقررات الكلية</h3>
-        <p>محتوى مصور ومكتوب متوافق 100% مع توصيف المقررات الأكاديمية والمناهج المعتمدة.</p>
-      </div>
-
-      <div class="feature-item">
-        <div class="feature-icon-box" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-          </svg>
-        </div>
-        <h3>انضمام آلي وفوري للمجموعات</h3>
-        <p>لا داعي لانتظار قبول المشرفين، بوت المنصة يفحص حالتك ويقبلك تلقائياً فور الاعتماد.</p>
-      </div>
-
-      <div class="feature-item">
-        <div class="feature-icon-box" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-        </div>
-        <h3>اختبارات تقييم ذاتي ذكية</h3>
-        <p>اختبر معلوماتك بعد كل باب دراسي عبر نظام كويزات تفاعلي يعرض نتيجتك وحلول الأسئلة.</p>
-      </div>
-
-      <div class="feature-item">
-        <div class="feature-icon-box" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
-        </div>
-        <h3>دفع آمن ومعالجة مباشرة</h3>
-        <p>ادفع عبر المحافظ الإلكترونية المألوفة (فودافون كاش، إنستاباي) مع نظام توثيق فوري للإيصالات.</p>
-      </div>
+      {/each}
     </div>
   </section>
 
   <!-- FAQ Section -->
   <section class="faq-section" aria-labelledby="faq-title">
     <div class="section-heading-center">
-      <span class="eyebrow-pill">الأسئلة الشائعة</span>
-      <h2 id="faq-title" class="section-title">كل ما تريد معرفته عن المنصة</h2>
-      <p class="section-subtitle">إجابات واضحة ومباشرة عن كافة تساؤلات الطلاب.</p>
+      <span class="eyebrow-pill">{$t.home.faq.eyebrow}</span>
+      <h2 id="faq-title" class="section-title">{$t.home.faq.title}</h2>
+      <p class="section-subtitle">{$t.home.faq.subtitle}</p>
     </div>
 
     <div class="faq-accordion">
-      {#each defaultFaqs as faq, index}
+      {#each $t.home.faq.items as faq, index}
         <div class="faq-card" class:faq-card-open={openFaqIndex === index}>
           <button
             type="button"
@@ -330,12 +304,12 @@
   <section class="cta-banner">
     <div class="cta-banner-bg" aria-hidden="true"></div>
     <div class="cta-content">
-      <span class="cta-badge">ابدأ دراستك الآن</span>
-      <h2>جاهز للتفوق في فصلك الدراسي؟</h2>
-      <p>انضم لزملائك في كلية الحاسبات والذكاء الاصطناعي واستفد من شروحات المقررات ومجموعات التليجرام المقفولة اليوم.</p>
+      <span class="cta-badge">{$t.home.cta.badge}</span>
+      <h2>{$t.home.cta.title}</h2>
+      <p>{$t.home.cta.desc}</p>
       <div class="cta-actions">
-        <a href="/courses" class="btn-cta-primary">استكشف جميع المقررات</a>
-        <a href="/register" class="btn-cta-secondary">إنشاء حساب طالب</a>
+        <a href="/courses" class="btn-cta-primary">{$t.home.cta.primary}</a>
+        <a href="/register" class="btn-cta-secondary">{$t.home.cta.secondary}</a>
       </div>
     </div>
   </section>

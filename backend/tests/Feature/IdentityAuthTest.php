@@ -49,3 +49,71 @@ it('logs in an existing user with valid credentials', function (): void {
         ->assertJsonPath('data.user.email', 'login@example.com')
         ->assertJsonPath('data.token', fn ($value) => is_string($value) && $value !== '');
 });
+
+it('prevents deactivated user from logging in', function (): void {
+    Role::create(['name' => 'student']);
+
+    $user = User::factory()->create([
+        'email' => 'deactivated@example.com',
+        'password' => bcrypt('Password123!'),
+        'is_active' => false,
+    ]);
+
+    $user->assignRole('student');
+
+    $response = $this->postJson('/api/v1/login', [
+        'email' => 'deactivated@example.com',
+        'password' => 'Password123!',
+    ]);
+
+    $response->assertStatus(403)
+        ->assertJsonPath('message', 'This account has been deactivated.');
+});
+
+it('authenticates subsequent request via Sanctum SPA session cookie across codeera.tech subdomains', function (): void {
+    Role::create(['name' => 'student']);
+
+    $user = User::factory()->create([
+        'email' => 'spa-student@example.com',
+        'password' => bcrypt('SecretPass123!'),
+    ]);
+    $user->assignRole('student');
+
+    config([
+        'sanctum.stateful' => ['codeera.tech', 'app.codeera.tech'],
+        'session.domain' => '.codeera.tech',
+        'session.secure' => true,
+    ]);
+
+    $originHeaders = [
+        'Origin' => 'https://app.codeera.tech',
+        'Referer' => 'https://app.codeera.tech/',
+    ];
+
+    $loginResponse = $this->withHeaders($originHeaders)->postJson('/api/v1/login', [
+        'email' => 'spa-student@example.com',
+        'password' => 'SecretPass123!',
+    ]);
+
+    $loginResponse->assertStatus(200);
+
+    $sessionCookieName = config('session.cookie');
+    $cookies = $loginResponse->headers->getCookies();
+    $foundSessionCookie = null;
+    foreach ($cookies as $cookie) {
+        if ($cookie->getName() === $sessionCookieName) {
+            $foundSessionCookie = $cookie;
+            break;
+        }
+    }
+
+    expect($foundSessionCookie)->not->toBeNull();
+
+    // Subsequent request to protected route without Bearer token, relying strictly on session cookie
+    $meResponse = $this->withHeaders($originHeaders)
+        ->withCookie($sessionCookieName, $foundSessionCookie->getValue())
+        ->getJson('/api/v1/me');
+
+    $meResponse->assertStatus(200)
+        ->assertJsonPath('data.user.email', 'spa-student@example.com');
+});

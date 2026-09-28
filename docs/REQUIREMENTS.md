@@ -27,11 +27,28 @@ A course-selling platform for students of the Faculty of Computers & AI (FCAI), 
 | Auth | Laravel Sanctum, cookie-based SPA auth (frontend and API on subdomains of the same parent domain) |
 | Database | MySQL 8 (InnoDB, utf8mb4) |
 | Cache / Queue / Sessions | Redis |
-| File storage | DigitalOcean Spaces (S3-compatible), **private** bucket, access via signed URLs. Local disk in dev |
-| Email | Laravel Mail via a free transactional provider (Brevo or Resend), always queued |
+| File storage | AWS S3 (**private** bucket, access via signed URLs — no public path). Local disk in dev |
+| Email | SendGrid (free via GitHub Student Developer Pack, 15k/mo), always queued |
 | Telegram | One bot, Bot API via webhook |
-| Hosting | DigitalOcean (Droplet, Nginx, PHP-FPM, Supervisor for queue workers, Node for SvelteKit `adapter-node`) |
+| Domain | `codeera.tech` (via GitHub Student Developer Pack), split as `codeera.tech` / `app.codeera.tech` (frontend, Vercel) and `api.codeera.tech` (backend, AWS) |
+| Frontend hosting | **Vercel** (`@sveltejs/adapter-vercel` or `adapter-auto`). Vercel owns the frontend build, CDN, and SSL entirely — no Node process to manage on a server |
+| Backend hosting | **AWS EC2** (free-plan credits, ~6 months — see migration note below), Ubuntu, Nginx (reverse proxy to PHP-FPM only), Supervisor for queue workers. **MySQL and Redis run self-managed on the same EC2 instance — deliberately NOT RDS/ElastiCache** — to keep the setup portable |
 | Testing | Pest (backend), Vitest + Playwright (frontend, critical flows) |
+
+**Hosting decision history (for context, not re-litigation):** DigitalOcean was the original plan.
+The backend is currently on **AWS EC2**, using the AWS Free Plan (up to $200 in credits, expiring
+6 months from account creation or when exhausted, whichever first — after which AWS closes the
+account unless upgraded to a Paid Plan). This is a deliberate, time-boxed choice: the owner plans
+to **migrate the backend to Oracle Cloud's Always Free tier** (no expiry) before the AWS credit
+runs out. To keep that migration cheap, the backend deliberately avoids AWS-managed services
+(RDS, ElastiCache) in favor of self-managed MySQL/Redis on the EC2 VM itself — the same setup
+Oracle will use, so migration is close to: `mysqldump` + copy files + repoint DNS.
+**⚠️ Action item for the owner:** set a calendar reminder for 2+ weeks before the AWS Free Plan's
+6-month/credit-exhaustion cutoff (check the exact date in AWS Billing → Free Tier) to complete
+the Oracle migration in time — AWS closes and eventually deletes the account's data otherwise.
+Heroku was also considered and rejected: its paid dyno + add-on costs exceed the available
+student credit, and it would require a rewrite of the deployment setup (buildpacks/Procfile
+instead of a plain VPS) that AWS EC2 and Oracle both avoid.
 
 Repo layout (monorepo):
 ```
@@ -185,7 +202,7 @@ Other:
 
 ## 9. Email
 
-Provider: free transactional tier (Brevo / Resend). Sender domain configured with SPF/DKIM. **All mail is queued.**
+Provider: SendGrid (free via GitHub Student Developer Pack). Sender domain (`codeera.tech`) configured with SPF/DKIM. **All mail is queued.**
 
 Emails (ar/en by user locale): email verification, password reset, teacher account created (temp password), payment approved, payment rejected (with reason).
 Mailable classes are templated with the brand identity. Failures logged and retried.
@@ -295,11 +312,11 @@ All `/en/...` mirrors.
 - Audit trail for all money and access changes.
 
 **Reliability / Ops**
-- Automated daily DB backups (managed backups or `mysqldump` to Spaces) plus DO droplet backups. Documented restore steps.
+- Automated daily DB backups (`mysqldump` to AWS S3 or another off-VM location — never only on the same VM, so a backup survives the eventual EC2→Oracle migration too). Documented restore steps, actually tested at least once before go-live.
 - Queue workers supervised (Supervisor); failed jobs table monitored.
 - Structured logging; error tracking hook (e.g. Sentry) optional.
 - CI: lint, static analysis (Larastan level 6+), tests must pass before merge.
-- Environments: local, staging (optional), production. Deployment script/documented steps for DigitalOcean.
+- Environments: local, staging (optional), production. Frontend deployed via Vercel (git-push deploy, no server to manage). Backend deployment script/documented steps for the AWS EC2 VM, written generically enough (plain Ubuntu/Nginx/Supervisor, no AWS-managed services) to reuse almost unchanged for the planned Oracle migration.
 
 **Performance targets (guideline)**: public pages fast on mobile 4G; API p95 under ~300 ms for typical reads under expected MVP load.
 
@@ -326,7 +343,7 @@ All `/en/...` mirrors.
 5. **Learning content**: sections/items, file uploads, student course page, quizzes/exams engine, results.
 6. **Dashboards & configuration**: teacher dashboard, earnings/payouts, settings & content blocks, legal pages, assistant admin permissions.
 7. **Polish**: Arabic/RTL QA, accessibility pass, performance/caching, security review.
-8. **Deployment**: DigitalOcean setup, Nginx, Supervisor, backups, monitoring, launch checklist.
+8. **Deployment**: AWS EC2 VM setup (Nginx → PHP-FPM only, self-managed MySQL/Redis, Supervisor for queues), Vercel project setup for the frontend, `codeera.tech` DNS split (`app.`/root → Vercel, `api.` → AWS EC2 IP), backups to S3, monitoring, launch checklist, and a dated reminder for the future Oracle migration.
 
 Each milestone ends with: passing tests, updated docs, a short summary of decisions and any open questions for the owner.
 

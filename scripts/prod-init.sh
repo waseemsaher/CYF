@@ -31,7 +31,11 @@ docker compose -f docker-compose.prod.yml exec backend php artisan storage:link 
 echo "--> Optimizing application caches (config, routes, views)..."
 docker compose -f docker-compose.prod.yml exec backend php artisan optimize
 
-# 6. Restart queue worker to pick up fresh code and caches
+# 6. Verify security configuration
+echo "--> Verifying production security configuration..."
+docker compose -f docker-compose.prod.yml exec backend php artisan production:verify
+
+# 7. Restart queue worker to pick up fresh code and caches
 echo "--> Restarting queue workers..."
 docker compose -f docker-compose.prod.yml exec backend php artisan queue:restart
 

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Payments\Actions;
 
 use App\Jobs\SendTelegramNotificationJob;
+use App\Mail\PaymentRejectedMail;
 use App\Models\Payment;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 
 class RejectPayment
 {
@@ -29,6 +31,10 @@ class RejectPayment
             ->log('payment_rejected');
 
         $student = $payment->user;
+        if ($student && $student->email) {
+            Mail::to($student->email)->queue(new PaymentRejectedMail($payment));
+        }
+
         if ($student && $student->telegram_user_id) {
             $courseTitle = $payment->course->getTranslation('title', 'ar') ?: $payment->course->slug;
 

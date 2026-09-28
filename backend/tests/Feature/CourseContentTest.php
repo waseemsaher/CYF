@@ -6,11 +6,13 @@ use App\Domain\Learning\Actions\CreateCourseItem;
 use App\Domain\Learning\Actions\CreateSection;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
 
@@ -153,4 +155,85 @@ it('restricts file download to actively enrolled students', function (): void {
         ->get("/api/v1/courses/{$course->slug}/items/{$item->id}/file");
 
     $downloadResponse->assertOk();
+});
+
+it('rejects dangerous or archive file uploads for course items', function (string $filename, string $mimeType): void {
+    $course = Course::create([
+        'slug' => 'test-security-course',
+        'title' => ['ar' => 'دورة', 'en' => 'Course'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'status' => 'published',
+        'price_cents' => 10000,
+    ]);
+
+    $section = app(CreateSection::class)->handle($course, ['ar' => 'فصل', 'en' => 'Sec']);
+    $file = UploadedFile::fake()->create($filename, 200, $mimeType);
+
+    expect(fn () => app(CreateCourseItem::class)->handle(
+        $course,
+        $section,
+        'file',
+        ['ar' => 'ملف ضار', 'en' => 'Malicious'],
+        null,
+        null,
+        $file
+    ))->toThrow(ValidationException::class);
+})->with([
+    ['payload.zip', 'application/zip'],
+    ['archive.rar', 'application/x-rar-compressed'],
+    ['script.sh', 'application/x-sh'],
+    ['executable.exe', 'application/x-msdownload'],
+    ['spoofed.pdf', 'application/x-msdownload'], // mismatched mime
+]);
+
+it('rejects course file uploads exceeding configured size limit in settings', function (): void {
+    Setting::setValue('uploads', 'teacher_file_max_size_kb', 100); // 100 KB limit
+
+    $course = Course::create([
+        'slug' => 'size-limit-course',
+        'title' => ['ar' => 'دورة', 'en' => 'Course'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'status' => 'published',
+        'price_cents' => 10000,
+    ]);
+
+    $section = app(CreateSection::class)->handle($course, ['ar' => 'فصل', 'en' => 'Sec']);
+    // Create 150 KB file (exceeds 100 KB limit)
+    $file = UploadedFile::fake()->create('oversized.pdf', 150, 'application/pdf');
+
+    expect(fn () => app(CreateCourseItem::class)->handle(
+        $course,
+        $section,
+        'file',
+        ['ar' => 'ملف كبير', 'en' => 'Oversized'],
+        null,
+        null,
+        $file
+    ))->toThrow(ValidationException::class);
+});
+
+it('denies unauthenticated direct access to private course files', function (): void {
+    $course = Course::create([
+        'slug' => 'direct-access-course',
+        'title' => ['ar' => 'دورة', 'en' => 'Course'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'status' => 'published',
+        'price_cents' => 10000,
+    ]);
+
+    $section = app(CreateSection::class)->handle($course, ['ar' => 'فصل', 'en' => 'Sec']);
+    $dummyFile = UploadedFile::fake()->create('lecture.pdf', 50, 'application/pdf');
+
+    $item = app(CreateCourseItem::class)->handle(
+        $course,
+        $section,
+        'file',
+        ['ar' => 'ملف', 'en' => 'File'],
+        null,
+        null,
+        $dummyFile
+    );
+
+    $this->getJson("/api/v1/courses/{$course->slug}/items/{$item->id}/file")
+        ->assertUnauthorized();
 });

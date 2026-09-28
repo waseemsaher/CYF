@@ -180,6 +180,14 @@
               {#if payment.student_note}
                 <div class="student-note"><strong>ملاحظة الطالب:</strong> {payment.student_note}</div>
               {/if}
+              {#if payment.proof_url}
+                <div class="proof-preview">
+                  <span class="proof-label">إثبات الدفع:</span>
+                  <a href={payment.proof_url} target="_blank" rel="noopener noreferrer" class="proof-link">
+                    <img src={payment.proof_url} alt="صورة إثبات التحويل" class="proof-thumb" loading="lazy" />
+                  </a>
+                </div>
+              {/if}
             </div>
           </div>
 
@@ -264,6 +272,11 @@
   .info-row span { color: var(--muted); font-size: 0.88rem; }
   .info-row strong { color: var(--storm); }
   .student-note { background: var(--paper); border-radius: 0.35rem; font-size: 0.85rem; margin-top: 0.75rem; padding: 0.6rem 0.85rem; }
+  .proof-preview { margin-top: 0.75rem; }
+  .proof-label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.35rem; font-weight: 600; }
+  .proof-link { display: inline-block; border-radius: 0.4rem; overflow: hidden; border: 1.5px solid var(--line); transition: border-color 150ms ease; }
+  .proof-link:hover { border-color: var(--brand-accent); }
+  .proof-thumb { display: block; max-height: 100px; max-width: 160px; object-fit: cover; }
   .card-actions { border-top: 2px solid var(--line); display: flex; gap: 0.75rem; padding: 1rem 1.25rem; }
   .btn-approve { background: var(--brand-navy); border: 0; border-radius: 0.4rem; color: #FAF8F5; cursor: pointer; flex: 1; font: inherit; font-weight: 800; min-height: 2.8rem; transition: background-color 150ms ease, opacity 150ms ease; }
   .btn-approve:hover { background: #1E2B4D; opacity: 0.95; }

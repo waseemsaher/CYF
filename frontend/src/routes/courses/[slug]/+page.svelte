@@ -2,14 +2,13 @@
   import type { PageData } from './$types';
   import { currentUser } from '$lib/api/auth';
   import { updateAdminCourse } from '$lib/api/admin';
+  import { currentLocale, formatPrice, getLocalizedText } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
 
   let isAdmin = $derived(
     $currentUser?.role === 'admin' || $currentUser?.role === 'superadmin'
   );
-
-  const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
 
   // Edit Modal State
   let isEditModalOpen = $state(false);
@@ -75,86 +74,94 @@
 </script>
 
 <svelte:head>
-  <title>{data.course.title.ar} | منصة Codeera</title>
-  <meta name="description" content={data.course.description.ar} />
+  <title>{getLocalizedText(data.course.title, $currentLocale)} | {$currentLocale === 'en' ? 'Codeera Platform' : 'منصة Codeera'}</title>
+  <meta name="description" content={getLocalizedText(data.course.description, $currentLocale)} />
 </svelte:head>
 
 <div class="detail-shell">
-  <nav class="breadcrumb-nav" aria-label="مسار التنقل">
-    <a class="back-link" href="/courses"><span aria-hidden="true">→</span> العودة إلى قائمة الدورات</a>
+  <nav class="breadcrumb-nav" aria-label={$currentLocale === 'en' ? 'Breadcrumbs' : 'مسار التنقل'}>
+    <a class="back-link" href="/courses">
+      <span aria-hidden="true">{$currentLocale === 'en' ? '←' : '→'}</span>
+      {$currentLocale === 'en' ? 'Back to Courses Catalog' : 'العودة إلى قائمة الدورات'}
+    </a>
   </nav>
 
   <section class="course-hero">
     <div class="hero-copy">
       <div class="hero-tag-row">
-        <p class="kicker">{isAdmin ? 'لوحة إدارة المقرر الدراسي' : 'دورة متاحة للتسجيل'}</p>
+        <p class="kicker">{isAdmin ? ($currentLocale === 'en' ? 'Course Management' : 'لوحة إدارة المقرر الدراسي') : ($currentLocale === 'en' ? 'Available Course' : 'دورة متاحة للتسجيل')}</p>
         {#if isAdmin}
-          <span class="admin-badge">وضع المسؤول</span>
+          <span class="admin-badge">{$currentLocale === 'en' ? 'Admin Mode' : 'وضع المسؤول'}</span>
         {/if}
       </div>
-      <h1>{data.course.title.ar}</h1>
-      <p class="description">{data.course.description.ar}</p>
+      <h1>{getLocalizedText(data.course.title, $currentLocale)}</h1>
+      <p class="description">{getLocalizedText(data.course.description, $currentLocale)}</p>
     </div>
 
     <!-- Side Panel: Admin Controls OR Student Enrollment -->
     {#if isAdmin}
-      <aside class="admin-panel" aria-label="لوحة تحكم المسؤول في المقرر">
+      <aside class="admin-panel" aria-label={$currentLocale === 'en' ? 'Admin Course Controls' : 'لوحة تحكم المسؤول في المقرر'}>
         <div class="panel-header">
-          <span class="panel-tag">لوحة المسؤول</span>
-          <h3>إدارة المقرر والمحتوى</h3>
+          <span class="panel-tag">{$currentLocale === 'en' ? 'Admin' : 'لوحة المسؤول'}</span>
+          <h3>{$currentLocale === 'en' ? 'Manage Course & Content' : 'إدارة المقرر والمحتوى'}</h3>
         </div>
 
         <div class="admin-info-box">
           <div class="info-row">
-            <span>سعر المقرر:</span>
-            <strong>{formatPrice(data.course.amount_due_cents)}</strong>
+            <span>{$currentLocale === 'en' ? 'Course Fee:' : 'سعر المقرر:'}</span>
+            <strong>{formatPrice(data.course.amount_due_cents, $currentLocale)}</strong>
           </div>
           <div class="info-row">
-            <span>حالة المقرر:</span>
-            <span class="status-chip">{data.course.status === 'published' ? 'منشور' : 'مسودة'}</span>
+            <span>{$currentLocale === 'en' ? 'Status:' : 'حالة المقرر:'}</span>
+            <span class="status-chip">{data.course.status === 'published' ? ($currentLocale === 'en' ? 'Published' : 'منشور') : ($currentLocale === 'en' ? 'Draft' : 'مسودة')}</span>
           </div>
         </div>
 
         <div class="admin-buttons-stack">
           <a class="btn-panel-action btn-manage-content" href={`/my-courses/${data.course.slug}`}>
-            <span>إدارة المحتوى والمحاضرات</span>
-            <span aria-hidden="true">←</span>
+            <span>{$currentLocale === 'en' ? 'Manage Lectures & Content' : 'إدارة المحتوى والمحاضرات'}</span>
+            <span aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
           </a>
           <button type="button" class="btn-panel-action btn-edit-course" onclick={openEditModal}>
-            <span>تعديل بيانات وسعر المقرر</span>
+            <span>{$currentLocale === 'en' ? 'Edit Course Details & Price' : 'تعديل بيانات وسعر المقرر'}</span>
           </button>
           <a class="btn-panel-action btn-back-dashboard" href="/admin">
-            <span>لوحة تحكم الإدارة الرئيسية</span>
+            <span>{$currentLocale === 'en' ? 'Main Admin Dashboard' : 'لوحة تحكم الإدارة الرئيسية'}</span>
           </a>
         </div>
       </aside>
     {:else}
-      <aside class="enrollment-panel" aria-label="تفاصيل السعر والتسجيل">
-        <p>السعر الحالي</p>
+      <aside class="enrollment-panel" aria-label={$currentLocale === 'en' ? 'Price & Enrollment Details' : 'تفاصيل السعر والتسجيل'}>
+        <p>{$currentLocale === 'en' ? 'Current Price' : 'السعر الحالي'}</p>
         {#if data.course.discount_cents > 0}
-          <span class="old-price">{formatPrice(data.course.list_price_cents)}</span>
+          <span class="old-price">{formatPrice(data.course.list_price_cents, $currentLocale)}</span>
         {/if}
-        <strong>{formatPrice(data.course.amount_due_cents)}</strong>
+        <strong>{formatPrice(data.course.amount_due_cents, $currentLocale)}</strong>
         {#if data.course.amount_due_cents === 0}
-          <span class="free-label">مجانية</span>
-          <a class="enroll-btn free" href={`/courses/${data.course.slug}/checkout`}>سجّل فورًا — مجانًا</a>
+          <span class="free-label">{$currentLocale === 'en' ? 'Free' : 'مجانية'}</span>
+          <a class="enroll-btn free" href={`/courses/${data.course.slug}/checkout`}>
+            {$currentLocale === 'en' ? 'Enroll Now — Free' : 'سجّل فورًا — مجانًا'}
+          </a>
         {:else}
-          <a class="enroll-btn" href={`/courses/${data.course.slug}/checkout`}>سجّل الآن <span aria-hidden="true">←</span></a>
+          <a class="enroll-btn" href={`/courses/${data.course.slug}/checkout`}>
+            <span>{$currentLocale === 'en' ? 'Enroll Now' : 'سجّل الآن'}</span>
+            <span aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
+          </a>
         {/if}
       </aside>
     {/if}
   </section>
 
   <section class="outline">
-    <p class="kicker">نظرة عامة على المقرر</p>
-    <h2>محتوى وتفاصيل المنهج</h2>
-    <p>ستجد داخل الدورة محتوى مرتبًا وروابط المحاضرات والاختبارات الخاصة بالمقرر للمساعدة في المذاكرة والمراجعة النهائية.</p>
+    <p class="kicker">{$currentLocale === 'en' ? 'Course Overview' : 'نظرة عامة على المقرر'}</p>
+    <h2>{$currentLocale === 'en' ? 'Curriculum & Course Structure' : 'محتوى وتفاصيل المنهج'}</h2>
+    <p>{$currentLocale === 'en' ? 'Inside this course you will find structured lessons, video lecture links, and interactive quizzes for regular review and final exam preparation.' : 'ستجد داخل الدورة محتوى مرتبًا وروابط المحاضرات والاختبارات الخاصة بالمقرر للمساعدة في المذاكرة والمراجعة النهائية.'}</p>
     
     {#if isAdmin}
       <div class="admin-inline-notice">
-        <p>بصفتك مسؤولاً، يمكنك الوصول للمحتوى وإضافة المحاضرات والاختبارات بالضغط على زر "إدارة المحتوى والمحاضرات" بالأعلى.</p>
+        <p>{$currentLocale === 'en' ? 'As an administrator, you can manage lectures, quizzes, and materials by clicking "Manage Lectures & Content" above.' : 'بصفتك مسؤولاً، يمكنك الوصول للمحتوى وإضافة المحاضرات والاختبارات بالضغط على زر "إدارة المحتوى والمحاضرات" بالأعلى.'}</p>
         <a href={`/my-courses/${data.course.slug}`} class="btn-inline-manage">
-          فتح المحتوى التعليمي الآن ←
+          {$currentLocale === 'en' ? 'Open Course Materials →' : 'فتح المحتوى التعليمي الآن ←'}
         </a>
       </div>
     {/if}

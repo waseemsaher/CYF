@@ -1,5 +1,6 @@
 <script lang="ts">
   import { logout } from '$lib/api/auth';
+  import { t } from '$lib/i18n';
 
   interface Props {
     requiredRole: 'admin' | 'teacher' | 'student';
@@ -17,17 +18,15 @@
     onRetry,
   }: Props = $props();
 
-  const roleLabels: Record<string, string> = {
-    admin: 'المسؤولين',
-    teacher: 'أعضاء هيئة التدريس والمحاضرين',
-    student: 'الطلاب المسجلين',
-  };
-
-  const devCredentials = {
-    admin: { email: 'admin@example.com', pass: 'password' },
-    teacher: { email: 'teacher@example.com', pass: 'password' },
-    student: { email: 'student@example.com', pass: 'password' },
-  };
+  function getRoleLabel(role?: string): string {
+    if (!role) return '';
+    const roles = $t.auth.guard.roles;
+    if (role === 'admin') return roles.admin;
+    if (role === 'teacher') return roles.teacher;
+    if (role === 'student') return roles.student;
+    if (role === 'superadmin') return roles.superadmin;
+    return role;
+  }
 
   function handleLogout() {
     logout();
@@ -35,7 +34,7 @@
   }
 </script>
 
-<div class="auth-guard-container" dir="rtl">
+<div class="auth-guard-container">
   <div class="guard-card">
     {#if isUnauthenticated}
       <div class="icon-bubble lock-bubble" aria-hidden="true">
@@ -45,31 +44,20 @@
         </svg>
       </div>
 
-      <h2 class="guard-title">تسجيل الدخول مطلوب</h2>
+      <h2 class="guard-title">{$t.auth.guard.loginRequiredTitle}</h2>
       <p class="guard-desc">
-        هذه الصفحة مخصصة لـ
-        <strong>{roleLabels[requiredRole] || requiredRole}</strong>
-        فقط. يرجى تسجيل الدخول بحساب معتمد للوصول إلى لوحة التحكم.
+        {$t.auth.guard.loginRequiredDescPrefix}
+        <strong>{getRoleLabel(requiredRole)}</strong>
+        {$t.auth.guard.loginRequiredDescSuffix}
       </p>
 
       <div class="guard-actions">
         <a href="/login" class="btn-guard-primary">
-          تسجيل الدخول
+          {$t.auth.guard.loginBtn}
         </a>
         <a href="/" class="btn-guard-secondary">
-          العودة للرئيسية
+          {$t.auth.guard.homeBtn}
         </a>
-      </div>
-
-      <div class="dev-hint-box">
-        <div class="hint-header">
-          <span class="hint-dot"></span>
-          <span>بيانات الحساب التجريبي للتجربة المحلية:</span>
-        </div>
-        <div class="hint-credentials">
-          <code>البريد: {devCredentials[requiredRole].email}</code>
-          <code>كلمة المرور: {devCredentials[requiredRole].pass}</code>
-        </div>
       </div>
 
     {:else if currentRole && currentRole !== requiredRole && currentRole !== 'superadmin'}
@@ -81,20 +69,20 @@
         </svg>
       </div>
 
-      <h2 class="guard-title">غير مصرح لك بالوصول</h2>
+      <h2 class="guard-title">{$t.auth.guard.accessDeniedTitle}</h2>
       <p class="guard-desc">
-        أنت مسجل حالياً بحساب
-        <strong class="role-highlight">({roleLabels[currentRole] || currentRole})</strong>،
-        وهذه اللوحة مخصصة حصرياً لـ
-        <strong>{roleLabels[requiredRole] || requiredRole}</strong>.
+        {$t.auth.guard.accessDeniedDescCurrent}
+        <strong class="role-highlight">({getRoleLabel(currentRole)})</strong>،
+        {$t.auth.guard.accessDeniedDescRequired}
+        <strong>{getRoleLabel(requiredRole)}</strong>.
       </p>
 
       <div class="guard-actions">
         <a href="/courses" class="btn-guard-primary">
-          تصفح المقررات الدراسية
+          {$t.auth.guard.browseCoursesBtn}
         </a>
         <button type="button" class="btn-guard-secondary" onclick={handleLogout}>
-          تبديل الحساب (خروج)
+          {$t.auth.guard.switchAccountBtn}
         </button>
       </div>
 
@@ -107,19 +95,19 @@
         </svg>
       </div>
 
-      <h2 class="guard-title">تعذر الوصول إلى اللوحة</h2>
+      <h2 class="guard-title">{$t.auth.guard.cannotAccessTitle}</h2>
       <p class="guard-desc">
-        {customError || 'حدث خطأ أثناء التحقق من الصلاحيات أو تحميل البيانات.'}
+        {customError || $t.auth.guard.defaultError}
       </p>
 
       <div class="guard-actions">
         {#if onRetry}
           <button type="button" class="btn-guard-primary" onclick={onRetry}>
-            إعادة المحاولة
+            {$t.auth.guard.retryBtn}
           </button>
         {/if}
         <a href="/" class="btn-guard-secondary">
-          العودة للرئيسية
+          {$t.auth.guard.homeBtn}
         </a>
       </div>
     {/if}
@@ -241,52 +229,5 @@
 
   .btn-guard-secondary:hover {
     background: var(--card-hover);
-  }
-
-  .dev-hint-box {
-    margin-top: 1rem;
-    padding: 0.85rem 1rem;
-    background: var(--paper);
-    border: 2px dashed var(--line);
-    border-radius: 0.6rem;
-    width: 100%;
-    box-sizing: border-box;
-    text-align: right;
-  }
-
-  .hint-header {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #64748b;
-    margin-bottom: 0.4rem;
-  }
-
-  .hint-dot {
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 50%;
-    background: #10b981;
-  }
-
-  .hint-credentials {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .hint-credentials code {
-    font-size: 0.82rem;
-    color: var(--storm);
-    background: var(--card);
-    padding: 0.2rem 0.4rem;
-    border-radius: 0.3rem;
-    border: 1px solid var(--line);
-    font-family: monospace;
-    direction: ltr;
-    display: inline-block;
-    text-align: left;
   }
 </style>

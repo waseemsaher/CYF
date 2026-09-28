@@ -39,20 +39,17 @@ php artisan migrate --force
 echo "--> Caching Laravel configurations, routes, and views..."
 php artisan optimize
 
+echo "--> Verifying production environment and security configurations..."
+php artisan production:verify
+
 echo "--> Restarting queue workers..."
 php artisan queue:restart
 
-# 4. Frontend build
-echo "--> Building SvelteKit production bundle..."
-cd "${APP_DIR}/frontend"
-npm ci --prefer-offline
-npm run build
-
-# 5. Restart services via Supervisor and reload Web Server
+# 4. Restart services via Supervisor and reload Web Server
 echo "--> Restarting application processes..."
 if command -v supervisorctl &> /dev/null; then
     sudo supervisorctl restart cyf-worker:* || true
-    sudo supervisorctl restart cyf-frontend || true
+    sudo supervisorctl restart cyf-scheduler || true
 fi
 
 if command -v systemctl &> /dev/null; then

@@ -84,9 +84,7 @@ class PaymentController extends Controller
             ->with('course')
             ->findOrFail($id);
 
-        if ($user->getKey() !== (int) $payment->getAttribute('user_id')) {
-            abort(403);
-        }
+        $this->authorize('view', $payment);
 
         return (new PaymentResource($payment))->response();
     }
@@ -102,9 +100,7 @@ class PaymentController extends Controller
         /** @var Payment $payment */
         $payment = Payment::query()->findOrFail($id);
 
-        if ($user->getKey() !== (int) $payment->getAttribute('user_id') || ! $payment->isPending()) {
-            abort(403);
-        }
+        $this->authorize('cancel', $payment);
 
         $cancelPayment->handle($payment, $user);
 
