@@ -91,7 +91,7 @@ class DatabaseBackupCommand extends Command
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     private function createDump(string $connectionName, array $config, string $outputPath): bool
     {
@@ -103,7 +103,7 @@ class DatabaseBackupCommand extends Command
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     private function createSqliteDump(array $config, string $outputPath): bool
     {
@@ -157,7 +157,7 @@ class DatabaseBackupCommand extends Command
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     private function createMysqlDump(array $config, string $outputPath): bool
     {

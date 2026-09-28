@@ -23,6 +23,7 @@ export type Payment = {
   platform_share_cents: number | null;
   reviewed_at: string | null;
   has_duplicate_proof: boolean;
+  proof_url?: string | null;
   course?: {
     id: number;
     slug: string;

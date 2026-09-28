@@ -13,6 +13,28 @@ if (isDev) {
   connectSrc.push('http://localhost:8000', 'http://127.0.0.1:8000');
 }
 
+const s3Bucket = process.env.PUBLIC_S3_BUCKET || process.env.AWS_BUCKET || 'codeera-media';
+const s3Region = process.env.PUBLIC_AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
+
+const imgSrc = [
+  "'self'",
+  'data:',
+  'blob:',
+  `https://${s3Bucket}.s3.${s3Region}.amazonaws.com`,
+  `https://${s3Bucket}.s3.amazonaws.com`
+];
+
+if (process.env.PUBLIC_STORAGE_ORIGIN) {
+  try {
+    const parsed = new URL(process.env.PUBLIC_STORAGE_ORIGIN);
+    imgSrc.push(parsed.origin);
+  } catch (_) {}
+}
+
+if (isDev) {
+  imgSrc.push('http://localhost:8000', 'http://127.0.0.1:8000');
+}
+
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   preprocess: vitePreprocess(),
@@ -24,7 +46,7 @@ const config = {
         'script-src': ['self'],
         'style-src': ['self', 'unsafe-inline', 'https://fonts.googleapis.com'],
         'font-src': ['self', 'https://fonts.gstatic.com', 'data:'],
-        'img-src': ['self', 'data:', 'blob:', 'https:'],
+        'img-src': Array.from(new Set(imgSrc)),
         'media-src': ['self'],
         'connect-src': Array.from(new Set(connectSrc)),
         'frame-ancestors': ['self'],

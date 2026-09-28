@@ -56,7 +56,16 @@ class SecurityHeaders
 
         $connectSrc = implode(' ', array_values(array_unique($connectOrigins)));
 
-        $csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self'; connect-src {$connectSrc}; frame-ancestors 'self'; form-action 'self'";
+        $imgOrigins = ["'self'", 'data:', 'blob:'];
+        $bucket = (string) config('filesystems.disks.s3.bucket', 'codeera-media');
+        $region = (string) config('filesystems.disks.s3.region', 'us-east-1');
+        if ($bucket !== '') {
+            $imgOrigins[] = "https://{$bucket}.s3.{$region}.amazonaws.com";
+            $imgOrigins[] = "https://{$bucket}.s3.amazonaws.com";
+        }
+        $imgSrc = implode(' ', array_values(array_unique($imgOrigins)));
+
+        $csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src {$imgSrc}; media-src 'self'; connect-src {$connectSrc}; frame-ancestors 'self'; form-action 'self'";
         $response->headers->set('Content-Security-Policy', $csp);
 
         if ($request->isSecure() || app()->environment('production')) {

@@ -167,7 +167,7 @@ class DatabaseRestoreCommand extends Command
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     private function executeRestore(string $connectionName, array $config, string $backupPath): bool
     {
@@ -179,7 +179,7 @@ class DatabaseRestoreCommand extends Command
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     private function restoreSqlite(array $config, string $backupPath): bool
     {
@@ -212,7 +212,7 @@ class DatabaseRestoreCommand extends Command
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     private function restoreMysql(array $config, string $backupPath): bool
     {
