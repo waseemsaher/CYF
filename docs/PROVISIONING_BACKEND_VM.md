@@ -163,33 +163,51 @@ AWS_DEFAULT_REGION=us-east-1
 AWS_BUCKET=codeera-media
 AWS_BACKUP_BUCKET=codeera-backups
 
-# Transactional Email (SendGrid SMTP)
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.sendgrid.net
-MAIL_PORT=587
-MAIL_ENCRYPTION=tls
-MAIL_USERNAME=apikey
-MAIL_PASSWORD=<SENDGRID_API_KEY>
+# Transactional Email (Default to 'log' for pilot launch; no mail sent until provider configured)
+MAIL_MAILER=log
 MAIL_FROM_ADDRESS="noreply@codeera.tech"
 MAIL_FROM_NAME="Codeera"
+
+# Container Image (Fast Path: pull from GHCR; Fallback: build locally)
+APP_IMAGE=ghcr.io/waseemsaher/cyf-backend:latest
 ```
 
 ---
 
-## 6. Build and Deploy the Docker Stack
+## 6. Deploy the Docker Stack
 
-Ensure DNS for `api.codeera.tech` is pointed to `<STATIC_PUBLIC_IP>` at your domain registrar, then run:
+> [!TIP]
+> **Fast Path vs. Host Build**:
+> - **Fast Path (Recommended, ~5 minutes)**: Pull the pre-built, tested `linux/amd64` Docker image from GitHub Container Registry (`GHCR`). This prevents out-of-memory errors and completes in minutes on 1–2 GB RAM instances.
+> - **Fallback Path (Local Host Build, ~15–20 minutes)**: Build directly on the VM. The 2GB swap file created in Section 3 ensures compilation completes safely without OOM.
+> - **Multi-Architecture Note**: Current CI builds `linux/amd64` for AWS EC2 `t2`/`t3` instances. For future Oracle Cloud Ampere A1 (ARM64) instances, multi-arch builds can be enabled in CI or natively built on the VM.
+
+### Option A: Fast Path (Pull pre-built image from GHCR)
 
 ```bash
 cd /var/www/cyf
+
+# Pull pre-built images from GitHub Container Registry
+docker compose -f docker-compose.prod.yml pull
+
+# Run deployment automation
 ./scripts/deploy.sh
 ```
 
+### Option B: Fallback Path (Build locally on host with 2GB swap)
+
+```bash
+cd /var/www/cyf
+
+# Builds image on VM using local Dockerfile and 2GB swap
+APP_IMAGE=cyf-backend:prod ./scripts/deploy.sh
+```
+
 The deployment script executes the following automated pipeline:
-1. `docker compose -f docker-compose.prod.yml build`: Natively builds the multi-stage PHP 8.4 FPM production image on the target host (supporting x86_64 EC2 or ARM64 Oracle transparently).
-2. `docker compose -f docker-compose.prod.yml run --rm app php artisan migrate --force`: Runs all database migrations.
-3. `docker compose -f docker-compose.prod.yml up -d`: Launches `web` (Caddy), `app` (PHP-FPM), `queue` (Worker), `scheduler` (Artisan Scheduler), `mysql` (MySQL 8), and `redis` (Redis 7).
-4. `docker compose -f docker-compose.prod.yml exec -T app php artisan optimize`: Caches configuration, routes, and views.
+1. Pulls or builds the production PHP 8.4 FPM container.
+2. Runs database migrations (`php artisan migrate --force`).
+3. Launches `web` (Caddy), `app` (PHP-FPM), `queue` (Worker), `scheduler` (Artisan Scheduler), `mysql` (MySQL 8), and `redis` (Redis 7).
+4. Optimizes Laravel cache (`php artisan optimize`).
 5. Performs automated `/up` health checks.
 
 ---

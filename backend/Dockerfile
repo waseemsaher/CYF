@@ -7,25 +7,29 @@
 # ------------------------------------------------------------------------------
 FROM composer:2 AS composer-builder
 
+ARG INSTALL_DEV=false
+
 WORKDIR /app
 
 # Copy Composer manifests
 COPY composer.json composer.lock ./
 
-# Install vendor dependencies without dev packages and scripts
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --prefer-dist \
-    --optimize-autoloader \
-    --no-scripts \
-    --ignore-platform-reqs
+# Install vendor dependencies (respecting INSTALL_DEV flag)
+RUN if [ "$INSTALL_DEV" = "true" ]; then \
+        composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts --ignore-platform-reqs; \
+    else \
+        composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts --ignore-platform-reqs; \
+    fi
 
 # Copy application source code
 COPY . .
 
 # Generate optimized autoloader
-RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
+RUN if [ "$INSTALL_DEV" = "true" ]; then \
+        composer dump-autoload --optimize; \
+    else \
+        composer dump-autoload --optimize --no-dev --classmap-authoritative; \
+    fi
 
 # ------------------------------------------------------------------------------
 # Stage 2: Production PHP 8.4 FPM Alpine Runtime
@@ -40,42 +44,40 @@ WORKDIR /var/www/html
 # - gzip for compressed database dumps
 # - fcgi for php-fpm container health checks
 # - libpng, libjpeg-turbo, freetype, libzip, icu for image and internationalization
+# Install system dependencies & PHP extensions
 RUN apk add --no-cache \
-    bash \
-    curl \
-    gzip \
-    mariadb-client \
-    fcgi \
-    icu-libs \
-    icu-data-full \
-    libpng \
-    libjpeg-turbo \
-    freetype \
-    libzip
-
-# Install official PHP extension installer helper
-ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
-
-# Install and configure required PHP extensions:
-# - pdo_mysql: database connectivity
-# - redis: cache, session, and queue driver
-# - gd: avatar & payment proof thumbnail manipulation and EXIF stripping
-# - bcmath: high-precision currency & calculation arithmetic
-# - intl: localized number, date, and currency formatting
-# - opcache: bytecode caching with production tuning
-# - pcntl: Laravel queue worker process management
-# - zip: compressed archives and document export
-# - exif: image orientation and metadata handling
-RUN install-php-extensions \
-    pdo_mysql \
-    redis \
-    gd \
-    bcmath \
-    intl \
-    opcache \
-    pcntl \
-    zip \
-    exif
+        bash \
+        curl \
+        gzip \
+        mariadb-client \
+        fcgi \
+        icu-libs \
+        icu-data-full \
+        libpng \
+        libjpeg-turbo \
+        freetype \
+        libzip \
+    && apk add --no-cache --virtual .build-deps \
+        $PHPIZE_DEPS \
+        linux-headers \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+        libzip-dev \
+        icu-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_mysql \
+        gd \
+        bcmath \
+        intl \
+        pcntl \
+        zip \
+        exif \
+    && printf "\n\n\n\n\n\n" | pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del .build-deps \
+    && rm -rf /tmp/pear ~/.pearrc
 
 # Copy custom PHP and PHP-FPM configuration files
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini

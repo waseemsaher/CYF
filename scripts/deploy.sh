@@ -40,9 +40,12 @@ git pull origin "${BRANCH}"
 NEW_COMMIT=$(git rev-parse HEAD)
 echo "--> Deployed commit: ${NEW_COMMIT}"
 
-# 2. Build production Docker images natively on target host
-echo "--> Building production Docker images on host (${COMPOSE_FILE})..."
-docker compose -f "${COMPOSE_FILE}" build
+# 2. Acquire production Docker image (pull pre-built if configured, fallback to build)
+echo "--> Acquiring production Docker images (${COMPOSE_FILE})..."
+if ! docker compose -f "${COMPOSE_FILE}" pull app 2>/dev/null; then
+    echo "--> Registry image not available, building production Docker image on host..."
+    docker compose -f "${COMPOSE_FILE}" build
+fi
 
 # 3. Run database migrations
 echo "--> Executing database migrations..."

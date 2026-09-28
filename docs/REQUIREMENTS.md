@@ -354,3 +354,21 @@ Each milestone ends with: passing tests, updated docs, a short summary of decisi
 - Final legal text review (drafts to be written in Arabic and English by the assistant, reviewed by the owner and ideally a lawyer).
 - Domain name and email sender domain.
 - Exact Telegram group setup steps per course (bot admin rights).
+
+---
+
+## 20. Pilot Scope (Term Launch — Minimal Operational Footprint)
+
+Due to the academic term starting in ~2 days, the operational goal shifts to getting a real pilot running as fast as safely possible:
+- **Pilot Target**: One active course, a small cohort of real students, real manual payments.
+- **Language**: Arabic is the primary and release-critical language. English is verified on the student critical path; if incomplete, it is toggled off for the pilot.
+- **Authentication**: Token-based authentication (`localStorage` Bearer token) is retained for the pilot. Cookie-based SPA auth migration is deferred.
+- **Admin Management**: Missing Admin UI sections are replaced with robust Artisan CLI commands (`content:import`, `settings:set`, `teacher:create`, `teacher:assign`, `enrollment:grant`, `enrollment:revoke`, `user:reset-password`, `content-block:set`).
+- **Communication**: Payment approval and rejection notifications are delivered directly via queued Telegram private messages instead of transactional email.
+- **Out of Scope for Pilot**:
+  - i18n architectural rewrite or route migration to `/en`.
+  - Sanctum cookie-based SPA auth migration.
+  - New Admin or Teacher UI screens, quiz builder, payouts UI.
+  - Oracle Cloud migration and Resend email provider setup.
+  - Password reset email flow and associated frontend pages (handled via `user:reset-password` CLI).
+  - N+1 refactors, Redis query caching, sitemap/Open Graph, controller refactoring.

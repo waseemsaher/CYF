@@ -36,7 +36,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: cyf-backend:prod
+    image: ${APP_IMAGE:-ghcr.io/waseemsaher/cyf-app:latest}
     container_name: cyf-prod-app
     restart: unless-stopped
     working_dir: /var/www/html
@@ -139,7 +139,7 @@ services:
       start_period: 10s
 
   scheduler:
-    image: cyf-backend:prod
+    image: ${APP_IMAGE:-ghcr.io/waseemsaher/cyf-app:latest}
     container_name: cyf-prod-scheduler
     restart: unless-stopped
     working_dir: /var/www/html
@@ -238,21 +238,49 @@ services:
       retries: 5
       start_period: 5s
 
-  s3:
-    image: adobe/s3mock:latest
-    container_name: cyf-test-s3
+  minio:
+    image: minio/minio:latest
+    container_name: cyf-test-minio
     profiles: ["test", "drill"]
     restart: unless-stopped
+    command: server /data --console-address ":9001"
     environment:
-      initialBuckets: codeera-media,codeera-backups
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword
+    volumes:
+      - cyf_minio_data:/data
     networks:
       - cyf-network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:9090/ || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:9000/minio/health/live || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 5
       start_period: 5s
+
+  minio-init:
+    image: ${APP_IMAGE:-ghcr.io/waseemsaher/cyf-app:latest}
+    container_name: cyf-minio-init
+    profiles: ["test", "drill"]
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - cyf-network
+    entrypoint: >
+      php -r '
+      require "/var/www/html/vendor/autoload.php";
+      $$s3 = new Aws\S3\S3Client([
+          "version" => "latest",
+          "region" => "us-east-1",
+          "endpoint" => "http://minio:9000",
+          "use_path_style_endpoint" => true,
+          "credentials" => ["key" => "minioadmin", "secret" => "minioadminpassword"]
+      ]);
+      foreach (["codeera-media", "codeera-backups"] as $$b) {
+          try { $$s3->createBucket(["Bucket" => $$b]); } catch (\Exception $$e) {}
+      }
+      '
 
 networks:
   cyf-network:
@@ -262,5 +290,6 @@ volumes:
   cyf_mysql_data:
   cyf_redis_data:
   cyf_storage_data:
+  cyf_minio_data:
   caddy_data:
   caddy_config:
