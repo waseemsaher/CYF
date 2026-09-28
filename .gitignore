@@ -7,6 +7,11 @@ node_modules/
 !.env.*.example
 *.log
 
+# Private content imports (contains private Telegram invite links)
+*.private.json
+pilot-content.json
+!docs/examples/*.example.json
+
 # Backend
 /backend/vendor/
 /backend/node_modules/

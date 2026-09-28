@@ -1,0 +1,74 @@
+{
+  "$comment": "Example content import file for the pilot course. Real files with private invite links should be saved as pilot-content.json (which is git-ignored).",
+  "courses": [
+    {
+      "slug": "fcai-discrete-math",
+      "title": {
+        "ar": "الرياضيات المتقطعة",
+        "en": "Discrete Mathematics"
+      },
+      "description": {
+        "ar": "مقرر الرياضيات المتقطعة لطلاب الفرقة الأولى بكلية الحاسبات والذكاء الاصطناعي - جامعة الأزهر.",
+        "en": "Discrete Mathematics course for first-year FCAI students at Al-Azhar University."
+      },
+      "price_cents": 15000,
+      "status": "published",
+      "telegram_chat_id": -1001234567890,
+      "telegram_invite_link": "https://t.me/+examplePilotInviteCode123",
+      "sections": [
+        {
+          "title": {
+            "ar": "الوحدة الأولى: المنطق ونظرية المجموعات",
+            "en": "Unit 1: Logic and Set Theory"
+          },
+          "position": 1,
+          "items": [
+            {
+              "type": "link",
+              "title": {
+                "ar": "المحاضرة 1: المنطق الرياضي وجداول الصواب",
+                "en": "Lecture 1: Propositional Logic and Truth Tables"
+              },
+              "url": "https://t.me/c/1234567890/10",
+              "position": 1,
+              "published": true
+            },
+            {
+              "type": "text",
+              "title": {
+                "ar": "تعليمات وتكليف الأسبوع الأول",
+                "en": "Week 1 Instructions and Homework"
+              },
+              "url": null,
+              "description": {
+                "ar": "تسليم حل التمارين في الجروب المغلق قبل موعد المحاضرة الثانية.",
+                "en": "Submit your solutions in the private group before lecture 2."
+              },
+              "position": 2,
+              "published": true
+            }
+          ]
+        },
+        {
+          "title": {
+            "ar": "الوحدة الثانية: الدوال والعلاقات",
+            "en": "Unit 2: Functions and Relations"
+          },
+          "position": 2,
+          "items": [
+            {
+              "type": "link",
+              "title": {
+                "ar": "المحاضرة 2: أنواع الدوال وتطبيقاتها",
+                "en": "Lecture 2: Functions and Applications"
+              },
+              "url": "https://t.me/c/1234567890/25",
+              "position": 1,
+              "published": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
