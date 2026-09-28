@@ -38,8 +38,8 @@
 
     try {
       const formData = new FormData();
-      formData.append('course_id', String(data.course.id));
-      formData.append('term_id', '1'); // TODO: use current term from API
+      const termId = data.currentTerm?.id ? String(data.currentTerm.id) : '1';
+      formData.append('term_id', termId);
       formData.append('method', method);
       formData.append('sender_identifier', senderIdentifier);
       formData.append('proof', proof);

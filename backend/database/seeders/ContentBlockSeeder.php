@@ -40,24 +40,24 @@ class ContentBlockSeeder extends Seeder
                 'key' => 'legal.terms',
                 'group' => 'legal',
                 'content' => [
-                    'ar' => 'شروط الاستخدام: منصة Codeera مخصصة للطلاب المسجلين. يُمنع تسريب المواد أو إعادة نشر الشروحات أو روابط التليجرام لأطراف خارجية دون إذن.',
-                    'en' => 'Terms of Use: Codeera platform is exclusively for registered students. Unauthorized redistribution of materials or links is prohibited.',
+                    'ar' => "هذه الصفحة قيد الإعداد والمراجعة، وسيتم نشر شروط الاستخدام المعتمدة قبل فتح المنصة للاستخدام العام للطلاب.\nإذا كان لديك أي استفسار، يرجى التواصل مع إدارة المنصة مباشرة.",
+                    'en' => "This page is currently being prepared and reviewed. The finalized terms of use will be published before the platform opens for general student use.\nIf you have any questions, please contact the platform administration directly.",
                 ],
             ],
             [
                 'key' => 'legal.privacy',
                 'group' => 'legal',
                 'content' => [
-                    'ar' => 'سياسة الخصوصية: نحن نحمي بياناتك الشخصية (الاسم، البريد، العام الأكاديمي، إيصالات الدفع) ولا نشاركها مع أي جهة خارجية مطلقاً.',
-                    'en' => 'Privacy Policy: We protect your personal data and payment proofs and never share them with third parties.',
+                    'ar' => "هذه الصفحة قيد الإعداد والمراجعة، وسيتم نشر سياسة الخصوصية المعتمدة قبل فتح المنصة للاستخدام العام للطلاب.\nنحن نحرص على حماية بياناتكم الشخصية، ولن يتم مشاركتها مع أي جهة خارجية.",
+                    'en' => "This page is currently being prepared and reviewed. The finalized privacy policy will be published before the platform opens for general student use.\nWe are committed to protecting your personal information.",
                 ],
             ],
             [
                 'key' => 'legal.refund',
                 'group' => 'legal',
                 'content' => [
-                    'ar' => 'سياسة الاسترجاع: يمكن للطلاب طلب استرجاع المبلغ في حال تم رفض إيصال الدفع أو قبل فتح المحتوى التعليمي خلال 48 ساعة من السداد.',
-                    'en' => 'Refund Policy: Students may request a refund within 48 hours of payment if course materials have not yet been accessed.',
+                    'ar' => "هذه الصفحة قيد الإعداد والمراجعة، وسيتم نشر سياسة الاسترجاع المعتمدة قبل فتح المنصة للاستخدام العام للطلاب.\nفي حال وجود أي خطأ في السداد أو التحويل، يرجى مراجعة إدارة المنصة لحل المشكلة فوراً.",
+                    'en' => "This page is currently being prepared and reviewed. The finalized refund policy will be published before the platform opens for general student use.\nIf you encounter any payment issues, please reach out to the platform administration.",
                 ],
             ],
         ];

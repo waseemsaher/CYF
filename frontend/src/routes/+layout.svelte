@@ -4,6 +4,7 @@
   import { page } from '$app/state';
   import { currentUser, refreshUser, logout } from '$lib/api/auth';
   import { initLocale, currentLocale, toggleLocale, t } from '$lib/i18n';
+  import { FEATURES } from '$lib/config';
   import { socialLinks } from '$lib/socials';
 
   let { children }: { children: Snippet } = $props();
@@ -132,15 +133,17 @@
           {/if}
         </button>
 
-        <button
-          type="button"
-          class="btn-lang-toggle"
-          onclick={toggleLocale}
-          aria-label={$t.nav.langToggleAria}
-          title={$t.nav.langToggleLabel}
-        >
-          {$t.nav.langToggleLabel}
-        </button>
+        {#if FEATURES.ENABLE_LANGUAGE_TOGGLE}
+          <button
+            type="button"
+            class="btn-lang-toggle"
+            onclick={toggleLocale}
+            aria-label={$t.nav.langToggleAria}
+            title={$t.nav.langToggleLabel}
+          >
+            {$t.nav.langToggleLabel}
+          </button>
+        {/if}
 
         {#if $currentUser}
           <div class="user-badge">

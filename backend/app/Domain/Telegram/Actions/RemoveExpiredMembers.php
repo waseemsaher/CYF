@@ -47,7 +47,7 @@ class RemoveExpiredMembers
                 ->with('user')
                 ->where('course_id', $course->id)
                 ->where(function ($query): void {
-                    $query->where('status', 'revoked')
+                    $query->whereIn('status', ['revoked', 'expired'])
                         ->orWhere(function ($q): void {
                             $q->where('status', 'active')
                                 ->whereNotNull('expires_at')
@@ -57,6 +57,10 @@ class RemoveExpiredMembers
                 ->get();
 
             foreach ($expiredEnrollments as $enrollment) {
+                // If enrollment was active but past expiry date, mark status as expired
+                if ($enrollment->status === 'active' && $enrollment->expires_at && $enrollment->expires_at <= now()) {
+                    $enrollment->update(['status' => 'expired']);
+                }
                 $user = $enrollment->user;
                 if (! $user || ! $user->telegram_user_id) {
                     continue;

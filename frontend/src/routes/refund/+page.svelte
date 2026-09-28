@@ -10,7 +10,7 @@
       const res = await getContentBlock(fetch, 'legal.refund');
       content = res.data.content.ar;
     } catch {
-      content = 'سياسة الاسترجاع: يمكن استرجاع المبالغ المسددة في حال تم رفض إيصال الدفع أو خلال 48 ساعة من الاشتراك قبل بدء مشاهدة المحتوى.';
+      content = 'هذه الصفحة قيد الإعداد والمراجعة، وسيتم نشر سياسة الاسترجاع المعتمدة قبل فتح المنصة للاستخدام العام للطلاب.';
     } finally {
       loading = false;
     }

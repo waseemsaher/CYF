@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 use App\Domain\Telegram\Actions\RemoveExpiredMembers;
 use App\Models\Course;
+use App\Models\CourseItem;
+use App\Models\CourseSection;
 use App\Models\Enrollment;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
@@ -138,4 +141,86 @@ it('does not remove member if they have another active enrollment for the same c
 
     expect($removedCount)->toBe(0);
     Http::assertNotSent(fn ($req) => str_contains($req->url(), 'banChatMember'));
+});
+
+it('settles enrollment expiry: status becomes expired, content returns 403, and Telegram removal is invoked', function (): void {
+    Role::findOrCreate('student', 'web');
+
+    $course = Course::create([
+        'slug' => 'cs-security',
+        'title' => ['ar' => 'أمن المعلومات', 'en' => 'InfoSec'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'status' => 'published',
+        'price_cents' => 15000,
+        'telegram_channel_id' => -10011223344,
+        'telegram_group_id' => -10011223355,
+    ]);
+
+    $section = CourseSection::create([
+        'course_id' => $course->id,
+        'title' => ['ar' => 'الفصل 1', 'en' => 'Chapter 1'],
+        'position' => 1,
+    ]);
+
+    $item = CourseItem::create([
+        'course_id' => $course->id,
+        'section_id' => $section->id,
+        'type' => 'file',
+        'title' => ['ar' => 'ملف الشرح', 'en' => 'Notes PDF'],
+        'file_path' => 'courses/1/notes.pdf',
+        'position' => 1,
+        'is_published' => true,
+    ]);
+
+    $term = Term::create([
+        'name' => ['ar' => 'فصل منتهي', 'en' => 'Expired Term'],
+        'starts_at' => now()->subMonths(4),
+        'ends_at' => now()->subDays(2),
+        'is_current' => false,
+    ]);
+
+    $student = User::factory()->create([
+        'telegram_user_id' => 999888777,
+    ]);
+    $student->assignRole('student');
+
+    // 1. Initially enrollment is active but has passed expires_at
+    $enrollment = Enrollment::create([
+        'user_id' => $student->id,
+        'course_id' => $course->id,
+        'term_id' => $term->id,
+        'source' => 'payment',
+        'status' => 'active',
+        'starts_at' => now()->subMonths(4),
+        'expires_at' => now()->subHour(),
+    ]);
+
+    // 2. Student attempts to access protected content -> 403 Forbidden!
+    $this->actingAs($student, 'sanctum')
+        ->getJson("/api/v1/courses/{$course->slug}/items/{$item->id}/file")
+        ->assertForbidden();
+
+    // Also check course overview shows is_unlocked = false
+    $overviewRes = $this->actingAs($student, 'sanctum')
+        ->getJson("/api/v1/courses/{$course->slug}/content")
+        ->assertOk();
+    expect($overviewRes->json('data.is_unlocked'))->toBeFalse()
+        ->and($overviewRes->json('data.course.telegram_invite_link'))->toBeNull();
+
+    // 3. Automated expiry sweep runs (via Artisan or action)
+    $this->artisan('telegram:remove-expired')
+        ->expectsOutputToContain('Removed 1 member(s)')
+        ->assertSuccessful();
+
+    // 4. Assert status has transitioned to 'expired'
+    $enrollment->refresh();
+    expect($enrollment->status)->toBe('expired');
+
+    // 5. Assert Telegram removal was invoked for the chats
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'banChatMember')
+        && $req['user_id'] === 999888777
+        && (int) $req['chat_id'] === -10011223344);
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'banChatMember')
+        && $req['user_id'] === 999888777
+        && (int) $req['chat_id'] === -10011223355);
 });

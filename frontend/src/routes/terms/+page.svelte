@@ -10,7 +10,7 @@
       const res = await getContentBlock(fetch, 'legal.terms');
       content = res.data.content.ar;
     } catch {
-      content = 'شروط الاستخدام: منصة Codeera مخصصة للطلاب المسجلين. يُمنع مشاركة الحسابات أو تسريب المحتوى التعليمي.';
+      content = 'هذه الصفحة قيد الإعداد والمراجعة، وسيتم نشر شروط الاستخدام المعتمدة قبل فتح المنصة للاستخدام العام للطلاب.';
     } finally {
       loading = false;
     }

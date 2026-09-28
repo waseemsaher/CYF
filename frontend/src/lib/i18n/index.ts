@@ -803,10 +803,11 @@ export const t = derived(currentLocale, ($locale) => translations[$locale]);
 export const currentHeroTranslations = derived(currentLocale, ($locale) => translations[$locale].hero);
 
 export function formatPrice(cents: number, locale: Locale = 'ar'): string {
+  const amount = (cents / 100).toLocaleString('en-US');
   if (locale === 'en') {
-    return `${(cents / 100).toLocaleString('en-US')} EGP`;
+    return `${amount} EGP`;
   }
-  return `${(cents / 100).toLocaleString('ar-EG')} ج.م`;
+  return `${amount} ج.م`;
 }
 
 export function getLocalizedText(

@@ -230,10 +230,10 @@ test('login endpoint rate limits excessive attempts after 5 requests', function 
     $response->assertStatus(429);
 });
 
-test('registration endpoint rate limits excessive attempts per IP after 5 requests', function (): void {
+test('registration endpoint rate limits excessive attempts per IP after 30 requests', function (): void {
     RateLimiter::clear('register');
 
-    for ($i = 0; $i < 5; $i++) {
+    for ($i = 0; $i < 30; $i++) {
         $this->postJson('/api/v1/register', [
             'name' => "User {$i}",
             'email' => "register{$i}@example.com",
@@ -258,10 +258,10 @@ test('registration endpoint rate limits excessive attempts per IP after 5 reques
     $response->assertStatus(429);
 });
 
-test('forgot password endpoint rate limits after 3 attempts', function (): void {
+test('forgot password endpoint rate limits after 5 attempts', function (): void {
     RateLimiter::clear('password-reset');
 
-    for ($i = 0; $i < 3; $i++) {
+    for ($i = 0; $i < 5; $i++) {
         $this->postJson('/api/v1/forgot-password', [
             'email' => 'student-reset@example.com',
         ]);

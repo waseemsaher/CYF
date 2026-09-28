@@ -34,24 +34,26 @@ class AppServiceProvider extends ServiceProvider
     private function configureRateLimiting(): void
     {
         RateLimiter::for('login', function (Request $request) {
-            $email = (string) $request->input('email');
+            $email = Str::lower((string) $request->input('email'));
+            $emailIpKey = $email !== '' ? "{$email}|".$request->ip() : (string) $request->ip();
 
             return [
-                Limit::perMinute(5)->by((string) $request->ip()),
-                Limit::perMinute(5)->by($email !== '' ? Str::lower($email) : (string) $request->ip()),
+                Limit::perMinute(100)->by((string) $request->ip()),
+                Limit::perMinute(5)->by($emailIpKey),
             ];
         });
 
         RateLimiter::for('register', function (Request $request) {
-            return Limit::perHour(5)->by((string) $request->ip());
+            return Limit::perMinute(30)->by((string) $request->ip());
         });
 
         RateLimiter::for('password-reset', function (Request $request) {
-            $email = (string) $request->input('email');
+            $email = Str::lower((string) $request->input('email'));
+            $emailIpKey = $email !== '' ? "{$email}|".$request->ip() : (string) $request->ip();
 
             return [
-                Limit::perHour(3)->by((string) $request->ip()),
-                Limit::perHour(3)->by($email !== '' ? Str::lower($email) : (string) $request->ip()),
+                Limit::perMinute(60)->by((string) $request->ip()),
+                Limit::perMinute(5)->by($emailIpKey),
             ];
         });
 

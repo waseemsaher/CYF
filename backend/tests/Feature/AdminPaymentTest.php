@@ -2,8 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Mail\PaymentApprovedMail;
-use App\Mail\PaymentRejectedMail;
+use App\Jobs\SendTelegramNotificationJob;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
@@ -12,6 +11,7 @@ use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -203,24 +203,28 @@ it('detects duplicate proof hashes', function (): void {
     }
 });
 
-it('queues PaymentApprovedMail when admin approves a payment', function (): void {
+it('dispatches queued SendTelegramNotificationJob when admin approves a payment with linked telegram', function (): void {
+    Queue::fake();
     Mail::fake();
     $data = setupAdminPaymentTestData();
+    $data['student']->update(['telegram_user_id' => 987654321]);
 
     $response = $this->actingAs($data['admin'], 'sanctum')
         ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
 
     $response->assertOk();
 
-    Mail::assertQueued(PaymentApprovedMail::class, function (PaymentApprovedMail $mail) use ($data): bool {
-        return $mail->hasTo($data['student']->email)
-            && $mail->payment->is($data['payment']);
+    Queue::assertPushed(SendTelegramNotificationJob::class, function (SendTelegramNotificationJob $job): bool {
+        return $job->telegramUserId === 987654321 && str_contains($job->message, 'تم قبول عملية الدفع');
     });
+    Mail::assertNothingQueued();
 });
 
-it('queues PaymentRejectedMail when admin rejects a payment', function (): void {
+it('dispatches queued SendTelegramNotificationJob when admin rejects a payment with linked telegram', function (): void {
+    Queue::fake();
     Mail::fake();
     $data = setupAdminPaymentTestData();
+    $data['student']->update(['telegram_user_id' => 987654321]);
 
     $response = $this->actingAs($data['admin'], 'sanctum')
         ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
@@ -229,8 +233,8 @@ it('queues PaymentRejectedMail when admin rejects a payment', function (): void 
 
     $response->assertOk();
 
-    Mail::assertQueued(PaymentRejectedMail::class, function (PaymentRejectedMail $mail) use ($data): bool {
-        return $mail->hasTo($data['student']->email)
-            && $mail->payment->is($data['payment']);
+    Queue::assertPushed(SendTelegramNotificationJob::class, function (SendTelegramNotificationJob $job): bool {
+        return $job->telegramUserId === 987654321 && str_contains($job->message, 'تم رفض إيصال الدفع');
     });
+    Mail::assertNothingQueued();
 });

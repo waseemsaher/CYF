@@ -383,7 +383,7 @@
       bind:this={videoEl}
       class="hero-media hero-video"
       src="/videos/hero-bg.mp4"
-      poster="/images/hero-poster.jpg"
+      poster="/images/hero-poster.webp"
       autoplay
       muted
       loop
@@ -392,7 +392,7 @@
     ></video>
   {:else}
     <img
-      src="/images/hero-poster.jpg"
+      src="/images/hero-poster.webp"
       alt=""
       class="hero-media hero-poster"
       loading="eager"

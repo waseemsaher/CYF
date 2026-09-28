@@ -10,7 +10,7 @@
       const res = await getContentBlock(fetch, 'legal.privacy');
       content = res.data.content.ar;
     } catch {
-      content = 'سياسة الخصوصية: نحن نحترم خصوصية بياناتك ولا نشارك معلوماتك الشخصية مع أي طرف ثالث.';
+      content = 'هذه الصفحة قيد الإعداد والمراجعة، وسيتم نشر سياسة الخصوصية المعتمدة قبل فتح المنصة للاستخدام العام للطلاب.';
     } finally {
       loading = false;
     }
