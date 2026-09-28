@@ -1,11 +1,13 @@
-vendor
 .git
+.github
 .env
-.env.local
-.env.production
-.env.testing
+.env.*
 node_modules
+tests
 storage/logs/*
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
+storage/backups/*
+vendor
+*.md

@@ -11,7 +11,7 @@ on:
 
 jobs:
   backend:
-    name: Backend (PHP 8.3 / Laravel)
+    name: Backend (PHP 8.4 / Laravel)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -23,7 +23,7 @@ jobs:
       - name: Setup PHP runtime
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, sqlite3, redis, gd
           coverage: none
 
