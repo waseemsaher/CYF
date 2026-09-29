@@ -97,3 +97,12 @@ it('restores database successfully from an s3-backups backup by default', functi
         @rmdir($tempBackupDir);
     }
 });
+
+it('configures s3-backups disk with dedicated settings', function (): void {
+    $config = config('filesystems.disks.s3-backups');
+
+    expect($config)->toBeArray();
+    expect($config['driver'])->toBe('s3');
+    expect($config['visibility'])->toBe('private');
+    expect(config('filesystems.disks.s3'))->not->toBeNull();
+});

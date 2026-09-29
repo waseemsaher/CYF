@@ -44,35 +44,54 @@ Complete these cloud and third-party dashboard steps first before deploying code
      - Region: Same region as EC2.
      - **Block all public access**: Keep **ENABLED** (checked).
      - Under **Management** -> **Lifecycle rules** -> Add rule to expire/delete backup objects after `30 days`.
-2. **Create Least-Privilege IAM Credentials**:
-   - Open **IAM** -> **Users** -> **Create user** named `codeera-app-agent`.
-   - Select **Attach policies directly** -> Click **Create policy** -> Choose **JSON** editor:
-   ```json
-   {
-       "Version": "2012-10-17",
-       "Statement": [
-           {
-               "Sid": "AllowAppMediaAndBackups",
-               "Effect": "Allow",
-               "Action": [
-                   "s3:PutObject",
-                   "s3:GetObject",
-                   "s3:DeleteObject",
-                   "s3:ListBucket"
-               ],
-               "Resource": [
-                   "arn:aws:s3:::codeera-media",
-                   "arn:aws:s3:::codeera-media/*",
-                   "arn:aws:s3:::codeera-backups",
-                   "arn:aws:s3:::codeera-backups/*"
-               ]
-           }
-       ]
-   }
-   ```
-   - Name the policy `CodeeraAppS3Policy` and attach it to `codeera-app-agent`.
-   - Go to the user's **Security credentials** tab -> **Create access key** (Application running outside AWS).
-   - Save the **Access Key ID** and **Secret Access Key** safely.
+2. **Create Least-Privilege IAM Credentials (Separated Media & Backup Users)**:
+   - **User 1 (Media Storage)**: Open **IAM** -> **Users** -> **Create user** named `codeera-media-agent`.
+     - Attach policy `CodeeraMediaS3Policy`:
+     ```json
+     {
+         "Version": "2012-10-17",
+         "Statement": [
+             {
+                 "Sid": "AllowAppMedia",
+                 "Effect": "Allow",
+                 "Action": [
+                     "s3:PutObject",
+                     "s3:GetObject",
+                     "s3:DeleteObject",
+                     "s3:ListBucket"
+                 ],
+                 "Resource": [
+                     "arn:aws:s3:::codeera-media",
+                     "arn:aws:s3:::codeera-media/*"
+                 ]
+             }
+         ]
+     }
+     ```
+     - Create and save access keys as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+   - **User 2 (Database Backup Storage)**: Open **IAM** -> **Users** -> **Create user** named `codeera-backup-agent`.
+     - Attach policy `CodeeraBackupsS3Policy` with **`PutObject`, `GetObject`, `ListBucket` only (NO `DeleteObject`)** to prevent backup deletion if compromised:
+     ```json
+     {
+         "Version": "2012-10-17",
+         "Statement": [
+             {
+                 "Sid": "AllowDatabaseBackupsAppendOnly",
+                 "Effect": "Allow",
+                 "Action": [
+                     "s3:PutObject",
+                     "s3:GetObject",
+                     "s3:ListBucket"
+                 ],
+                 "Resource": [
+                     "arn:aws:s3:::codeera-backups",
+                     "arn:aws:s3:::codeera-backups/*"
+                 ]
+             }
+         ]
+     }
+     ```
+     - Create and save access keys as `AWS_BACKUP_ACCESS_KEY_ID` and `AWS_BACKUP_SECRET_ACCESS_KEY`.
 
 ### 1.3 DNS Records Configuration
 In your domain registrar DNS management (e.g. Cloudflare / Namecheap / GoDaddy) for `codeera.tech`:
@@ -199,11 +218,18 @@ MAIL_MAILER=log
 MAIL_FROM_ADDRESS="noreply@codeera.tech"
 MAIL_FROM_NAME="Codeera"
 
+# Primary Media Storage (Application user uploads: payment receipts, course media)
 FILESYSTEM_DISK=s3
-AWS_ACCESS_KEY_ID=<YOUR_IAM_ACCESS_KEY>
-AWS_SECRET_ACCESS_KEY=<YOUR_IAM_SECRET_KEY>
+AWS_ACCESS_KEY_ID=<YOUR_MEDIA_IAM_ACCESS_KEY>
+AWS_SECRET_ACCESS_KEY=<YOUR_MEDIA_IAM_SECRET_KEY>
 AWS_DEFAULT_REGION=us-east-1
 AWS_BUCKET=codeera-media
+
+# Dedicated Database Backup Storage (Separate least-privilege IAM credentials)
+# IAM user needs: PutObject, GetObject, ListBucket on this bucket only (NO DeleteObject)
+AWS_BACKUP_ACCESS_KEY_ID=<YOUR_BACKUP_IAM_ACCESS_KEY>
+AWS_BACKUP_SECRET_ACCESS_KEY=<YOUR_BACKUP_IAM_SECRET_KEY>
+AWS_BACKUP_DEFAULT_REGION=us-east-1
 AWS_BACKUP_BUCKET=codeera-backups
 
 TELEGRAM_BOT_TOKEN=<YOUR_TELEGRAM_BOT_TOKEN>
