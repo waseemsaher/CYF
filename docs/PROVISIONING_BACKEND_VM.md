@@ -169,7 +169,8 @@ MAIL_FROM_ADDRESS="noreply@codeera.tech"
 MAIL_FROM_NAME="Codeera"
 
 # Container Image (Fast Path: pull from GHCR; Fallback: build locally)
-APP_IMAGE=ghcr.io/waseemsaher/cyf-backend:latest
+BACKEND_IMAGE=ghcr.io/waseemsaher/cyf-backend
+IMAGE_TAG=latest
 ```
 
 ---
@@ -200,7 +201,7 @@ docker compose -f docker-compose.prod.yml pull
 cd /var/www/cyf
 
 # Builds image on VM using local Dockerfile and 2GB swap
-APP_IMAGE=cyf-backend:prod ./scripts/deploy.sh
+BACKEND_IMAGE=cyf-backend IMAGE_TAG=prod ./scripts/deploy.sh
 ```
 
 The deployment script executes the following automated pipeline:

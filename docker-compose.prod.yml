@@ -26,7 +26,7 @@ services:
     networks:
       - cyf-network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:80/up || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80/up || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -36,7 +36,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: ${APP_IMAGE:-ghcr.io/waseemsaher/cyf-app:latest}
+    image: ${BACKEND_IMAGE:-ghcr.io/waseemsaher/cyf-backend}:${IMAGE_TAG:-latest}
     container_name: cyf-prod-app
     restart: unless-stopped
     working_dir: /var/www/html
@@ -86,7 +86,7 @@ services:
       start_period: 10s
 
   queue:
-    image: cyf-backend:prod
+    image: ${BACKEND_IMAGE:-ghcr.io/waseemsaher/cyf-backend}:${IMAGE_TAG:-latest}
     container_name: cyf-prod-queue
     restart: unless-stopped
     working_dir: /var/www/html
@@ -139,7 +139,7 @@ services:
       start_period: 10s
 
   scheduler:
-    image: ${APP_IMAGE:-ghcr.io/waseemsaher/cyf-app:latest}
+    image: ${BACKEND_IMAGE:-ghcr.io/waseemsaher/cyf-backend}:${IMAGE_TAG:-latest}
     container_name: cyf-prod-scheduler
     restart: unless-stopped
     working_dir: /var/www/html
@@ -259,7 +259,7 @@ services:
       start_period: 5s
 
   minio-init:
-    image: ${APP_IMAGE:-ghcr.io/waseemsaher/cyf-app:latest}
+    image: ${BACKEND_IMAGE:-ghcr.io/waseemsaher/cyf-backend}:${IMAGE_TAG:-latest}
     container_name: cyf-minio-init
     profiles: ["test", "drill"]
     depends_on:

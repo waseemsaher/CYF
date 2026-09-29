@@ -209,7 +209,8 @@ TELEGRAM_BOT_TOKEN=<YOUR_TELEGRAM_BOT_TOKEN>
 TELEGRAM_BOT_USERNAME="CodeeraPilotBot"
 TELEGRAM_WEBHOOK_SECRET=<YOUR_TELEGRAM_WEBHOOK_SECRET>
 
-APP_IMAGE=ghcr.io/waseemsaher/cyf-backend:latest
+BACKEND_IMAGE=ghcr.io/waseemsaher/cyf-backend
+IMAGE_TAG=latest
 ```
 
 Generate application key:
@@ -218,9 +219,46 @@ APP_KEY=$(docker compose -f docker-compose.prod.yml run --rm app php artisan key
 sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" .env
 ```
 
-### 2.3 Execute Deployment
+### 2.3 GHCR Authentication
+
+If the `ghcr.io/waseemsaher/cyf-backend` package is **private**, the server
+needs a GitHub Personal Access Token (classic) with **only `read:packages`**
+scope to pull images.
+
+```bash
+# Create a PAT at https://github.com/settings/tokens with only read:packages
+# Store it in the .env file (never commit):
+echo "GHCR_TOKEN=ghp_XXXXXXXXXXXX" >> .env
+
+# Log in to GHCR (one time, or after token rotation):
+source .env
+echo "$GHCR_TOKEN" | docker login ghcr.io -u waseemsaher --password-stdin
+```
+
+If the package is **public**, no login is needed.
+
+### 2.4 Execute Deployment
 ```bash
 ./scripts/deploy.sh
+```
+
+### 2.5 Deploy a Specific Commit or Roll Back
+
+Every push to `main` publishes a tagged image `sha-<short-hash>` alongside
+`latest`. To deploy or roll back to a specific commit:
+
+```bash
+# Deploy a specific commit (example: sha-abc1234)
+IMAGE_TAG=sha-abc1234 docker compose -f docker-compose.prod.yml pull
+IMAGE_TAG=sha-abc1234 docker compose -f docker-compose.prod.yml up -d
+
+# Roll back to the previous known-good tag
+IMAGE_TAG=sha-def5678 docker compose -f docker-compose.prod.yml pull
+IMAGE_TAG=sha-def5678 docker compose -f docker-compose.prod.yml up -d
+
+# Return to latest
+IMAGE_TAG=latest docker compose -f docker-compose.prod.yml pull
+IMAGE_TAG=latest docker compose -f docker-compose.prod.yml up -d
 ```
 Verify all containers are healthy:
 ```bash
