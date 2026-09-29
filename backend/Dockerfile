@@ -43,7 +43,8 @@ WORKDIR /var/www/html
 # - mariadb-client (mysqldump & mysql CLI) for db:backup and db:restore
 # - gzip for compressed database dumps
 # - fcgi for php-fpm container health checks
-# - libpng, libjpeg-turbo, freetype, libzip, icu for image and internationalization
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
+
 # Install system dependencies & PHP extensions
 RUN apk add --no-cache \
         bash \
@@ -51,22 +52,7 @@ RUN apk add --no-cache \
         gzip \
         mariadb-client \
         fcgi \
-        icu-libs \
-        icu-data-full \
-        libpng \
-        libjpeg-turbo \
-        freetype \
-        libzip \
-    && apk add --no-cache --virtual .build-deps \
-        $PHPIZE_DEPS \
-        linux-headers \
-        libpng-dev \
-        libjpeg-turbo-dev \
-        freetype-dev \
-        libzip-dev \
-        icu-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) \
+    && install-php-extensions \
         pdo_mysql \
         gd \
         bcmath \
@@ -74,10 +60,8 @@ RUN apk add --no-cache \
         pcntl \
         zip \
         exif \
-    && printf "\n\n\n\n\n\n" | pecl install redis \
-    && docker-php-ext-enable redis \
-    && apk del .build-deps \
-    && rm -rf /tmp/pear ~/.pearrc
+        redis \
+        opcache
 
 # Copy custom PHP and PHP-FPM configuration files
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini

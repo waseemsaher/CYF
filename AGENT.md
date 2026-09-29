@@ -161,3 +161,8 @@ Keep `docs/API.md` updated with every endpoint (method, path, auth, request, res
 - Silently changing architecture, dependencies, or requirements.
 - Skipping tests or checks "to save time".
 - Using the browser subagent or opening the browser (`browser_subagent`, `open_browser_url`). Validate via checks, build, tests, and curl.
+
+## 12. Privilege & Machine-Specific Rules
+- Never run `sudo`. Never guess, reuse, or pipe a password into any command. Never try to work around a permission error.
+- If something needs elevated rights or changes machine-level settings (e.g. `/etc/docker/daemon.json`), stop and ask the owner. Do not edit system configuration files.
+- Do not create workarounds that live in committed files to fix a problem that exists only on the development machine.
