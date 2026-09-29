@@ -3,6 +3,7 @@
   import { getTeacherDashboard, type TeacherDashboardData } from '$lib/api/admin';
   import { getAuthToken } from '$lib/api/client';
   import { getCurrentUser } from '$lib/api/auth';
+  import { currentLocale, formatPrice } from '$lib/i18n';
   import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
 
   let data: TeacherDashboardData | null = $state(null);
@@ -10,8 +11,6 @@
   let errorMsg = $state('');
   let isUnauthenticated = $state(false);
   let currentRole = $state('');
-
-  const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
 
   async function loadData() {
     loading = true;
@@ -92,19 +91,19 @@
       <section class="kpi-grid" aria-label="مؤشرات مالية">
         <div class="kpi-card">
           <span class="kpi-label">الرصيد المتاح للتحويل</span>
-          <strong class="kpi-value kpi-green">{formatPrice(data.earnings.balance_cents)}</strong>
+          <strong class="kpi-value kpi-green">{formatPrice(data.earnings.balance_cents, $currentLocale)}</strong>
           <span class="kpi-hint">أرباح مستحقة الدفع</span>
         </div>
 
         <div class="kpi-card">
           <span class="kpi-label">إجمالي الأرباح المحققة</span>
-          <strong class="kpi-value">{formatPrice(data.earnings.earned_cents)}</strong>
+          <strong class="kpi-value">{formatPrice(data.earnings.earned_cents, $currentLocale)}</strong>
           <span class="kpi-hint">حصة المدرس من الاشتراكات المقبولة</span>
         </div>
 
         <div class="kpi-card">
           <span class="kpi-label">المسحوبات السابقة</span>
-          <strong class="kpi-value kpi-muted">{formatPrice(data.earnings.paid_out_cents)}</strong>
+          <strong class="kpi-value kpi-muted">{formatPrice(data.earnings.paid_out_cents, $currentLocale)}</strong>
           <span class="kpi-hint">تم تحويلها لحسابك البنكي أو المحفظة</span>
         </div>
       </section>
@@ -159,7 +158,7 @@
                 {#each data.payouts as payout}
                   <tr>
                     <td>{new Date(payout.paid_at).toLocaleDateString('ar-EG')}</td>
-                    <td><strong>{formatPrice(payout.amount_cents)}</strong></td>
+                    <td><strong>{formatPrice(payout.amount_cents, $currentLocale)}</strong></td>
                     <td class="muted-cell">{payout.note || '—'}</td>
                   </tr>
                 {/each}

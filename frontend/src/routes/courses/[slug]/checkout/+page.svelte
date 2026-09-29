@@ -1,10 +1,9 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { submitPayment } from '$lib/api/payments';
+  import { currentLocale, formatPrice } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
-
-  const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
 
   let method = $state('vodafone_cash');
   let senderIdentifier = $state('');
@@ -148,17 +147,17 @@
         </div>
         <div class="summary-row">
           <span>السعر الأصلي</span>
-          <span>{formatPrice(data.course.list_price_cents)}</span>
+          <span>{formatPrice(data.course.list_price_cents, $currentLocale)}</span>
         </div>
         {#if data.course.discount_cents > 0}
           <div class="summary-row discount">
             <span>الخصم</span>
-            <span>-{formatPrice(data.course.discount_cents)}</span>
+            <span>-{formatPrice(data.course.discount_cents, $currentLocale)}</span>
           </div>
         {/if}
         <div class="summary-total">
           <span>المطلوب</span>
-          <strong>{formatPrice(data.course.amount_due_cents)}</strong>
+          <strong>{formatPrice(data.course.amount_due_cents, $currentLocale)}</strong>
         </div>
       </aside>
     </section>

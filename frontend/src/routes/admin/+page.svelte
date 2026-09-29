@@ -13,6 +13,7 @@
   } from '$lib/api/admin';
   import { getAuthToken } from '$lib/api/client';
   import { getCurrentUser } from '$lib/api/auth';
+  import { currentLocale, formatPrice } from '$lib/i18n';
   import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
 
   let overview: AdminOverviewData | null = $state(null);
@@ -43,8 +44,6 @@
   let formStatus = $state<'published' | 'draft' | 'archived'>('published');
   let formTelegramLink = $state('');
   let formTeacherShare = $state(70);
-
-  const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
 
   async function loadData() {
     loading = true;
@@ -295,7 +294,7 @@
               </svg>
             </span>
           </div>
-          <strong class="kpi-value revenue-val">{formatPrice(overview.term_revenue_cents)}</strong>
+          <strong class="kpi-value revenue-val">{formatPrice(overview.term_revenue_cents, $currentLocale)}</strong>
           <span class="kpi-hint">إجمالي المبيعات المعتمدة</span>
         </div>
 
@@ -400,7 +399,7 @@
                         <code class="slug-tag" dir="ltr">{course.slug}</code>
                       </td>
                       <td>
-                        <strong>{formatPrice(course.price_cents)}</strong>
+                        <strong>{formatPrice(course.price_cents, $currentLocale)}</strong>
                       </td>
                       <td>
                         <span>{course.teacher_share_percent ?? 70}%</span>

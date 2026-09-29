@@ -7,6 +7,7 @@
   } from '$lib/api/payments';
   import { getAuthToken } from '$lib/api/client';
   import { getCurrentUser } from '$lib/api/auth';
+  import { currentLocale, formatPrice } from '$lib/i18n';
   import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
 
   let payments: Payment[] = $state([]);
@@ -20,7 +21,6 @@
   let rejectingId = $state<number | null>(null);
   let rejectionReason = $state('');
 
-  const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   const statusTabs = [
@@ -173,7 +173,7 @@
 
             <div class="payment-info">
               <h3>{payment.course?.title?.ar ?? 'الدورة'}</h3>
-              <div class="info-row"><span>المبلغ المطلوب</span><strong>{formatPrice(payment.amount_due_cents)}</strong></div>
+              <div class="info-row"><span>المبلغ المطلوب</span><strong>{formatPrice(payment.amount_due_cents, $currentLocale)}</strong></div>
               <div class="info-row"><span>طريقة الدفع</span><span>{payment.method}</span></div>
               <div class="info-row"><span>المرسل</span><span>{payment.sender_identifier}</span></div>
               <div class="info-row"><span>التاريخ</span><span>{formatDate(payment.created_at)}</span></div>

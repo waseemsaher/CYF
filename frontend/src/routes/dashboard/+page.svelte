@@ -3,6 +3,7 @@
   import { getCurrentUser, type UserProfile } from '$lib/api/auth';
   import { getMyPayments, type Payment } from '$lib/api/payments';
   import { getAuthToken } from '$lib/api/client';
+  import { currentLocale, formatPrice } from '$lib/i18n';
   import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
   import TelegramLinkCard from '$lib/components/TelegramLinkCard.svelte';
 
@@ -212,7 +213,7 @@
                         <span class="dot">•</span>
                         <span>رقم الحساب/المحفظة: <strong dir="ltr">{p.sender_identifier}</strong></span>
                         <span class="dot">•</span>
-                        <span>المبلغ: <strong>{(p.amount_due_cents / 100).toLocaleString('ar-EG')} جنيه</strong></span>
+                        <span>المبلغ: <strong>{formatPrice(p.amount_due_cents, $currentLocale)}</strong></span>
                       </p>
                     </div>
                     <div class="pending-status-chip">

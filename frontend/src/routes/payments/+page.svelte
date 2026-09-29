@@ -1,13 +1,13 @@
 <script lang="ts">
   import { getMyPayments, type Payment } from '$lib/api/payments';
   import { getAuthToken } from '$lib/api/client';
+  import { currentLocale, formatPrice } from '$lib/i18n';
 
   let payments: Payment[] = $state([]);
   let loading = $state(true);
   let errorMsg = $state('');
   let isUnauthenticated = $state(false);
 
-  const formatPrice = (cents: number) => `${(cents / 100).toLocaleString('ar-EG')} جنيه`;
   const formatDate = (iso: string) => {
     const d = new Date(iso);
     return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
@@ -95,12 +95,12 @@
             {/if}
             <div class="price-row">
               <span>المبلغ المطلوب</span>
-              <strong>{formatPrice(payment.amount_due_cents)}</strong>
+              <strong>{formatPrice(payment.amount_due_cents, $currentLocale)}</strong>
             </div>
             {#if payment.discount_cents > 0}
               <div class="price-row muted">
                 <span>الخصم</span>
-                <span>-{formatPrice(payment.discount_cents)}</span>
+                <span>-{formatPrice(payment.discount_cents, $currentLocale)}</span>
               </div>
             {/if}
           </div>
