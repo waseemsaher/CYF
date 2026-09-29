@@ -225,14 +225,28 @@ All containers should display status `Up (healthy)`.
 ```bash
 docker stats --no-stream
 ```
-*Expected baseline memory usage*:
-* Caddy (`cyf-prod-web`): ~17 MiB
-* PHP-FPM (`cyf-prod-app`): ~48 MiB
-* Queue Worker (`cyf-prod-queue`): ~33 MiB
-* Scheduler (`cyf-prod-scheduler`): ~34 MiB
-* MySQL 8 (`cyf-prod-mysql`): ~167 MiB
-* Redis 7 (`cyf-prod-redis`): ~6 MiB
-* **Total Stack Baseline**: **~305 MiB** (easily fits within 1 GB RAM).
+*Empirical memory measurements (verified under production compose configuration)*:
+
+| Container | Image / Service | Configured Limit | Idle Usage | Under Load (50 reqs) |
+|---|---|---|---|---|
+| `cyf-prod-mysql` | `mysql:8.0` | 128 MB buffer pool, 40 conns | 184.0 MiB | 184.0 MiB |
+| `cyf-prod-app` | `cyf-backend` (PHP-FPM) | Host / PHP 256M limit | 34.56 MiB | 34.54 MiB |
+| `cyf-prod-web` | `caddy:2-alpine` | Host default | 34.44 MiB | 36.72 MiB |
+| `cyf-prod-queue` | `cyf-backend` (Queue Worker) | Host / PHP 256M limit | 33.44 MiB | 33.45 MiB |
+| `cyf-prod-scheduler` | `cyf-backend` (Scheduler) | Host / PHP 256M limit | 33.03 MiB | 33.57 MiB |
+| `cyf-prod-redis` | `redis:7-alpine` | 128 MB maxmemory | 4.11 MiB | 4.40 MiB |
+| **Total Stack** | All 6 containers | — | **~323.6 MiB** | **~326.7 MiB** |
+
+#### Sizing & Build Viability Conclusions:
+1. **1 GB Instance (`t3.micro` / `t2.micro`)**:
+   - The runtime stack requires ~327 MiB. Combined with base OS (Ubuntu 24.04/Alpine + systemd + Docker engine ~250–300 MiB), total baseline memory is ~580–630 MiB.
+   - While the running stack fits at idle, headroom is tight (<350 MiB). A **2 GB swap file is mandatory** to prevent Linux OOM-killer invocations during traffic spikes or backup jobs.
+2. **2 GB Instance (`t3.small` or Oracle Cloud Free Tier)**:
+   - Comfortably accommodates the stack with >1.3 GB headroom for OS page cache, query caching, and burst traffic. Recommended for high stability.
+3. **Build Viability on Server (NOT VIABLE)**:
+   - Clean `docker build` from scratch consumes **~1004 MiB peak** (+957 MiB system RAM, +47 MiB swap) primarily during PHP extension compilation (Redis, PDO MySQL) and Composer dependency install.
+   - **Never build on a 1 GB or 2 GB production server while services are running.** It will trigger OOM killer termination of MySQL or the build process.
+   - **Rule**: Container images **must always be pre-built in CI (GitHub Actions)** and pushed to GHCR, then pulled to the server (`docker compose pull`).
 
 ### Verify Public Health Check Endpoint
 ```bash
