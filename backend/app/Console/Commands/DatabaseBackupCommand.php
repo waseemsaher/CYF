@@ -15,7 +15,7 @@ class DatabaseBackupCommand extends Command
      * @var string
      */
     protected $signature = 'db:backup
-                            {--disk=s3 : The storage disk to upload the backup to}
+                            {--disk=s3-backups : The storage disk to upload the backup to}
                             {--no-upload : Skip uploading to cloud storage}
                             {--path= : Custom local directory to store the backup}
                             {--retention=7 : Number of days to retain local backups}';
