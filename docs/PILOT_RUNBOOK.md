@@ -172,6 +172,7 @@ APP_NAME=Codeera
 APP_ENV=production
 APP_KEY=                      # Leave blank initially; generated below
 APP_DEBUG=false
+BCRYPT_ROUNDS=12
 APP_URL=https://api.codeera.tech
 
 FRONTEND_URL=https://codeera.tech
@@ -226,16 +227,11 @@ needs a GitHub Personal Access Token (classic) with **only `read:packages`**
 scope to pull images.
 
 ```bash
-# Create a PAT at https://github.com/settings/tokens with only read:packages
-# Store it in the .env file (never commit):
-echo "GHCR_TOKEN=ghp_XXXXXXXXXXXX" >> .env
-
-# Log in to GHCR (one time, or after token rotation):
-source .env
-echo "$GHCR_TOKEN" | docker login ghcr.io -u waseemsaher --password-stdin
+docker login ghcr.io -u waseemsaher
+# paste a classic PAT that has only read:packages; credentials are stored in ~/.docker/config.json
 ```
 
-If the package is **public**, no login is needed.
+The token must never be placed in `.env` or committed to git. If the package is **public**, no login is needed.
 
 ### 2.4 Execute Deployment
 ```bash
@@ -244,8 +240,7 @@ If the package is **public**, no login is needed.
 
 ### 2.5 Deploy a Specific Commit or Roll Back
 
-Every push to `main` publishes a tagged image `sha-<short-hash>` alongside
-`latest`. To deploy or roll back to a specific commit:
+Every push to `main` publishes a tagged image `sha-<7 chars>` (7-character short commit SHA, e.g. `sha-55c917f`) alongside `latest`. To deploy or roll back to a specific commit:
 
 ```bash
 # Deploy a specific commit (example: sha-abc1234)
@@ -265,7 +260,7 @@ Verify all containers are healthy:
 docker compose -f docker-compose.prod.yml ps
 ```
 
-### 2.4 Initialize Superadmin Account
+### 2.6 Initialize Superadmin Account
 ```bash
 docker compose -f docker-compose.prod.yml exec -T app php artisan admin:create-superadmin admin@codeera.tech --name="Platform Owner"
 ```

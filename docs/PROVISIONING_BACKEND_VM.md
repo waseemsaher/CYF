@@ -227,7 +227,7 @@ docker stats --no-stream
 ```
 *Empirical memory measurements (verified under production compose configuration)*:
 
-| Container | Image / Service | Configured Limit | Idle Usage | Under Load (50 reqs) |
+| Container | Image / Service | Configured Limit | Idle Usage | Under Load (50 GET /courses reqs)* |
 |---|---|---|---|---|
 | `cyf-prod-mysql` | `mysql:8.0` | 128 MB buffer pool, 40 conns | 184.0 MiB | 184.0 MiB |
 | `cyf-prod-app` | `cyf-backend` (PHP-FPM) | Host / PHP 256M limit | 34.56 MiB | 34.54 MiB |
@@ -236,6 +236,8 @@ docker stats --no-stream
 | `cyf-prod-scheduler` | `cyf-backend` (Scheduler) | Host / PHP 256M limit | 33.03 MiB | 33.57 MiB |
 | `cyf-prod-redis` | `redis:7-alpine` | 128 MB maxmemory | 4.11 MiB | 4.40 MiB |
 | **Total Stack** | All 6 containers | — | **~323.6 MiB** | **~326.7 MiB** |
+
+*\*Note on load testing*: The "Under Load" column reflects 50 sequential requests to the public course listing endpoint (`GET /api/v1/courses`) against an unpopulated database. An earlier reported login load test (50/50 HTTP 200 in 0.35s) was invalid because requests sent an unmatching Host header (`api.codeera.tech` against a `localhost` Caddy server), causing Caddy to drop the connection with a 0-byte 200 NOP without routing to PHP-FPM. Real login requests routed to Laravel properly invoke bcrypt (12 rounds) and the 5 req/min rate limiter.
 
 #### Sizing & Build Viability Conclusions:
 1. **1 GB Instance (`t3.micro` / `t2.micro`)**:
