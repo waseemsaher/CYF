@@ -25,6 +25,13 @@ beforeEach(function (): void {
 });
 
 test('api responses include standard security headers', function (): void {
+    config()->set('app.url', 'http://localhost:8000');
+    config()->set('app.frontend_url', 'https://codeera.tech');
+    config()->set('filesystems.disks.s3.bucket', 'codeera-media');
+    config()->set('filesystems.disks.s3.region', 'us-east-1');
+    config()->set('app.env', 'testing');
+    $this->app['env'] = 'testing';
+
     $response = $this->getJson('/api/v1/courses');
 
     $response->assertHeader('X-Frame-Options', 'SAMEORIGIN')
@@ -32,8 +39,105 @@ test('api responses include standard security headers', function (): void {
         ->assertHeader('X-XSS-Protection', '1; mode=block')
         ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
         ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
-        ->assertHeader('X-Permitted-Cross-Domain-Policies', 'none')
-        ->assertHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; media-src 'self'; connect-src 'self' http://localhost:8000 http://localhost:5173 http://127.0.0.1:8000 http://localhost:4173; frame-ancestors 'self'; form-action 'self'");
+        ->assertHeader('X-Permitted-Cross-Domain-Policies', 'none');
+
+    $csp = $response->headers->get('Content-Security-Policy');
+    expect($csp)->toBeString();
+
+    $directives = [];
+    foreach (explode(';', $csp) as $directive) {
+        $directive = trim($directive);
+        if ($directive === '') {
+            continue;
+        }
+        $parts = explode(' ', $directive, 2);
+        $directives[$parts[0]] = $parts[1] ?? '';
+    }
+
+    expect($directives['default-src'] ?? '')->toBe("'self'")
+        ->and($directives['script-src'] ?? '')->not->toContain("'unsafe-inline'")
+        ->and($directives['script-src'] ?? '')->not->toContain('https:')
+        ->and(explode(' ', $directives['connect-src'] ?? ''))->not->toContain('https:')
+        ->and(explode(' ', $directives['img-src'] ?? ''))->toEqualCanonicalizing([
+            "'self'",
+            'data:',
+            'blob:',
+            'https://codeera-media.s3.us-east-1.amazonaws.com',
+            'https://codeera-media.s3.amazonaws.com',
+        ])
+        ->and($directives['frame-ancestors'] ?? '')->toBe("'self'")
+        ->and($directives['form-action'] ?? '')->toBe("'self'");
+
+    $expectedCsp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://codeera-media.s3.us-east-1.amazonaws.com https://codeera-media.s3.amazonaws.com; media-src 'self'; connect-src 'self' http://localhost:8000 https://codeera.tech http://127.0.0.1:8000 http://localhost:5173 http://localhost:4173; frame-ancestors 'self'; form-action 'self'";
+    $response->assertHeader('Content-Security-Policy', $expectedCsp);
+});
+
+test('security headers in production do not include localhost origins in connect-src', function (): void {
+    config()->set('app.env', 'production');
+    config()->set('app.url', 'https://api.codeera.tech');
+    config()->set('app.frontend_url', 'https://codeera.tech');
+    config()->set('filesystems.disks.s3.bucket', 'codeera-media');
+    config()->set('filesystems.disks.s3.region', 'us-east-1');
+    $this->app['env'] = 'production';
+
+    $response = $this->getJson('/api/v1/courses');
+
+    $csp = $response->headers->get('Content-Security-Policy');
+    expect($csp)->toBeString();
+
+    $directives = [];
+    foreach (explode(';', $csp) as $directive) {
+        $directive = trim($directive);
+        if ($directive === '') {
+            continue;
+        }
+        $parts = explode(' ', $directive, 2);
+        $directives[$parts[0]] = $parts[1] ?? '';
+    }
+
+    $connectOrigins = explode(' ', $directives['connect-src'] ?? '');
+
+    expect($connectOrigins)
+        ->toContain("'self'")
+        ->toContain('https://api.codeera.tech')
+        ->toContain('https://codeera.tech')
+        ->not->toContain('http://localhost:8000')
+        ->not->toContain('http://localhost:5173')
+        ->not->toContain('http://127.0.0.1:8000')
+        ->not->toContain('http://localhost:4173');
+});
+
+test('security headers in local environment include localhost origins in connect-src', function (): void {
+    config()->set('app.env', 'local');
+    config()->set('app.url', 'http://localhost:8000');
+    config()->set('app.frontend_url', 'http://localhost:5173');
+    config()->set('filesystems.disks.s3.bucket', 'codeera-media');
+    config()->set('filesystems.disks.s3.region', 'us-east-1');
+    $this->app['env'] = 'local';
+
+    $response = $this->getJson('/api/v1/courses');
+
+    $csp = $response->headers->get('Content-Security-Policy');
+    expect($csp)->toBeString();
+
+    $directives = [];
+    foreach (explode(';', $csp) as $directive) {
+        $directive = trim($directive);
+        if ($directive === '') {
+            continue;
+        }
+        $parts = explode(' ', $directive, 2);
+        $directives[$parts[0]] = $parts[1] ?? '';
+    }
+
+    $connectOrigins = explode(' ', $directives['connect-src'] ?? '');
+
+    expect($connectOrigins)
+        ->toContain("'self'")
+        ->toContain('http://localhost:8000')
+        ->toContain('http://127.0.0.1:8000')
+        ->toContain('http://localhost:5173')
+        ->toContain('http://localhost:4173');
 });
 
 test('https requests return Strict-Transport-Security header', function (): void {
