@@ -18,7 +18,7 @@ class DatabaseRestoreCommand extends Command
     protected $signature = 'db:restore
                             {file? : The backup filename or local file path}
                             {--from-s3 : Download backup from S3 storage}
-                            {--disk=s3 : The storage disk to pull the backup from}
+                            {--disk=s3-backups : The storage disk to pull the backup from}
                             {--force : Force the operation without confirmation prompt}';
 
     /**
