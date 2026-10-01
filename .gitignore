@@ -31,3 +31,4 @@ pilot-content.json
 /frontend/.vercel/
 /frontend/.output/
 frontend/.DS_Store
+key.pem
