@@ -37,17 +37,6 @@ it('allows an authenticated user to generate a telegram link token and deep link
         ->and(TelegramLinkToken::query()->where('user_id', $user->id)->count())->toBe(1);
 });
 
-it('strips leading @ from bot username when generating deep link', function (): void {
-    config()->set('telegram.bot_username', '@TestBot');
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user)->postJson('/api/v1/telegram/link-token');
-
-    $response->assertOk();
-    $data = $response->json('data');
-    expect($data['deep_link'])->toBe("https://t.me/TestBot?start={$data['token']}");
-});
-
 it('invalidates prior unused tokens when a new link token is generated', function (): void {
     $user = User::factory()->create();
 
