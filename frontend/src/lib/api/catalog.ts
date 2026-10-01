@@ -53,3 +53,7 @@ export function getAcademicYears(fetcher: typeof fetch) {
 export function getDepartments(fetcher: typeof fetch) {
   return apiGet<CollectionResponse<ReferenceOption>>(fetcher, '/reference/departments');
 }
+
+export function getTerms(fetcher: typeof fetch) {
+  return apiGet<CollectionResponse<ReferenceOption & { is_current?: boolean }>>(fetcher, '/reference/terms');
+}

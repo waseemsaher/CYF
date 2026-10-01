@@ -36,7 +36,13 @@
     errorMsg = '';
 
     try {
+      if (!data.course?.id) {
+        errorMsg = 'لم يتم العثور على بيانات الدورة. يرجى إعادة تحميل الصفحة.';
+        return;
+      }
+
       const formData = new FormData();
+      formData.append('course_id', String(data.course.id));
       const termId = data.currentTerm?.id ? String(data.currentTerm.id) : '1';
       formData.append('term_id', termId);
       formData.append('method', method);
