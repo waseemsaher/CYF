@@ -19,6 +19,8 @@
   let editPricePounds = $state(0);
   let editStatus = $state<'published' | 'draft'>('published');
   let editTelegramLink = $state('');
+  let editTelegramGroupId = $state('');
+  let editTelegramChannelId = $state('');
   let modalLoading = $state(false);
   let modalError = $state('');
 
@@ -30,6 +32,8 @@
     editPricePounds = Math.round((data.course.price_cents || data.course.amount_due_cents || 0) / 100);
     editStatus = (data.course.status as 'published' | 'draft') || 'published';
     editTelegramLink = data.course.telegram_invite_link || '';
+    editTelegramGroupId = data.course.telegram_group_id ? String(data.course.telegram_group_id) : '';
+    editTelegramChannelId = data.course.telegram_channel_id ? String(data.course.telegram_channel_id) : '';
     modalError = '';
     isEditModalOpen = true;
   }
@@ -56,11 +60,10 @@
         },
         price_cents: Math.max(0, Math.round(editPricePounds * 100)),
         status: editStatus,
+        telegram_invite_link: editTelegramLink.trim() || null,
+        telegram_group_id: editTelegramGroupId.trim() ? Number(editTelegramGroupId.trim()) : null,
+        telegram_channel_id: editTelegramChannelId.trim() ? Number(editTelegramChannelId.trim()) : null,
       };
-
-      if (editTelegramLink) {
-        payload.telegram_invite_link = editTelegramLink;
-      }
 
       await updateAdminCourse(fetch, data.course.id, payload);
       closeEditModal();
@@ -243,14 +246,44 @@
           </div>
 
           <div class="form-group">
-            <label for="edit-telegram">رابط مجموعة تليجرام</label>
+            <label for="edit-telegram">رابط دعوة تليجرام</label>
             <input
               id="edit-telegram"
               type="url"
               dir="ltr"
               bind:value={editTelegramLink}
-              placeholder="https://t.me/..."
+              placeholder="https://t.me/+joinchat..."
             />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-telegram-group">معرّف مجموعة تليجرام (Group ID)</label>
+            <input
+              id="edit-telegram-group"
+              type="text"
+              dir="ltr"
+              bind:value={editTelegramGroupId}
+              placeholder="-1001234567890"
+            />
+            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
+              معرّف المجموعة (يبدأ بـ 100- للمجموعات الخارقة).
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-telegram-channel">معرّف قناة تليجرام (Channel ID)</label>
+            <input
+              id="edit-telegram-channel"
+              type="text"
+              dir="ltr"
+              bind:value={editTelegramChannelId}
+              placeholder="-1001987654321"
+            />
+            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
+              معرّف القناة لبث الدروس (اختياري).
+            </small>
           </div>
         </div>
 

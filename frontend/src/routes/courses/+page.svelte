@@ -25,6 +25,8 @@
   let formPricePounds = $state(150);
   let formStatus = $state<'published' | 'draft'>('published');
   let formTelegramLink = $state('');
+  let formTelegramGroupId = $state('');
+  let formTelegramChannelId = $state('');
   let formAcademicYearId = $state<number | ''>('');
   let formDepartmentId = $state<number | ''>('');
 
@@ -63,6 +65,8 @@
     formPricePounds = 150;
     formStatus = 'published';
     formTelegramLink = '';
+    formTelegramGroupId = '';
+    formTelegramChannelId = '';
     formAcademicYearId = data.academicYears[0]?.id || '';
     formDepartmentId = data.departments[0]?.id || '';
     modalError = '';
@@ -80,6 +84,8 @@
     formPricePounds = Math.round((course.price_cents || course.amount_due_cents || 0) / 100);
     formStatus = (course.status as 'published' | 'draft') || 'published';
     formTelegramLink = course.telegram_invite_link || '';
+    formTelegramGroupId = course.telegram_group_id ? String(course.telegram_group_id) : '';
+    formTelegramChannelId = course.telegram_channel_id ? String(course.telegram_channel_id) : '';
     formAcademicYearId = data.academicYears[0]?.id || '';
     formDepartmentId = data.departments[0]?.id || '';
     modalError = '';
@@ -119,11 +125,10 @@
         slug: formSlug,
         price_cents: Math.max(0, Math.round(formPricePounds * 100)),
         status: formStatus,
+        telegram_invite_link: formTelegramLink.trim() || null,
+        telegram_group_id: formTelegramGroupId.trim() ? Number(formTelegramGroupId.trim()) : null,
+        telegram_channel_id: formTelegramChannelId.trim() ? Number(formTelegramChannelId.trim()) : null,
       };
-
-      if (formTelegramLink) {
-        payload.telegram_invite_link = formTelegramLink;
-      }
 
       if (formAcademicYearId && formDepartmentId) {
         payload.audiences = [
@@ -495,6 +500,36 @@
               bind:value={formTelegramLink}
               placeholder="https://t.me/+joinchat..."
             />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="course-telegram-group">معرّف مجموعة تليجرام (Group ID)</label>
+            <input
+              id="course-telegram-group"
+              type="text"
+              dir="ltr"
+              bind:value={formTelegramGroupId}
+              placeholder="-1001234567890"
+            />
+            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
+              معرّف المجموعة (يبدأ بـ 100- للمجموعات الخارقة).
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="course-telegram-channel">معرّف قناة تليجرام (Channel ID)</label>
+            <input
+              id="course-telegram-channel"
+              type="text"
+              dir="ltr"
+              bind:value={formTelegramChannelId}
+              placeholder="-1001987654321"
+            />
+            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
+              معرّف القناة لبث الدروس (اختياري).
+            </small>
           </div>
         </div>
 

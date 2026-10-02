@@ -17,6 +17,8 @@ export type Course = {
   discount_id: number | null;
   status?: string;
   telegram_invite_link?: string | null;
+  telegram_channel_id?: number | null;
+  telegram_group_id?: number | null;
   teacher_share_percent?: number | null;
 };
 
