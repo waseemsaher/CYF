@@ -32,7 +32,7 @@ class GenerateTelegramLinkToken
             'expires_at' => $expiresAt,
         ]);
 
-        $botUsername = (string) config('telegram.bot_username', 'AlAzharCoursesBot');
+        $botUsername = ltrim((string) config('telegram.bot_username', 'AlAzharCoursesBot'), '@');
         $deepLink = "https://t.me/{$botUsername}?start={$plainToken}";
 
         return [

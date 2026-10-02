@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Identity\Actions;
 
+use App\Models\Enrollment;
 use App\Models\User;
 
 class GetCurrentUserProfileAction
@@ -28,6 +29,19 @@ class GetCurrentUserProfileAction
                 'email_verified_at' => $user->getAttribute('email_verified_at')?->toIso8601String(),
                 'must_change_password' => (bool) $user->getAttribute('must_change_password'),
                 'is_active' => (bool) $user->getAttribute('is_active'),
+                'enrolled_courses' => $user->enrollments()
+                    ->where('status', 'active')
+                    ->where('expires_at', '>', now())
+                    ->with('course')
+                    ->get()
+                    ->map(fn (Enrollment $enrollment): ?array => $enrollment->course ? [
+                        'id' => $enrollment->course->getKey(),
+                        'slug' => $enrollment->course->getAttribute('slug'),
+                        'title' => $enrollment->course->getTranslations('title'),
+                    ] : null)
+                    ->filter()
+                    ->values()
+                    ->all(),
             ],
         ];
     }

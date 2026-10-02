@@ -15,6 +15,11 @@ export type UserProfile = {
   locale?: string;
   email_verified_at?: string | null;
   is_active?: boolean;
+  enrolled_courses?: Array<{
+    id: number;
+    slug: string;
+    title: { ar: string; en?: string };
+  }>;
 };
 
 export type AuthResponse = {

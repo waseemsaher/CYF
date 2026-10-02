@@ -13,11 +13,25 @@
   let isUnauthenticated = $state(false);
   let errorMsg = $state('');
 
-  let approvedCourses = $derived(
-    payments
+  let approvedCourses = $derived.by(() => {
+    const fromProfile = (user?.enrolled_courses || []).map((c) => ({
+      id: c.id,
+      slug: c.slug,
+      title: c.title,
+    }));
+
+    const fromPayments = payments
       .filter((p) => p.status === 'approved' && p.course)
-      .map((p) => p.course!)
-  );
+      .map((p) => p.course!);
+
+    const map = new Map<number, { id: number; slug: string; title: { ar: string; en?: string } }>();
+    for (const c of [...fromProfile, ...fromPayments]) {
+      if (c && c.id && !map.has(c.id)) {
+        map.set(c.id, c);
+      }
+    }
+    return Array.from(map.values());
+  });
 
   let pendingPayments = $derived(
     payments.filter((p) => p.status === 'pending')
