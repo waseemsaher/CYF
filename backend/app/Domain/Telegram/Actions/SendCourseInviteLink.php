@@ -62,7 +62,7 @@ class SendCourseInviteLink
         $expireDate = now()->addHours(48)->timestamp;
 
         $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;
-        $staticLink  = $course->getAttribute('telegram_invite_link');
+        $staticLink = $course->getAttribute('telegram_invite_link');
 
         // Call Telegram to create the single-use invite
         $response = $this->client->createChatInviteLink(
@@ -74,17 +74,17 @@ class SendCourseInviteLink
 
         if (! $response->successful()) {
             Log::error('Failed to create Telegram chat invite link', [
-                'chat_id'   => $chatId,
-                'user_id'   => $user->getKey(),
+                'chat_id' => $chatId,
+                'user_id' => $user->getKey(),
                 'course_id' => $course->getKey(),
-                'response'  => $response->body(),
+                'response' => $response->body(),
             ]);
 
             // Fall back: send plain approval message with the static join-request link if available
             if ($staticLink) {
                 $fallback = "🎉 تم تفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\n\n"
-                    . "اضغط على الرابط التالي للانضمام إلى القناة:\n"
-                    . "<a href=\"{$staticLink}\">{$staticLink}</a>";
+                    .'اضغط على الرابط التالي للانضمام إلى القناة:'."\n"
+                    .'<a href="'.$staticLink.'">'.$staticLink.'</a>';
                 $this->client->sendMessage((int) $telegramUserId, $fallback);
             }
 
@@ -102,8 +102,8 @@ class SendCourseInviteLink
 
         // Persist the issued invite so we can guard against duplicates
         TelegramCourseInvite::create([
-            'user_id'    => $user->getKey(),
-            'course_id'  => $course->getKey(),
+            'user_id' => $user->getKey(),
+            'course_id' => $course->getKey(),
             'invite_link' => $inviteLink,
             'expires_at' => now()->addHours(48),
         ]);
@@ -113,12 +113,12 @@ class SendCourseInviteLink
         $message = "🎉 تم قبول دفعك وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\n\n";
 
         if ($staticLink) {
-            $message .= "اضغط على الرابط التالي للانضمام إلى القناة:\n"
-                . "<a href=\"{$staticLink}\">{$staticLink}</a>";
+            $message .= 'اضغط على الرابط التالي للانضمام إلى القناة:'."\n"
+                .'<a href="'.$staticLink.'">'.$staticLink.'</a>';
         } else {
-            $message .= "رابط الانضمام الشخصي (صالح لمرة واحدة · 48 ساعة):\n"
-                . "{$inviteLink}\n\n"
-                . "⚠️ لا تشارك هذا الرابط مع أحد.";
+            $message .= 'رابط الانضمام الشخصي (صالح لمرة واحدة · 48 ساعة):'."\n"
+                .$inviteLink."\n\n"
+                .'⚠️ لا تشارك هذا الرابط مع أحد.';
         }
 
         $this->client->sendMessage((int) $telegramUserId, $message);
