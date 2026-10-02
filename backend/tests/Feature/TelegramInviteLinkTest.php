@@ -107,7 +107,7 @@ it('dispatches SendCourseInviteLinkJob when payment approved and student is link
     $payment = makePayment($d['student'], $d['courseWithGroup'], $d['term']);
 
     $this->actingAs($d['admin'], 'sanctum')
-        ->postJson('/api/v1/admin/payments/' . $payment->getKey() . '/approve')
+        ->postJson('/api/v1/admin/payments/'.$payment->getKey().'/approve')
         ->assertOk();
 
     Queue::assertPushed(SendCourseInviteLinkJob::class, function (SendCourseInviteLinkJob $job) use ($d): bool {
@@ -126,7 +126,7 @@ it('falls back to SendTelegramNotificationJob when course has no group_id', func
     $payment = makePayment($d['student'], $d['courseWithoutGroup'], $d['term']);
 
     $this->actingAs($d['admin'], 'sanctum')
-        ->postJson('/api/v1/admin/payments/' . $payment->getKey() . '/approve')
+        ->postJson('/api/v1/admin/payments/'.$payment->getKey().'/approve')
         ->assertOk();
 
     Queue::assertNotPushed(SendCourseInviteLinkJob::class);
@@ -143,7 +143,7 @@ it('dispatches nothing when student has no linked Telegram on approval', functio
     $payment = makePayment($d['student'], $d['courseWithGroup'], $d['term']);
 
     $this->actingAs($d['admin'], 'sanctum')
-        ->postJson('/api/v1/admin/payments/' . $payment->getKey() . '/approve')
+        ->postJson('/api/v1/admin/payments/'.$payment->getKey().'/approve')
         ->assertOk();
 
     Queue::assertNotPushed(SendCourseInviteLinkJob::class);

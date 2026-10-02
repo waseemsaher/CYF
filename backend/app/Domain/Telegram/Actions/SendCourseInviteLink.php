@@ -83,8 +83,8 @@ class SendCourseInviteLink
             // Fall back: send plain approval message with the static join-request link if available
             if ($staticLink) {
                 $fallback = "🎉 تم تفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\n\n"
-                    . "اضغط على الرابط التالي للانضمام إلى القناة:\n"
-                    . "<a href=\"{$staticLink}\">{$staticLink}</a>";
+                    .'اضغط على الرابط التالي للانضمام إلى القناة:'."\n"
+                    .'<a href="'.$staticLink.'">'.$staticLink.'</a>';
                 $this->client->sendMessage((int) $telegramUserId, $fallback);
             }
 
@@ -113,12 +113,12 @@ class SendCourseInviteLink
         $message = "🎉 تم قبول دفعك وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\n\n";
 
         if ($staticLink) {
-            $message .= "اضغط على الرابط التالي للانضمام إلى القناة:\n"
-                . "<a href=\"{$staticLink}\">{$staticLink}</a>";
+            $message .= 'اضغط على الرابط التالي للانضمام إلى القناة:'."\n"
+                .'<a href="'.$staticLink.'">'.$staticLink.'</a>';
         } else {
-            $message .= "رابط الانضمام الشخصي (صالح لمرة واحدة · 48 ساعة):\n"
-                . "{$inviteLink}\n\n"
-                . "⚠️ لا تشارك هذا الرابط مع أحد.";
+            $message .= 'رابط الانضمام الشخصي (صالح لمرة واحدة · 48 ساعة):'."\n"
+                .$inviteLink."\n\n"
+                .'⚠️ لا تشارك هذا الرابط مع أحد.';
         }
 
         $this->client->sendMessage((int) $telegramUserId, $message);
