@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Telegram\Actions\SendCourseInviteLink;
 use App\Jobs\SendCourseInviteLinkJob;
 use App\Jobs\SendTelegramNotificationJob;
 use App\Models\Course;
@@ -167,7 +168,7 @@ it('sends createChatInviteLink + sendMessage when no outstanding invite exists (
         'https://api.telegram.org/bot*/sendMessage' => Http::response(['ok' => true]),
     ]);
 
-    $action = app(\App\Domain\Telegram\Actions\SendCourseInviteLink::class);
+    $action = app(SendCourseInviteLink::class);
     $result = $action->handle($d['student'], $d['courseWithGroup']);
 
     expect($result)->toBeTrue();
@@ -201,7 +202,7 @@ it('skips API call when an outstanding invite already exists (idempotency)', fun
 
     Http::fake(); // should receive zero calls
 
-    $action = app(\App\Domain\Telegram\Actions\SendCourseInviteLink::class);
+    $action = app(SendCourseInviteLink::class);
     $result = $action->handle($d['student'], $d['courseWithGroup']);
 
     expect($result)->toBeFalse();
@@ -228,7 +229,7 @@ it('sends a new invite when a previous invite has expired', function (): void {
         'https://api.telegram.org/bot*/sendMessage' => Http::response(['ok' => true]),
     ]);
 
-    $action = app(\App\Domain\Telegram\Actions\SendCourseInviteLink::class);
+    $action = app(SendCourseInviteLink::class);
     $result = $action->handle($d['student'], $d['courseWithGroup']);
 
     expect($result)->toBeTrue();
@@ -245,7 +246,7 @@ it('does nothing when course has no telegram_group_id', function (): void {
 
     Http::fake();
 
-    $action = app(\App\Domain\Telegram\Actions\SendCourseInviteLink::class);
+    $action = app(SendCourseInviteLink::class);
     $result = $action->handle($d['student'], $d['courseWithoutGroup']);
 
     expect($result)->toBeFalse();
@@ -258,7 +259,7 @@ it('does nothing when user has no telegram_user_id', function (): void {
 
     Http::fake();
 
-    $action = app(\App\Domain\Telegram\Actions\SendCourseInviteLink::class);
+    $action = app(SendCourseInviteLink::class);
     $result = $action->handle($d['student'], $d['courseWithGroup']);
 
     expect($result)->toBeFalse();

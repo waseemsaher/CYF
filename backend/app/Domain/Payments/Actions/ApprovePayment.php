@@ -108,7 +108,6 @@ class ApprovePayment
         });
     }
 
-
     private function resolveTeacherSharePercent(Payment $payment): int
     {
         // Priority: per-course override > global default

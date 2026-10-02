@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -19,7 +20,7 @@ Artisan::command('telegram:set-webhook {--info}', function () {
     }
 
     if ($this->option('info')) {
-        $response = \Illuminate\Support\Facades\Http::get("https://api.telegram.org/bot{$botToken}/getWebhookInfo");
+        $response = Http::get("https://api.telegram.org/bot{$botToken}/getWebhookInfo");
         $this->line(json_encode($response->json(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         return 0;
