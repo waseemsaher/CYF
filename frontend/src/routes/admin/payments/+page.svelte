@@ -240,13 +240,13 @@
 
 <style>
   :global(*) { box-sizing: border-box; }
-  .admin-shell { margin: 0 auto; max-width: 1100px; padding: 1.25rem 1.25rem 4rem; }
-  .admin-header { align-items: center; display: flex; gap: 1.5rem; padding: 0.5rem 0 2rem; }
+  .admin-shell { margin: 0 auto; max-width: 1100px; padding: 1.25rem 1.25rem 4rem; width: 100%; box-sizing: border-box; overflow-x: hidden; }
+  .admin-header { align-items: center; display: flex; flex-wrap: wrap; gap: 1.5rem; padding: 0.5rem 0 2rem; }
   .brand { color: var(--storm); font-size: 1.05rem; font-weight: 800; letter-spacing: 0.08em; text-decoration: none; }
   .brand span { color: var(--brand-accent); font-size: 0.68rem; margin-inline-start: 0.35rem; }
   .header-title { color: var(--muted); font-size: 0.95rem; font-weight: 700; }
-  .status-tabs { background: var(--card); border: 2px solid var(--line); border-radius: 0.6rem; display: flex; margin-bottom: 1.5rem; overflow: hidden; }
-  .status-tabs button { background: none; border: 0; cursor: pointer; flex: 1; font: inherit; font-weight: 700; padding: 0.85rem 1rem; position: relative; transition: background 150ms, color 150ms; color: var(--storm); }
+  .status-tabs { background: var(--card); border: 2px solid var(--line); border-radius: 0.6rem; display: flex; margin-bottom: 1.5rem; overflow: hidden; width: 100%; box-sizing: border-box; }
+  .status-tabs button { background: none; border: 0; cursor: pointer; flex: 1; font: inherit; font-weight: 700; padding: 0.85rem 1rem; position: relative; transition: background 150ms, color 150ms; color: var(--storm); min-width: 0; }
   .status-tabs button:not(:last-child) { border-inline-end: 2px solid var(--line); }
   .status-tabs button.active { background: var(--brand-navy); color: #FAF8F5; }
   .tab-count { background: rgba(255,255,255,0.2); border-radius: 9rem; font-size: 0.72rem; margin-inline-start: 0.4rem; padding: 0.15rem 0.5rem; }
@@ -254,39 +254,45 @@
   .loading-state { align-items: center; display: flex; flex-direction: column; gap: 1rem; padding: 4rem 0; }
   .spinner { animation: spin 800ms linear infinite; border: 3px solid var(--line); border-radius: 50%; border-top-color: var(--deep-cyan); height: 2.5rem; width: 2.5rem; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .notice { background: var(--card); border: 2px solid var(--line); border-radius: 0.6rem; padding: 1.25rem; color: var(--storm); }
+  .notice { background: var(--card); border: 2px solid var(--line); border-radius: 0.6rem; padding: 1.25rem; color: var(--storm); word-break: break-word; }
   .error { border-color: #e8b5b2; color: #8a302b; }
   .empty-state { background: var(--card); border: 2px solid var(--line); border-radius: 0.6rem; padding: 3rem; text-align: center; }
   .empty-state p { color: var(--muted); margin: 0; }
-  .payment-queue { display: grid; gap: 1rem; }
-  .queue-card { background: var(--card); border: 2px solid var(--line); border-radius: 0.75rem; overflow: hidden; }
+  .payment-queue { display: grid; gap: 1rem; width: 100%; }
+  .queue-card { background: var(--card); border: 2px solid var(--line); border-radius: 0.75rem; overflow: hidden; min-width: 0; width: 100%; box-sizing: border-box; }
   .queue-card.duplicate-warning { border-color: #f59e0b; }
-  .duplicate-banner { background: #fef3c7; color: #92400e; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
-  .card-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr 1.3fr; padding: 1.25rem; }
-  .student-info h2 { font-size: 1.1rem; margin: 0 0 0.75rem; }
-  dl { display: grid; gap: 0.3rem; grid-template-columns: 4rem 1fr; margin: 0; }
+  .duplicate-banner { background: #fef3c7; color: #92400e; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1.25rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; word-break: break-word; }
+  .card-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr 1.3fr; padding: 1.25rem; min-width: 0; width: 100%; box-sizing: border-box; }
+  .student-info h2 { font-size: 1.1rem; margin: 0 0 0.75rem; word-break: break-word; }
+  dl { display: grid; gap: 0.3rem; grid-template-columns: 4rem 1fr; margin: 0; min-width: 0; }
   dt { color: var(--muted); font-size: 0.82rem; }
-  dd { font-size: 0.88rem; margin: 0; }
-  .payment-info h3 { font-size: 1rem; margin: 0 0 0.75rem; }
-  .info-row { display: flex; justify-content: space-between; margin-bottom: 0.35rem; }
+  dd { font-size: 0.88rem; margin: 0; word-break: break-all; }
+  .payment-info h3 { font-size: 1rem; margin: 0 0 0.75rem; word-break: break-word; }
+  .info-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.35rem; }
   .info-row span { color: var(--muted); font-size: 0.88rem; }
   .info-row strong { color: var(--storm); }
-  .student-note { background: var(--paper); border-radius: 0.35rem; font-size: 0.85rem; margin-top: 0.75rem; padding: 0.6rem 0.85rem; }
+  .student-note { background: var(--paper); border-radius: 0.35rem; font-size: 0.85rem; margin-top: 0.75rem; padding: 0.6rem 0.85rem; word-break: break-word; }
   .proof-preview { margin-top: 0.75rem; }
   .proof-label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.35rem; font-weight: 600; }
-  .proof-link { display: inline-block; border-radius: 0.4rem; overflow: hidden; border: 1.5px solid var(--line); transition: border-color 150ms ease; }
+  .proof-link { display: inline-block; border-radius: 0.4rem; overflow: hidden; border: 1.5px solid var(--line); transition: border-color 150ms ease; max-width: 100%; }
   .proof-link:hover { border-color: var(--brand-accent); }
-  .proof-thumb { display: block; max-height: 100px; max-width: 160px; object-fit: cover; }
-  .card-actions { border-top: 2px solid var(--line); display: flex; gap: 0.75rem; padding: 1rem 1.25rem; }
-  .btn-approve { background: var(--brand-navy); border: 0; border-radius: 0.4rem; color: #FAF8F5; cursor: pointer; flex: 1; font: inherit; font-weight: 800; min-height: 2.8rem; transition: background-color 150ms ease, opacity 150ms ease; }
+  .proof-thumb { display: block; max-height: 100px; max-width: 100%; object-fit: cover; }
+  .card-actions { border-top: 2px solid var(--line); display: flex; flex-wrap: wrap; gap: 0.75rem; padding: 1rem 1.25rem; }
+  .btn-approve { background: var(--brand-navy); border: 0; border-radius: 0.4rem; color: #FAF8F5; cursor: pointer; flex: 1; min-width: 120px; font: inherit; font-weight: 800; min-height: 2.8rem; transition: background-color 150ms ease, opacity 150ms ease; }
   .btn-approve:hover { background: #1E2B4D; opacity: 0.95; }
-  .btn-reject { background: transparent; border: 2px solid #e8b5b2; border-radius: 0.4rem; color: #8a302b; cursor: pointer; flex: 1; font: inherit; font-weight: 800; min-height: 2.8rem; }
+  .btn-reject { background: transparent; border: 2px solid #e8b5b2; border-radius: 0.4rem; color: #8a302b; cursor: pointer; flex: 1; min-width: 120px; font: inherit; font-weight: 800; min-height: 2.8rem; }
   .btn-approve:disabled, .btn-reject:disabled { cursor: not-allowed; opacity: 0.5; }
   .reject-form { display: grid; gap: 0.75rem; width: 100%; }
-  .reject-form textarea { background: #fef2f2; border: 2px solid #e8b5b2; border-radius: 0.4rem; font: inherit; padding: 0.6rem 0.85rem; resize: vertical; }
-  .reject-buttons { display: flex; gap: 0.5rem; }
+  .reject-form textarea { background: #fef2f2; border: 2px solid #e8b5b2; border-radius: 0.4rem; font: inherit; padding: 0.6rem 0.85rem; resize: vertical; width: 100%; box-sizing: border-box; }
+  .reject-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
   .btn-reject-confirm { background: #991b1b; border: 0; border-radius: 0.4rem; color: white; cursor: pointer; flex: 1; font: inherit; font-weight: 800; min-height: 2.5rem; }
   .btn-cancel { background: transparent; border: 2px solid var(--line); border-radius: 0.4rem; color: var(--muted); cursor: pointer; font: inherit; font-weight: 700; min-height: 2.5rem; padding: 0 1rem; }
   .btn-reject-confirm:disabled { cursor: not-allowed; opacity: 0.5; }
-  @media (max-width: 760px) { .card-grid { grid-template-columns: 1fr; } .status-tabs { flex-wrap: wrap; } .status-tabs button { flex-basis: 50%; } }
+  @media (max-width: 860px) {
+    .admin-shell { padding: 1rem 1rem 3rem; }
+    .card-grid { grid-template-columns: 1fr; }
+    .status-tabs { flex-wrap: wrap; }
+    .status-tabs button { flex: 1 1 50%; border-bottom: 2px solid var(--line); padding: 0.75rem 0.5rem; }
+    .status-tabs button:nth-child(2) { border-inline-end: 0; }
+  }
 </style>

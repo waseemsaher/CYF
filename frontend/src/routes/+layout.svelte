@@ -11,7 +11,21 @@
   let { children }: { children: Snippet } = $props();
 
   let isDark = $state(false);
+  let mobileMenuOpen = $state(false);
   let webManifestLink = $derived(pwaInfo ? pwaInfo.webManifest.linkTag : '');
+
+  function toggleMobileMenu() {
+    mobileMenuOpen = !mobileMenuOpen;
+  }
+
+  function closeMobileMenu() {
+    mobileMenuOpen = false;
+  }
+
+  $effect(() => {
+    const _ = page.url.pathname;
+    mobileMenuOpen = false;
+  });
 
   onMount(async () => {
     initLocale();
@@ -111,12 +125,13 @@
 <div class="layout-container">
   <header class="global-header">
     <div class="header-inner">
-      <a class="brand" href="/" aria-label={$t.nav.brandAria}>
-        <span class="brand-fcai">CODE</span>
-        <span class="brand-courses">ERA</span>
+      <a class="brand" href="/" aria-label={$t.nav.brandAria} onclick={closeMobileMenu}>
+        <img src="/logo/app-icon.svg" alt="" aria-hidden="true" class="brand-logo" width="36" height="36" />
+        <span class="brand-text">Codeera</span>
       </a>
 
-      <nav aria-label={$t.nav.mainNavAria} class="nav-menu">
+      <!-- Desktop nav -->
+      <nav aria-label={$t.nav.mainNavAria} class="nav-menu desktop-only">
         {#each navLinks as link}
           <a
             href={link.href}
@@ -129,7 +144,8 @@
         {/each}
       </nav>
 
-      <div class="header-actions">
+      <!-- Desktop actions -->
+      <div class="header-actions desktop-only">
         <button
           type="button"
           class="btn-theme-toggle"
@@ -181,7 +197,110 @@
           <a href="/register" class="btn-auth-register">{$t.nav.register}</a>
         {/if}
       </div>
+
+      <!-- Mobile quick controls (compact bar: theme toggle + hamburger) -->
+      <div class="mobile-header-controls mobile-only">
+        <button
+          type="button"
+          class="btn-theme-toggle"
+          onclick={toggleTheme}
+          aria-label={isDark ? $t.nav.themeToggleAriaLight : $t.nav.themeToggleAriaDark}
+          title={isDark ? $t.nav.themeLight : $t.nav.themeDark}
+        >
+          {#if isDark}
+            <svg class="theme-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+          {:else}
+            <svg class="theme-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          {/if}
+        </button>
+
+        <button
+          type="button"
+          class="btn-menu-toggle"
+          onclick={toggleMobileMenu}
+          aria-expanded={mobileMenuOpen}
+          aria-label={mobileMenuOpen ? ($t.nav.menuCloseAria || 'إغلاق القائمة') : ($t.nav.menuToggleAria || 'فتح القائمة')}
+        >
+          {#if mobileMenuOpen}
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          {:else}
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          {/if}
+        </button>
+      </div>
     </div>
+
+    <!-- Mobile Drawer Panel -->
+    {#if mobileMenuOpen}
+      <div class="mobile-drawer mobile-only">
+        <nav class="mobile-nav-list" aria-label={$t.nav.mainNavAria}>
+          {#each navLinks as link}
+            <a
+              href={link.href}
+              class="mobile-nav-link"
+              class:active={isActive(link.href)}
+              aria-current={isActive(link.href) ? 'page' : undefined}
+              onclick={closeMobileMenu}
+            >
+              {link.label}
+            </a>
+          {/each}
+        </nav>
+
+        <div class="mobile-drawer-footer">
+          {#if FEATURES.ENABLE_LANGUAGE_TOGGLE}
+            <button
+              type="button"
+              class="btn-lang-toggle mobile-lang-btn"
+              onclick={() => { toggleLocale(); closeMobileMenu(); }}
+              aria-label={$t.nav.langToggleAria}
+            >
+              {$t.nav.langToggleLabel}
+            </button>
+          {/if}
+
+          {#if $currentUser}
+            <div class="mobile-user-section">
+              <div class="mobile-user-info">
+                <span class="user-name">{$currentUser.name}</span>
+                <span class="role-chip">{getRoleLabel($currentUser.role)}</span>
+              </div>
+              <button
+                type="button"
+                class="btn-logout mobile-logout-btn"
+                onclick={() => { closeMobileMenu(); handleLogout(); }}
+              >
+                {$t.nav.logout}
+              </button>
+            </div>
+          {:else}
+            <div class="mobile-auth-actions">
+              <a href="/login" class="btn-auth-login mobile-auth-btn" onclick={closeMobileMenu}>{$t.nav.login}</a>
+              <a href="/register" class="btn-auth-register mobile-auth-btn" onclick={closeMobileMenu}>{$t.nav.register}</a>
+            </div>
+          {/if}
+        </div>
+      </div>
+    {/if}
   </header>
 
   <main id="main-content" class="main-content" tabindex="-1">
@@ -345,6 +464,7 @@
     color-scheme: dark;
   }
 
+  :global(html),
   :global(body) {
     background-color: var(--paper);
     color: var(--ink);
@@ -355,6 +475,8 @@
     direction: rtl;
     text-align: start;
     transition: background-color 150ms ease, color 150ms ease;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 
   /* Universal Dark Theme Overrides for all Cards, Surfaces & Forms */
@@ -783,6 +905,9 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .global-header {
@@ -807,22 +932,35 @@
   .brand {
     text-decoration: none;
     display: inline-flex;
-    align-items: baseline;
-    gap: 0.35rem;
+    align-items: center;
+    gap: 0.65rem;
+    transition: transform 150ms ease, opacity 150ms ease;
   }
 
-  .brand-fcai {
-    color: var(--brand-navy);
-    font-size: 1.25rem;
-    font-weight: 900;
-    letter-spacing: 0.04em;
+  .brand:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
   }
 
-  .brand-courses {
-    color: var(--brand-accent);
-    font-size: 1.25rem;
-    font-weight: 900;
-    letter-spacing: 0.04em;
+  .brand:active {
+    transform: translateY(0);
+  }
+
+  .brand-logo {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.55rem;
+    object-fit: contain;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  .brand-text {
+    color: var(--text-main);
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1;
   }
 
   .nav-menu {
@@ -993,6 +1131,9 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .main-content:focus {
@@ -1190,17 +1331,180 @@
     }
   }
 
+  /* Desktop / Mobile navigation visibility */
+  .desktop-only {
+    display: flex;
+  }
+
+  .mobile-only {
+    display: none;
+  }
+
+  .mobile-header-controls {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-menu-toggle {
+    background: var(--paper);
+    color: var(--storm);
+    border: 2px solid var(--line);
+    border-radius: 0.5rem;
+    width: 2.35rem;
+    height: 2.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease;
+  }
+
+  .btn-menu-toggle:hover {
+    border-color: var(--deep-cyan);
+    color: var(--deep-cyan);
+  }
+
+  .mobile-drawer {
+    background: var(--card);
+    border-top: 1px solid var(--line);
+    border-bottom: 2px solid var(--line);
+    padding: 0.85rem 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.12);
+    animation: drawerFadeIn 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes drawerFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .mobile-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .mobile-nav-link {
+    color: var(--storm);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.98rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.5rem;
+    display: block;
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+
+  .mobile-nav-link:hover,
+  .mobile-nav-link.active {
+    background: var(--paper);
+    color: var(--brand-accent);
+  }
+
+  .mobile-drawer-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .mobile-user-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--paper);
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--line);
+    gap: 0.75rem;
+  }
+
+  .mobile-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  .mobile-user-info .user-name {
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-logout-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #e53e3e;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .mobile-auth-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+  }
+
+  .mobile-auth-btn {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 0.75rem;
+    min-height: 2.6rem;
+  }
+
+  .mobile-lang-btn {
+    width: 100%;
+    height: 2.6rem;
+  }
+
   @media (max-width: 768px) {
-    .header-inner {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1rem;
+    .brand-logo {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.45rem;
     }
 
-    .header-actions {
-      margin-inline-start: 0;
-      width: 100%;
-      justify-content: flex-end;
+    .brand-text {
+      font-size: 1.15rem;
+    }
+
+    .header-inner {
+      padding: 0.65rem 1rem;
+      gap: 0.75rem;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .desktop-only {
+      display: none !important;
+    }
+
+    .mobile-only {
+      display: flex !important;
+    }
+
+    .mobile-drawer.mobile-only {
+      display: flex !important;
     }
   }
 </style>

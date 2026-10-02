@@ -38,6 +38,8 @@ export interface NavTranslations {
   themeToggleAriaDark: string;
   langToggleAria: string;
   langToggleLabel: string;
+  menuToggleAria: string;
+  menuCloseAria: string;
   roles: {
     superadmin: string;
     admin: string;
@@ -234,8 +236,8 @@ export const translations: Record<Locale, Translations> = {
       badge: 'منصة تعليمية لطلاب حاسبات الأزهر',
       titlePrefix: 'شروحات برمجية مركزة،',
       titleHighlight: 'خطوتك الواثقة نحو الامتياز الأكاديمي.',
-      subheading: 'منصة Codeera توفر محتوى دراسي متخصص يغطي مناهج كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر، مع مجموعات تليجرام مقفولة ومتابعة مستمرة.',
-      description: 'منصة Codeera توفر محتوى دراسي متخصص يغطي مناهج كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر، مع مجموعات تليجرام مقفولة ومتابعة مستمرة.',
+      subheading: 'منصة Codeera توفر محتوى دراسي متخصص يغطي مناهج كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر، مع دعم أكاديمي مباشر ومتابعة مستمرة لحد ما توصل للنتيجة اللي تستحقها.',
+      description: 'منصة Codeera توفر محتوى دراسي متخصص يغطي مناهج كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر، مع دعم أكاديمي مباشر ومتابعة مستمرة لحد ما توصل للنتيجة اللي تستحقها.',
       typewriterPrefix: 'المسارات الأكاديمية:',
       typewriterPhrases: [
         'تراك الذكاء الاصطناعي وتعلم الآلة',
@@ -248,8 +250,8 @@ export const translations: Record<Locale, Translations> = {
       dashboardCta: 'لوحة التحكم',
       stats: [
         { value: '+10', label: 'مقررات تخصصية متكاملة' },
-        { value: '100%', label: 'مجموعات تليجرام مقفولة' },
-        { value: 'فوري', label: 'قبول آلي عبر البوت' }
+        { value: '100%', label: 'تطابق مع توصيف المقرر الأكاديمي' },
+        { value: 'فوري', label: 'تفعيل المحتوى بعد اعتماد الدفع' }
       ],
       langToggleAria: 'Switch to English',
       langToggleLabel: 'English'
@@ -274,6 +276,8 @@ export const translations: Record<Locale, Translations> = {
       themeToggleAriaDark: 'التبديل إلى الوضع الداكن',
       langToggleAria: 'Switch to English',
       langToggleLabel: 'English',
+      menuToggleAria: 'فتح القائمة الرئيسية',
+      menuCloseAria: 'إغلاق القائمة الرئيسية',
       roles: {
         superadmin: 'مدير عام',
         admin: 'مسؤول',
@@ -301,8 +305,8 @@ export const translations: Record<Locale, Translations> = {
         step1Desc: 'تصفح المقررات المتاحة لفرقتك وقسمك (علوم حاسب، نظم، ذكاء اصطناعي)، واطلع على تفاصيل المنهج وشروحاته.',
         step2Title: 'سدد الرسوم وارفع الإيصال',
         step2Desc: 'حول الرسوم بسهولة عبر فودافون كاش أو إنستاباي، ثم ارفع لقطة شاشة للإيصال في نموذج الاشتراك المباشر.',
-        step3Title: 'اربط تليجرام وابدأ الدراسة',
-        step3Desc: 'فور اعتماد الدفع، يفتح لك المحتوى التعليمي فوراً ويتم قبولك آلياً في مجموعة التليجرام عبر البوت الذكي.'
+        step3Title: 'ابدأ دراستك فوراً',
+        step3Desc: 'فور اعتماد الدفع، يفتح لك المحتوى التعليمي بالكامل ويتم تفعيل اشتراكك تلقائياً — بدون انتظار أو تعقيد.'
       },
       courses: {
         eyebrow: 'المقررات الدراسية',
@@ -324,8 +328,8 @@ export const translations: Record<Locale, Translations> = {
             desc: 'محتوى مصور ومكتوب متوافق 100% مع توصيف المقررات الأكاديمية والمناهج المعتمدة.'
           },
           {
-            title: 'انضمام آلي وفوري للمجموعات',
-            desc: 'لا داعي لانتظار قبول المشرفين، بوت المنصة يفحص حالتك ويقبلك تلقائياً فور الاعتماد.'
+            title: 'تفعيل فوري للمحتوى',
+            desc: 'محتوى المقرر بيفتح أمامك مباشرة فور اعتماد الدفع، بدون أي انتظار أو خطوات إضافية.'
           },
           {
             title: 'اختبارات تقييم ذاتي ذكية',
@@ -343,8 +347,8 @@ export const translations: Record<Locale, Translations> = {
         subtitle: 'إجابات واضحة ومباشرة عن كافة تساؤلات الطلاب.',
         items: [
           {
-            q: 'كيف يمكنني الانضمام لمجموعة التليجرام الخاصة بالمقرر؟',
-            a: 'بعد اعتماد إيصال السداد الخاص بك، ادخل إلى صفحة المقرر أو لوحة التحكم واضغط على "ربط حساب تليجرام" لتوليد رابط الدخول الخاص بك. عند إرسال طلب الانضمام لمجموعة المقرر، يقوم بوت المنصة بالتحقق من اشتراكك وقبولك فوراً وبشكل آلي.'
+            q: 'إزاي أقدر أتواصل مع فريق المادة أو أحصل على دعم خلال المقرر؟',
+            a: 'بعد اعتماد إيصال السداد، هتلاقي في لوحة التحكم رابط الانضمام لقناة النقاش الخاصة بالمقرر. فور إرسال طلب الانضمام، هيتم تفعيله تلقائياً وفوراً من غير انتظار.'
           },
           {
             q: 'ما هي طرق الدفع المتاحة للاشتراك؟',
@@ -363,7 +367,7 @@ export const translations: Record<Locale, Translations> = {
       cta: {
         badge: 'ابدأ دراستك الآن',
         title: 'جاهز للتفوق في فصلك الدراسي؟',
-        desc: 'انضم لزملائك في كلية الحاسبات والذكاء الاصطناعي واستفد من شروحات المقررات ومجموعات التليجرام المقفولة اليوم.',
+        desc: 'انضم لزملائك في كلية الحاسبات والذكاء الاصطناعي واستفد من شروحات المقررات والدعم الأكاديمي المباشر اليوم.',
         primary: 'استكشف جميع المقررات',
         secondary: 'إنشاء حساب طالب'
       }
@@ -492,8 +496,8 @@ export const translations: Record<Locale, Translations> = {
       badge: 'Educational Platform for FCAI Al-Azhar Students',
       titlePrefix: 'Focused Tech Curriculum,',
       titleHighlight: 'Your Definitive Path to Academic Excellence.',
-      subheading: 'Codeera provides specialized coursework tailored for Faculty of Computers & Artificial Intelligence Al-Azhar students, with private Telegram community groups and continuous academic support.',
-      description: 'Codeera provides specialized coursework tailored for Faculty of Computers & Artificial Intelligence Al-Azhar students, with private Telegram community groups and continuous academic support.',
+      subheading: 'Codeera provides specialized coursework tailored for Faculty of Computers & Artificial Intelligence Al-Azhar students, with direct academic support and continuous follow-up to achieve the results you deserve.',
+      description: 'Codeera provides specialized coursework tailored for Faculty of Computers & Artificial Intelligence Al-Azhar students, with direct academic support and continuous follow-up to achieve the results you deserve.',
       typewriterPrefix: 'Academic Tracks:',
       typewriterPhrases: [
         'Artificial Intelligence & Machine Learning',
@@ -506,8 +510,8 @@ export const translations: Record<Locale, Translations> = {
       dashboardCta: 'My Dashboard',
       stats: [
         { value: '+10', label: 'Comprehensive Tech Courses' },
-        { value: '100%', label: 'Private Telegram Groups' },
-        { value: 'Instant', label: 'Automated Bot Verification' }
+        { value: '100%', label: 'Match with Academic Course Specifications' },
+        { value: 'Instant', label: 'Content Access Upon Payment Approval' }
       ],
       langToggleAria: 'التبديل إلى العربية',
       langToggleLabel: 'عربي'
@@ -532,6 +536,8 @@ export const translations: Record<Locale, Translations> = {
       themeToggleAriaDark: 'Switch to dark mode',
       langToggleAria: 'التبديل إلى العربية',
       langToggleLabel: 'عربي',
+      menuToggleAria: 'Open main navigation menu',
+      menuCloseAria: 'Close main navigation menu',
       roles: {
         superadmin: 'Superadmin',
         admin: 'Admin',
@@ -550,7 +556,7 @@ export const translations: Record<Locale, Translations> = {
     },
     home: {
       metaTitle: 'Codeera Platform | Interactive Programming & CS Courses',
-      metaDesc: 'Codeera is an interactive educational platform for programming, computer science, and AI curriculum with private Telegram groups.',
+      metaDesc: 'Codeera is an interactive educational platform for programming, computer science, and AI curriculum with direct academic support.',
       steps: {
         eyebrow: 'Quick Steps',
         title: 'How to Start Learning With Us',
@@ -559,8 +565,8 @@ export const translations: Record<Locale, Translations> = {
         step1Desc: 'Browse courses tailored to your academic year and department (CS, IS, AI) and preview syllabus outlines.',
         step2Title: 'Pay Fees & Upload Receipt',
         step2Desc: 'Transfer securely via Vodafone Cash, InstaPay, or mobile wallets, then upload the receipt screenshot.',
-        step3Title: 'Connect Telegram & Study',
-        step3Desc: 'Once payment is approved, course materials unlock immediately and our smart bot auto-admits you to the Telegram group.'
+        step3Title: 'Start Studying Immediately',
+        step3Desc: 'Once payment is approved, your full course content is unlocked and your access is activated automatically — no waiting or hassle.'
       },
       courses: {
         eyebrow: 'Course Catalog',
@@ -582,8 +588,8 @@ export const translations: Record<Locale, Translations> = {
             desc: 'Video lectures and notes 100% aligned with verified academic course specifications.'
           },
           {
-            title: 'Instant Automated Group Access',
-            desc: 'No waiting for admin approvals; the platform bot checks your enrollment and approves you instantly.'
+            title: 'Instant Content Activation',
+            desc: 'Course content opens directly upon payment approval, without any waiting or extra steps.'
           },
           {
             title: 'Smart Self-Assessment Quizzes',
@@ -601,8 +607,8 @@ export const translations: Record<Locale, Translations> = {
         subtitle: 'Direct and clear answers to common student inquiries.',
         items: [
           {
-            q: 'How do I join the course Telegram group?',
-            a: 'After your payment receipt is approved, visit the course page or your dashboard and click "Connect Telegram" to generate your personal join link. When you request to join the group, the platform bot verifies your enrollment and admits you instantly and automatically.'
+            q: 'How can I contact course instructors or get support during the course?',
+            a: 'After your payment receipt is approved, you will find the discussion channel link in your dashboard. Upon sending a join request, it is activated automatically and immediately without waiting.'
           },
           {
             q: 'What payment methods are supported?',
@@ -621,7 +627,7 @@ export const translations: Record<Locale, Translations> = {
       cta: {
         badge: 'Start Learning Now',
         title: 'Ready to Excel This Semester?',
-        desc: 'Join your classmates in the Faculty of Computers & Artificial Intelligence and gain access to comprehensive courses and private Telegram communities today.',
+        desc: 'Join your classmates in the Faculty of Computers & Artificial Intelligence and benefit from course lectures and direct academic support today.',
         primary: 'Explore All Courses',
         secondary: 'Create Student Account'
       }
