@@ -40,22 +40,49 @@ class SubmitPayment
             ]);
         }
 
+        // Check for existing active enrollment
+        $existingEnrollment = Enrollment::query()
+            ->where('user_id', $user->getKey())
+            ->where('course_id', $course->getKey())
+            ->where('term_id', $term->getKey())
+            ->where('status', 'active')
+            ->where('expires_at', '>', now())
+            ->first();
+
         // Calculate pricing
         $pricing = $this->calculateCoursePrice->handle($course);
+
+        if ($existingEnrollment instanceof Enrollment) {
+            if ($pricing['amount_due_cents'] === 0) {
+                return $existingEnrollment;
+            }
+
+            throw ValidationException::withMessages([
+                'course_id' => [__('أنت مشترك بالفعل في هذه الدورة.')],
+            ]);
+        }
 
         // If free → instant enrollment
         if ($pricing['amount_due_cents'] === 0) {
             $graceDays = (int) Setting::getValue('enrollment', 'grace_days', 0);
+            $expiresAt = $term->getAttribute('ends_at')->addDays($graceDays);
 
-            return Enrollment::create([
-                'user_id' => $user->getKey(),
-                'course_id' => $course->getKey(),
-                'term_id' => $term->getKey(),
-                'source' => 'free',
-                'status' => 'active',
-                'starts_at' => now(),
-                'expires_at' => $term->getAttribute('ends_at')->addDays($graceDays),
-            ]);
+            /** @var Enrollment $enrollment */
+            $enrollment = Enrollment::query()->updateOrCreate(
+                [
+                    'user_id' => $user->getKey(),
+                    'course_id' => $course->getKey(),
+                    'term_id' => $term->getKey(),
+                ],
+                [
+                    'source' => 'free',
+                    'status' => 'active',
+                    'starts_at' => now(),
+                    'expires_at' => $expiresAt,
+                ]
+            );
+
+            return $enrollment;
         }
 
         // Process proof image
