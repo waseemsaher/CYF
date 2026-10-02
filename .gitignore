@@ -32,3 +32,7 @@ pilot-content.json
 /frontend/.output/
 frontend/.DS_Store
 key.pem
+cert.pem
+*.pem
+lighthouse-*.json
+frontend/C:*

@@ -48,7 +48,7 @@
     {:else if errorMsg}
       <div class="error-card">
         <p>{errorMsg}</p>
-        <button type="button" onclick={() => history.back()} class="btn-back">العودة</button>
+        <button type="button" onclick={() => window.history.length > 1 ? window.history.back() : (window.location.href = '/courses')} class="btn-back">العودة</button>
       </div>
     {:else if result}
       <!-- Score summary card -->
@@ -89,7 +89,7 @@
           </div>
         {/if}
 
-        <button type="button" onclick={() => history.back()} class="btn-go-back">
+        <button type="button" onclick={() => window.history.length > 1 ? window.history.back() : (window.location.href = '/courses')} class="btn-go-back">
           العودة للمادة
         </button>
       </div>

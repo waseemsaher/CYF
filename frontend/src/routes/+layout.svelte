@@ -6,14 +6,32 @@
   import { initLocale, currentLocale, toggleLocale, t } from '$lib/i18n';
   import { FEATURES } from '$lib/config';
   import { socialLinks } from '$lib/socials';
+  import { pwaInfo } from 'virtual:pwa-info';
 
   let { children }: { children: Snippet } = $props();
 
   let isDark = $state(false);
+  let webManifestLink = $derived(pwaInfo ? pwaInfo.webManifest.linkTag : '');
 
-  onMount(() => {
+  onMount(async () => {
     initLocale();
     refreshUser(fetch);
+    if (pwaInfo) {
+      try {
+        const { registerSW } = await import('virtual:pwa-register');
+        registerSW({
+          immediate: true,
+          onRegistered(r?: ServiceWorkerRegistration) {
+            console.log('Codeera PWA Service Worker registered:', r);
+          },
+          onRegisterError(error?: unknown) {
+            console.error('Codeera PWA Service Worker registration error:', error);
+          }
+        });
+      } catch (err) {
+        console.error('Failed to register Codeera PWA Service Worker:', err);
+      }
+    }
     if (typeof document !== 'undefined') {
       const activeTheme = document.documentElement.getAttribute('data-theme') ||
                           localStorage.getItem('codeera_theme') ||
@@ -82,6 +100,11 @@
     return page.url.pathname.startsWith(href);
   }
 </script>
+
+<svelte:head>
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html webManifestLink}
+</svelte:head>
 
 <a href="#main-content" class="skip-link">{$t.nav.skipLink}</a>
 
