@@ -100,7 +100,7 @@
     {:else if errorMsg && !data}
       <div class="error-card">
         <p>{errorMsg}</p>
-        <button type="button" onclick={() => history.back()} class="btn-back">العودة</button>
+        <button type="button" onclick={() => window.history.length > 1 ? window.history.back() : (window.location.href = '/courses')} class="btn-back">العودة</button>
       </div>
     {:else if data}
       <!-- Header bar with title and sticky timer -->
