@@ -61,10 +61,7 @@ class SendCourseInviteLink
         // 48-hour expiry window
         $expireDate = now()->addHours(48)->timestamp;
 
-        $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;
-        $staticLink  = $course->getAttribute('telegram_invite_link');
-
-        // Call Telegram to create the single-use invite
+        // Call Telegram to create the invite
         $response = $this->client->createChatInviteLink(
             chatId: $chatId,
             memberLimit: 1,
@@ -74,19 +71,11 @@ class SendCourseInviteLink
 
         if (! $response->successful()) {
             Log::error('Failed to create Telegram chat invite link', [
-                'chat_id'   => $chatId,
-                'user_id'   => $user->getKey(),
+                'chat_id' => $chatId,
+                'user_id' => $user->getKey(),
                 'course_id' => $course->getKey(),
-                'response'  => $response->body(),
+                'response' => $response->body(),
             ]);
-
-            // Fall back: send plain approval message with the static join-request link if available
-            if ($staticLink) {
-                $fallback = "🎉 تم تفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\n\n"
-                    . "اضغط على الرابط التالي للانضمام إلى القناة:\n"
-                    . "<a href=\"{$staticLink}\">{$staticLink}</a>";
-                $this->client->sendMessage((int) $telegramUserId, $fallback);
-            }
 
             return false;
         }
@@ -102,24 +91,17 @@ class SendCourseInviteLink
 
         // Persist the issued invite so we can guard against duplicates
         TelegramCourseInvite::create([
-            'user_id'    => $user->getKey(),
-            'course_id'  => $course->getKey(),
+            'user_id' => $user->getKey(),
+            'course_id' => $course->getKey(),
             'invite_link' => $inviteLink,
             'expires_at' => now()->addHours(48),
         ]);
 
-        // Build the message — always include the static join-request link so the
-        // student has a reliable fallback if they can't use the single-use link.
-        $message = "🎉 تم قبول دفعك وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\n\n";
-
-        if ($staticLink) {
-            $message .= "اضغط على الرابط التالي للانضمام إلى القناة:\n"
-                . "<a href=\"{$staticLink}\">{$staticLink}</a>";
-        } else {
-            $message .= "رابط الانضمام الشخصي (صالح لمرة واحدة · 48 ساعة):\n"
-                . "{$inviteLink}\n\n"
-                . "⚠️ لا تشارك هذا الرابط مع أحد.";
-        }
+        $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;
+        $message = "🎉 مرحباً! تم تفعيل اشتراكك في مادة: <b>{$courseTitle}</b>\n\n"
+            . "انقر على الرابط التالي للانضمام إلى مجموعة التليجرام الخاصة بالمادة مباشرةً (رابط شخصي ولمرة واحدة فقط):\n"
+            . "{$inviteLink}\n\n"
+            . "⚠️ هذا الرابط صالح لمدة 48 ساعة ولشخص واحد فقط. لا تشاركه مع أحد.";
 
         $this->client->sendMessage((int) $telegramUserId, $message);
 
