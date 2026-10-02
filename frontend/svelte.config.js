@@ -52,8 +52,7 @@ const config = {
         'media-src': ['self'],
         'connect-src': Array.from(new Set(connectSrc)),
         'frame-ancestors': ['self'],
-        'form-action': ['self'],
-        'worker-src': ['self']
+        'form-action': ['self']
       }
     }
   }

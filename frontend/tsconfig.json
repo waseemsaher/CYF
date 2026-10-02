@@ -10,11 +10,6 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "types": [
-      "svelte",
-      "vite-plugin-pwa/client",
-      "vite-plugin-pwa/info",
-      "vite-plugin-pwa/svelte"
-    ]
+    "types": ["svelte"]
   }
 }

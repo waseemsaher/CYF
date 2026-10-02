@@ -278,42 +278,6 @@
   - `app` (PHP-FPM): `pm = static`, `pm.max_children = 4`, `pm.max_requests = 500`. Limits PHP-FPM worker baseline to ~47MB.
   - **Measured Baseline**: Full running production stack (`web`, `app`, `queue`, `scheduler`, `mysql`, `redis`) consumes **~304 MiB** of RAM under idle state, operating comfortably within 1GB and 2GB VM boundaries.
 
----
 
-# Progressive Web App (PWA) Decisions
 
-## 1. Plugin Integration & SvelteKit / Vercel Adapter Compatibility
-- **Plugin Selection**: Integrated `@vite-pwa/sveltekit` (official SvelteKit wrapper for `vite-plugin-pwa`) alongside SvelteKit 2 and Vite 5.
-- **Adapter Compatibility**: Fully compatible with `@sveltejs/adapter-vercel`. `@vite-pwa/sveltekit` hooks into the client build step to generate `sw.js` and `workbox-*.js` into `.svelte-kit/output/client`, which `@sveltejs/adapter-vercel` automatically packages into `.vercel/output/static`.
-- **Content Security Policy (CSP)**: SvelteKit's `csp.directives` updated with `'worker-src': ['self']` in `svelte.config.js` to ensure browsers do not block service worker script registration.
 
-## 2. Web App Manifest
-- Dynamically generated via Vite plugin config (`manifest.webmanifest`) to keep metadata in sync:
-  - `name`: "Codeera"
-  - `short_name`: "Codeera"
-  - `start_url`: "/"
-  - `scope`: "/"
-  - `display`: "standalone"
-  - `orientation`: "portrait-primary"
-  - `background_color`: `#0F282F` (Storm Green from Brand Design Tokens §14)
-  - `theme_color`: `#0F282F` (Storm Green)
-  - `lang`: "ar"
-  - `dir`: "rtl"
-- **Icon Generation**: Rasterized directly from `frontend/static/logo/app-icon.svg` using headless Chromium:
-  - Standard any icons: `pwa-192x192.png`, `pwa-512x512.png`.
-  - Maskable icon: `maskable-icon-512x512.png` with full-bleed brand gradient background and central Codeera glyph scaled to 78% (safely inside the 80% safe-zone circular boundary to prevent Android launcher clipping).
-  - Apple touch icon: `apple-touch-icon.png` (180x180) without transparent padding for iOS Safari home screen bookmarking.
-
-## 3. Service Worker & Caching Strategy
-- **Strategy**: Workbox `generateSW` with `registerType: 'autoUpdate'`, `skipWaiting: true`, and `clientsClaim: true`.
-- **Update Flow**: `autoUpdate` chosen over prompt-based update to guarantee students never remain stranded on stale cached client versions or outdated quiz logic when updates are deployed.
-- **Cache Inclusions**: App shell immutable assets (`/_app/immutable/`), stylesheets, scripts, fonts (`fonts.googleapis.com`, `fonts.gstatic.com`), and static branding assets.
-- **Strict Exclusions (NetworkOnly)**:
-  - All API routes (`/api/*` and `api.codeera.tech`).
-  - All payment and checkout pages (`/courses/*/checkout`, `/payments`, `/admin/payments`).
-  - Authentication pages (`/login`, `/register`).
-  - Added `navigateFallbackDenylist` covering all dynamic and financial endpoints.
-
-## 4. Standalone UX & Navigation Safeguards
-- Updated quiz and quiz-result back buttons to check `window.history.length > 1 ? window.history.back() : (window.location.href = '/courses')` so students running the installed standalone app never become trapped on a screen without a browser chrome back button.
-- Added `<meta name="mobile-web-app-capable" content="yes" />` and iOS Safari tags (`apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style: black-translucent`, `apple-mobile-web-app-title: Codeera`) in `app.html`.
