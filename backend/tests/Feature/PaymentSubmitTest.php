@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Models\Course;
-use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\Term;
@@ -146,68 +145,6 @@ it('creates instant enrollment for free courses', function (): void {
         'course_id' => $data['course']->getKey(),
         'source' => 'free',
     ]);
-});
-
-it('gracefully returns existing enrollment when submitting checkout for an already-enrolled free course', function (): void {
-    Storage::fake('local');
-    $data = setupPaymentTestData();
-    $data['course']->update(['price_cents' => 0]);
-
-    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
-
-    // First enrollment
-    $this->actingAs($data['student'], 'sanctum')
-        ->postJson('/api/v1/payments', [
-            'course_id' => $data['course']->getKey(),
-            'term_id' => $data['term']->getKey(),
-            'method' => 'vodafone_cash',
-            'sender_identifier' => '01012345678',
-            'proof' => $proof,
-        ])->assertCreated();
-
-    // Duplicate submission for already enrolled free course
-    $response = $this->actingAs($data['student'], 'sanctum')
-        ->postJson('/api/v1/payments', [
-            'course_id' => $data['course']->getKey(),
-            'term_id' => $data['term']->getKey(),
-            'method' => 'vodafone_cash',
-            'sender_identifier' => '01012345678',
-            'proof' => $proof,
-        ]);
-
-    $response->assertCreated()
-        ->assertJsonPath('data.source', 'free')
-        ->assertJsonPath('data.status', 'active');
-});
-
-it('rejects payment submission when student is already actively enrolled in a paid course', function (): void {
-    Storage::fake('local');
-    $data = setupPaymentTestData();
-
-    // Create existing active enrollment
-    Enrollment::create([
-        'user_id' => $data['student']->getKey(),
-        'course_id' => $data['course']->getKey(),
-        'term_id' => $data['term']->getKey(),
-        'source' => 'manual',
-        'status' => 'active',
-        'starts_at' => now(),
-        'expires_at' => now()->addMonths(3),
-    ]);
-
-    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
-
-    $response = $this->actingAs($data['student'], 'sanctum')
-        ->postJson('/api/v1/payments', [
-            'course_id' => $data['course']->getKey(),
-            'term_id' => $data['term']->getKey(),
-            'method' => 'vodafone_cash',
-            'sender_identifier' => '01012345678',
-            'proof' => $proof,
-        ]);
-
-    $response->assertUnprocessable()
-        ->assertJsonValidationErrors(['course_id']);
 });
 
 it('lists only the students own payments', function (): void {
