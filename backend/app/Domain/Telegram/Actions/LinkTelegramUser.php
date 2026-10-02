@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Telegram\Actions;
 
 use App\Domain\Telegram\Services\TelegramClient;
+use App\Models\Enrollment;
 use App\Models\TelegramLinkToken;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,7 @@ class LinkTelegramUser
 {
     public function __construct(
         private readonly TelegramClient $client,
+        private readonly SendCourseInviteLink $sendInvite,
     ) {}
 
     public function handle(int $telegramUserId, ?string $telegramUsername, string $plainToken): bool
@@ -58,6 +60,27 @@ class LinkTelegramUser
             $telegramUserId,
             "أهلاً بك يا <b>{$userName}</b>!\nتم ربط حسابك بنجاح في منصة Codeera.\n\nYour Telegram account has been linked successfully!"
         );
+
+        // Trigger B: send invite links for all currently active enrollments
+        // Reload the user to get the freshly-set telegram_user_id
+        $user = $linkToken->user->fresh();
+        if ($user) {
+            $activeEnrollments = Enrollment::query()
+                ->where('user_id', $user->getKey())
+                ->where('status', 'active')
+                ->where(function ($q): void {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })
+                ->with('course')
+                ->get();
+
+            foreach ($activeEnrollments as $enrollment) {
+                $course = $enrollment->course;
+                if ($course && $course->getAttribute('telegram_group_id')) {
+                    $this->sendInvite->handle($user, $course);
+                }
+            }
+        }
 
         return true;
     }

@@ -75,6 +75,31 @@ class TelegramClient
     }
 
     /**
+     * Create a single-use invite link for a chat.
+     *
+     * @param  int  $memberLimit  Max number of members that can join via this link (1 = single-use)
+     * @param  int|null  $expireDate  Unix timestamp after which the link is invalid (null = no expiry)
+     */
+    public function createChatInviteLink(
+        int|string $chatId,
+        int $memberLimit = 1,
+        ?int $expireDate = null,
+        bool $createsJoinRequest = false,
+    ): Response {
+        $params = [
+            'chat_id' => $chatId,
+            'member_limit' => $memberLimit,
+            'creates_join_request' => $createsJoinRequest,
+        ];
+
+        if ($expireDate !== null) {
+            $params['expire_date'] = $expireDate;
+        }
+
+        return $this->post('createChatInviteLink', $params);
+    }
+
+    /**
      * Get information about a chat (channel, group, etc.) to verify bot access.
      */
     public function getChat(int|string $chatId): Response

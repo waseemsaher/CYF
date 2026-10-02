@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Payments\Actions;
 
+use App\Jobs\SendCourseInviteLinkJob;
 use App\Jobs\SendTelegramNotificationJob;
 use App\Models\Enrollment;
 use App\Models\Payment;
@@ -87,19 +88,26 @@ class ApprovePayment
                 $course = $payment->course;
                 $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;
 
-                $msg = "تم قبول عملية الدفع وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\nيمكنك الآن الانضمام إلى مجموعة التليجرام الخاصة بالمادة.\n\nYour payment has been approved and your course access is now active!";
+                if ($course->getAttribute('telegram_group_id')) {
+                    // Primary path: push a single-use invite link directly to the student
+                    SendCourseInviteLinkJob::dispatch($student, $course);
+                } else {
+                    // Fallback: plain approval message with optional static invite link
+                    $msg = "تم قبول عملية الدفع وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\nيمكنك الآن الانضمام إلى مجموعة التليجرام الخاصة بالمادة.\n\nYour payment has been approved and your course access is now active!";
 
-                $inviteLink = $course->telegram_invite_link;
-                if ($inviteLink) {
-                    $msg .= "\n\n<a href=\"{$inviteLink}\">انضم إلى القناة / Join Channel</a>";
+                    $inviteLink = $course->telegram_invite_link;
+                    if ($inviteLink) {
+                        $msg .= "\n\n<a href=\"{$inviteLink}\">انضم إلى القناة / Join Channel</a>";
+                    }
+
+                    SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg);
                 }
-
-                SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg);
             }
 
             return $enrollment;
         });
     }
+
 
     private function resolveTeacherSharePercent(Payment $payment): int
     {
