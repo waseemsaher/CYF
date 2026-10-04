@@ -7,6 +7,7 @@
     createAdminCourse,
     updateAdminCourse,
     deleteAdminCourse,
+    getAdminTeachers,
     type AdminOverviewData,
     type AdminCourse,
     type AdminStudent,
@@ -15,17 +16,19 @@
   import { getCurrentUser } from '$lib/api/auth';
   import { currentLocale, formatPrice } from '$lib/i18n';
   import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
+  import TeacherManagement from '$lib/components/admin/TeacherManagement.svelte';
 
   let overview: AdminOverviewData | null = $state(null);
   let courses: AdminCourse[] = $state([]);
   let students: any[] = $state([]);
+  let teachersCount = $state(0);
   let loading = $state(true);
   let errorMsg = $state('');
   let isUnauthenticated = $state(false);
   let currentRole = $state('');
 
   // Active Tab
-  let activeTab = $state<'courses' | 'students' | 'activity' | 'system'>('courses');
+  let activeTab = $state<'courses' | 'teachers' | 'students' | 'activity' | 'system'>('courses');
 
   // Modal State
   let isCourseModalOpen = $state(false);
@@ -65,15 +68,24 @@
         currentRole = userRes.data.user.role || '';
       }
 
-      const [overviewRes, coursesRes, studentsRes] = await Promise.all([
+      const [overviewRes, coursesRes, studentsRes, teachersRes] = await Promise.all([
         getAdminOverview(fetch),
         getAdminCourses(fetch, 1).catch(() => ({ data: [] })),
         getAdminStudents(fetch, 1).catch(() => ({ data: [] })),
+        getAdminTeachers(fetch).catch(() => ({ data: [] })),
       ]);
 
       overview = overviewRes.data;
       courses = coursesRes.data || [];
       students = (studentsRes as any).data || [];
+      teachersCount = (teachersRes as any).data?.length || 0;
+
+      if (typeof window !== 'undefined') {
+        const urlTab = new URLSearchParams(window.location.search).get('tab');
+        if (urlTab === 'teachers' || urlTab === 'students' || urlTab === 'activity' || urlTab === 'system') {
+          activeTab = urlTab;
+        }
+      }
     } catch (e: any) {
       const msg = e?.message || '';
       if (msg.includes('401') || msg.includes('Unauthenticated')) {
@@ -246,6 +258,12 @@
           <button type="button" class="btn-create-course-header" onclick={openCreateCourseModal}>
             <span>إضافة مقرر جديد</span>
           </button>
+          <a href="/admin/teachers" class="btn-payments-queue">
+            <span>إدارة المدرسين</span>
+            {#if teachersCount > 0}
+              <span class="badge-count-static">{teachersCount}</span>
+            {/if}
+          </a>
           <a href="/admin/payments" class="btn-payments-queue">
             <span>طابور مراجعة الإيصالات</span>
             {#if overview.pending_payments_count > 0}
@@ -330,6 +348,14 @@
           onclick={() => activeTab = 'courses'}
         >
           إدارة المقررات ({courses.length})
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          class:active={activeTab === 'teachers'}
+          onclick={() => activeTab = 'teachers'}
+        >
+          إدارة المدرسين ({teachersCount})
         </button>
         <button
           type="button"
@@ -434,11 +460,11 @@
                             تعديل
                           </button>
                           <a
-                            href={`/my-courses/${course.slug}`}
+                            href={`/admin/courses/${course.id}/content?slug=${course.slug}`}
                             class="btn-sm btn-content"
                             title="إدارة فصول ومحاضرات واختبارات المادة"
                           >
-                            المحتوى
+                            إدارة المحتوى
                           </a>
                           <a
                             href={`/courses/${course.slug}`}
@@ -469,7 +495,13 @@
           {/if}
         </section>
 
-      <!-- TAB 2: STUDENTS DIRECTORY -->
+      <!-- TAB 2: TEACHERS MANAGEMENT -->
+      {:else if activeTab === 'teachers'}
+        <section class="dash-panel">
+          <TeacherManagement />
+        </section>
+
+      <!-- TAB 3: STUDENTS DIRECTORY -->
       {:else if activeTab === 'students'}
         <section class="dash-panel">
           <div class="panel-top-bar">
@@ -567,6 +599,19 @@
           </div>
 
           <div class="system-modules-grid">
+            <a href="/admin/teachers" class="sys-module-card">
+              <span class="sys-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </span>
+              <h3>إدارة المحاضرين والعمولات</h3>
+              <p>إنشاء حسابات المدرسين، تحديد نسب الأرباح، وصرف المستحقات المالية.</p>
+            </a>
+
             <a href="/admin/payments" class="sys-module-card">
               <span class="sys-icon">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -941,6 +986,15 @@
     padding: 0.15rem 0.5rem;
     border-radius: 9999px;
     animation: pulse 1.5s infinite;
+  }
+
+  .badge-count-static {
+    background: var(--brand-navy);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 900;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
   }
 
   @keyframes pulse {

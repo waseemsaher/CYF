@@ -16,6 +16,7 @@ export type CourseItem = {
   has_telegram_video?: boolean;
   is_locked: boolean;
   position: number;
+  is_published?: boolean;
   quiz?: {
     id: number;
     kind: 'quiz' | 'exam';
