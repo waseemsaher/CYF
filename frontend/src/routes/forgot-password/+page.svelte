@@ -1,68 +1,72 @@
 <script lang="ts">
-  import { page } from '$app/state';
-  import { login, currentUser } from '$lib/api/auth';
+  import { forgotPassword, currentUser } from '$lib/api/auth';
+  import { ApiError } from '$lib/api/client';
   import { t, currentLocale } from '$lib/i18n';
 
-  let email = $state(page.url.searchParams.get('email') || '');
-  let password = $state('');
+  let email = $state('');
   let loading = $state(false);
-  let errorType = $state<'required' | 'invalid' | 'generic' | 'custom' | null>(null);
-  let customError = $state('');
-  let resetSuccess = $derived(page.url.searchParams.get('reset') === 'success');
+  let submitted = $state(false);
+  let errorMessage = $state('');
 
-  let errorMessage = $derived.by(() => {
-    if (!errorType) return '';
-    if (errorType === 'required') return $t.auth.login.errors.required;
-    if (errorType === 'invalid') return $t.auth.login.errors.invalid;
-    if (errorType === 'generic') return $t.auth.login.errors.generic;
-    return customError;
-  });
-
-  function redirectUser(role?: string) {
-    let dest = '/dashboard';
-    if (role === 'superadmin' || role === 'admin') {
-      dest = '/admin';
-    } else if (role === 'teacher') {
-      dest = '/teacher';
-    }
-    window.location.href = dest;
+  function validateEmail(val: string): boolean {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(val);
   }
 
-  async function handleLogin(e: SubmitEvent) {
+  async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
-    errorType = null;
-    customError = '';
+    errorMessage = '';
 
-    if (!email || !password) {
-      errorType = 'required';
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      errorMessage = $t.auth.forgotPassword.errors.required;
+      return;
+    }
+
+    if (!validateEmail(trimmedEmail)) {
+      errorMessage = $t.auth.forgotPassword.errors.invalidEmail;
       return;
     }
 
     loading = true;
 
     try {
-      const res = await login(fetch, { email, password });
-      if (res.data?.token) {
-        const user = res.data.user;
-        const role = user?.role || (user?.roles && user.roles[0]) || '';
-        redirectUser(role);
-      }
+      await forgotPassword(fetch, trimmedEmail);
+      // Always transition to success state to protect against account enumeration
+      submitted = true;
     } catch (err: unknown) {
-      if (err instanceof Error && err.message) {
-        customError = err.message;
-        errorType = 'custom';
+      if (err instanceof ApiError) {
+        if (err.status === 429) {
+          errorMessage = $t.auth.forgotPassword.errors.throttled;
+        } else if (err.status === 422) {
+          const validationMsg = err.data?.errors?.email?.[0] || err.message;
+          errorMessage = validationMsg || $t.auth.forgotPassword.errors.invalidEmail;
+        } else {
+          errorMessage = err.message || $t.auth.forgotPassword.errors.generic;
+        }
+      } else if (err instanceof Error) {
+        if (err.message.includes('429') || err.message.toLowerCase().includes('too many')) {
+          errorMessage = $t.auth.forgotPassword.errors.throttled;
+        } else {
+          errorMessage = err.message || $t.auth.forgotPassword.errors.generic;
+        }
       } else {
-        errorType = 'invalid';
+        errorMessage = $t.auth.forgotPassword.errors.generic;
       }
     } finally {
       loading = false;
     }
   }
+
+  function handleReset() {
+    submitted = false;
+    errorMessage = '';
+  }
 </script>
 
 <svelte:head>
-  <title>{$t.auth.login.metaTitle}</title>
-  <meta name="description" content={$t.auth.login.metaDesc} />
+  <title>{$t.auth.forgotPassword.metaTitle}</title>
+  <meta name="description" content={$t.auth.forgotPassword.metaDesc} />
 </svelte:head>
 
 <div class="auth-page">
@@ -78,32 +82,48 @@
         <h2>{$t.auth.login.alreadyLoggedInTitle}</h2>
         <p>{$t.auth.login.alreadyLoggedInWelcome} <strong>{$currentUser.name}</strong> ({$currentUser.email})</p>
         <div class="already-actions">
-          <button type="button" class="btn-submit" onclick={() => redirectUser($currentUser?.role)}>
+          <a href="/dashboard" class="btn-submit">
             <span>{$t.auth.login.goToDashboard}</span>
             <span aria-hidden="true">{$currentLocale === 'ar' ? '←' : '→'}</span>
-          </button>
+          </a>
           <a href="/courses" class="btn-secondary-link">{$t.auth.login.browseCourses}</a>
+        </div>
+      </div>
+    {:else if submitted}
+      <div class="success-state" role="status" aria-live="polite">
+        <div class="success-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <h2>{$t.auth.forgotPassword.successTitle}</h2>
+        <p class="success-desc">
+          {$t.auth.forgotPassword.successMessage}
+        </p>
+        <p class="resend-note">
+          {$t.auth.forgotPassword.resendNote}
+        </p>
+
+        <div class="success-actions">
+          <a href="/login" class="btn-submit">
+            <span>{$t.auth.forgotPassword.backToLogin}</span>
+            <span aria-hidden="true">{$currentLocale === 'ar' ? '←' : '→'}</span>
+          </a>
+          <button type="button" class="btn-link" onclick={handleReset}>
+            {$currentLocale === 'ar' ? 'إرسال بريد إلكتروني آخر' : 'Send to another email'}
+          </button>
         </div>
       </div>
     {:else}
       <div class="auth-header">
-        <span class="auth-badge">{$t.auth.login.badge}</span>
-        <h1>{$t.auth.login.title}</h1>
-        <p>{$t.auth.login.subtitle}</p>
+        <span class="auth-badge">{$t.auth.forgotPassword.badge}</span>
+        <h1>{$t.auth.forgotPassword.title}</h1>
+        <p>{$t.auth.forgotPassword.subtitle}</p>
       </div>
 
-      {#if resetSuccess}
-        <div class="success-banner" role="status">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-          </svg>
-          <p>{$t.auth.resetPassword.successMessage}</p>
-        </div>
-      {/if}
-
       {#if errorMessage}
-        <div class="error-banner" role="alert">
+        <div class="error-banner" role="alert" aria-live="assertive">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
             <line x1="12" y1="9" x2="12" y2="13"></line>
@@ -113,41 +133,26 @@
         </div>
       {/if}
 
-      <form class="auth-form" onsubmit={handleLogin}>
+      <form class="auth-form" onsubmit={handleSubmit} novalidate>
         <div class="form-group">
-          <label for="email">{$t.auth.login.emailLabel}</label>
+          <label for="email">{$t.auth.forgotPassword.emailLabel}</label>
           <input
             id="email"
             type="email"
             bind:value={email}
             required
             dir="ltr"
-            placeholder={$t.auth.login.emailPlaceholder}
+            placeholder={$t.auth.forgotPassword.emailPlaceholder}
             autocomplete="email"
-          />
-        </div>
-
-        <div class="form-group">
-          <div class="label-row">
-            <label for="password">{$t.auth.login.passwordLabel}</label>
-            <a href="/forgot-password" class="forgot-link">{$t.auth.login.forgotPasswordLink}</a>
-          </div>
-          <input
-            id="password"
-            type="password"
-            bind:value={password}
-            required
-            dir="ltr"
-            placeholder={$t.auth.login.passwordPlaceholder}
-            autocomplete="current-password"
+            disabled={loading}
           />
         </div>
 
         <button type="submit" class="btn-submit" disabled={loading}>
           {#if loading}
-            <span>{$t.auth.login.submitting}</span>
+            <span>{$t.auth.forgotPassword.submitting}</span>
           {:else}
-            <span>{$t.auth.login.submit}</span>
+            <span>{$t.auth.forgotPassword.submit}</span>
             <span aria-hidden="true">{$currentLocale === 'ar' ? '←' : '→'}</span>
           {/if}
         </button>
@@ -155,8 +160,10 @@
 
       <div class="auth-footer">
         <p>
-          {$t.auth.login.noAccount}
-          <a href="/register">{$t.auth.login.registerLink}</a>
+          <a href="/login" class="back-link">
+            <span aria-hidden="true">{$currentLocale === 'ar' ? '→' : '←'}</span>
+            <span>{$t.auth.forgotPassword.backToLogin}</span>
+          </a>
         </p>
       </div>
     {/if}
@@ -183,41 +190,78 @@
     box-sizing: border-box;
   }
 
-  .already-logged-in {
+  .already-logged-in,
+  .success-state {
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    padding: 1rem 0;
+    padding: 0.5rem 0;
   }
 
-  .user-avatar {
+  .user-avatar,
+  .success-icon {
     font-size: 3rem;
-    background: rgba(var(--brand-navy-rgb), 0.08);
     width: 5rem;
     height: 5rem;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid rgba(var(--brand-navy-rgb), 0.2);
   }
 
-  .already-logged-in h2 {
+  .user-avatar {
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    border: 2px solid rgba(var(--brand-navy-rgb), 0.2);
+    color: var(--brand-navy);
+  }
+
+  .success-icon {
+    background: rgba(22, 101, 52, 0.1);
+    border: 2px solid rgba(22, 101, 52, 0.25);
+    color: #166534;
+  }
+
+  :global([data-theme='dark']) .success-icon {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #4ade80;
+  }
+
+  .already-logged-in h2,
+  .success-state h2 {
     font-size: 1.4rem;
     font-weight: 800;
     margin: 0;
     color: var(--storm);
   }
 
-  .already-logged-in p {
+  .already-logged-in p,
+  .success-desc {
     color: var(--muted);
     font-size: 0.95rem;
     margin: 0;
+    line-height: 1.6;
   }
 
-  .already-actions {
+  .resend-note {
+    font-size: 0.85rem;
+    color: var(--muted);
+    background: rgba(0, 0, 0, 0.03);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px dashed var(--line);
+    margin: 0.5rem 0 0;
+    line-height: 1.5;
+  }
+
+  :global([data-theme='dark']) .resend-note {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .already-actions,
+  .success-actions {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
@@ -231,6 +275,23 @@
     text-decoration: none;
     font-size: 0.95rem;
     padding: 0.5rem;
+    text-align: center;
+  }
+
+  .btn-link {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.5rem;
+    text-decoration: underline;
+    transition: color 150ms ease;
+  }
+
+  .btn-link:hover {
+    color: var(--storm);
   }
 
   .auth-header {
@@ -265,23 +326,6 @@
     line-height: 1.5;
   }
 
-  .success-banner {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    background: #f0fdf4;
-    border: 2px solid #bbf7d0;
-    color: #166534;
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 1.5rem;
-    font-size: 0.9rem;
-  }
-
-  .success-banner p {
-    margin: 0;
-  }
-
   .error-banner {
     display: flex;
     align-items: center;
@@ -293,6 +337,12 @@
     border-radius: 0.5rem;
     margin-bottom: 1.5rem;
     font-size: 0.9rem;
+  }
+
+  :global([data-theme='dark']) .error-banner {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
   }
 
   .error-banner p {
@@ -314,25 +364,6 @@
     box-sizing: border-box;
   }
 
-  .label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .forgot-link {
-    font-size: 0.84rem;
-    color: var(--deep-cyan);
-    font-weight: 700;
-    text-decoration: none;
-    transition: opacity 150ms ease, text-decoration 150ms ease;
-  }
-
-  .forgot-link:hover {
-    text-decoration: underline;
-    opacity: 0.85;
-  }
-
   label {
     font-size: 0.88rem;
     font-weight: 700;
@@ -348,6 +379,8 @@
     padding: 0.75rem 0.9rem;
     font-size: 0.95rem;
     font-family: inherit;
+    background: var(--card);
+    color: var(--storm);
     transition: border-color 150ms ease, box-shadow 150ms ease;
   }
 
@@ -355,6 +388,11 @@
     border-color: var(--deep-cyan);
     outline: none;
     box-shadow: 0 0 0 3px rgba(var(--brand-navy-rgb), 0.15);
+  }
+
+  input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   .btn-submit {
@@ -371,8 +409,10 @@
     justify-content: center;
     gap: 0.5rem;
     margin-top: 0.5rem;
+    text-decoration: none;
     transition: opacity 150ms ease, transform 150ms ease, background-color 150ms ease;
     width: 100%;
+    box-sizing: border-box;
   }
 
   .btn-submit:hover:not(:disabled) {
@@ -399,14 +439,17 @@
     margin: 0;
   }
 
-  .auth-footer a {
+  .back-link {
     color: var(--deep-cyan);
     font-weight: 800;
     text-decoration: none;
-    margin-inline-start: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: text-decoration 150ms ease;
   }
 
-  .auth-footer a:hover {
+  .back-link:hover {
     text-decoration: underline;
   }
 </style>

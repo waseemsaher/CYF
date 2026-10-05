@@ -40,6 +40,18 @@ export function clearAuthToken(): void {
   }
 }
 
+export class ApiError extends Error {
+  status: number;
+  data: any;
+
+  constructor(message: string, status: number, data?: any) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.data = data;
+  }
+}
+
 export async function apiGet<T>(fetcher: typeof fetch, path: string): Promise<T> {
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -57,7 +69,7 @@ export async function apiGet<T>(fetcher: typeof fetch, path: string): Promise<T>
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
-    throw new Error(errorBody?.message || `API request failed with status ${response.status}`);
+    throw new ApiError(errorBody?.message || `API request failed with status ${response.status}`, response.status, errorBody);
   }
 
   return response.json() as Promise<T>;
@@ -87,7 +99,7 @@ export async function apiPost<T>(fetcher: typeof fetch, path: string, body?: unk
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
-    throw new Error(errorBody?.message || `API request failed with status ${response.status}`);
+    throw new ApiError(errorBody?.message || `API request failed with status ${response.status}`, response.status, errorBody);
   }
 
   return response.json() as Promise<T>;
@@ -117,7 +129,7 @@ export async function apiPut<T>(fetcher: typeof fetch, path: string, body?: unkn
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
-    throw new Error(errorBody?.message || `API request failed with status ${response.status}`);
+    throw new ApiError(errorBody?.message || `API request failed with status ${response.status}`, response.status, errorBody);
   }
 
   return response.json() as Promise<T>;
@@ -141,7 +153,7 @@ export async function apiDelete<T = unknown>(fetcher: typeof fetch, path: string
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
-    throw new Error(errorBody?.message || `API request failed with status ${response.status}`);
+    throw new ApiError(errorBody?.message || `API request failed with status ${response.status}`, response.status, errorBody);
   }
 
   if (response.status === 204) {

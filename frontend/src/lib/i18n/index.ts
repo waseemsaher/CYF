@@ -141,6 +141,7 @@ export interface AuthTranslations {
     emailPlaceholder: string;
     passwordLabel: string;
     passwordPlaceholder: string;
+    forgotPasswordLink: string;
     submit: string;
     submitting: string;
     noAccount: string;
@@ -152,6 +153,56 @@ export interface AuthTranslations {
     errors: {
       required: string;
       invalid: string;
+      generic: string;
+    };
+  };
+  forgotPassword: {
+    metaTitle: string;
+    metaDesc: string;
+    badge: string;
+    title: string;
+    subtitle: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    submit: string;
+    submitting: string;
+    backToLogin: string;
+    successTitle: string;
+    successMessage: string;
+    resendNote: string;
+    errors: {
+      required: string;
+      invalidEmail: string;
+      throttled: string;
+      generic: string;
+    };
+  };
+  resetPassword: {
+    metaTitle: string;
+    metaDesc: string;
+    badge: string;
+    title: string;
+    subtitle: string;
+    emailLabel: string;
+    passwordLabel: string;
+    passwordPlaceholder: string;
+    confirmPasswordLabel: string;
+    confirmPasswordPlaceholder: string;
+    submit: string;
+    submitting: string;
+    backToLogin: string;
+    requestNewLink: string;
+    successTitle: string;
+    successMessage: string;
+    redirecting: string;
+    invalidLinkTitle: string;
+    invalidLinkMessage: string;
+    errors: {
+      required: string;
+      passwordMin: string;
+      passwordMismatch: string;
+      tokenInvalid: string;
+      throttled: string;
       generic: string;
     };
   };
@@ -410,6 +461,7 @@ export const translations: Record<Locale, Translations> = {
         emailPlaceholder: 'name@example.com',
         passwordLabel: 'كلمة المرور',
         passwordPlaceholder: '••••••••',
+        forgotPasswordLink: 'نسيت كلمة السر؟',
         submit: 'دخول',
         submitting: 'جاري تسجيل الدخول...',
         noAccount: 'ليس لديك حساب بعد؟',
@@ -422,6 +474,56 @@ export const translations: Record<Locale, Translations> = {
           required: 'يرجى إدخال البريد الإلكتروني وكلمة المرور.',
           invalid: 'بيانات الدخول غير صحيحة، يرجى المحاولة مرة أخرى.',
           generic: 'حدث خطأ أثناء تسجيل الدخول.'
+        }
+      },
+      forgotPassword: {
+        metaTitle: 'استعادة كلمة المرور | منصة Codeera',
+        metaDesc: 'استعادة وتعيين كلمة المرور لحسابك في منصة Codeera التعليمية.',
+        badge: 'استعادة الحساب',
+        title: 'نسيت كلمة المرور؟',
+        subtitle: 'أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.',
+        emailLabel: 'البريد الإلكتروني',
+        emailPlaceholder: 'name@example.com',
+        submit: 'إرسال رابط استعادة كلمة المرور',
+        submitting: 'جاري الإرسال...',
+        backToLogin: 'العودة لتسجيل الدخول',
+        successTitle: 'تم إرسال الرابط',
+        successMessage: 'إذا كان هذا البريد مسجلاً لدينا، فستصلك رسالة تحتوي على رابط لإعادة تعيين كلمة السر خلال دقائق.',
+        resendNote: 'لم تصلك الرسالة؟ تأكد من مجلد الرسائل غير المرغوب فيها (Spam) أو حاول مجدداً بعد قليل.',
+        errors: {
+          required: 'يرجى إدخال البريد الإلكتروني.',
+          invalidEmail: 'يرجى إدخال بريد إلكتروني صالح.',
+          throttled: 'لقد تجاوزت عدد المحاولات المسموح بها. يرجى الانتظار والمحاولة لاحقاً.',
+          generic: 'حدث خطأ أثناء إرسال الرابط، يرجى المحاولة مرة أخرى.'
+        }
+      },
+      resetPassword: {
+        metaTitle: 'إعادة تعيين كلمة المرور | منصة Codeera',
+        metaDesc: 'تعيين كلمة مرور جديدة لحسابك في منصة Codeera التعليمية.',
+        badge: 'أمان الحساب',
+        title: 'تعيين كلمة المرور الجديدة',
+        subtitle: 'يرجى إدخال كلمة المرور الجديدة وتأكيدها لمتابعة الدخول لحسابك.',
+        emailLabel: 'البريد الإلكتروني',
+        passwordLabel: 'كلمة المرور الجديدة',
+        passwordPlaceholder: '8 أحرف على الأقل',
+        confirmPasswordLabel: 'تأكيد كلمة المرور الجديدة',
+        confirmPasswordPlaceholder: 'أعد إدخال كلمة المرور',
+        submit: 'تغيير كلمة المرور',
+        submitting: 'جاري حفظ كلمة المرور...',
+        backToLogin: 'العودة لتسجيل الدخول',
+        requestNewLink: 'طلب رابط جديد',
+        successTitle: 'تم تغيير كلمة المرور بنجاح!',
+        successMessage: 'تم تحديث كلمة المرور لحسابك. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.',
+        redirecting: 'جاري نقلك لصفحة الدخول...',
+        invalidLinkTitle: 'رابط غير صالح أو منتهي الصلاحية',
+        invalidLinkMessage: 'يبدو أن رابط إعادة تعيين كلمة المرور غير صالح أو انتهت مدة صلاحيته (صالح لمدة 60 دقيقة). يمكنك طلب رابط جديد في أي وقت.',
+        errors: {
+          required: 'يرجى ملء جميع الحقول المطلوبة.',
+          passwordMin: 'كلمة المرور يجب أن تتكون من 8 أحرف على الأقل.',
+          passwordMismatch: 'كلمتا المرور غير متطابقتين.',
+          tokenInvalid: 'رابط إعادة التعيين غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.',
+          throttled: 'لقد تجاوزت عدد المحاولات المسموح بها. يرجى الانتظار والمحاولة لاحقاً.',
+          generic: 'حدث خطأ أثناء إعادة تعيين كلمة المرور.'
         }
       },
       register: {
@@ -670,6 +772,7 @@ export const translations: Record<Locale, Translations> = {
         emailPlaceholder: 'name@example.com',
         passwordLabel: 'Password',
         passwordPlaceholder: '••••••••',
+        forgotPasswordLink: 'Forgot password?',
         submit: 'Sign In',
         submitting: 'Signing in...',
         noAccount: "Don't have an account yet?",
@@ -682,6 +785,56 @@ export const translations: Record<Locale, Translations> = {
           required: 'Please enter your email and password.',
           invalid: 'Invalid credentials, please try again.',
           generic: 'An error occurred during sign in.'
+        }
+      },
+      forgotPassword: {
+        metaTitle: 'Forgot Password | Codeera Platform',
+        metaDesc: 'Recover and reset your account password on Codeera educational platform.',
+        badge: 'Account Recovery',
+        title: 'Forgot Password?',
+        subtitle: 'Enter your registered email address and we will send you a reset link.',
+        emailLabel: 'Email Address',
+        emailPlaceholder: 'name@example.com',
+        submit: 'Send Reset Link',
+        submitting: 'Sending...',
+        backToLogin: 'Back to Sign In',
+        successTitle: 'Reset Link Sent',
+        successMessage: 'If this email is registered with us, you will receive an email with a password reset link within a few minutes.',
+        resendNote: "Didn't receive the email? Check your spam folder or try again in a few minutes.",
+        errors: {
+          required: 'Please enter your email address.',
+          invalidEmail: 'Please enter a valid email address.',
+          throttled: 'Too many attempts. Please wait and try again later.',
+          generic: 'An unexpected error occurred. Please try again.'
+        }
+      },
+      resetPassword: {
+        metaTitle: 'Reset Password | Codeera Platform',
+        metaDesc: 'Set a new password for your account on Codeera educational platform.',
+        badge: 'Account Security',
+        title: 'Reset Your Password',
+        subtitle: 'Enter and confirm your new password to restore access to your account.',
+        emailLabel: 'Email Address',
+        passwordLabel: 'New Password',
+        passwordPlaceholder: 'At least 8 characters',
+        confirmPasswordLabel: 'Confirm New Password',
+        confirmPasswordPlaceholder: 'Re-enter your new password',
+        submit: 'Reset Password',
+        submitting: 'Resetting password...',
+        backToLogin: 'Back to Sign In',
+        requestNewLink: 'Request a new reset link',
+        successTitle: 'Password Reset Successfully!',
+        successMessage: 'Your password has been updated. You can now log in with your new password.',
+        redirecting: 'Redirecting to sign in...',
+        invalidLinkTitle: 'Invalid or Expired Link',
+        invalidLinkMessage: 'This password reset link is invalid or has expired (links expire after 60 minutes). Please request a new link.',
+        errors: {
+          required: 'Please fill in all required fields.',
+          passwordMin: 'Password must be at least 8 characters long.',
+          passwordMismatch: 'Passwords do not match.',
+          tokenInvalid: 'This password reset link is invalid or has expired. Please request a new one.',
+          throttled: 'Too many attempts. Please wait and try again later.',
+          generic: 'An error occurred while resetting your password.'
         }
       },
       register: {

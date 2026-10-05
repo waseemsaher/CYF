@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -27,6 +28,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::preventLazyLoading(! $this->app->environment('production'));
+
+        ResetPassword::createUrlUsing(function ($notifiable, string $token): string {
+            $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:5173'), '/');
+
+            return "{$frontendUrl}/reset-password?token={$token}&email=" . urlencode($notifiable->getEmailForPasswordReset());
+        });
 
         $this->configureRateLimiting();
     }

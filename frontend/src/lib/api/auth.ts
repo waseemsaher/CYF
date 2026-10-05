@@ -116,3 +116,28 @@ export function logout(): void {
 export function isAuthenticated(): boolean {
   return getAuthToken() !== null;
 }
+
+export type ResetPasswordCredentials = {
+  token: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+};
+
+export type MessageResponse = {
+  message: string;
+};
+
+export async function forgotPassword(
+  fetcher: typeof fetch = fetch,
+  email: string
+): Promise<MessageResponse> {
+  return apiPost<MessageResponse>(fetcher, '/forgot-password', { email });
+}
+
+export async function resetPassword(
+  fetcher: typeof fetch = fetch,
+  credentials: ResetPasswordCredentials
+): Promise<MessageResponse> {
+  return apiPost<MessageResponse>(fetcher, '/reset-password', credentials);
+}
