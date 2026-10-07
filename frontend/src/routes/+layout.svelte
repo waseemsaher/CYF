@@ -70,8 +70,8 @@
     }
   }
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     window.location.href = '/';
   }
 

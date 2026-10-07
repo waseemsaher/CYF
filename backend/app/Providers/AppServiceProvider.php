@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
         ResetPassword::createUrlUsing(function ($notifiable, string $token): string {
             $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:5173'), '/');
 
-            return "{$frontendUrl}/reset-password?token={$token}&email=" . urlencode($notifiable->getEmailForPasswordReset());
+            return "{$frontendUrl}/reset-password?token={$token}&email=".urlencode($notifiable->getEmailForPasswordReset());
         });
 
         $this->configureRateLimiting();

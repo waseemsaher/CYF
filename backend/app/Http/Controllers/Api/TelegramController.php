@@ -87,11 +87,8 @@ class TelegramController extends Controller
      * Telegram Bot Webhook endpoint.
      * Protected by X-Telegram-Bot-Api-Secret-Token.
      */
-    public function webhook(
-        Request $request,
-        LinkTelegramUser $linkUser,
-        ProcessJoinRequest $processJoin,
-    ): JsonResponse {
+    public function webhook(Request $request): JsonResponse
+    {
         $secretToken = (string) config('telegram.webhook_secret', '');
         $receivedSecret = (string) $request->header('X-Telegram-Bot-Api-Secret-Token', '');
 
@@ -112,7 +109,7 @@ class TelegramController extends Controller
             $username = $joinRequest['from']['username'] ?? null;
 
             if ($chatId !== null && $fromId !== null) {
-                $processJoin->handle($chatId, (int) $fromId, $username);
+                app(ProcessJoinRequest::class)->handle($chatId, (int) $fromId, $username);
             }
 
             return response()->json(['ok' => true]);
@@ -130,7 +127,7 @@ class TelegramController extends Controller
                 $token = isset($parts[1]) ? trim($parts[1]) : '';
 
                 if ($token !== '') {
-                    $linkUser->handle((int) $fromId, $username, $token);
+                    app(LinkTelegramUser::class)->handle((int) $fromId, $username, $token);
                 }
             }
 

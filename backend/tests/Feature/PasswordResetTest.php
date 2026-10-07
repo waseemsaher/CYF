@@ -3,11 +3,11 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Auth\Notifications\ResetPassword;
 
 uses(RefreshDatabase::class);
 
@@ -23,23 +23,24 @@ it('sends a password reset link to existing user with configured frontend URL', 
     ]);
 
     $response->assertStatus(200)
-        ->assertJsonPath('message', __('passwords.sent'));
+        ->assertJsonPath('message', 'لو كان البريد الإلكتروني ده مسجل عندنا، هيوصلك رابط إعادة تعيين كلمة السر خلال دقائق.');
 
     Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user): bool {
         $mail = $notification->toMail($user);
-        $expectedPrefix = config('app.frontend_url') . '/reset-password?token=' . $notification->token;
+        $expectedPrefix = config('app.frontend_url').'/reset-password?token='.$notification->token;
 
         return str_starts_with($mail->actionUrl, $expectedPrefix)
-            && str_contains($mail->actionUrl, 'email=' . urlencode($user->email));
+            && str_contains($mail->actionUrl, 'email='.urlencode($user->email));
     });
 });
 
-it('handles forgot-password for non-existent email without 500 error', function (): void {
+it('handles forgot-password for non-existent email returning identical message to prevent account enumeration', function (): void {
     $response = $this->postJson('/api/v1/forgot-password', [
         'email' => 'notfound@example.com',
     ]);
 
-    $response->assertStatus(200);
+    $response->assertStatus(200)
+        ->assertJsonPath('message', 'لو كان البريد الإلكتروني ده مسجل عندنا، هيوصلك رابط إعادة تعيين كلمة السر خلال دقائق.');
 });
 
 it('validates email on forgot-password', function (): void {
@@ -51,11 +52,14 @@ it('validates email on forgot-password', function (): void {
         ->assertJsonValidationErrors(['email']);
 });
 
-it('resets password successfully with valid token and email', function (): void {
+it('resets password successfully with valid token and email and revokes existing tokens', function (): void {
     $user = User::factory()->create([
         'email' => 'student@example.com',
         'password' => Hash::make('OldPassword123!'),
     ]);
+    $user->createToken('device-1');
+    $user->createToken('device-2');
+    expect($user->tokens()->count())->toBe(2);
 
     $token = Password::broker()->createToken($user);
 
@@ -70,7 +74,8 @@ it('resets password successfully with valid token and email', function (): void 
         ->assertJsonPath('message', __('passwords.reset'));
 
     $user->refresh();
-    expect(Hash::check('NewSecretPassword123!', $user->password))->toBeTrue();
+    expect(Hash::check('NewSecretPassword123!', $user->password))->toBeTrue()
+        ->and($user->tokens()->count())->toBe(0);
 });
 
 it('fails to reset password with invalid token', function (): void {

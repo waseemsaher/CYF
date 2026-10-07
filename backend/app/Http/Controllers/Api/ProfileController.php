@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class ProfileController extends Controller
 {
@@ -77,7 +78,7 @@ class ProfileController extends Controller
         ])->save();
 
         $currentToken = $request->user()?->currentAccessToken();
-        if ($currentToken instanceof \Laravel\Sanctum\PersonalAccessToken) {
+        if ($currentToken instanceof PersonalAccessToken) {
             $user->tokens()->where('id', '!=', $currentToken->id)->delete();
         }
 

@@ -24,7 +24,7 @@ class SendCourseInviteLink
     ) {}
 
     /**
-     * @return bool  true if a message was sent, false if skipped (already outstanding) or no group configured
+     * @return bool true if a message was sent, false if skipped (already outstanding) or no group configured
      */
     public function handle(User $user, Course $course): bool
     {
@@ -99,9 +99,9 @@ class SendCourseInviteLink
 
         $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;
         $message = "🎉 مرحباً! تم تفعيل اشتراكك في مادة: <b>{$courseTitle}</b>\n\n"
-            . "انقر على الرابط التالي للانضمام إلى مجموعة التليجرام الخاصة بالمادة مباشرةً (رابط شخصي ولمرة واحدة فقط):\n"
-            . "{$inviteLink}\n\n"
-            . "⚠️ هذا الرابط صالح لمدة 48 ساعة ولشخص واحد فقط. لا تشاركه مع أحد.";
+            ."انقر على الرابط التالي للانضمام إلى مجموعة التليجرام الخاصة بالمادة مباشرةً (رابط شخصي ولمرة واحدة فقط):\n"
+            ."{$inviteLink}\n\n"
+            .'⚠️ هذا الرابط صالح لمدة 48 ساعة ولشخص واحد فقط. لا تشاركه مع أحد.';
 
         $this->client->sendMessage((int) $telegramUserId, $message);
 

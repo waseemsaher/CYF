@@ -308,4 +308,3 @@ it('prevents race conditions between approve and reject operations and maintains
     expect($enrollment)->not->toBeNull();
     expect($enrollment->status)->toBe('active');
 });
-

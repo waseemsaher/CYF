@@ -128,7 +128,7 @@ it('logs out authenticated user and revokes the current access token', function 
 
     $token = $user->createToken('auth-token');
 
-    $response = $this->withHeader('Authorization', 'Bearer ' . $token->plainTextToken)
+    $response = $this->withHeader('Authorization', 'Bearer '.$token->plainTextToken)
         ->postJson('/api/v1/logout');
 
     $response->assertStatus(200)
@@ -140,7 +140,7 @@ it('logs out authenticated user and revokes the current access token', function 
 
     app('auth')->forgetGuards();
 
-    $subsequentResponse = $this->withHeader('Authorization', 'Bearer ' . $token->plainTextToken)
+    $subsequentResponse = $this->withHeader('Authorization', 'Bearer '.$token->plainTextToken)
         ->getJson('/api/v1/me');
 
     $subsequentResponse->assertStatus(401);

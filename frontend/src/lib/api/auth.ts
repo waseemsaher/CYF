@@ -107,7 +107,15 @@ export async function register(fetcher: typeof fetch = fetch, data: RegisterData
   return res;
 }
 
-export function logout(): void {
+export async function logout(fetcher: typeof fetch = fetch): Promise<void> {
+  const token = getAuthToken();
+  if (token) {
+    try {
+      await apiPost(fetcher, '/logout', {});
+    } catch {
+      // Ignore network or token errors during logout
+    }
+  }
   clearAuthToken();
   currentUser.set(null);
   authChecked.set(true);

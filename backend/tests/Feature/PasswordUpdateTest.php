@@ -60,7 +60,7 @@ test('password update revokes other personal access tokens but preserves current
 
     expect($user->tokens()->count())->toBe(3);
 
-    $response = $this->withHeader('Authorization', 'Bearer ' . $currentToken->plainTextToken)
+    $response = $this->withHeader('Authorization', 'Bearer '.$currentToken->plainTextToken)
         ->putJson('/api/v1/profile/password', [
             'current_password' => 'OldPassword123!',
             'password' => 'NewSecretPassword456!',
