@@ -6,7 +6,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property int $course_id
+ * @property string $invite_link
+ * @property Carbon $expires_at
+ * @property Carbon|null $used_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User $user
+ * @property-read Course $course
+ */
 class TelegramCourseInvite extends Model
 {
     protected $table = 'telegram_course_invites';
@@ -20,6 +33,14 @@ class TelegramCourseInvite extends Model
         'invite_link',
         'expires_at',
         'used_at',
+    ];
+
+    /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'expires_at' => 'datetime',
+        'used_at' => 'datetime',
     ];
 
     /**
