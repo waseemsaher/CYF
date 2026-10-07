@@ -37,6 +37,10 @@ class ApprovePayment
                 return $existing;
             }
 
+            if (! $payment->isPending()) {
+                throw new \DomainException("Only pending payments can be approved. Current status: {$payment->getAttribute('status')}");
+            }
+
             // Calculate revenue shares
             $amountDueCents = (int) $payment->getAttribute('amount_due_cents');
             $teacherSharePercent = $this->resolveTeacherSharePercent($payment);

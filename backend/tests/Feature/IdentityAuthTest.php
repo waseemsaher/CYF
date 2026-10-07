@@ -117,3 +117,37 @@ it('authenticates subsequent request via Sanctum SPA session cookie across codee
     $meResponse->assertStatus(200)
         ->assertJsonPath('data.user.email', 'spa-student@example.com');
 });
+
+it('logs out authenticated user and revokes the current access token', function (): void {
+    Role::firstOrCreate(['name' => 'student', 'guard_name' => 'web']);
+
+    $user = User::factory()->create([
+        'email' => 'logout-student@example.com',
+    ]);
+    $user->assignRole('student');
+
+    $token = $user->createToken('auth-token');
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $token->plainTextToken)
+        ->postJson('/api/v1/logout');
+
+    $response->assertStatus(200)
+        ->assertJsonPath('message', 'تم تسجيل الخروج بنجاح.');
+
+    $this->assertDatabaseMissing('personal_access_tokens', [
+        'id' => $token->accessToken->id,
+    ]);
+
+    app('auth')->forgetGuards();
+
+    $subsequentResponse = $this->withHeader('Authorization', 'Bearer ' . $token->plainTextToken)
+        ->getJson('/api/v1/me');
+
+    $subsequentResponse->assertStatus(401);
+});
+
+it('requires authentication for logout endpoint', function (): void {
+    $response = $this->postJson('/api/v1/logout');
+
+    $response->assertStatus(401);
+});

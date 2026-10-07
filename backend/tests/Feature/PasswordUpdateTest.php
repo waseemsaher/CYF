@@ -48,3 +48,28 @@ test('password update fails with invalid current password', function (): void {
     $response->assertStatus(422)
         ->assertJsonValidationErrors(['current_password']);
 });
+
+test('password update revokes other personal access tokens but preserves current token', function (): void {
+    $user = User::factory()->create([
+        'password' => Hash::make('OldPassword123!'),
+    ]);
+
+    $currentToken = $user->createToken('current-device');
+    $otherToken1 = $user->createToken('other-device-1');
+    $otherToken2 = $user->createToken('other-device-2');
+
+    expect($user->tokens()->count())->toBe(3);
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $currentToken->plainTextToken)
+        ->putJson('/api/v1/profile/password', [
+            'current_password' => 'OldPassword123!',
+            'password' => 'NewSecretPassword456!',
+            'password_confirmation' => 'NewSecretPassword456!',
+        ]);
+
+    $response->assertOk();
+
+    $user->refresh();
+    expect($user->tokens()->count())->toBe(1)
+        ->and($user->tokens()->first()->id)->toBe($currentToken->accessToken->id);
+});

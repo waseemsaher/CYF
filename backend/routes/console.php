@@ -44,4 +44,5 @@ Artisan::command('telegram:set-webhook {--info}', function () {
 })->purpose('Register or inspect the Telegram webhook');
 
 Schedule::command('telegram:remove-expired')->daily();
+Schedule::command('sanctum:prune-expired --hours=24')->daily();
 Schedule::command('db:backup')->dailyAt('02:00');

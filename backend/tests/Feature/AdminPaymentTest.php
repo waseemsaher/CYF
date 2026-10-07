@@ -238,3 +238,74 @@ it('dispatches queued SendTelegramNotificationJob when admin rejects a payment w
     });
     Mail::assertNothingQueued();
 });
+
+it('fails cleanly when attempting to approve an already rejected payment without creating an enrollment', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    // Reject first
+    $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'Invalid receipt',
+        ])
+        ->assertOk();
+
+    // Attempt to approve rejected payment
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Only pending payments can be approved. Current status: rejected');
+
+    // Confirm no enrollment was created
+    $enrollmentCount = Enrollment::query()
+        ->where('payment_id', $data['payment']->getKey())
+        ->count();
+
+    expect($enrollmentCount)->toBe(0);
+});
+
+it('fails cleanly when attempting to reject an already approved payment', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    // Approve first
+    $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve')
+        ->assertOk();
+
+    // Attempt to reject approved payment
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'Too late',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Only pending payments can be rejected. Current status: approved');
+
+    // Confirm payment status remains approved
+    expect($data['payment']->fresh()->status)->toBe('approved');
+});
+
+it('prevents race conditions between approve and reject operations and maintains consistent state', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    // Simulate concurrent/conflicting operations: First operation succeeds
+    $approveResponse = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+    $approveResponse->assertOk();
+
+    // Second conflicting operation fails with 422 because status is no longer pending
+    $rejectResponse = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'Conflicting reject attempt',
+        ]);
+    $rejectResponse->assertStatus(422);
+
+    // Assert final database state is strictly consistent (approved status matches active enrollment)
+    $payment = $data['payment']->fresh();
+    expect($payment->status)->toBe('approved');
+
+    $enrollment = Enrollment::query()->where('payment_id', $payment->getKey())->first();
+    expect($enrollment)->not->toBeNull();
+    expect($enrollment->status)->toBe('active');
+});
+

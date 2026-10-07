@@ -187,7 +187,40 @@ test('students cannot access admin or teacher endpoints', function (): void {
         ->assertForbidden();
 
     $this->actingAs($student)
+        ->getJson('/api/v1/admin/courses')
+        ->assertForbidden();
+
+    $this->actingAs($student)
+        ->getJson('/api/v1/admin/students')
+        ->assertForbidden();
+
+    $this->actingAs($student)
         ->getJson('/api/v1/teacher/dashboard')
+        ->assertForbidden();
+
+    $this->actingAs($student)
+        ->getJson('/api/v1/teacher/courses/1/students')
+        ->assertForbidden();
+});
+
+test('teachers can access teacher dashboard but are blocked from admin routes', function (): void {
+    $teacher = User::factory()->create();
+    $teacher->assignRole('teacher');
+
+    $this->actingAs($teacher)
+        ->getJson('/api/v1/teacher/dashboard')
+        ->assertOk();
+
+    $this->actingAs($teacher)
+        ->getJson('/api/v1/admin/overview')
+        ->assertForbidden();
+
+    $this->actingAs($teacher)
+        ->getJson('/api/v1/admin/settings')
+        ->assertForbidden();
+
+    $this->actingAs($teacher)
+        ->getJson('/api/v1/admin/payments')
         ->assertForbidden();
 });
 

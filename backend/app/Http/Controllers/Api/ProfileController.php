@@ -76,6 +76,11 @@ class ProfileController extends Controller
             'must_change_password' => false,
         ])->save();
 
+        $currentToken = $request->user()?->currentAccessToken();
+        if ($currentToken instanceof \Laravel\Sanctum\PersonalAccessToken) {
+            $user->tokens()->where('id', '!=', $currentToken->id)->delete();
+        }
+
         return response()->json([
             'message' => 'Password updated successfully.',
             'data' => [
