@@ -7,36 +7,48 @@ namespace App\Domain\Payments\Actions;
 use App\Jobs\SendTelegramNotificationJob;
 use App\Models\Payment;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class RejectPayment
 {
     public function handle(Payment $payment, User $reviewer, string $reason): Payment
     {
-        $payment->update([
-            'status' => 'rejected',
-            'rejection_reason' => $reason,
-            'reviewed_by' => $reviewer->getKey(),
-            'reviewed_at' => now(),
-        ]);
+        return DB::transaction(function () use ($payment, $reviewer, $reason): Payment {
+            /** @var Payment $payment */
+            $payment = Payment::query()
+                ->lockForUpdate()
+                ->findOrFail($payment->getKey());
 
-        activity('payment')
-            ->performedOn($payment)
-            ->causedBy($reviewer)
-            ->withProperties([
-                'payment_id' => $payment->getKey(),
-                'reason' => $reason,
-            ])
-            ->log('payment_rejected');
+            if (! $payment->isPending()) {
+                throw new \DomainException("Only pending payments can be rejected. Current status: {$payment->getAttribute('status')}");
+            }
 
-        $student = $payment->user;
-        if ($student && $student->telegram_user_id) {
-            $courseTitle = $payment->course->getTranslation('title', 'ar') ?: $payment->course->slug;
+            $payment->update([
+                'status' => 'rejected',
+                'rejection_reason' => $reason,
+                'reviewed_by' => $reviewer->getKey(),
+                'reviewed_at' => now(),
+            ]);
 
-            $msg = "نأسف، تم رفض إيصال الدفع لمادة: <b>{$courseTitle}</b>.\nالسبب: <i>{$reason}</i>\nيمكنك إعادة رفع إيصال صحيح من حسابك.\n\nYour payment proof was rejected. Reason: {$reason}";
+            activity('payment')
+                ->performedOn($payment)
+                ->causedBy($reviewer)
+                ->withProperties([
+                    'payment_id' => $payment->getKey(),
+                    'reason' => $reason,
+                ])
+                ->log('payment_rejected');
 
-            SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg);
-        }
+            $student = $payment->user;
+            if ($student && $student->telegram_user_id) {
+                $courseTitle = $payment->course->getTranslation('title', 'ar') ?: $payment->course->slug;
 
-        return $payment;
+                $msg = "نأسف، تم رفض إيصال الدفع لمادة: <b>{$courseTitle}</b>.\nالسبب: <i>{$reason}</i>\nيمكنك إعادة رفع إيصال صحيح من حسابك.\n\nYour payment proof was rejected. Reason: {$reason}";
+
+                SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg);
+            }
+
+            return $payment;
+        });
     }
 }

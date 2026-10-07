@@ -44,6 +44,7 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:telegram-webhook');
 
     Route::middleware('auth:sanctum')->group(function (): void {
+        Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [ProfileController::class, 'show']);
         Route::put('/profile', [ProfileController::class, 'update']);
         Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
