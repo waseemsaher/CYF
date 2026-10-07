@@ -96,27 +96,18 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout(Request $request): JsonResponse
-    {
-        $request->user()->currentAccessToken()->delete();
-
-        return response()->json([
-            'message' => 'تم تسجيل الخروج بنجاح.',
-        ]);
-    }
-
     public function forgotPassword(Request $request): JsonResponse
     {
         $request->validate([
             'email' => ['required', 'email'],
         ]);
 
-        Password::sendResetLink(
+        $status = Password::sendResetLink(
             $request->only('email')
         );
 
         return response()->json([
-            'message' => 'لو كان البريد الإلكتروني ده مسجل عندنا، هيوصلك رابط إعادة تعيين كلمة السر خلال دقائق.',
+            'message' => __($status),
         ]);
     }
 
@@ -135,8 +126,6 @@ class AuthController extends Controller
                     'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
-
-                $user->tokens()->delete();
             }
         );
 

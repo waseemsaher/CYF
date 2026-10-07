@@ -87,11 +87,7 @@ class AdminPaymentController extends Controller
         /** @var Payment $payment */
         $payment = Payment::query()->findOrFail($id);
 
-        try {
-            $enrollment = $approvePayment->handle($payment, $user);
-        } catch (\DomainException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
+        $enrollment = $approvePayment->handle($payment, $user);
 
         return (new EnrollmentResource($enrollment))
             ->response()
@@ -111,11 +107,7 @@ class AdminPaymentController extends Controller
         /** @var Payment $payment */
         $payment = Payment::query()->findOrFail($id);
 
-        try {
-            $rejectPayment->handle($payment, $user, $request->validated('rejection_reason'));
-        } catch (\DomainException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
+        $rejectPayment->handle($payment, $user, $request->validated('rejection_reason'));
 
         return (new PaymentResource($payment->fresh()))->response();
     }
