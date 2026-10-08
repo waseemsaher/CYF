@@ -7,6 +7,7 @@ namespace App\Domain\Payments\Actions;
 use App\Domain\Enrollment\Actions\ActivateEnrollment;
 use App\Jobs\SendCourseInviteLinkJob;
 use App\Jobs\SendTelegramNotificationJob;
+use App\Mail\PaymentApprovedMail;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
@@ -14,6 +15,7 @@ use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class ApprovePayment
 {
@@ -114,6 +116,8 @@ class ApprovePayment
 
                     SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg)->afterCommit();
                 }
+            } elseif ($student && $student->email) {
+                Mail::to($student->email)->queue((new PaymentApprovedMail($payment))->afterCommit());
             }
 
             return $enrollment;

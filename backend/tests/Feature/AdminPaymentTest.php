@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Jobs\SendCourseInviteLinkJob;
 use App\Jobs\SendTelegramNotificationJob;
+use App\Mail\PaymentApprovedMail;
+use App\Mail\PaymentRejectedMail;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
@@ -372,4 +374,40 @@ it('fails with 422 when approving payment if user already has an active enrollme
 
     $response->assertStatus(422)
         ->assertJsonPath('message', 'The user already has an active enrollment for this course in this term.');
+});
+
+it('sends PaymentApprovedMail when approved student has email but no telegram', function (): void {
+    Mail::fake();
+    Queue::fake();
+    $data = setupAdminPaymentTestData();
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertOk();
+
+    Mail::assertQueued(PaymentApprovedMail::class, function (PaymentApprovedMail $mail) use ($data): bool {
+        return $mail->hasTo($data['student']->email) && $mail->afterCommit === true;
+    });
+    Queue::assertNotPushed(SendTelegramNotificationJob::class);
+});
+
+it('sends PaymentRejectedMail with reason when rejected student has email but no telegram', function (): void {
+    Mail::fake();
+    Queue::fake();
+    $data = setupAdminPaymentTestData();
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'صورة غير واضحة',
+        ]);
+
+    $response->assertOk();
+
+    Mail::assertQueued(PaymentRejectedMail::class, function (PaymentRejectedMail $mail) use ($data): bool {
+        return $mail->hasTo($data['student']->email)
+            && $mail->reason === 'صورة غير واضحة'
+            && $mail->afterCommit === true;
+    });
+    Queue::assertNotPushed(SendTelegramNotificationJob::class);
 });
