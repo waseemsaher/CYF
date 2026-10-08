@@ -411,3 +411,14 @@ it('sends PaymentRejectedMail with reason when rejected student has email but no
     });
     Queue::assertNotPushed(SendTelegramNotificationJob::class);
 });
+
+it('fails with 422 when approving payment if teacher share percent is out of range', function (): void {
+    $data = setupAdminPaymentTestData();
+    $data['course']->update(['teacher_share_percent' => 120]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Teacher share percent must be between 0 and 100. Current value: 120');
+});

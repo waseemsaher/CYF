@@ -36,7 +36,7 @@ class UpdateCourseRequest extends FormRequest
             'telegram_channel_id' => ['sometimes', 'nullable', 'integer'],
             'telegram_group_id' => ['sometimes', 'nullable', 'integer'],
             'telegram_invite_link' => ['sometimes', 'nullable', 'url', 'max:255'],
-            'teacher_share_percent' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:100'],
+            'teacher_share_percent' => ['sometimes', 'nullable', 'integer', 'between:0,100'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
             'audiences' => ['sometimes', 'array'],
             'audiences.*.academic_year_id' => ['required', 'integer', 'exists:academic_years,id'],

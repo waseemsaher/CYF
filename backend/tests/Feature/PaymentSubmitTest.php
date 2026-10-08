@@ -340,3 +340,50 @@ it('deletes stored proof file when payment creation fails to prevent orphan file
 
     expect(Storage::disk('local')->allFiles('proofs'))->toBeEmpty();
 });
+
+it('rejects payment submission for a term that has already ended', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $endedTerm = Term::create([
+        'name' => ['ar' => 'فصل منتهي', 'en' => 'Ended Term'],
+        'starts_at' => now()->subMonths(6),
+        'ends_at' => now()->subDay(),
+        'is_current' => false,
+        'sort_order' => 99,
+    ]);
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $endedTerm->getKey(),
+            'method' => 'vodafone_cash',
+            'sender_identifier' => '01012345678',
+            'proof' => $proof,
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['term_id']);
+});
+
+it('rejects payment submission with an invalid payment method', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+            'method' => 'unsupported_cryptocurrency',
+            'sender_identifier' => '01012345678',
+            'proof' => $proof,
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['method'])
+        ->assertJsonPath('errors.method.0', 'طريقة الدفع المختارة غير صالحة.');
+});

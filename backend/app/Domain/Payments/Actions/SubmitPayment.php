@@ -9,6 +9,7 @@ use App\Domain\Enrollment\Actions\ActivateEnrollment;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
+use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -36,6 +37,16 @@ class SubmitPayment
                     ->whereKey($user->getKey())
                     ->lockForUpdate()
                     ->first();
+
+                // Check if term is already over
+                $graceDays = (int) Setting::getValue('enrollment', 'grace_days', 0);
+                $endsAt = $term->getAttribute('ends_at');
+                $expiresAt = $endsAt?->copy()->addDays($graceDays);
+                if ($expiresAt && ! $expiresAt->isFuture()) {
+                    throw ValidationException::withMessages([
+                        'term_id' => [__('الفصل الدراسي المختار قد انتهى بالفعل.')],
+                    ]);
+                }
 
                 // Check for existing active non-expired enrollment
                 $existingActiveEnrollment = Enrollment::query()
