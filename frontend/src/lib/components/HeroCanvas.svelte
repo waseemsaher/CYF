@@ -38,7 +38,7 @@
   };
 
   // Brand tokens extracted from CSS variables
-  let brandAccentRgb = '200, 43, 52';
+  let brandAccentRgb = '34, 211, 238';
   let secondaryRgb = '213, 203, 193';
 
   function readBrandTokens() {

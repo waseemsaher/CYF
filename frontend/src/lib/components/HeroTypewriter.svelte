@@ -156,7 +156,7 @@
     display: inline-flex;
     align-items: center;
     color: #FAF8F5;
-    text-shadow: 0 0 16px rgba(200, 43, 52, 0.35);
+    text-shadow: 0 0 16px rgba(34, 211, 238, 0.35);
   }
 
   .typewriter-text {
@@ -169,10 +169,10 @@
     display: inline-block;
     width: 2px;
     height: 1.15em;
-    background-color: var(--brand-accent, #C82B34);
+    background-color: var(--brand-accent, #22D3EE);
     margin-inline-start: 2px;
     border-radius: 1px;
-    box-shadow: 0 0 8px rgba(200, 43, 52, 0.7);
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.7);
     animation: cursorBlink 1s infinite;
   }
 

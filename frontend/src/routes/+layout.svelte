@@ -404,16 +404,16 @@
     --text-main: #1A1918;
     --text-muted: #6B6864;
     --brand-navy: #2A3B6A;
-    --brand-accent: #C82B34;
+    --brand-accent: #22D3EE;
 
     /* RGB triplets for opacity blending */
     --brand-navy-rgb: 42, 59, 106;
-    --brand-accent-rgb: 200, 43, 52;
+    --brand-accent-rgb: 34, 211, 238;
     --bg-secondary-rgb: 213, 203, 193;
 
     /* Semantic Aliases mapped directly to user tokens */
     --storm: #1A1918;
-    --cyan: #C82B34;
+    --cyan: #22D3EE;
     --ink: #1A1918;
     --muted: #6B6864;
     --paper: #E5E2DD;
@@ -444,13 +444,13 @@
     --text-main: #FAF8F5;
     --text-muted: #9E9A94;
     --brand-navy: #5B7AC7;
-    --brand-accent: #E8454F;
+    --brand-accent: #67E3F5;
 
     --brand-navy-rgb: 91, 122, 199;
-    --brand-accent-rgb: 232, 69, 79;
+    --brand-accent-rgb: 103, 227, 245;
 
     --storm: #FAF8F5;
-    --cyan: #E8454F;
+    --cyan: #67E3F5;
     --ink: #FAF8F5;
     --muted: #9E9A94;
     --paper: #121211;
@@ -458,7 +458,7 @@
     --card-hover: #242220;
     --line: #33302C;
     --line-subtle: #292623;
-    --line-bold: #E8454F;
+    --line-bold: #67E3F5;
     --deep-cyan: #5B7AC7;
     --border-width: 2px;
     color-scheme: dark;
@@ -544,7 +544,7 @@
   :global([data-theme='dark']) .btn-browse-courses,
   :global([data-theme='dark']) .btn-view-content {
     background-color: var(--brand-accent) !important;
-    color: #ffffff !important;
+    color: #0a0f1a !important;
     border-color: var(--brand-accent) !important;
     font-weight: 800 !important;
   }
@@ -567,17 +567,17 @@
   :global([data-theme='dark']) .btn-browse-courses:hover,
   :global([data-theme='dark']) .btn-view-content:hover {
     opacity: 0.92 !important;
-    box-shadow: 0 0 18px rgba(232, 69, 79, 0.45) !important;
+    box-shadow: 0 0 18px rgba(103, 227, 245, 0.45) !important;
   }
 
-  /* Universal Contrast: Text on Accent buttons MUST ALWAYS be crisp white (#ffffff) */
+  /* Universal Contrast: Text on Accent buttons MUST ALWAYS be dark navy (#0a0f1a) on cyan */
   :global(.btn-hero-primary),
   :global(.btn-cta-primary),
   :global(.submit-btn),
   :global([data-theme='dark'] .btn-hero-primary),
   :global([data-theme='dark'] .btn-cta-primary),
   :global([data-theme='dark'] .submit-btn) {
-    color: #ffffff !important;
+    color: #0a0f1a !important;
   }
 
   /* Dark mode active tabs */
@@ -716,7 +716,7 @@
     border-color: rgba(91, 122, 199, 0.3) !important;
   }
   :global([data-theme='dark']) .counter-badge {
-    background: rgba(200, 43, 52, 0.15) !important;
+    background: rgba(103, 227, 245, 0.15) !important;
     color: var(--brand-accent) !important;
   }
   :global([data-theme='dark']) .counter-badge.pending-badge {
