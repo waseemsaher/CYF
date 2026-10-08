@@ -314,3 +314,29 @@ it('returns 422 when CancelPayment throws DomainException during cancel request'
         ->assertStatus(422)
         ->assertJsonPath('message', 'Only pending payments can be cancelled. Current status: approved');
 });
+
+it('deletes stored proof file when payment creation fails to prevent orphan files', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    Payment::saving(function () {
+        throw new RuntimeException('Database failure on saving payment');
+    });
+
+    try {
+        $this->actingAs($data['student'], 'sanctum')
+            ->postJson('/api/v1/payments', [
+                'course_id' => $data['course']->getKey(),
+                'term_id' => $data['term']->getKey(),
+                'method' => 'vodafone_cash',
+                'sender_identifier' => '01012345678',
+                'proof' => $proof,
+            ]);
+    } catch (RuntimeException $e) {
+        // Expected
+    }
+
+    expect(Storage::disk('local')->allFiles('proofs'))->toBeEmpty();
+});

@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -27,69 +28,87 @@ class SubmitPayment
      */
     public function handle(User $user, Course $course, Term $term, UploadedFile $proof, array $data): Payment|Enrollment
     {
-        // Check for existing active non-expired enrollment
-        $existingActiveEnrollment = Enrollment::query()
-            ->where('user_id', $user->getKey())
-            ->where('course_id', $course->getKey())
-            ->where('term_id', $term->getKey())
-            ->where('status', 'active')
-            ->where(function ($query) {
-                $query->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now());
-            })
-            ->exists();
+        $proofPath = null;
 
-        if ($existingActiveEnrollment) {
-            throw ValidationException::withMessages([
-                'course_id' => [__('You already have an active enrollment for this course in this term.')],
-            ]);
+        try {
+            return DB::transaction(function () use ($user, $course, $term, $proof, $data, &$proofPath): Payment|Enrollment {
+                User::query()
+                    ->whereKey($user->getKey())
+                    ->lockForUpdate()
+                    ->first();
+
+                // Check for existing active non-expired enrollment
+                $existingActiveEnrollment = Enrollment::query()
+                    ->where('user_id', $user->getKey())
+                    ->where('course_id', $course->getKey())
+                    ->where('term_id', $term->getKey())
+                    ->where('status', 'active')
+                    ->where(function ($query) {
+                        $query->whereNull('expires_at')
+                            ->orWhere('expires_at', '>', now());
+                    })
+                    ->exists();
+
+                if ($existingActiveEnrollment) {
+                    throw ValidationException::withMessages([
+                        'course_id' => [__('You already have an active enrollment for this course in this term.')],
+                    ]);
+                }
+
+                // Check for existing pending payment
+                $existingPending = Payment::query()
+                    ->where('user_id', $user->getKey())
+                    ->where('course_id', $course->getKey())
+                    ->where('term_id', $term->getKey())
+                    ->where('status', 'pending')
+                    ->exists();
+
+                if ($existingPending) {
+                    throw ValidationException::withMessages([
+                        'course_id' => [__('You already have a pending payment for this course in this term.')],
+                    ]);
+                }
+
+                // Calculate pricing
+                $pricing = $this->calculateCoursePrice->handle($course);
+
+                // If free → instant enrollment
+                if ($pricing['amount_due_cents'] === 0) {
+                    return $this->activateEnrollment->handle(
+                        user: $user,
+                        course: $course,
+                        term: $term,
+                        source: 'free',
+                    );
+                }
+
+                // Process proof image
+                $proofHash = hash_file('sha256', $proof->getRealPath());
+                $proofPath = $this->storeProof($proof);
+
+                return Payment::create([
+                    'user_id' => $user->getKey(),
+                    'course_id' => $course->getKey(),
+                    'term_id' => $term->getKey(),
+                    'method' => $data['method'],
+                    'list_price_cents' => $pricing['list_price_cents'],
+                    'discount_cents' => $pricing['discount_cents'],
+                    'amount_due_cents' => $pricing['amount_due_cents'],
+                    'sender_identifier' => $data['sender_identifier'],
+                    'proof_path' => $proofPath,
+                    'proof_hash' => $proofHash,
+                    'student_note' => $data['student_note'] ?? null,
+                    'status' => 'pending',
+                ]);
+            });
+        } catch (\Throwable $e) {
+            if ($proofPath !== null) {
+                $disk = config('filesystems.default', 'local');
+                Storage::disk($disk)->delete($proofPath);
+            }
+
+            throw $e;
         }
-
-        // Check for existing pending payment
-        $existingPending = Payment::query()
-            ->where('user_id', $user->getKey())
-            ->where('course_id', $course->getKey())
-            ->where('term_id', $term->getKey())
-            ->where('status', 'pending')
-            ->exists();
-
-        if ($existingPending) {
-            throw ValidationException::withMessages([
-                'course_id' => [__('You already have a pending payment for this course in this term.')],
-            ]);
-        }
-
-        // Calculate pricing
-        $pricing = $this->calculateCoursePrice->handle($course);
-
-        // If free → instant enrollment
-        if ($pricing['amount_due_cents'] === 0) {
-            return $this->activateEnrollment->handle(
-                user: $user,
-                course: $course,
-                term: $term,
-                source: 'free',
-            );
-        }
-
-        // Process proof image
-        $proofHash = hash_file('sha256', $proof->getRealPath());
-        $proofPath = $this->storeProof($proof);
-
-        return Payment::create([
-            'user_id' => $user->getKey(),
-            'course_id' => $course->getKey(),
-            'term_id' => $term->getKey(),
-            'method' => $data['method'],
-            'list_price_cents' => $pricing['list_price_cents'],
-            'discount_cents' => $pricing['discount_cents'],
-            'amount_due_cents' => $pricing['amount_due_cents'],
-            'sender_identifier' => $data['sender_identifier'],
-            'proof_path' => $proofPath,
-            'proof_hash' => $proofHash,
-            'student_note' => $data['student_note'] ?? null,
-            'status' => 'pending',
-        ]);
     }
 
     private function storeProof(UploadedFile $file): string
