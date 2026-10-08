@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Telegram\Actions;
 
+use App\Domain\Telegram\Exceptions\TelegramApiException;
 use App\Domain\Telegram\Services\TelegramClient;
 use App\Models\Course;
 use Illuminate\Support\Facades\Log;
@@ -60,6 +61,20 @@ class TestTelegramConnection
             }
 
             $errorDescription = $response->json('description', 'Unknown error');
+
+            Log::warning("Telegram {$type} connection test failed", [
+                'course_id' => $course->id,
+                'chat_id' => $chatId,
+                'error' => $errorDescription,
+            ]);
+
+            return [
+                'connected' => false,
+                'title' => null,
+                'error' => $errorDescription,
+            ];
+        } catch (TelegramApiException $e) {
+            $errorDescription = $e->description ?: $e->getMessage();
 
             Log::warning("Telegram {$type} connection test failed", [
                 'course_id' => $course->id,
