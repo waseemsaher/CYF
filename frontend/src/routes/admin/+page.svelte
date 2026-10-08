@@ -4,28 +4,33 @@
     getAdminOverview,
     getAdminCourses,
     getAdminStudents,
+    getAdminTeachers,
+    assignTeacherToCourse,
     createAdminCourse,
     updateAdminCourse,
     deleteAdminCourse,
     type AdminOverviewData,
     type AdminCourse,
     type AdminStudent,
+    type AdminTeacher,
   } from '$lib/api/admin';
   import { getAuthToken } from '$lib/api/client';
   import { getCurrentUser } from '$lib/api/auth';
   import { currentLocale, formatPrice } from '$lib/i18n';
   import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
+  import TeacherManagement from '$lib/components/admin/TeacherManagement.svelte';
 
   let overview: AdminOverviewData | null = $state(null);
   let courses: AdminCourse[] = $state([]);
   let students: any[] = $state([]);
+  let teachersList: AdminTeacher[] = $state([]);
   let loading = $state(true);
   let errorMsg = $state('');
   let isUnauthenticated = $state(false);
   let currentRole = $state('');
 
   // Active Tab
-  let activeTab = $state<'courses' | 'students' | 'activity' | 'system'>('courses');
+  let activeTab = $state<'courses' | 'teachers' | 'students' | 'activity' | 'system'>('courses');
 
   // Modal State
   let isCourseModalOpen = $state(false);
@@ -45,6 +50,7 @@
   let formTelegramLink = $state('');
   let formTelegramGroupId = $state('');
   let formTelegramChannelId = $state('');
+  let formTeacherId = $state<number | null>(null);
   let formTeacherShare = $state(70);
 
   async function loadData() {
@@ -65,15 +71,17 @@
         currentRole = userRes.data.user.role || '';
       }
 
-      const [overviewRes, coursesRes, studentsRes] = await Promise.all([
+      const [overviewRes, coursesRes, studentsRes, teachersRes] = await Promise.all([
         getAdminOverview(fetch),
         getAdminCourses(fetch, 1).catch(() => ({ data: [] })),
         getAdminStudents(fetch, 1).catch(() => ({ data: [] })),
+        getAdminTeachers(fetch).catch(() => ({ data: [] })),
       ]);
 
       overview = overviewRes.data;
       courses = coursesRes.data || [];
       students = (studentsRes as any).data || [];
+      teachersList = teachersRes.data || [];
     } catch (e: any) {
       const msg = e?.message || '';
       if (msg.includes('401') || msg.includes('Unauthenticated')) {
@@ -88,7 +96,15 @@
     }
   }
 
-  function openCreateCourseModal() {
+  async function refreshTeachersList() {
+    try {
+      const res = await getAdminTeachers(fetch);
+      teachersList = res.data || [];
+    } catch (_) {}
+  }
+
+  async function openCreateCourseModal() {
+    await refreshTeachersList();
     isEditingCourse = false;
     editingCourseId = null;
     formTitleAr = '';
@@ -101,12 +117,14 @@
     formTelegramLink = '';
     formTelegramGroupId = '';
     formTelegramChannelId = '';
+    formTeacherId = null;
     formTeacherShare = 70;
     modalError = '';
     isCourseModalOpen = true;
   }
 
-  function openEditCourseModal(course: AdminCourse) {
+  async function openEditCourseModal(course: AdminCourse) {
+    await refreshTeachersList();
     isEditingCourse = true;
     editingCourseId = course.id;
     formTitleAr = course.title?.ar || '';
@@ -119,6 +137,8 @@
     formTelegramLink = course.telegram_invite_link || '';
     formTelegramGroupId = course.telegram_group_id ? String(course.telegram_group_id) : '';
     formTelegramChannelId = course.telegram_channel_id ? String(course.telegram_channel_id) : '';
+    const assignedTeacher = teachersList.find((t) => t.courses?.some((c) => c.id === course.id));
+    formTeacherId = assignedTeacher ? assignedTeacher.id : null;
     formTeacherShare = course.teacher_share_percent || 70;
     modalError = '';
     isCourseModalOpen = true;
@@ -163,10 +183,21 @@
         telegram_channel_id: formTelegramChannelId.trim() ? Number(formTelegramChannelId.trim()) : null,
       };
 
+      let savedCourseId = editingCourseId;
       if (isEditingCourse && editingCourseId) {
         await updateAdminCourse(fetch, editingCourseId, payload);
       } else {
-        await createAdminCourse(fetch, payload);
+        const createRes = await createAdminCourse(fetch, payload);
+        savedCourseId = createRes.data?.id;
+      }
+
+      if (savedCourseId && formTeacherId) {
+        await assignTeacherToCourse(fetch, savedCourseId, {
+          teacher_id: Number(formTeacherId),
+          teacher_share_percent: Number(formTeacherShare),
+        }).catch((err) => {
+          console.error('Failed to assign teacher to course:', err);
+        });
       }
 
       closeCourseModal();
@@ -334,6 +365,15 @@
         <button
           type="button"
           class="tab-btn"
+          class:active={activeTab === 'teachers'}
+          onclick={() => activeTab = 'teachers'}
+          data-testid="tab-teachers"
+        >
+          إدارة المحاضرين ({teachersList.length})
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
           class:active={activeTab === 'students'}
           onclick={() => activeTab = 'students'}
         >
@@ -434,9 +474,10 @@
                             تعديل
                           </button>
                           <a
-                            href={`/my-courses/${course.slug}`}
+                            href={`/admin/courses/${course.id}/content`}
                             class="btn-sm btn-content"
                             title="إدارة فصول ومحاضرات واختبارات المادة"
+                            data-testid={`btn-course-content-${course.id}`}
                           >
                             المحتوى
                           </a>
@@ -467,6 +508,12 @@
               </table>
             </div>
           {/if}
+        </section>
+
+      <!-- TAB: TEACHERS MANAGEMENT -->
+      {:else if activeTab === 'teachers'}
+        <section class="dash-panel">
+          <TeacherManagement />
         </section>
 
       <!-- TAB 2: STUDENTS DIRECTORY -->
@@ -734,14 +781,33 @@
           </div>
 
           <div class="form-group">
-            <label for="admin-teacher-share">نسبة أرباح المحاضر (%)</label>
+            <label for="admin-teacher-picker">المحاضر المسؤول عن المقرر</label>
+            <select id="admin-teacher-picker" bind:value={formTeacherId} data-testid="select-course-teacher">
+              <option value={null}>-- بدون محاضر محدد --</option>
+              {#each teachersList as teacher}
+                <option value={teacher.id}>{teacher.name} ({teacher.email})</option>
+              {/each}
+            </select>
+            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
+              يمكنك تعيين أو تغيير المحاضر المسؤول عن هذا المقرر.
+            </small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="admin-teacher-share">نسبة أرباح المحاضر من مبيعات المقرر (%)</label>
             <input
               id="admin-teacher-share"
               type="number"
               min="0"
               max="100"
               bind:value={formTeacherShare}
+              data-testid="input-course-teacher-share"
             />
+            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
+              النسبة المئوية الافتراضية 70%.
+            </small>
           </div>
         </div>
 

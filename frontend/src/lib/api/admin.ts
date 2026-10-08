@@ -109,3 +109,63 @@ export function getAdminStudents(fetcher: typeof fetch = fetch, page = 1, search
   );
 }
 
+export type AdminTeacher = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  courses: {
+    id: number;
+    slug: string;
+    title: { ar: string; en: string };
+    teacher_share_percent: number | null;
+  }[];
+  earnings: {
+    earned_cents: number;
+    paid_out_cents: number;
+    balance_cents: number;
+  };
+};
+
+export type CreateTeacherPayload = {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string | null;
+};
+
+export type AssignTeacherPayload = {
+  teacher_id: number;
+  teacher_share_percent?: number | null;
+};
+
+export type RecordPayoutPayload = {
+  amount_cents: number;
+  note?: string | null;
+};
+
+export function getAdminTeachers(fetcher: typeof fetch = fetch) {
+  return apiGet<{ data: AdminTeacher[] }>(fetcher, '/admin/teachers');
+}
+
+export function createAdminTeacher(fetcher: typeof fetch = fetch, data: CreateTeacherPayload) {
+  return apiPost<{ data: AdminTeacher }>(fetcher, '/admin/teachers', data);
+}
+
+export function assignTeacherToCourse(
+  fetcher: typeof fetch = fetch,
+  courseId: number,
+  data: AssignTeacherPayload
+) {
+  return apiPost<{ message: string }>(fetcher, `/admin/courses/${courseId}/teachers`, data);
+}
+
+export function recordTeacherPayout(
+  fetcher: typeof fetch = fetch,
+  teacherId: number,
+  data: RecordPayoutPayload
+) {
+  return apiPost<{ data: unknown }>(fetcher, `/admin/teachers/${teacherId}/payouts`, data);
+}
+
+
