@@ -55,7 +55,7 @@ class LinkTelegramUser
             ]);
         });
 
-        $userName = $linkToken->user->name;
+        $userName = htmlspecialchars((string) $linkToken->user->name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $this->client->sendMessage(
             $telegramUserId,
             "أهلاً بك يا <b>{$userName}</b>!\nتم ربط حسابك بنجاح في منصة Codeera.\n\nYour Telegram account has been linked successfully!"

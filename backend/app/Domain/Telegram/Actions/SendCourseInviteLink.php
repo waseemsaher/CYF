@@ -97,10 +97,11 @@ class SendCourseInviteLink
             'expires_at' => now()->addHours(48),
         ]);
 
-        $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;
+        $courseTitle = htmlspecialchars((string) ($course->getTranslation('title', 'ar') ?: $course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $escapedInviteLink = htmlspecialchars((string) $inviteLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $message = "🎉 مرحباً! تم تفعيل اشتراكك في مادة: <b>{$courseTitle}</b>\n\n"
             ."انقر على الرابط التالي للانضمام إلى مجموعة التليجرام الخاصة بالمادة مباشرةً (رابط شخصي ولمرة واحدة فقط):\n"
-            ."{$inviteLink}\n\n"
+            ."{$escapedInviteLink}\n\n"
             .'⚠️ هذا الرابط صالح لمدة 48 ساعة ولشخص واحد فقط. لا تشاركه مع أحد.';
 
         $this->client->sendMessage((int) $telegramUserId, $message);

@@ -110,4 +110,24 @@ class TelegramClientTest extends TestCase
             $this->assertStringContainsString('[REDACTED_BOT_TOKEN]', $e->getMessage());
         }
     }
+
+    public function test_send_message_resends_without_parse_mode_on_entity_parse_error(): void
+    {
+        Http::fake([
+            'https://api.telegram.org/bot*' => Http::sequence()
+                ->push(['ok' => false, 'error_code' => 400, 'description' => "Bad Request: can't parse entities: Character '=' is reserved"], 400)
+                ->push(['ok' => true, 'result' => ['message_id' => 99]], 200),
+        ]);
+
+        $client = new TelegramClient('test_token', 'https://api.telegram.org');
+        $response = $client->sendMessage(123456, 'Broken <b>HTML');
+
+        $this->assertTrue($response->successful());
+
+        Http::assertSentCount(2);
+        Http::assertSent(function ($request) {
+            // Second request should have no parse_mode
+            return ! isset($request->data()['parse_mode']);
+        });
+    }
 }

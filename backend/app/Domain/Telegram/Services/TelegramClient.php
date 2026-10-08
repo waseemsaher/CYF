@@ -40,7 +40,23 @@ class TelegramClient
             $params['parse_mode'] = $parseMode;
         }
 
-        return $this->post('sendMessage', $params);
+        try {
+            return $this->post('sendMessage', $params);
+        } catch (TelegramApiException $e) {
+            if ($parseMode !== null && $e->isEntityParseError()) {
+                Log::warning('Telegram HTML entity parse error; retrying without parse_mode', [
+                    'chat_id' => $chatId,
+                    'error' => $e->description,
+                ]);
+
+                return $this->post('sendMessage', [
+                    'chat_id' => $chatId,
+                    'text' => $text,
+                ]);
+            }
+
+            throw $e;
+        }
     }
 
     public function approveChatJoinRequest(int|string $chatId, int $userId): Response

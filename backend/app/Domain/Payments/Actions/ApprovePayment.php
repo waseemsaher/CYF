@@ -108,7 +108,7 @@ class ApprovePayment
             $student = $payment->user;
             if ($student && $student->telegram_user_id) {
                 $course = $payment->course;
-                $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;
+                $courseTitle = htmlspecialchars((string) ($course->getTranslation('title', 'ar') ?: $course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
                 if ($course->getAttribute('telegram_group_id')) {
                     // Primary path: push a single-use invite link directly to the student
@@ -119,7 +119,8 @@ class ApprovePayment
 
                     $inviteLink = $course->telegram_invite_link;
                     if ($inviteLink) {
-                        $msg .= "\n\n<a href=\"{$inviteLink}\">انضم إلى القناة / Join Channel</a>";
+                        $escapedInviteLink = htmlspecialchars((string) $inviteLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                        $msg .= "\n\n<a href=\"{$escapedInviteLink}\">انضم إلى القناة / Join Channel</a>";
                     }
 
                     SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg)->afterCommit();
