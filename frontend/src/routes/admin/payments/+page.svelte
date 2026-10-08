@@ -65,13 +65,49 @@
     }
   }
 
+  function formatPaymentErrorMessage(msg: string): string {
+    const match = msg.match(/Only pending payments can be (?:approved|rejected)\. Current status:\s*(\w+)/i);
+    if (match) {
+      const rawStatus = match[1].toLowerCase();
+      const statusMap: Record<string, string> = {
+        pending: 'قيد المراجعة',
+        approved: 'تمت الموافقة',
+        rejected: 'مرفوض',
+        cancelled: 'ملغى'
+      };
+      const localized = statusMap[rawStatus] ?? rawStatus;
+      return `هذه الدفعة سبق التعامل معها (الحالة الحالية: ${localized}).`;
+    }
+    return msg;
+  }
+
   async function approvePayment(id: number) {
     actionLoading = id;
+    errorMsg = '';
     try {
       await approveAdminPayment(fetch, id);
-      await loadPayments();
-    } catch {
-      errorMsg = 'فشلت عملية الموافقة.';
+      // Optimistically remove the row so a stale-list second click is impossible
+      payments = payments.filter((p) => p.id !== id);
+      // Fire-and-forget: refresh counts + remaining rows; errors are swallowed by loadPayments' own try/catch
+      loadPayments();
+    } catch (e: any) {
+      const status: number = e?.status ?? 0;
+      const backendMsg: string = e?.data?.message || e?.message || '';
+      console.error(`[approvePayment] HTTP ${status} for payment #${id}:`, backendMsg, e);
+      if (status === 422 && backendMsg) {
+        errorMsg = formatPaymentErrorMessage(backendMsg);
+      } else if (status === 401 || status === 403) {
+        isUnauthenticated = status === 401;
+        if (status === 403 && !currentRole) currentRole = 'student';
+        errorMsg = status === 401
+          ? 'انتهت الجلسة. يرجى تسجيل الدخول مجدداً.'
+          : 'ليس لديك صلاحية الموافقة على الدفعات.';
+      } else if (status === 404) {
+        errorMsg = 'الدفعة غير موجودة — ربما حُذفت. يرجى تحديث القائمة.';
+        payments = payments.filter((p) => p.id !== id);
+      } else {
+        errorMsg = backendMsg ? formatPaymentErrorMessage(backendMsg) : `فشلت عملية الموافقة (${status || 'خطأ في الشبكة'}).`;
+      }
     } finally {
       actionLoading = null;
     }
@@ -80,13 +116,33 @@
   async function rejectPayment(id: number) {
     if (!rejectionReason.trim()) return;
     actionLoading = id;
+    errorMsg = '';
     try {
       await rejectAdminPayment(fetch, id, rejectionReason);
       rejectingId = null;
       rejectionReason = '';
-      await loadPayments();
-    } catch {
-      errorMsg = 'فشلت عملية الرفض.';
+      // Optimistically remove the row so a stale-list second click is impossible
+      payments = payments.filter((p) => p.id !== id);
+      // Fire-and-forget: refresh counts + remaining rows; errors are swallowed by loadPayments' own try/catch
+      loadPayments();
+    } catch (e: any) {
+      const status: number = e?.status ?? 0;
+      const backendMsg: string = e?.data?.message || e?.message || '';
+      console.error(`[rejectPayment] HTTP ${status} for payment #${id}:`, backendMsg, e);
+      if (status === 422 && backendMsg) {
+        errorMsg = formatPaymentErrorMessage(backendMsg);
+      } else if (status === 401 || status === 403) {
+        isUnauthenticated = status === 401;
+        if (status === 403 && !currentRole) currentRole = 'student';
+        errorMsg = status === 401
+          ? 'انتهت الجلسة. يرجى تسجيل الدخول مجدداً.'
+          : 'ليس لديك صلاحية رفض الدفعات.';
+      } else if (status === 404) {
+        errorMsg = 'الدفعة غير موجودة — ربما حُذفت. يرجى تحديث القائمة.';
+        payments = payments.filter((p) => p.id !== id);
+      } else {
+        errorMsg = backendMsg ? formatPaymentErrorMessage(backendMsg) : `فشلت عملية الرفض (${status || 'خطأ في الشبكة'}).`;
+      }
     } finally {
       actionLoading = null;
     }
@@ -134,14 +190,16 @@
     {/each}
   </nav>
 
+  {#if errorMsg}
+    <div class="notice error" role="alert" style="margin-bottom: 1.5rem;">{errorMsg}</div>
+  {/if}
+
   {#if loading}
     <div class="loading-state">
       <div class="spinner" aria-hidden="true"></div>
       <p>جاري تحميل الدفعات...</p>
     </div>
-  {:else if errorMsg}
-    <div class="notice error" role="alert">{errorMsg}</div>
-  {:else if payments.length === 0}
+  {:else if payments.length === 0 && !errorMsg}
     <div class="empty-state">
       <p>لا توجد دفعات في هذه الحالة.</p>
     </div>
