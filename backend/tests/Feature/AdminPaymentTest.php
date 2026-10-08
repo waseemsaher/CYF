@@ -422,3 +422,46 @@ it('fails with 422 when approving payment if teacher share percent is out of ran
     $response->assertStatus(422)
         ->assertJsonPath('message', 'Teacher share percent must be between 0 and 100. Current value: 120');
 });
+
+it('prevents a reviewer from approving their own payment', function (): void {
+    $data = setupAdminPaymentTestData();
+    $data['payment']->update(['user_id' => $data['admin']->getKey()]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Reviewers cannot approve their own payments.');
+});
+
+it('prevents a reviewer from rejecting their own payment', function (): void {
+    $data = setupAdminPaymentTestData();
+    $data['payment']->update(['user_id' => $data['admin']->getKey()]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'Invalid receipt',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Reviewers cannot reject their own payments.');
+});
+
+it('throws DomainException and returns 422 when approving an already approved payment whose enrollment is missing', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    // Approve first
+    $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve')
+        ->assertOk();
+
+    // Force delete enrollment to simulate corrupted state
+    Enrollment::query()->where('payment_id', $data['payment']->getKey())->delete();
+
+    // Try approving again
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Payment is approved but associated enrollment is missing.');
+});
