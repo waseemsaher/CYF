@@ -8,8 +8,13 @@ use App\Domain\Telegram\Actions\GenerateTelegramLinkToken;
 use App\Domain\Telegram\Actions\LinkTelegramUser;
 use App\Domain\Telegram\Actions\ProcessJoinRequest;
 use App\Domain\Telegram\Actions\WatchLesson;
+use App\Domain\Telegram\Services\TelegramClient;
 use App\Http\Controllers\Controller;
+use App\Jobs\SendCourseInviteLinkJob;
+use App\Models\Course;
 use App\Models\CourseItem;
+use App\Models\Enrollment;
+use App\Models\TelegramCourseInvite;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -84,6 +89,80 @@ class TelegramController extends Controller
     }
 
     /**
+     * Resend Telegram course invite link to student.
+     */
+    public function resendInvite(Request $request, string|int $courseParam, TelegramClient $client): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        if (! $user->telegram_user_id) {
+            return response()->json([
+                'message' => 'يجب ربط حسابك في تليجرام أولاً لاستلام رابط الانضمام.',
+            ], 422);
+        }
+
+        /** @var Course $course */
+        $course = is_numeric($courseParam)
+            ? Course::query()->findOrFail((int) $courseParam)
+            : Course::query()->where('slug', $courseParam)->firstOrFail();
+
+        // Must have active, non-expired enrollment (staff allowed)
+        $isStaff = $user->hasRole(['superadmin', 'admin']) || $user->can('courses.manage');
+        if (! $isStaff) {
+            $hasActiveEnrollment = Enrollment::query()
+                ->where('user_id', $user->getKey())
+                ->where('course_id', $course->getKey())
+                ->where('status', 'active')
+                ->where(function ($q): void {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                })
+                ->exists();
+
+            if (! $hasActiveEnrollment) {
+                return response()->json([
+                    'message' => 'لا يوجد اشتراك نشط وساري المفعول في هذا المقرر.',
+                ], 403);
+            }
+        }
+
+        if (! $course->telegram_group_id) {
+            return response()->json([
+                'message' => 'لا توجد مجموعة تليجرام مخصصة لهذا المقرر حالياً.',
+            ], 422);
+        }
+
+        // Revoke any outstanding invite link for that user + course
+        $outstandingInvites = TelegramCourseInvite::query()
+            ->where('user_id', $user->getKey())
+            ->where('course_id', $course->getKey())
+            ->whereNull('used_at')
+            ->where('expires_at', '>', now())
+            ->get();
+
+        foreach ($outstandingInvites as $invite) {
+            if ($invite->invite_link) {
+                try {
+                    $client->revokeChatInviteLink($course->telegram_group_id, $invite->invite_link);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to revoke outstanding chat invite link on resend', [
+                        'course_id' => $course->getKey(),
+                        'user_id' => $user->getKey(),
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+            $invite->delete();
+        }
+
+        SendCourseInviteLinkJob::dispatch($user, $course);
+
+        return response()->json([
+            'message' => 'تم إرسال رابط الانضمام الجديد إلى حسابك على تليجرام بنجاح.',
+        ]);
+    }
+
+    /**
      * Telegram Bot Webhook endpoint.
      * Protected by X-Telegram-Bot-Api-Secret-Token.
      */
@@ -137,4 +216,3 @@ class TelegramController extends Controller
         return response()->json(['ok' => true]);
     }
 }
-
