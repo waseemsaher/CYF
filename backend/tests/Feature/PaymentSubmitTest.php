@@ -342,3 +342,49 @@ it('serializes concurrent duplicate payment submissions and prevents two pending
 
     expect(Payment::query()->where('user_id', $data['student']->getKey())->count())->toBe(1);
 });
+
+it('rejects payment submission for an academic term that has already ended', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $endedTerm = Term::create([
+        'name' => ['ar' => 'فصل منتهي', 'en' => 'Ended Term'],
+        'starts_at' => now()->subMonths(6),
+        'ends_at' => now()->subDays(5),
+        'is_current' => false,
+        'sort_order' => 2,
+    ]);
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $endedTerm->getKey(),
+            'method' => 'vodafone_cash',
+            'sender_identifier' => '01012345678',
+            'proof' => $proof,
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['term_id']);
+});
+
+it('rejects payment submission with an invalid or unconfigured payment method', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+            'method' => 'unsupported_method',
+            'sender_identifier' => '01012345678',
+            'proof' => $proof,
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['method']);
+});

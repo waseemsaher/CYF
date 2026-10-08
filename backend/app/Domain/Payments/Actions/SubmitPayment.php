@@ -9,6 +9,7 @@ use App\Domain\Enrollment\Actions\ActivateEnrollment;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
+use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -31,6 +32,15 @@ class SubmitPayment
         return DB::transaction(function () use ($user, $course, $term, $proof, $data): Payment|Enrollment {
             // Lock user's row so concurrent submissions serialize
             User::query()->whereKey($user->getKey())->lockForUpdate()->first();
+
+            // Reject ended term (term ends_at + grace_days not in the future)
+            $graceDays = (int) Setting::getValue('enrollment', 'grace_days', 0);
+            $termExpiry = $term->getAttribute('ends_at') ? $term->getAttribute('ends_at')->addDays($graceDays) : null;
+            if ($termExpiry === null || ! $termExpiry->isFuture()) {
+                throw ValidationException::withMessages([
+                    'term_id' => [__('الفصل الدراسي المختار قد انتهى.')],
+                ]);
+            }
 
             // Check for existing active, non-expired enrollment
             $existingEnrollment = Enrollment::query()

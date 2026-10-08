@@ -418,3 +418,29 @@ it('returns 422 when approving payment if enrollment is already active and not e
     $response->assertStatus(422)
         ->assertJsonPath('message', 'Student already has an active enrollment for this course in this term.');
 });
+
+it('returns 422 when teacher share percent is out of range during approval', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    $data['course']->update(['teacher_share_percent' => 150]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Teacher share percent must be between 0 and 100. Got: 150');
+});
+
+it('rejects teacher assignment when teacher_share_percent is out of range', function (): void {
+    $data = setupAdminPaymentTestData();
+    $teacher = User::factory()->create();
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/courses/'.$data['course']->getKey().'/teachers', [
+            'teacher_id' => $teacher->getKey(),
+            'teacher_share_percent' => 105,
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['teacher_share_percent']);
+});

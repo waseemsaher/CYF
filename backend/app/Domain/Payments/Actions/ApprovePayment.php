@@ -121,10 +121,14 @@ class ApprovePayment
         $course = $payment->course;
 
         $courseOverride = $course->getAttribute('teacher_share_percent');
-        if ($courseOverride !== null) {
-            return (int) $courseOverride;
+        $sharePercent = $courseOverride !== null
+            ? (int) $courseOverride
+            : (int) Setting::getValue('revenue', 'default_teacher_share_percent', 70);
+
+        if ($sharePercent < 0 || $sharePercent > 100) {
+            throw new \DomainException("Teacher share percent must be between 0 and 100. Got: {$sharePercent}");
         }
 
-        return (int) Setting::getValue('revenue', 'default_teacher_share_percent', 70);
+        return $sharePercent;
     }
 }
