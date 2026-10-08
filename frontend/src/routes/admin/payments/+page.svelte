@@ -65,6 +65,22 @@
     }
   }
 
+  function formatPaymentErrorMessage(msg: string): string {
+    const match = msg.match(/Only pending payments can be (?:approved|rejected)\. Current status:\s*(\w+)/i);
+    if (match) {
+      const rawStatus = match[1].toLowerCase();
+      const statusMap: Record<string, string> = {
+        pending: 'قيد المراجعة',
+        approved: 'تمت الموافقة',
+        rejected: 'مرفوض',
+        cancelled: 'ملغى'
+      };
+      const localized = statusMap[rawStatus] ?? rawStatus;
+      return `هذه الدفعة سبق التعامل معها (الحالة الحالية: ${localized}).`;
+    }
+    return msg;
+  }
+
   async function approvePayment(id: number) {
     actionLoading = id;
     errorMsg = '';
@@ -79,7 +95,7 @@
       const backendMsg: string = e?.data?.message || e?.message || '';
       console.error(`[approvePayment] HTTP ${status} for payment #${id}:`, backendMsg, e);
       if (status === 422 && backendMsg) {
-        errorMsg = backendMsg; // e.g. "Only pending payments can be approved. Current status: approved"
+        errorMsg = formatPaymentErrorMessage(backendMsg);
       } else if (status === 401 || status === 403) {
         isUnauthenticated = status === 401;
         if (status === 403 && !currentRole) currentRole = 'student';
@@ -90,7 +106,7 @@
         errorMsg = 'الدفعة غير موجودة — ربما حُذفت. يرجى تحديث القائمة.';
         payments = payments.filter((p) => p.id !== id);
       } else {
-        errorMsg = backendMsg || `فشلت عملية الموافقة (${status || 'خطأ في الشبكة'}).`;
+        errorMsg = backendMsg ? formatPaymentErrorMessage(backendMsg) : `فشلت عملية الموافقة (${status || 'خطأ في الشبكة'}).`;
       }
     } finally {
       actionLoading = null;
@@ -114,7 +130,7 @@
       const backendMsg: string = e?.data?.message || e?.message || '';
       console.error(`[rejectPayment] HTTP ${status} for payment #${id}:`, backendMsg, e);
       if (status === 422 && backendMsg) {
-        errorMsg = backendMsg; // e.g. "Only pending payments can be rejected. Current status: rejected"
+        errorMsg = formatPaymentErrorMessage(backendMsg);
       } else if (status === 401 || status === 403) {
         isUnauthenticated = status === 401;
         if (status === 403 && !currentRole) currentRole = 'student';
@@ -125,7 +141,7 @@
         errorMsg = 'الدفعة غير موجودة — ربما حُذفت. يرجى تحديث القائمة.';
         payments = payments.filter((p) => p.id !== id);
       } else {
-        errorMsg = backendMsg || `فشلت عملية الرفض (${status || 'خطأ في الشبكة'}).`;
+        errorMsg = backendMsg ? formatPaymentErrorMessage(backendMsg) : `فشلت عملية الرفض (${status || 'خطأ في الشبكة'}).`;
       }
     } finally {
       actionLoading = null;
@@ -174,14 +190,16 @@
     {/each}
   </nav>
 
+  {#if errorMsg}
+    <div class="notice error" role="alert" style="margin-bottom: 1.5rem;">{errorMsg}</div>
+  {/if}
+
   {#if loading}
     <div class="loading-state">
       <div class="spinner" aria-hidden="true"></div>
       <p>جاري تحميل الدفعات...</p>
     </div>
-  {:else if errorMsg}
-    <div class="notice error" role="alert">{errorMsg}</div>
-  {:else if payments.length === 0}
+  {:else if payments.length === 0 && !errorMsg}
     <div class="empty-state">
       <p>لا توجد دفعات في هذه الحالة.</p>
     </div>
