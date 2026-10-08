@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Telegram\Actions\GenerateTelegramLinkToken;
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\TelegramCourseInvite;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -207,4 +208,62 @@ it('handles chat_join_request for group in webhook and approves eligible student
     Http::assertSent(fn ($req) => str_contains($req->url(), 'approveChatJoinRequest')
         && $req['chat_id'] == -1002222222222
         && $req['user_id'] === 888999111);
+});
+
+it('catches internal errors in webhook handler and still returns 200 ok', function (): void {
+    // Malformed/unexpected payload that causes an action to fail or throw
+    $response = $this->withHeaders([
+        'X-Telegram-Bot-Api-Secret-Token' => 'my_secure_secret',
+    ])->postJson('/api/v1/telegram/webhook', [
+        'update_id' => 999,
+        'message' => [
+            'from' => ['id' => 12345],
+            'text' => '/start validtoken',
+        ],
+    ]);
+
+    // Should still return HTTP 200 with ok: true
+    $response->assertOk()->assertJsonPath('ok', true);
+});
+
+it('marks invite as used when chat_member update indicates user became member', function (): void {
+    $course = Course::create([
+        'slug' => 'course-chat-member',
+        'title' => ['ar' => 'دورة', 'en' => 'Course'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'price_cents' => 10000,
+        'status' => 'published',
+        'telegram_group_id' => -100999888,
+    ]);
+
+    $student = User::factory()->create([
+        'telegram_user_id' => 777888999,
+    ]);
+
+    $invite = TelegramCourseInvite::create([
+        'user_id' => $student->id,
+        'course_id' => $course->id,
+        'invite_link' => 'https://t.me/+joinlink',
+        'expires_at' => now()->addDays(2),
+    ]);
+
+    $response = $this->withHeaders([
+        'X-Telegram-Bot-Api-Secret-Token' => 'my_secure_secret',
+    ])->postJson('/api/v1/telegram/webhook', [
+        'update_id' => 301,
+        'chat_member' => [
+            'chat' => ['id' => -100999888],
+            'from' => ['id' => 777888999],
+            'new_chat_member' => [
+                'status' => 'member',
+                'user' => ['id' => 777888999],
+            ],
+            'invite_link' => [
+                'invite_link' => 'https://t.me/+joinlink',
+            ],
+        ],
+    ]);
+
+    $response->assertOk()->assertJsonPath('ok', true);
+    expect($invite->fresh()->used_at)->not->toBeNull();
 });

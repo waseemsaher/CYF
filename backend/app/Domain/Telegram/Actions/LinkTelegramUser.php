@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Telegram\Actions;
 
 use App\Domain\Telegram\Services\TelegramClient;
+use App\Jobs\SendCourseInviteLinkJob;
 use App\Models\Enrollment;
 use App\Models\TelegramLinkToken;
 use App\Models\User;
@@ -14,7 +15,6 @@ class LinkTelegramUser
 {
     public function __construct(
         private readonly TelegramClient $client,
-        private readonly SendCourseInviteLink $sendInvite,
     ) {}
 
     public function handle(int $telegramUserId, ?string $telegramUsername, string $plainToken): bool
@@ -62,7 +62,6 @@ class LinkTelegramUser
         );
 
         // Trigger B: send invite links for all currently active enrollments
-        // Reload the user to get the freshly-set telegram_user_id
         $user = $linkToken->user->fresh();
         if ($user) {
             $activeEnrollments = Enrollment::query()
@@ -76,8 +75,8 @@ class LinkTelegramUser
 
             foreach ($activeEnrollments as $enrollment) {
                 $course = $enrollment->course;
-                if ($course && $course->getAttribute('telegram_group_id')) {
-                    $this->sendInvite->handle($user, $course);
+                if ($course && ($course->getAttribute('telegram_group_id') || $course->getAttribute('telegram_chat_id'))) {
+                    SendCourseInviteLinkJob::dispatch($user, $course);
                 }
             }
         }

@@ -182,13 +182,20 @@ class TelegramController extends Controller
 
         // 1. Handle Chat Join Request
         if (isset($update['chat_join_request'])) {
-            $joinRequest = $update['chat_join_request'];
-            $chatId = $joinRequest['chat']['id'] ?? null;
-            $fromId = $joinRequest['from']['id'] ?? null;
-            $username = $joinRequest['from']['username'] ?? null;
+            try {
+                $joinRequest = $update['chat_join_request'];
+                $chatId = $joinRequest['chat']['id'] ?? null;
+                $fromId = $joinRequest['from']['id'] ?? null;
+                $username = $joinRequest['from']['username'] ?? null;
 
-            if ($chatId !== null && $fromId !== null) {
-                app(ProcessJoinRequest::class)->handle($chatId, (int) $fromId, $username);
+                if ($chatId !== null && $fromId !== null) {
+                    app(ProcessJoinRequest::class)->handle($chatId, (int) $fromId, $username);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Error processing telegram chat_join_request update', [
+                    'error' => $e->getMessage(),
+                    'update' => $update,
+                ]);
             }
 
             return response()->json(['ok' => true]);
@@ -196,18 +203,56 @@ class TelegramController extends Controller
 
         // 2. Handle Message (e.g. /start <token>)
         if (isset($update['message'])) {
-            $message = $update['message'];
-            $text = trim((string) ($message['text'] ?? ''));
-            $fromId = $message['from']['id'] ?? null;
-            $username = $message['from']['username'] ?? null;
+            try {
+                $message = $update['message'];
+                $text = trim((string) ($message['text'] ?? ''));
+                $fromId = $message['from']['id'] ?? null;
+                $username = $message['from']['username'] ?? null;
 
-            if ($fromId !== null && str_starts_with($text, '/start')) {
-                $parts = explode(' ', $text, 2);
-                $token = isset($parts[1]) ? trim($parts[1]) : '';
+                if ($fromId !== null && str_starts_with($text, '/start')) {
+                    $parts = explode(' ', $text, 2);
+                    $token = isset($parts[1]) ? trim($parts[1]) : '';
 
-                if ($token !== '') {
-                    app(LinkTelegramUser::class)->handle((int) $fromId, $username, $token);
+                    if ($token !== '') {
+                        app(LinkTelegramUser::class)->handle((int) $fromId, $username, $token);
+                    }
                 }
+            } catch (\Throwable $e) {
+                Log::error('Error processing telegram message update', [
+                    'error' => $e->getMessage(),
+                    'update' => $update,
+                ]);
+            }
+
+            return response()->json(['ok' => true]);
+        }
+
+        // 3. Handle Chat Member Updates (e.g. student joined via invite link)
+        if (isset($update['chat_member'])) {
+            try {
+                $chatMember = $update['chat_member'];
+                $newStatus = $chatMember['new_chat_member']['status'] ?? null;
+                $userId = $chatMember['new_chat_member']['user']['id'] ?? ($chatMember['from']['id'] ?? null);
+
+                if ($newStatus === 'member' && $userId !== null) {
+                    $inviteLink = $chatMember['invite_link']['invite_link'] ?? null;
+
+                    $query = TelegramCourseInvite::query()->whereNull('used_at');
+                    if ($inviteLink) {
+                        $query->where('invite_link', $inviteLink);
+                    } else {
+                        $query->whereHas('user', function ($q) use ($userId): void {
+                            $q->where('telegram_user_id', $userId);
+                        });
+                    }
+
+                    $query->update(['used_at' => now()]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Error processing telegram chat_member update', [
+                    'error' => $e->getMessage(),
+                    'update' => $update,
+                ]);
             }
 
             return response()->json(['ok' => true]);
