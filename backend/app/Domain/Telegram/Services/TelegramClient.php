@@ -95,23 +95,38 @@ class TelegramClient
             return false;
         }
 
-        try {
-            $this->post('unbanChatMember', [
-                'chat_id' => $chatId,
-                'user_id' => $userId,
-                'only_if_banned' => true,
-            ]);
+        // Ban succeeded! Unban immediately with retry and backoff so student isn't permanently stuck banned
+        $maxUnbanAttempts = 3;
+        for ($unbanAttempt = 1; $unbanAttempt <= $maxUnbanAttempts; $unbanAttempt++) {
+            try {
+                $this->post('unbanChatMember', [
+                    'chat_id' => $chatId,
+                    'user_id' => $userId,
+                    'only_if_banned' => true,
+                ]);
 
-            return true;
-        } catch (Throwable $e) {
-            Log::warning('Failed to unban member during kick operation', [
-                'chat_id' => $chatId,
-                'user_id' => $userId,
-                'error' => $this->sanitize($e->getMessage()),
-            ]);
+                return true;
+            } catch (Throwable $e) {
+                Log::warning('Failed to unban member during kick operation, retrying', [
+                    'chat_id' => $chatId,
+                    'user_id' => $userId,
+                    'attempt' => $unbanAttempt,
+                    'error' => $this->sanitize($e->getMessage()),
+                ]);
 
-            return false;
+                if ($unbanAttempt < $maxUnbanAttempts) {
+                    $this->sleep(min($unbanAttempt * 2, 10));
+                }
+            }
         }
+
+        Log::critical('CRITICAL: Member was banned but unban failed after retries; student remains stuck banned in Telegram', [
+            'chat_id' => $chatId,
+            'user_id' => $userId,
+            'stuck_banned' => true,
+        ]);
+
+        return false;
     }
 
     public function unbanChatMember(int|string $chatId, int $userId, bool $onlyIfBanned = true): Response

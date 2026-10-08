@@ -130,4 +130,21 @@ class TelegramClientTest extends TestCase
             return ! isset($request->data()['parse_mode']);
         });
     }
+
+    public function test_kick_chat_member_retries_unban_when_first_attempt_fails(): void
+    {
+        Http::fake([
+            'https://api.telegram.org/bot*/banChatMember' => Http::response(['ok' => true], 200),
+            'https://api.telegram.org/bot*/unbanChatMember' => Http::sequence()
+                ->push(['ok' => false, 'error_code' => 500, 'description' => 'Internal server error'], 500)
+                ->push(['ok' => true], 200),
+        ]);
+
+        $client = new TelegramClient('test_token', 'https://api.telegram.org');
+        $result = $client->kickChatMember(-100123456, 789);
+
+        $this->assertTrue($result);
+        Http::assertSent(fn ($req) => str_contains($req->url(), 'banChatMember'));
+        Http::assertSent(fn ($req) => str_contains($req->url(), 'unbanChatMember'));
+    }
 }
