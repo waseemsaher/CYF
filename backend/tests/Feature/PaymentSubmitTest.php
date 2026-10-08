@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Payments\Actions\SubmitPayment;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
@@ -11,6 +12,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -292,4 +294,51 @@ it('rejects payment submission when student already has an active enrollment', f
 
     $response->assertUnprocessable()
         ->assertJsonValidationErrors(['course_id']);
+});
+
+it('cleans up stored proof file if payment creation fails', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    Payment::creating(function (): void {
+        throw new RuntimeException('Database failure during payment creation');
+    });
+
+    expect(fn () => app(SubmitPayment::class)->handle(
+        $data['student'],
+        $data['course'],
+        $data['term'],
+        $proof,
+        [
+            'method' => 'vodafone_cash',
+            'sender_identifier' => '01012345678',
+        ]
+    ))->toThrow(RuntimeException::class, 'Database failure during payment creation');
+
+    expect(Storage::disk('local')->allFiles('proofs'))->toBeEmpty();
+});
+
+it('serializes concurrent duplicate payment submissions and prevents two pending payments', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $proof1 = UploadedFile::fake()->image('receipt1.jpg', 800, 600);
+    $proof2 = UploadedFile::fake()->image('receipt2.jpg', 800, 600);
+
+    $submitAction = app(SubmitPayment::class);
+
+    $payment1 = $submitAction->handle($data['student'], $data['course'], $data['term'], $proof1, [
+        'method' => 'vodafone_cash',
+        'sender_identifier' => '01012345678',
+    ]);
+    expect($payment1->status)->toBe('pending');
+
+    expect(fn () => $submitAction->handle($data['student'], $data['course'], $data['term'], $proof2, [
+        'method' => 'vodafone_cash',
+        'sender_identifier' => '01012345678',
+    ]))->toThrow(ValidationException::class);
+
+    expect(Payment::query()->where('user_id', $data['student']->getKey())->count())->toBe(1);
 });
