@@ -67,11 +67,31 @@
 
   async function approvePayment(id: number) {
     actionLoading = id;
+    errorMsg = '';
     try {
       await approveAdminPayment(fetch, id);
-      await loadPayments();
-    } catch {
-      errorMsg = 'فشلت عملية الموافقة.';
+      // Optimistically remove the row so a stale-list second click is impossible
+      payments = payments.filter((p) => p.id !== id);
+      // Fire-and-forget: refresh counts + remaining rows; errors are swallowed by loadPayments' own try/catch
+      loadPayments();
+    } catch (e: any) {
+      const status: number = e?.status ?? 0;
+      const backendMsg: string = e?.data?.message || e?.message || '';
+      console.error(`[approvePayment] HTTP ${status} for payment #${id}:`, backendMsg, e);
+      if (status === 422 && backendMsg) {
+        errorMsg = backendMsg; // e.g. "Only pending payments can be approved. Current status: approved"
+      } else if (status === 401 || status === 403) {
+        isUnauthenticated = status === 401;
+        if (status === 403 && !currentRole) currentRole = 'student';
+        errorMsg = status === 401
+          ? 'انتهت الجلسة. يرجى تسجيل الدخول مجدداً.'
+          : 'ليس لديك صلاحية الموافقة على الدفعات.';
+      } else if (status === 404) {
+        errorMsg = 'الدفعة غير موجودة — ربما حُذفت. يرجى تحديث القائمة.';
+        payments = payments.filter((p) => p.id !== id);
+      } else {
+        errorMsg = backendMsg || `فشلت عملية الموافقة (${status || 'خطأ في الشبكة'}).`;
+      }
     } finally {
       actionLoading = null;
     }
@@ -80,13 +100,33 @@
   async function rejectPayment(id: number) {
     if (!rejectionReason.trim()) return;
     actionLoading = id;
+    errorMsg = '';
     try {
       await rejectAdminPayment(fetch, id, rejectionReason);
       rejectingId = null;
       rejectionReason = '';
-      await loadPayments();
-    } catch {
-      errorMsg = 'فشلت عملية الرفض.';
+      // Optimistically remove the row so a stale-list second click is impossible
+      payments = payments.filter((p) => p.id !== id);
+      // Fire-and-forget: refresh counts + remaining rows; errors are swallowed by loadPayments' own try/catch
+      loadPayments();
+    } catch (e: any) {
+      const status: number = e?.status ?? 0;
+      const backendMsg: string = e?.data?.message || e?.message || '';
+      console.error(`[rejectPayment] HTTP ${status} for payment #${id}:`, backendMsg, e);
+      if (status === 422 && backendMsg) {
+        errorMsg = backendMsg; // e.g. "Only pending payments can be rejected. Current status: rejected"
+      } else if (status === 401 || status === 403) {
+        isUnauthenticated = status === 401;
+        if (status === 403 && !currentRole) currentRole = 'student';
+        errorMsg = status === 401
+          ? 'انتهت الجلسة. يرجى تسجيل الدخول مجدداً.'
+          : 'ليس لديك صلاحية رفض الدفعات.';
+      } else if (status === 404) {
+        errorMsg = 'الدفعة غير موجودة — ربما حُذفت. يرجى تحديث القائمة.';
+        payments = payments.filter((p) => p.id !== id);
+      } else {
+        errorMsg = backendMsg || `فشلت عملية الرفض (${status || 'خطأ في الشبكة'}).`;
+      }
     } finally {
       actionLoading = null;
     }
