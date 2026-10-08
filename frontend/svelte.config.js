@@ -9,7 +9,7 @@ if (process.env.PUBLIC_API_BASE_URL) {
     connectSrc.push(parsed.origin);
   } catch (_) {}
 }
-if (isDev) {
+if (isDev || process.env.ALLOW_LOCAL_API === 'true' || !process.env.VERCEL) {
   connectSrc.push('http://localhost:8000', 'http://127.0.0.1:8000');
 }
 
@@ -31,7 +31,7 @@ if (process.env.PUBLIC_STORAGE_ORIGIN) {
   } catch (_) {}
 }
 
-if (isDev) {
+if (isDev || process.env.ALLOW_LOCAL_API === 'true' || !process.env.VERCEL) {
   imgSrc.push('http://localhost:8000', 'http://127.0.0.1:8000');
 }
 
