@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Jobs\SendCourseInviteLinkJob;
 use App\Jobs\SendTelegramNotificationJob;
 use App\Models\Course;
 use App\Models\Enrollment;
@@ -215,9 +216,28 @@ it('dispatches queued SendTelegramNotificationJob when admin approves a payment 
     $response->assertOk();
 
     Queue::assertPushed(SendTelegramNotificationJob::class, function (SendTelegramNotificationJob $job): bool {
-        return $job->telegramUserId === 987654321 && str_contains($job->message, 'تم قبول عملية الدفع');
+        return $job->telegramUserId === 987654321
+            && str_contains($job->message, 'تم قبول عملية الدفع')
+            && $job->afterCommit === true;
     });
     Mail::assertNothingQueued();
+});
+
+it('dispatches queued SendCourseInviteLinkJob with afterCommit when course has telegram_group_id', function (): void {
+    Queue::fake();
+    Mail::fake();
+    $data = setupAdminPaymentTestData();
+    $data['student']->update(['telegram_user_id' => 987654321]);
+    $data['course']->update(['telegram_group_id' => -1001234567890]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertOk();
+
+    Queue::assertPushed(SendCourseInviteLinkJob::class, function (SendCourseInviteLinkJob $job): bool {
+        return $job->afterCommit === true;
+    });
 });
 
 it('dispatches queued SendTelegramNotificationJob when admin rejects a payment with linked telegram', function (): void {
@@ -234,7 +254,9 @@ it('dispatches queued SendTelegramNotificationJob when admin rejects a payment w
     $response->assertOk();
 
     Queue::assertPushed(SendTelegramNotificationJob::class, function (SendTelegramNotificationJob $job): bool {
-        return $job->telegramUserId === 987654321 && str_contains($job->message, 'تم رفض إيصال الدفع');
+        return $job->telegramUserId === 987654321
+            && str_contains($job->message, 'تم رفض إيصال الدفع')
+            && $job->afterCommit === true;
     });
     Mail::assertNothingQueued();
 });

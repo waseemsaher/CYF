@@ -93,7 +93,7 @@ class ApprovePayment
 
                 if ($course->getAttribute('telegram_group_id')) {
                     // Primary path: push a single-use invite link directly to the student
-                    SendCourseInviteLinkJob::dispatch($student, $course);
+                    SendCourseInviteLinkJob::dispatch($student, $course)->afterCommit();
                 } else {
                     // Fallback: plain approval message with optional static invite link
                     $msg = "تم قبول عملية الدفع وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\nيمكنك الآن الانضمام إلى مجموعة التليجرام الخاصة بالمادة.\n\nYour payment has been approved and your course access is now active!";
@@ -103,7 +103,7 @@ class ApprovePayment
                         $msg .= "\n\n<a href=\"{$inviteLink}\">انضم إلى القناة / Join Channel</a>";
                     }
 
-                    SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg);
+                    SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg)->afterCommit();
                 }
             }
 
