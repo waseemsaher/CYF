@@ -180,7 +180,11 @@ it('sends createChatInviteLink + sendMessage when no outstanding invite exists (
         'invite_link' => 'https://t.me/+AbCdEfGhIjK',
     ]);
 
-    Http::assertSentCount(2); // createChatInviteLink + sendMessage
+    Http::assertSentCount(3); // unbanChatMember + createChatInviteLink + sendMessage
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'unbanChatMember')
+        && $req['chat_id'] == $d['courseWithGroup']->telegram_group_id
+        && $req['user_id'] === 111222333
+        && $req['only_if_banned'] === true);
     Http::assertSent(fn ($req) => str_contains($req->url(), 'createChatInviteLink')
         && $req['member_limit'] === 1
         && $req['creates_join_request'] === false);
@@ -349,8 +353,43 @@ it('sends invite links for all active enrollments when Telegram is linked (Trigg
         'invite_link' => 'https://t.me/+Link2',
     ]);
 
-    // 1 welcome sendMessage + 2 createChatInviteLink + 2 invite sendMessage = 5 HTTP calls
-    Http::assertSentCount(5);
+    // 1 welcome sendMessage + 2 unbanChatMember + 2 createChatInviteLink + 2 invite sendMessage = 7 HTTP calls
+    Http::assertSentCount(7);
+});
+
+it('does not persist invite row if sendMessage delivery fails allowing future retries', function (): void {
+    $d = inviteTestSetup();
+    $d['student']->update(['telegram_user_id' => 111222333]);
+
+    Http::fake([
+        'https://api.telegram.org/bot*/unbanChatMember' => Http::response(['ok' => true]),
+        'https://api.telegram.org/bot*/createChatInviteLink' => Http::response([
+            'ok' => true,
+            'result' => [
+                'invite_link' => 'https://t.me/+AbCdEfGhIjK',
+                'member_limit' => 1,
+                'expire_date' => now()->addHours(48)->timestamp,
+            ],
+        ]),
+        'https://api.telegram.org/bot*/sendMessage' => Http::response([
+            'ok' => false,
+            'error_code' => 403,
+            'description' => 'Forbidden: bot was blocked by the user',
+        ], 403),
+    ]);
+
+    $action = app(SendCourseInviteLink::class);
+
+    try {
+        $action->handle($d['student'], $d['courseWithGroup']);
+    } catch (Throwable $e) {
+        // Exception caught
+    }
+
+    $this->assertDatabaseMissing('telegram_course_invites', [
+        'user_id' => $d['student']->getKey(),
+        'course_id' => $d['courseWithGroup']->getKey(),
+    ]);
 });
 
 it('does not send a second invite link when linking Telegram again after already having one outstanding', function (): void {

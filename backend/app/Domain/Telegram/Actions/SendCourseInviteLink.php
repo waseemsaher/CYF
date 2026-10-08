@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\TelegramCourseInvite;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Generates a single-use Telegram invite link for a course group and delivers it
@@ -58,6 +59,18 @@ class SendCourseInviteLink
             return false;
         }
 
+        // Before creating a new link, unban in case re-enrolled student was previously kicked
+        try {
+            $this->client->unbanChatMember($chatId, (int) $telegramUserId, true);
+        } catch (Throwable $e) {
+            Log::warning('Failed to unban student before generating new invite link', [
+                'chat_id' => $chatId,
+                'user_id' => $user->getKey(),
+                'telegram_user_id' => $telegramUserId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         // 48-hour expiry window
         $expireDate = now()->addHours(48)->timestamp;
 
@@ -89,14 +102,6 @@ class SendCourseInviteLink
             return false;
         }
 
-        // Persist the issued invite so we can guard against duplicates
-        TelegramCourseInvite::create([
-            'user_id' => $user->getKey(),
-            'course_id' => $course->getKey(),
-            'invite_link' => $inviteLink,
-            'expires_at' => now()->addHours(48),
-        ]);
-
         $courseTitle = htmlspecialchars((string) ($course->getTranslation('title', 'ar') ?: $course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $escapedInviteLink = htmlspecialchars((string) $inviteLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $message = "🎉 مرحباً! تم تفعيل اشتراكك في مادة: <b>{$courseTitle}</b>\n\n"
@@ -104,7 +109,26 @@ class SendCourseInviteLink
             ."{$escapedInviteLink}\n\n"
             .'⚠️ هذا الرابط صالح لمدة 48 ساعة ولشخص واحد فقط. لا تشاركه مع أحد.';
 
-        $this->client->sendMessage((int) $telegramUserId, $message);
+        $sendResponse = $this->client->sendMessage((int) $telegramUserId, $message);
+
+        if (! $sendResponse->successful() || $sendResponse->json('ok') === false) {
+            Log::error('Telegram invite message delivery failed', [
+                'chat_id' => $chatId,
+                'user_id' => $user->getKey(),
+                'telegram_user_id' => $telegramUserId,
+                'response' => $sendResponse->body(),
+            ]);
+
+            return false;
+        }
+
+        // Persist the issued invite only AFTER message was delivered successfully
+        TelegramCourseInvite::create([
+            'user_id' => $user->getKey(),
+            'course_id' => $course->getKey(),
+            'invite_link' => $inviteLink,
+            'expires_at' => now()->addHours(48),
+        ]);
 
         return true;
     }
