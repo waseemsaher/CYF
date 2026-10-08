@@ -45,7 +45,7 @@ class RejectPayment
 
                 $msg = "نأسف، تم رفض إيصال الدفع لمادة: <b>{$courseTitle}</b>.\nالسبب: <i>{$reason}</i>\nيمكنك إعادة رفع إيصال صحيح من حسابك.\n\nYour payment proof was rejected. Reason: {$reason}";
 
-                SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg);
+                SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg)->afterCommit();
             }
 
             return $payment;
