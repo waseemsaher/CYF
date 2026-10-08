@@ -2,6 +2,9 @@ import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 const isDev = process.env.NODE_ENV !== 'production';
+const isE2E = process.env.E2E_TEST === 'true';
+const allowLocalhost = isDev || isE2E;
+
 const connectSrc = ["'self'", 'https://api.codeera.tech'];
 if (process.env.PUBLIC_API_BASE_URL) {
   try {
@@ -9,7 +12,7 @@ if (process.env.PUBLIC_API_BASE_URL) {
     connectSrc.push(parsed.origin);
   } catch (_) {}
 }
-if (isDev || process.env.ALLOW_LOCAL_API === 'true' || !process.env.VERCEL) {
+if (allowLocalhost) {
   connectSrc.push('http://localhost:8000', 'http://127.0.0.1:8000');
 }
 
@@ -31,7 +34,7 @@ if (process.env.PUBLIC_STORAGE_ORIGIN) {
   } catch (_) {}
 }
 
-if (isDev || process.env.ALLOW_LOCAL_API === 'true' || !process.env.VERCEL) {
+if (allowLocalhost) {
   imgSrc.push('http://localhost:8000', 'http://127.0.0.1:8000');
 }
 

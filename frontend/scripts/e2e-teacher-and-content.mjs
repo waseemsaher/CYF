@@ -193,8 +193,11 @@ async function run() {
     console.log('Quiz and Question successfully created in UI!');
 
     // 9. Capture proof screenshot
-    const screenshotPath = '/home/kaminari0x/cyf/admin-ui-proof.png';
+    const screenshotPath = '/tmp/admin-ui-proof.png';
     await page.screenshot({ path: screenshotPath, fullPage: true });
+    try {
+      execSync('cp /tmp/admin-ui-proof.png /home/kaminari0x/.gemini/antigravity/brain/caee1bd8-c444-46f4-a7cc-c5d5842019ec/admin-ui-proof.png 2>/dev/null || true');
+    } catch (_) {}
     console.log(`Proof screenshot saved to ${screenshotPath}`);
 
     // 10. Query SQLite Database directly to verify persistence of all entities!
