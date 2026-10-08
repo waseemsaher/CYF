@@ -308,3 +308,48 @@ it('prevents race conditions between approve and reject operations and maintains
     expect($enrollment)->not->toBeNull();
     expect($enrollment->status)->toBe('active');
 });
+
+it('reactivates a revoked enrollment when approving payment', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    $revokedEnrollment = Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'source' => 'admin_grant',
+        'status' => 'revoked',
+        'starts_at' => now()->subMonth(),
+        'expires_at' => now()->subDay(),
+    ]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertOk();
+
+    $revokedEnrollment->refresh();
+    expect($revokedEnrollment->status)->toBe('active')
+        ->and($revokedEnrollment->payment_id)->toBe($data['payment']->getKey())
+        ->and($revokedEnrollment->source)->toBe('payment')
+        ->and($revokedEnrollment->expires_at->isFuture())->toBeTrue();
+});
+
+it('returns 422 when approving payment if enrollment is already active and not expired', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'source' => 'admin_grant',
+        'status' => 'active',
+        'starts_at' => now(),
+        'expires_at' => now()->addMonths(2),
+    ]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Student already has an active enrollment for this course in this term.');
+});

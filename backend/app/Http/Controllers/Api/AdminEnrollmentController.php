@@ -37,7 +37,11 @@ class AdminEnrollmentController extends Controller
         /** @var Term $term */
         $term = Term::query()->findOrFail($request->validated('term_id'));
 
-        $enrollment = $grantEnrollment->handle($student, $course, $term, $admin);
+        try {
+            $enrollment = $grantEnrollment->handle($student, $course, $term, $admin);
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         return (new EnrollmentResource($enrollment))
             ->response()

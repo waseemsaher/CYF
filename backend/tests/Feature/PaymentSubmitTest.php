@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\Term;
@@ -232,4 +233,33 @@ it('allows a student to cancel their own pending payment', function (): void {
         ->postJson('/api/v1/payments/'.$payment->getKey().'/cancel')
         ->assertOk()
         ->assertJsonPath('data.status', 'cancelled');
+});
+
+it('rejects payment submission when student already has an active enrollment', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'source' => 'admin_grant',
+        'status' => 'active',
+        'starts_at' => now(),
+        'expires_at' => now()->addMonths(2),
+    ]);
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+            'method' => 'vodafone_cash',
+            'sender_identifier' => '01012345678',
+            'proof' => $proof,
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['course_id']);
 });

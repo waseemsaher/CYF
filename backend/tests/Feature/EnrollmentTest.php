@@ -146,3 +146,53 @@ it('denies a student from revoking enrollments', function (): void {
         ->postJson('/api/v1/admin/enrollments/'.$enrollment->getKey().'/revoke')
         ->assertForbidden();
 });
+
+it('returns 422 when granting an enrollment twice for the same student and course/term', function (): void {
+    $data = setupEnrollmentTestData();
+
+    // First grant
+    $response1 = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/enrollments/grant', [
+            'user_id' => $data['student']->getKey(),
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+        ]);
+    $response1->assertCreated();
+
+    // Second grant -> 422
+    $response2 = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/enrollments/grant', [
+            'user_id' => $data['student']->getKey(),
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+        ]);
+    $response2->assertStatus(422)
+        ->assertJsonPath('message', 'Student already has an active enrollment for this course in this term.');
+});
+
+it('reactivates a revoked enrollment when granting again', function (): void {
+    $data = setupEnrollmentTestData();
+
+    $enrollment = Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'source' => 'payment',
+        'status' => 'revoked',
+        'starts_at' => now()->subMonth(),
+        'expires_at' => now()->subDay(),
+    ]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/enrollments/grant', [
+            'user_id' => $data['student']->getKey(),
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+        ]);
+
+    $response->assertCreated();
+    $enrollment->refresh();
+    expect($enrollment->status)->toBe('active')
+        ->and($enrollment->source)->toBe('admin_grant')
+        ->and($enrollment->granted_by)->toBe($data['admin']->getKey());
+});
