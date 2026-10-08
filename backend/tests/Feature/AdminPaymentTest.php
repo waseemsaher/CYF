@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Jobs\SendCourseInviteLinkJob;
 use App\Jobs\SendTelegramNotificationJob;
+use App\Mail\PaymentApprovedMail;
+use App\Mail\PaymentRejectedMail;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
@@ -259,6 +261,47 @@ it('dispatches queued SendTelegramNotificationJob when admin rejects a payment w
             && $job->afterCommit === true;
     });
     Mail::assertNothingQueued();
+});
+
+it('queues PaymentApprovedMail with afterCommit when student has no telegram but has email', function (): void {
+    Queue::fake();
+    Mail::fake();
+    $data = setupAdminPaymentTestData();
+    $data['student']->update(['telegram_user_id' => null, 'email' => 'student@example.com']);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertOk();
+
+    Queue::assertNothingPushed();
+    Mail::assertQueued(PaymentApprovedMail::class, function (PaymentApprovedMail $mail) use ($data): bool {
+        return $mail->hasTo('student@example.com')
+            && $mail->payment->getKey() === $data['payment']->getKey()
+            && $mail->afterCommit === true;
+    });
+});
+
+it('queues PaymentRejectedMail with afterCommit and reason when student has no telegram but has email', function (): void {
+    Queue::fake();
+    Mail::fake();
+    $data = setupAdminPaymentTestData();
+    $data['student']->update(['telegram_user_id' => null, 'email' => 'student@example.com']);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'صورة غير واضحة',
+        ]);
+
+    $response->assertOk();
+
+    Queue::assertNothingPushed();
+    Mail::assertQueued(PaymentRejectedMail::class, function (PaymentRejectedMail $mail) use ($data): bool {
+        return $mail->hasTo('student@example.com')
+            && $mail->payment->getKey() === $data['payment']->getKey()
+            && $mail->payment->rejection_reason === 'صورة غير واضحة'
+            && $mail->afterCommit === true;
+    });
 });
 
 it('fails cleanly when attempting to approve an already rejected payment without creating an enrollment', function (): void {
