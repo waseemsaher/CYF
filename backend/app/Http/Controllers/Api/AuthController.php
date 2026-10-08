@@ -111,12 +111,12 @@ class AuthController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        $status = Password::sendResetLink(
+        Password::sendResetLink(
             $request->only('email')
         );
 
         return response()->json([
-            'message' => __($status),
+            'message' => 'لو كان البريد الإلكتروني ده مسجل عندنا، هيوصلك رابط إعادة تعيين كلمة السر خلال دقائق.',
         ]);
     }
 
@@ -135,6 +135,8 @@ class AuthController extends Controller
                     'password' => Hash::make($password),
                     'remember_token' => Str::random(60),
                 ])->save();
+
+                $user->tokens()->delete();
             }
         );
 

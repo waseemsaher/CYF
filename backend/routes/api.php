@@ -61,7 +61,7 @@ Route::prefix('v1')->group(function (): void {
         });
 
         // Teacher dashboard
-        Route::prefix('teacher')->group(function (): void {
+        Route::prefix('teacher')->middleware('role:superadmin|admin|teacher')->group(function (): void {
             Route::get('/dashboard', [TeacherDashboardController::class, 'dashboard']);
             Route::get('/courses/{course}/students', [TeacherDashboardController::class, 'courseStudents']);
             Route::get('/quizzes/{quiz}/analytics', [TeacherDashboardController::class, 'quizAnalytics']);
@@ -82,7 +82,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/payments/{id}', [PaymentController::class, 'show']);
         Route::post('/payments/{id}/cancel', [PaymentController::class, 'cancel']);
 
-        Route::prefix('admin')->group(function (): void {
+        Route::prefix('admin')->middleware('role_or_permission:superadmin|admin|payments.review|courses.manage|students.manage|content.manage')->group(function (): void {
             // Overview dashboard
             Route::get('/overview', [AdminOverviewController::class, '__invoke']);
 
