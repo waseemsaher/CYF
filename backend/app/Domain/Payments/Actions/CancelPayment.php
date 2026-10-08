@@ -6,23 +6,36 @@ namespace App\Domain\Payments\Actions;
 
 use App\Models\Payment;
 use App\Models\User;
+use DomainException;
+use Illuminate\Support\Facades\DB;
 
 class CancelPayment
 {
     public function handle(Payment $payment, User $user): Payment
     {
-        $payment->update([
-            'status' => 'cancelled',
-        ]);
+        return DB::transaction(function () use ($payment, $user): Payment {
+            /** @var Payment $locked */
+            $locked = Payment::query()
+                ->lockForUpdate()
+                ->findOrFail($payment->getKey());
 
-        activity('payment')
-            ->performedOn($payment)
-            ->causedBy($user)
-            ->withProperties([
-                'payment_id' => $payment->getKey(),
-            ])
-            ->log('payment_cancelled');
+            if (! $locked->isPending()) {
+                throw new DomainException("Only pending payments can be cancelled. Current status: {$locked->getAttribute('status')}");
+            }
 
-        return $payment;
+            $locked->update([
+                'status' => 'cancelled',
+            ]);
+
+            activity('payment')
+                ->performedOn($locked)
+                ->causedBy($user)
+                ->withProperties([
+                    'payment_id' => $locked->getKey(),
+                ])
+                ->log('payment_cancelled');
+
+            return $locked;
+        });
     }
 }

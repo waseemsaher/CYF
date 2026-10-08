@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Payments\Actions\CancelPayment;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
@@ -262,4 +263,54 @@ it('allows a student to cancel their own pending payment', function (): void {
         ->postJson('/api/v1/payments/'.$payment->getKey().'/cancel')
         ->assertOk()
         ->assertJsonPath('data.status', 'cancelled');
+});
+
+it('throws DomainException when attempting to cancel non-pending payment in CancelPayment action', function (): void {
+    $data = setupPaymentTestData();
+
+    $payment = Payment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'method' => 'vodafone_cash',
+        'list_price_cents' => 30000,
+        'discount_cents' => 0,
+        'amount_due_cents' => 30000,
+        'sender_identifier' => '01012345678',
+        'proof_path' => 'proofs/test.jpg',
+        'proof_hash' => hash('sha256', 'cancel_race_test'),
+        'status' => 'approved',
+    ]);
+
+    $action = app(CancelPayment::class);
+
+    expect(fn () => $action->handle($payment, $data['student']))
+        ->toThrow(DomainException::class, 'Only pending payments can be cancelled. Current status: approved');
+});
+
+it('returns 422 when CancelPayment throws DomainException during cancel request', function (): void {
+    $data = setupPaymentTestData();
+
+    $payment = Payment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'method' => 'vodafone_cash',
+        'list_price_cents' => 30000,
+        'discount_cents' => 0,
+        'amount_due_cents' => 30000,
+        'sender_identifier' => '01012345678',
+        'proof_path' => 'proofs/test.jpg',
+        'proof_hash' => hash('sha256', 'cancel_race_test_2'),
+        'status' => 'pending',
+    ]);
+
+    $mock = Mockery::mock(CancelPayment::class);
+    $mock->shouldReceive('handle')->andThrow(new DomainException('Only pending payments can be cancelled. Current status: approved'));
+    $this->app->instance(CancelPayment::class, $mock);
+
+    $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments/'.$payment->getKey().'/cancel')
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Only pending payments can be cancelled. Current status: approved');
 });
