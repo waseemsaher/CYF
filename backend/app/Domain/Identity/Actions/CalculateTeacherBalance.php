@@ -11,7 +11,7 @@ use App\Models\User;
 class CalculateTeacherBalance
 {
     /**
-     * @return array{earned_cents: int, paid_out_cents: int, balance_cents: int}
+     * @return array{earned_cents: int, paid_out_cents: int, balance_cents: int, owed_back_cents: int}
      */
     public function handle(User $teacher): array
     {
@@ -30,11 +30,13 @@ class CalculateTeacherBalance
             ->sum('amount_cents');
 
         $balanceCents = $totalEarnedCents - $totalPaidOutCents;
+        $owedBackCents = max(0, $totalPaidOutCents - $totalEarnedCents);
 
         return [
             'earned_cents' => $totalEarnedCents,
             'paid_out_cents' => $totalPaidOutCents,
             'balance_cents' => max(0, $balanceCents),
+            'owed_back_cents' => $owedBackCents,
         ];
     }
 }

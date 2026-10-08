@@ -90,6 +90,11 @@ class Payment extends Model
         return $this->getAttribute('status') === 'approved';
     }
 
+    public function isRefunded(): bool
+    {
+        return $this->getAttribute('status') === 'refunded';
+    }
+
     /**
      * Check if a duplicate proof hash exists on another payment.
      */

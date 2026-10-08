@@ -106,6 +106,14 @@
           <strong class="kpi-value kpi-muted">{formatPrice(data.earnings.paid_out_cents, $currentLocale)}</strong>
           <span class="kpi-hint">تم تحويلها لحسابك البنكي أو المحفظة</span>
         </div>
+
+        {#if data.earnings.owed_back_cents && data.earnings.owed_back_cents > 0}
+          <div class="kpi-card kpi-owed-card">
+            <span class="kpi-label">مستحق للمنصة (فائض مسحوبات)</span>
+            <strong class="kpi-value kpi-red">{formatPrice(data.earnings.owed_back_cents, $currentLocale)}</strong>
+            <span class="kpi-hint">مبالغ تم تحويلها سابقاً لدفعات استُردت</span>
+          </div>
+        {/if}
       </section>
 
       <!-- Taught Courses -->
@@ -275,6 +283,15 @@
 
   .kpi-green {
     color: #059669;
+  }
+
+  .kpi-red {
+    color: #dc2626;
+  }
+
+  .kpi-owed-card {
+    border-color: #fecaca;
+    background: #fff5f5;
   }
 
   .kpi-muted {

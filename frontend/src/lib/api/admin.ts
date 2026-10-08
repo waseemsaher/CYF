@@ -18,6 +18,7 @@ export type TeacherEarnings = {
   earned_cents: number;
   paid_out_cents: number;
   balance_cents: number;
+  owed_back_cents?: number;
 };
 
 export type TeacherDashboardData = {
