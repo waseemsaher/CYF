@@ -184,7 +184,7 @@ class TelegramClient
     /**
      * @param  list<string>  $allowedUpdates
      */
-    public function setWebhook(string $url, string $secretToken, array $allowedUpdates = ['message', 'chat_join_request']): Response
+    public function setWebhook(string $url, string $secretToken, array $allowedUpdates = ['message', 'chat_join_request', 'chat_member']): Response
     {
         return $this->post('setWebhook', [
             'url' => $url,

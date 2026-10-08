@@ -233,20 +233,35 @@ class TelegramController extends Controller
                 $chatMember = $update['chat_member'];
                 $newStatus = $chatMember['new_chat_member']['status'] ?? null;
                 $userId = $chatMember['new_chat_member']['user']['id'] ?? ($chatMember['from']['id'] ?? null);
+                $chatId = $chatMember['chat']['id'] ?? null;
 
-                if ($newStatus === 'member' && $userId !== null) {
-                    $inviteLink = $chatMember['invite_link']['invite_link'] ?? null;
+                if ($newStatus === 'member' && $userId !== null && $chatId !== null) {
+                    $course = Course::query()
+                        ->where(function ($query) use ($chatId): void {
+                            $query->where('telegram_group_id', (string) $chatId)
+                                ->orWhere('telegram_group_id', (int) $chatId)
+                                ->orWhere('telegram_channel_id', (string) $chatId)
+                                ->orWhere('telegram_channel_id', (int) $chatId);
+                        })
+                        ->first();
 
-                    $query = TelegramCourseInvite::query()->whereNull('used_at');
-                    if ($inviteLink) {
-                        $query->where('invite_link', $inviteLink);
-                    } else {
-                        $query->whereHas('user', function ($q) use ($userId): void {
-                            $q->where('telegram_user_id', $userId);
-                        });
+                    if ($course) {
+                        $inviteLink = $chatMember['invite_link']['invite_link'] ?? null;
+
+                        $query = TelegramCourseInvite::query()
+                            ->where('course_id', $course->getKey())
+                            ->whereNull('used_at');
+
+                        if ($inviteLink) {
+                            $query->where('invite_link', $inviteLink);
+                        } else {
+                            $query->whereHas('user', function ($q) use ($userId): void {
+                                $q->where('telegram_user_id', $userId);
+                            });
+                        }
+
+                        $query->update(['used_at' => now()]);
                     }
-
-                    $query->update(['used_at' => now()]);
                 }
             } catch (\Throwable $e) {
                 Log::error('Error processing telegram chat_member update', [

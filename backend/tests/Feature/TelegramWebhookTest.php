@@ -267,3 +267,199 @@ it('marks invite as used when chat_member update indicates user became member', 
     $response->assertOk()->assertJsonPath('ok', true);
     expect($invite->fresh()->used_at)->not->toBeNull();
 });
+
+it('marks only the matching invite_link row for that course', function (): void {
+    $courseA = Course::create([
+        'slug' => 'course-scope-a',
+        'title' => ['ar' => 'دورة أ', 'en' => 'Course A'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'price_cents' => 10000,
+        'status' => 'published',
+        'telegram_group_id' => -100111222,
+    ]);
+
+    $courseB = Course::create([
+        'slug' => 'course-scope-b',
+        'title' => ['ar' => 'دورة ب', 'en' => 'Course B'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'price_cents' => 10000,
+        'status' => 'published',
+        'telegram_group_id' => -100333444,
+    ]);
+
+    $student1 = User::factory()->create(['telegram_user_id' => 11111]);
+    $student2 = User::factory()->create(['telegram_user_id' => 22222]);
+
+    $inviteA1 = TelegramCourseInvite::create([
+        'user_id' => $student1->id,
+        'course_id' => $courseA->id,
+        'invite_link' => 'https://t.me/+linkA1',
+        'expires_at' => now()->addDays(2),
+    ]);
+
+    $inviteA2 = TelegramCourseInvite::create([
+        'user_id' => $student1->id,
+        'course_id' => $courseA->id,
+        'invite_link' => 'https://t.me/+linkA2',
+        'expires_at' => now()->addDays(2),
+    ]);
+
+    $inviteStudent2 = TelegramCourseInvite::create([
+        'user_id' => $student2->id,
+        'course_id' => $courseA->id,
+        'invite_link' => 'https://t.me/+linkStudent2',
+        'expires_at' => now()->addDays(2),
+    ]);
+
+    $inviteB1 = TelegramCourseInvite::create([
+        'user_id' => $student1->id,
+        'course_id' => $courseB->id,
+        'invite_link' => 'https://t.me/+linkB1',
+        'expires_at' => now()->addDays(2),
+    ]);
+
+    $response = $this->withHeaders([
+        'X-Telegram-Bot-Api-Secret-Token' => 'my_secure_secret',
+    ])->postJson('/api/v1/telegram/webhook', [
+        'update_id' => 302,
+        'chat_member' => [
+            'chat' => ['id' => -100111222],
+            'from' => ['id' => 11111],
+            'new_chat_member' => [
+                'status' => 'member',
+                'user' => ['id' => 11111],
+            ],
+            'invite_link' => [
+                'invite_link' => 'https://t.me/+linkA1',
+            ],
+        ],
+    ]);
+
+    $response->assertOk()->assertJsonPath('ok', true);
+
+    expect($inviteA1->fresh()->used_at)->not->toBeNull()
+        ->and($inviteA2->fresh()->used_at)->toBeNull()
+        ->and($inviteStudent2->fresh()->used_at)->toBeNull()
+        ->and($inviteB1->fresh()->used_at)->toBeNull();
+});
+
+it('fallback without invite_link marks only the specific user and course pair', function (): void {
+    $courseA = Course::create([
+        'slug' => 'course-fallback-a',
+        'title' => ['ar' => 'دورة أ', 'en' => 'Course A'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'price_cents' => 10000,
+        'status' => 'published',
+        'telegram_group_id' => -100555666,
+    ]);
+
+    $courseB = Course::create([
+        'slug' => 'course-fallback-b',
+        'title' => ['ar' => 'دورة ب', 'en' => 'Course B'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'price_cents' => 10000,
+        'status' => 'published',
+        'telegram_group_id' => -100777888,
+    ]);
+
+    $student1 = User::factory()->create(['telegram_user_id' => 33333]);
+    $student2 = User::factory()->create(['telegram_user_id' => 44444]);
+
+    $inviteAStudent1 = TelegramCourseInvite::create([
+        'user_id' => $student1->id,
+        'course_id' => $courseA->id,
+        'invite_link' => 'https://t.me/+fallbackA1',
+        'expires_at' => now()->addDays(2),
+    ]);
+
+    $inviteBStudent1 = TelegramCourseInvite::create([
+        'user_id' => $student1->id,
+        'course_id' => $courseB->id,
+        'invite_link' => 'https://t.me/+fallbackB1',
+        'expires_at' => now()->addDays(2),
+    ]);
+
+    $inviteAStudent2 = TelegramCourseInvite::create([
+        'user_id' => $student2->id,
+        'course_id' => $courseA->id,
+        'invite_link' => 'https://t.me/+fallbackA2',
+        'expires_at' => now()->addDays(2),
+    ]);
+
+    // chat_member payload with no invite_link
+    $response = $this->withHeaders([
+        'X-Telegram-Bot-Api-Secret-Token' => 'my_secure_secret',
+    ])->postJson('/api/v1/telegram/webhook', [
+        'update_id' => 303,
+        'chat_member' => [
+            'chat' => ['id' => -100555666],
+            'from' => ['id' => 33333],
+            'new_chat_member' => [
+                'status' => 'member',
+                'user' => ['id' => 33333],
+            ],
+        ],
+    ]);
+
+    $response->assertOk()->assertJsonPath('ok', true);
+
+    expect($inviteAStudent1->fresh()->used_at)->not->toBeNull()
+        ->and($inviteBStudent1->fresh()->used_at)->toBeNull()
+        ->and($inviteAStudent2->fresh()->used_at)->toBeNull();
+});
+
+it('chat_member update for another chat does not touch any invites', function (): void {
+    $course = Course::create([
+        'slug' => 'course-unrelated',
+        'title' => ['ar' => 'دورة', 'en' => 'Course'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'price_cents' => 10000,
+        'status' => 'published',
+        'telegram_group_id' => -100111222,
+    ]);
+
+    $student = User::factory()->create(['telegram_user_id' => 55555]);
+
+    $invite = TelegramCourseInvite::create([
+        'user_id' => $student->id,
+        'course_id' => $course->id,
+        'invite_link' => 'https://t.me/+unrelatedLink',
+        'expires_at' => now()->addDays(2),
+    ]);
+
+    $response = $this->withHeaders([
+        'X-Telegram-Bot-Api-Secret-Token' => 'my_secure_secret',
+    ])->postJson('/api/v1/telegram/webhook', [
+        'update_id' => 304,
+        'chat_member' => [
+            'chat' => ['id' => -100999999], // unrelated chat ID
+            'from' => ['id' => 55555],
+            'new_chat_member' => [
+                'status' => 'member',
+                'user' => ['id' => 55555],
+            ],
+            'invite_link' => [
+                'invite_link' => 'https://t.me/+unrelatedLink',
+            ],
+        ],
+    ]);
+
+    $response->assertOk()->assertJsonPath('ok', true);
+    expect($invite->fresh()->used_at)->toBeNull();
+});
+
+it('always returns 200 ok even on unexpected or malformed chat_member updates', function (): void {
+    $response = $this->withHeaders([
+        'X-Telegram-Bot-Api-Secret-Token' => 'my_secure_secret',
+    ])->postJson('/api/v1/telegram/webhook', [
+        'update_id' => 305,
+        'chat_member' => [
+            'chat' => null,
+            'new_chat_member' => [
+                'status' => 'left',
+            ],
+        ],
+    ]);
+
+    $response->assertOk()->assertJsonPath('ok', true);
+});

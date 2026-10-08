@@ -147,4 +147,38 @@ class TelegramClientTest extends TestCase
         Http::assertSent(fn ($req) => str_contains($req->url(), 'banChatMember'));
         Http::assertSent(fn ($req) => str_contains($req->url(), 'unbanChatMember'));
     }
+
+    public function test_set_webhook_defaults_allowed_updates_to_message_chat_join_request_and_chat_member(): void
+    {
+        Http::fake([
+            'https://api.telegram.org/bot*/setWebhook' => Http::response(['ok' => true, 'result' => true], 200),
+        ]);
+
+        $client = new TelegramClient('test_token', 'https://api.telegram.org');
+        $response = $client->setWebhook('https://example.com/webhook', 'test_secret');
+
+        $this->assertTrue($response->successful());
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), 'setWebhook')
+                && $request['url'] === 'https://example.com/webhook'
+                && $request['secret_token'] === 'test_secret'
+                && $request['allowed_updates'] === ['message', 'chat_join_request', 'chat_member'];
+        });
+    }
+
+    public function test_set_webhook_allows_overriding_allowed_updates(): void
+    {
+        Http::fake([
+            'https://api.telegram.org/bot*/setWebhook' => Http::response(['ok' => true, 'result' => true], 200),
+        ]);
+
+        $client = new TelegramClient('test_token', 'https://api.telegram.org');
+        $response = $client->setWebhook('https://example.com/webhook', 'test_secret', ['message']);
+
+        $this->assertTrue($response->successful());
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), 'setWebhook')
+                && $request['allowed_updates'] === ['message'];
+        });
+    }
 }
