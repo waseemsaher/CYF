@@ -146,3 +146,27 @@ it('denies a student from revoking enrollments', function (): void {
         ->postJson('/api/v1/admin/enrollments/'.$enrollment->getKey().'/revoke')
         ->assertForbidden();
 });
+
+it('fails with 422 when granting enrollment twice to the same student in the same course/term', function (): void {
+    $data = setupEnrollmentTestData();
+
+    // First grant succeeds
+    $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/enrollments/grant', [
+            'user_id' => $data['student']->getKey(),
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+        ])
+        ->assertCreated();
+
+    // Second grant fails with 422
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/enrollments/grant', [
+            'user_id' => $data['student']->getKey(),
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'The user already has an active enrollment for this course in this term.');
+});

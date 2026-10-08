@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace App\Domain\Payments\Actions;
 
+use App\Domain\Enrollment\Actions\ActivateEnrollment;
 use App\Jobs\SendCourseInviteLinkJob;
 use App\Jobs\SendTelegramNotificationJob;
+use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Setting;
+use App\Models\Term;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class ApprovePayment
 {
+    public function __construct(
+        private readonly ActivateEnrollment $activateEnrollment,
+    ) {}
+
     /**
      * Approve a payment, create enrollment, and freeze revenue shares.
      * Runs inside a DB transaction with row locking. Idempotent.
@@ -57,21 +64,22 @@ class ApprovePayment
                 'platform_share_cents' => $platformShareCents,
             ]);
 
-            // Get term for expiry calculation
-            $term = $payment->term;
-            $graceDays = (int) Setting::getValue('enrollment', 'grace_days', 0);
+            /** @var Term $term */
+            $term = $payment->term ?? Term::query()->findOrFail($payment->getAttribute('term_id'));
+            /** @var User $student */
+            $student = $payment->user ?? User::query()->findOrFail($payment->getAttribute('user_id'));
+            /** @var Course $course */
+            $course = $payment->course ?? Course::query()->findOrFail($payment->getAttribute('course_id'));
 
-            // Create enrollment
-            $enrollment = Enrollment::create([
-                'user_id' => $payment->getAttribute('user_id'),
-                'course_id' => $payment->getAttribute('course_id'),
-                'term_id' => $payment->getAttribute('term_id'),
-                'payment_id' => $payment->getKey(),
-                'source' => 'payment',
-                'status' => 'active',
-                'starts_at' => now(),
-                'expires_at' => $term->getAttribute('ends_at')->addDays($graceDays),
-            ]);
+            // Create or reactivate enrollment
+            $enrollment = $this->activateEnrollment->handle(
+                user: $student,
+                course: $course,
+                term: $term,
+                source: 'payment',
+                paymentId: $payment->getKey(),
+                grantedBy: null,
+            );
 
             // Log activity
             activity('payment')

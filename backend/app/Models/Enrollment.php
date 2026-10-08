@@ -78,4 +78,11 @@ class Enrollment extends Model
     {
         return $this->getAttribute('status') === 'active';
     }
+
+    public function isExpired(): bool
+    {
+        $expiresAt = $this->getAttribute('expires_at');
+
+        return $expiresAt !== null && $expiresAt->isPast();
+    }
 }

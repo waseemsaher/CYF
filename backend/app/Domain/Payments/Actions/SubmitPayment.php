@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Payments\Actions;
 
 use App\Domain\Catalog\Actions\CalculateCoursePrice;
+use App\Domain\Enrollment\Actions\ActivateEnrollment;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
-use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -19,6 +19,7 @@ class SubmitPayment
 {
     public function __construct(
         private readonly CalculateCoursePrice $calculateCoursePrice,
+        private readonly ActivateEnrollment $activateEnrollment,
     ) {}
 
     /**
@@ -26,6 +27,24 @@ class SubmitPayment
      */
     public function handle(User $user, Course $course, Term $term, UploadedFile $proof, array $data): Payment|Enrollment
     {
+        // Check for existing active non-expired enrollment
+        $existingActiveEnrollment = Enrollment::query()
+            ->where('user_id', $user->getKey())
+            ->where('course_id', $course->getKey())
+            ->where('term_id', $term->getKey())
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->exists();
+
+        if ($existingActiveEnrollment) {
+            throw ValidationException::withMessages([
+                'course_id' => [__('You already have an active enrollment for this course in this term.')],
+            ]);
+        }
+
         // Check for existing pending payment
         $existingPending = Payment::query()
             ->where('user_id', $user->getKey())
@@ -45,17 +64,12 @@ class SubmitPayment
 
         // If free → instant enrollment
         if ($pricing['amount_due_cents'] === 0) {
-            $graceDays = (int) Setting::getValue('enrollment', 'grace_days', 0);
-
-            return Enrollment::create([
-                'user_id' => $user->getKey(),
-                'course_id' => $course->getKey(),
-                'term_id' => $term->getKey(),
-                'source' => 'free',
-                'status' => 'active',
-                'starts_at' => now(),
-                'expires_at' => $term->getAttribute('ends_at')->addDays($graceDays),
-            ]);
+            return $this->activateEnrollment->handle(
+                user: $user,
+                course: $course,
+                term: $term,
+                source: 'free',
+            );
         }
 
         // Process proof image
