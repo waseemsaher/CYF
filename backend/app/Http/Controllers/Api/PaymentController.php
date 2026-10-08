@@ -106,7 +106,11 @@ class PaymentController extends Controller
 
         $this->authorize('cancel', $payment);
 
-        $cancelPayment->handle($payment, $user);
+        try {
+            $cancelPayment->handle($payment, $user);
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         return (new PaymentResource($payment->fresh()))->response();
     }

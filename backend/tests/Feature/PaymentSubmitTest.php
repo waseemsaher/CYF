@@ -235,6 +235,36 @@ it('allows a student to cancel their own pending payment', function (): void {
         ->assertJsonPath('data.status', 'cancelled');
 });
 
+it('returns 422 when student cancels a payment that was approved concurrently', function (): void {
+    $data = setupPaymentTestData();
+
+    $payment = Payment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'method' => 'vodafone_cash',
+        'list_price_cents' => 30000,
+        'discount_cents' => 0,
+        'amount_due_cents' => 30000,
+        'sender_identifier' => '01012345678',
+        'proof_path' => 'proofs/test.jpg',
+        'proof_hash' => hash('sha256', 'cancel_race_test'),
+        'status' => 'pending',
+    ]);
+
+    // Simulate concurrent approval after policy check retrieves the model
+    Payment::retrieved(function (Payment $p) use ($payment): void {
+        if ($p->getKey() === $payment->getKey() && ! $p->isApproved()) {
+            Payment::query()->whereKey($payment->getKey())->update(['status' => 'approved']);
+        }
+    });
+
+    $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments/'.$payment->getKey().'/cancel')
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Only pending payments can be cancelled. Current status: approved');
+});
+
 it('rejects payment submission when student already has an active enrollment', function (): void {
     Storage::fake('local');
     $data = setupPaymentTestData();
