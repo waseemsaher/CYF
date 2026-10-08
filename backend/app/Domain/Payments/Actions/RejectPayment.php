@@ -21,6 +21,10 @@ class RejectPayment
                 ->lockForUpdate()
                 ->findOrFail($payment->getKey());
 
+            if ($payment->getAttribute('user_id') === $reviewer->getKey()) {
+                throw new \DomainException('Reviewers cannot reject their own payments.');
+            }
+
             if (! $payment->isPending()) {
                 throw new \DomainException("Only pending payments can be rejected. Current status: {$payment->getAttribute('status')}");
             }

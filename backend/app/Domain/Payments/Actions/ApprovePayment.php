@@ -34,12 +34,20 @@ class ApprovePayment
                 ->lockForUpdate()
                 ->findOrFail($payment->getKey());
 
+            if ($payment->getAttribute('user_id') === $reviewer->getKey()) {
+                throw new \DomainException('Reviewers cannot approve their own payments.');
+            }
+
             // Idempotent: if already approved, return existing enrollment
             if ($payment->isApproved()) {
-                /** @var Enrollment $existing */
+                /** @var Enrollment|null $existing */
                 $existing = Enrollment::query()
                     ->where('payment_id', $payment->getKey())
-                    ->firstOrFail();
+                    ->first();
+
+                if ($existing === null) {
+                    throw new \DomainException('Payment approved but enrollment missing.');
+                }
 
                 return $existing;
             }

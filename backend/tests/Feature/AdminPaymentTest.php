@@ -444,3 +444,41 @@ it('rejects teacher assignment when teacher_share_percent is out of range', func
     $response->assertUnprocessable()
         ->assertJsonValidationErrors(['teacher_share_percent']);
 });
+
+it('blocks a reviewer from approving their own payment', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    $data['payment']->update(['user_id' => $data['admin']->getKey()]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Reviewers cannot approve their own payments.');
+});
+
+it('blocks a reviewer from rejecting their own payment', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    $data['payment']->update(['user_id' => $data['admin']->getKey()]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'Invalid self payment',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Reviewers cannot reject their own payments.');
+});
+
+it('returns 422 with clear message when approved payment is missing its enrollment', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    $data['payment']->update(['status' => 'approved']);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Payment approved but enrollment missing.');
+});
