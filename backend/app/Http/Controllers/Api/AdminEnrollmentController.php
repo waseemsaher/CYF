@@ -37,7 +37,11 @@ class AdminEnrollmentController extends Controller
         /** @var Term $term */
         $term = Term::query()->findOrFail($request->validated('term_id'));
 
-        $enrollment = $grantEnrollment->handle($student, $course, $term, $admin);
+        try {
+            $enrollment = $grantEnrollment->handle($student, $course, $term, $admin);
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         return (new EnrollmentResource($enrollment))
             ->response()
@@ -47,7 +51,7 @@ class AdminEnrollmentController extends Controller
     /**
      * Admin revokes an enrollment.
      */
-    public function revoke(int $id, RevokeEnrollment $revokeEnrollment): JsonResponse
+    public function revoke(int $id, Request $request, RevokeEnrollment $revokeEnrollment): JsonResponse
     {
         /** @var Enrollment $enrollment */
         $enrollment = Enrollment::query()->findOrFail($id);
@@ -55,11 +59,13 @@ class AdminEnrollmentController extends Controller
         $this->authorize('revoke', $enrollment);
 
         /** @var User $admin */
-        $admin = request()->user();
+        $admin = $request->user();
 
-        $revokeEnrollment->handle($enrollment, $admin);
+        $refund = $request->boolean('refund', false);
 
-        return (new EnrollmentResource($enrollment->fresh()))->response();
+        $revoked = $revokeEnrollment->handle($enrollment, $admin, $refund);
+
+        return (new EnrollmentResource($revoked->fresh()))->response();
     }
 
     /**

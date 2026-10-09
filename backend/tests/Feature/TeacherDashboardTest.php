@@ -200,3 +200,63 @@ it('provides quiz analytics including average score and question accuracy', func
         ->assertJsonPath('data.stats.average_score', 10)
         ->assertJsonPath('data.questions.0.accuracy_rate', 100);
 });
+
+it('calculates owed_back_cents when payouts exceed remaining approved earnings after refunds', function (): void {
+    $teacher = User::factory()->create();
+    $teacher->assignRole('teacher');
+
+    $course = Course::create([
+        'slug' => 'algorithms',
+        'title' => ['ar' => 'خوارزميات', 'en' => 'Algorithms'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'status' => 'published',
+        'price_cents' => 10000,
+    ]);
+
+    app(AssignTeacherToCourse::class)->handle($course, $teacher, 70);
+
+    $term = Term::create([
+        'name' => ['ar' => 'فصل', 'en' => 'Term'],
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addMonths(2),
+        'is_current' => true,
+    ]);
+
+    $student1 = User::factory()->create();
+
+    // Refunded payment: teacher share was 7000 cents
+    Payment::create([
+        'user_id' => $student1->id,
+        'course_id' => $course->id,
+        'term_id' => $term->id,
+        'method' => 'vodafone_cash',
+        'list_price_cents' => 10000,
+        'discount_cents' => 0,
+        'amount_due_cents' => 10000,
+        'sender_identifier' => '01011112222',
+        'proof_path' => 'proofs/1.jpg',
+        'proof_hash' => 'hash1',
+        'status' => 'refunded',
+        'teacher_share_percent' => 70,
+        'teacher_share_cents' => 7000,
+        'platform_share_cents' => 3000,
+    ]);
+
+    $admin = User::factory()->create();
+    $admin->assignRole('admin');
+
+    // Teacher was already paid out 5000 cents
+    app(RecordTeacherPayout::class)->handle($teacher, 5000, $admin, 'دفعة سابقة');
+
+    $balance = app(CalculateTeacherBalance::class)->handle($teacher);
+
+    expect($balance['earned_cents'])->toBe(0)
+        ->and($balance['paid_out_cents'])->toBe(5000)
+        ->and($balance['balance_cents'])->toBe(0)
+        ->and($balance['owed_back_cents'])->toBe(5000);
+
+    $dashResponse = $this->actingAs($teacher)->getJson('/api/v1/teacher/dashboard');
+    $dashResponse->assertOk()
+        ->assertJsonPath('data.earnings.balance_cents', 0)
+        ->assertJsonPath('data.earnings.owed_back_cents', 5000);
+});

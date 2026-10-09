@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Jobs\SendCourseInviteLinkJob;
 use App\Jobs\SendTelegramNotificationJob;
+use App\Mail\PaymentApprovedMail;
+use App\Mail\PaymentRejectedMail;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
@@ -215,9 +218,27 @@ it('dispatches queued SendTelegramNotificationJob when admin approves a payment 
     $response->assertOk();
 
     Queue::assertPushed(SendTelegramNotificationJob::class, function (SendTelegramNotificationJob $job): bool {
-        return $job->telegramUserId === 987654321 && str_contains($job->message, 'تم قبول عملية الدفع');
+        return $job->telegramUserId === 987654321
+            && str_contains($job->message, 'تم قبول عملية الدفع')
+            && $job->afterCommit === true;
     });
     Mail::assertNothingQueued();
+});
+
+it('dispatches queued SendCourseInviteLinkJob after commit when course has telegram_group_id', function (): void {
+    Queue::fake();
+    $data = setupAdminPaymentTestData();
+    $data['student']->update(['telegram_user_id' => 987654321]);
+    $data['course']->update(['telegram_group_id' => -1001234567890]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertOk();
+
+    Queue::assertPushed(SendCourseInviteLinkJob::class, function (SendCourseInviteLinkJob $job): bool {
+        return $job->afterCommit === true;
+    });
 });
 
 it('dispatches queued SendTelegramNotificationJob when admin rejects a payment with linked telegram', function (): void {
@@ -234,7 +255,9 @@ it('dispatches queued SendTelegramNotificationJob when admin rejects a payment w
     $response->assertOk();
 
     Queue::assertPushed(SendTelegramNotificationJob::class, function (SendTelegramNotificationJob $job): bool {
-        return $job->telegramUserId === 987654321 && str_contains($job->message, 'تم رفض إيصال الدفع');
+        return $job->telegramUserId === 987654321
+            && str_contains($job->message, 'تم رفض إيصال الدفع')
+            && $job->afterCommit === true;
     });
     Mail::assertNothingQueued();
 });
@@ -307,4 +330,138 @@ it('prevents race conditions between approve and reject operations and maintains
     $enrollment = Enrollment::query()->where('payment_id', $payment->getKey())->first();
     expect($enrollment)->not->toBeNull();
     expect($enrollment->status)->toBe('active');
+});
+
+it('reactivates a revoked enrollment when approving payment', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    $revokedEnrollment = Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'source' => 'admin_grant',
+        'status' => 'revoked',
+        'starts_at' => now()->subMonths(1),
+        'expires_at' => now()->addMonths(1),
+    ]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertOk()
+        ->assertJsonPath('data.status', 'active');
+
+    expect($revokedEnrollment->fresh()->status)->toBe('active');
+    expect($revokedEnrollment->fresh()->payment_id)->toBe($data['payment']->getKey());
+    expect(Enrollment::query()->where('user_id', $data['student']->getKey())->count())->toBe(1);
+});
+
+it('fails with 422 when approving payment if user already has an active enrollment', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'source' => 'admin_grant',
+        'status' => 'active',
+        'starts_at' => now(),
+        'expires_at' => now()->addMonths(3),
+    ]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'The user already has an active enrollment for this course in this term.');
+});
+
+it('sends PaymentApprovedMail when approved student has email but no telegram', function (): void {
+    Mail::fake();
+    Queue::fake();
+    $data = setupAdminPaymentTestData();
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertOk();
+
+    Mail::assertQueued(PaymentApprovedMail::class, function (PaymentApprovedMail $mail) use ($data): bool {
+        return $mail->hasTo($data['student']->email) && $mail->afterCommit === true;
+    });
+    Queue::assertNotPushed(SendTelegramNotificationJob::class);
+});
+
+it('sends PaymentRejectedMail with reason when rejected student has email but no telegram', function (): void {
+    Mail::fake();
+    Queue::fake();
+    $data = setupAdminPaymentTestData();
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'صورة غير واضحة',
+        ]);
+
+    $response->assertOk();
+
+    Mail::assertQueued(PaymentRejectedMail::class, function (PaymentRejectedMail $mail) use ($data): bool {
+        return $mail->hasTo($data['student']->email)
+            && $mail->reason === 'صورة غير واضحة'
+            && $mail->afterCommit === true;
+    });
+    Queue::assertNotPushed(SendTelegramNotificationJob::class);
+});
+
+it('fails with 422 when approving payment if teacher share percent is out of range', function (): void {
+    $data = setupAdminPaymentTestData();
+    $data['course']->update(['teacher_share_percent' => 120]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Teacher share percent must be between 0 and 100. Current value: 120');
+});
+
+it('prevents a reviewer from approving their own payment', function (): void {
+    $data = setupAdminPaymentTestData();
+    $data['payment']->update(['user_id' => $data['admin']->getKey()]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Reviewers cannot approve their own payments.');
+});
+
+it('prevents a reviewer from rejecting their own payment', function (): void {
+    $data = setupAdminPaymentTestData();
+    $data['payment']->update(['user_id' => $data['admin']->getKey()]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'Invalid receipt',
+        ]);
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Reviewers cannot reject their own payments.');
+});
+
+it('throws DomainException and returns 422 when approving an already approved payment whose enrollment is missing', function (): void {
+    $data = setupAdminPaymentTestData();
+
+    // Approve first
+    $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve')
+        ->assertOk();
+
+    // Force delete enrollment to simulate corrupted state
+    Enrollment::query()->where('payment_id', $data['payment']->getKey())->delete();
+
+    // Try approving again
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'Payment is approved but associated enrollment is missing.');
 });

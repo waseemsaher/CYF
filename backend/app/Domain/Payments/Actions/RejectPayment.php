@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Domain\Payments\Actions;
 
 use App\Jobs\SendTelegramNotificationJob;
+use App\Mail\PaymentRejectedMail;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class RejectPayment
 {
@@ -18,6 +20,10 @@ class RejectPayment
             $payment = Payment::query()
                 ->lockForUpdate()
                 ->findOrFail($payment->getKey());
+
+            if ($payment->getAttribute('user_id') === $reviewer->getKey()) {
+                throw new \DomainException('Reviewers cannot reject their own payments.');
+            }
 
             if (! $payment->isPending()) {
                 throw new \DomainException("Only pending payments can be rejected. Current status: {$payment->getAttribute('status')}");
@@ -41,11 +47,14 @@ class RejectPayment
 
             $student = $payment->user;
             if ($student && $student->telegram_user_id) {
-                $courseTitle = $payment->course->getTranslation('title', 'ar') ?: $payment->course->slug;
+                $courseTitle = htmlspecialchars((string) ($payment->course->getTranslation('title', 'ar') ?: $payment->course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                $escapedReason = htmlspecialchars((string) $reason, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-                $msg = "نأسف، تم رفض إيصال الدفع لمادة: <b>{$courseTitle}</b>.\nالسبب: <i>{$reason}</i>\nيمكنك إعادة رفع إيصال صحيح من حسابك.\n\nYour payment proof was rejected. Reason: {$reason}";
+                $msg = "نأسف، تم رفض إيصال الدفع لمادة: <b>{$courseTitle}</b>.\nالسبب: <i>{$escapedReason}</i>\nيمكنك إعادة رفع إيصال صحيح من حسابك.\n\nYour payment proof was rejected. Reason: {$escapedReason}";
 
-                SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg);
+                SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg)->afterCommit();
+            } elseif ($student && $student->email) {
+                Mail::to($student->email)->queue((new PaymentRejectedMail($payment, $reason))->afterCommit());
             }
 
             return $payment;

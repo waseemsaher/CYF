@@ -4,16 +4,25 @@ declare(strict_types=1);
 
 namespace App\Domain\Payments\Actions;
 
+use App\Domain\Enrollment\Actions\ActivateEnrollment;
 use App\Jobs\SendCourseInviteLinkJob;
 use App\Jobs\SendTelegramNotificationJob;
+use App\Mail\PaymentApprovedMail;
+use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Setting;
+use App\Models\Term;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class ApprovePayment
 {
+    public function __construct(
+        private readonly ActivateEnrollment $activateEnrollment,
+    ) {}
+
     /**
      * Approve a payment, create enrollment, and freeze revenue shares.
      * Runs inside a DB transaction with row locking. Idempotent.
@@ -27,12 +36,20 @@ class ApprovePayment
                 ->lockForUpdate()
                 ->findOrFail($payment->getKey());
 
+            if ($payment->getAttribute('user_id') === $reviewer->getKey()) {
+                throw new \DomainException('Reviewers cannot approve their own payments.');
+            }
+
             // Idempotent: if already approved, return existing enrollment
             if ($payment->isApproved()) {
-                /** @var Enrollment $existing */
+                /** @var Enrollment|null $existing */
                 $existing = Enrollment::query()
                     ->where('payment_id', $payment->getKey())
-                    ->firstOrFail();
+                    ->first();
+
+                if ($existing === null) {
+                    throw new \DomainException('Payment is approved but associated enrollment is missing.');
+                }
 
                 return $existing;
             }
@@ -57,21 +74,22 @@ class ApprovePayment
                 'platform_share_cents' => $platformShareCents,
             ]);
 
-            // Get term for expiry calculation
-            $term = $payment->term;
-            $graceDays = (int) Setting::getValue('enrollment', 'grace_days', 0);
+            /** @var Term $term */
+            $term = $payment->term ?? Term::query()->findOrFail($payment->getAttribute('term_id'));
+            /** @var User $student */
+            $student = $payment->user ?? User::query()->findOrFail($payment->getAttribute('user_id'));
+            /** @var Course $course */
+            $course = $payment->course ?? Course::query()->findOrFail($payment->getAttribute('course_id'));
 
-            // Create enrollment
-            $enrollment = Enrollment::create([
-                'user_id' => $payment->getAttribute('user_id'),
-                'course_id' => $payment->getAttribute('course_id'),
-                'term_id' => $payment->getAttribute('term_id'),
-                'payment_id' => $payment->getKey(),
-                'source' => 'payment',
-                'status' => 'active',
-                'starts_at' => now(),
-                'expires_at' => $term->getAttribute('ends_at')->addDays($graceDays),
-            ]);
+            // Create or reactivate enrollment
+            $enrollment = $this->activateEnrollment->handle(
+                user: $student,
+                course: $course,
+                term: $term,
+                source: 'payment',
+                paymentId: $payment->getKey(),
+                grantedBy: null,
+            );
 
             // Log activity
             activity('payment')
@@ -90,22 +108,25 @@ class ApprovePayment
             $student = $payment->user;
             if ($student && $student->telegram_user_id) {
                 $course = $payment->course;
-                $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;
+                $courseTitle = htmlspecialchars((string) ($course->getTranslation('title', 'ar') ?: $course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
                 if ($course->getAttribute('telegram_group_id')) {
                     // Primary path: push a single-use invite link directly to the student
-                    SendCourseInviteLinkJob::dispatch($student, $course);
+                    SendCourseInviteLinkJob::dispatch($student, $course)->afterCommit();
                 } else {
                     // Fallback: plain approval message with optional static invite link
                     $msg = "تم قبول عملية الدفع وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\nيمكنك الآن الانضمام إلى مجموعة التليجرام الخاصة بالمادة.\n\nYour payment has been approved and your course access is now active!";
 
                     $inviteLink = $course->telegram_invite_link;
                     if ($inviteLink) {
-                        $msg .= "\n\n<a href=\"{$inviteLink}\">انضم إلى القناة / Join Channel</a>";
+                        $escapedInviteLink = htmlspecialchars((string) $inviteLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                        $msg .= "\n\n<a href=\"{$escapedInviteLink}\">انضم إلى القناة / Join Channel</a>";
                     }
 
-                    SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg);
+                    SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg)->afterCommit();
                 }
+            } elseif ($student && $student->email) {
+                Mail::to($student->email)->queue((new PaymentApprovedMail($payment))->afterCommit());
             }
 
             return $enrollment;
@@ -118,10 +139,14 @@ class ApprovePayment
         $course = $payment->course;
 
         $courseOverride = $course->getAttribute('teacher_share_percent');
-        if ($courseOverride !== null) {
-            return (int) $courseOverride;
+        $percent = $courseOverride !== null
+            ? (int) $courseOverride
+            : (int) Setting::getValue('revenue', 'default_teacher_share_percent', 70);
+
+        if ($percent < 0 || $percent > 100) {
+            throw new \DomainException("Teacher share percent must be between 0 and 100. Current value: {$percent}");
         }
 
-        return (int) Setting::getValue('revenue', 'default_teacher_share_percent', 70);
+        return $percent;
     }
 }

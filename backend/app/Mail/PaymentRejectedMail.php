@@ -19,6 +19,7 @@ class PaymentRejectedMail extends Mailable implements ShouldQueue
 
     public function __construct(
         public readonly Payment $payment,
+        public readonly ?string $reason = null,
     ) {}
 
     public function envelope(): Envelope
@@ -39,7 +40,7 @@ class PaymentRejectedMail extends Mailable implements ShouldQueue
                 'payment' => $this->payment,
                 'course' => $this->payment->course,
                 'user' => $this->payment->user,
-                'reason' => $this->payment->getAttribute('rejection_reason'),
+                'reason' => $this->reason ?? $this->payment->getAttribute('rejection_reason'),
                 'locale' => $this->payment->user->getAttribute('locale') ?? 'ar',
             ],
         );

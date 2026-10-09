@@ -16,7 +16,7 @@ export type Payment = {
   amount_due_cents: number;
   sender_identifier: string;
   student_note: string | null;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'refunded';
   rejection_reason: string | null;
   teacher_share_percent: number | null;
   teacher_share_cents: number | null;

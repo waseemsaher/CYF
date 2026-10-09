@@ -76,7 +76,7 @@ class AdminTeacherController extends Controller
 
         $validated = $request->validate([
             'teacher_id' => ['required', 'exists:users,id'],
-            'teacher_share_percent' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'teacher_share_percent' => ['nullable', 'integer', 'between:0,100'],
         ]);
 
         /** @var Course $course */

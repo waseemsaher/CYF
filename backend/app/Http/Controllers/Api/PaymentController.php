@@ -37,11 +37,15 @@ class PaymentController extends Controller
         /** @var UploadedFile $proof */
         $proof = $request->file('proof');
 
-        $result = $submitPayment->handle($user, $course, $term, $proof, [
-            'method' => $request->validated('method'),
-            'sender_identifier' => $request->validated('sender_identifier'),
-            'student_note' => $request->validated('student_note'),
-        ]);
+        try {
+            $result = $submitPayment->handle($user, $course, $term, $proof, [
+                'method' => $request->validated('method'),
+                'sender_identifier' => $request->validated('sender_identifier'),
+                'student_note' => $request->validated('student_note'),
+            ]);
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         if ($result instanceof Enrollment) {
             return (new EnrollmentResource($result))
@@ -102,8 +106,12 @@ class PaymentController extends Controller
 
         $this->authorize('cancel', $payment);
 
-        $cancelPayment->handle($payment, $user);
+        try {
+            $cancelled = $cancelPayment->handle($payment, $user);
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
-        return (new PaymentResource($payment->fresh()))->response();
+        return (new PaymentResource($cancelled->fresh()))->response();
     }
 }

@@ -25,7 +25,7 @@ class AdminPaymentController extends Controller
         $this->authorize('review', Payment::class);
 
         $status = request()->query('status', 'pending');
-        if (! is_string($status) || ! in_array($status, ['pending', 'approved', 'rejected', 'cancelled'], true)) {
+        if (! is_string($status) || ! in_array($status, ['pending', 'approved', 'rejected', 'cancelled', 'refunded'], true)) {
             $status = 'pending';
         }
 
