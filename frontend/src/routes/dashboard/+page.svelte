@@ -54,7 +54,7 @@
 
   const branchLabels: Record<string, string> = {
     azhar_boys: 'فرع البنين — مدينة نصر',
-    azhar_girls: 'فرع البنات — يوسف عباس',
+    azhar_girls: 'فرع البنات — مدينة نصر',
   };
 
   async function loadDashboard() {
