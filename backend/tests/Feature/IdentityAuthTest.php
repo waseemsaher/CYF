@@ -19,15 +19,51 @@ it('registers a new student and returns a token', function (): void {
         'branch' => 'azhar_boys',
         'academic_year' => '1st',
         'department' => 'CS',
+        'phone' => '01012345678',
     ]);
 
     $response->assertStatus(201)
         ->assertJsonPath('data.user.email', 'student@example.com')
-        ->assertJsonPath('data.user.role', 'student');
+        ->assertJsonPath('data.user.role', 'student')
+        ->assertJsonPath('data.user.telegram_is_linked', false);
 
     $this->assertDatabaseHas('users', [
         'email' => 'student@example.com',
+        'phone' => '01012345678',
     ]);
+});
+
+it('validates mandatory phone number and format on registration', function (): void {
+    Role::create(['name' => 'student']);
+
+    $missingPhone = $this->postJson('/api/v1/register', [
+        'name' => 'No Phone',
+        'email' => 'nophone@example.com',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
+        'branch' => 'azhar_boys',
+        'academic_year' => '1st',
+        'department' => 'CS',
+    ]);
+
+    $missingPhone->assertStatus(422)
+        ->assertJsonValidationErrors(['phone'])
+        ->assertJsonPath('errors.phone.0', 'رقم محفظتك الإلكترونية مطلوب لاسترداد أي مبلغ عند الحاجة.');
+
+    $invalidPhone = $this->postJson('/api/v1/register', [
+        'name' => 'Invalid Phone',
+        'email' => 'invalidphone@example.com',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
+        'branch' => 'azhar_boys',
+        'academic_year' => '1st',
+        'department' => 'CS',
+        'phone' => '01312345678',
+    ]);
+
+    $invalidPhone->assertStatus(422)
+        ->assertJsonValidationErrors(['phone'])
+        ->assertJsonPath('errors.phone.0', 'رقم المحفظة يجب أن يكون رقم موبايل مصري صحيح مكوّن من 11 رقمًا (مثال: 01012345678).');
 });
 
 it('logs in an existing user with valid credentials', function (): void {

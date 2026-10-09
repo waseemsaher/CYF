@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import type { UserProfile } from '$lib/api/auth';
   import { login, currentUser } from '$lib/api/auth';
   import { t, currentLocale } from '$lib/i18n';
 
@@ -18,7 +19,28 @@
     return customError;
   });
 
-  function redirectUser(role?: string) {
+  function redirectUser(userOrRole?: UserProfile | string | null, telegramIsLinked?: boolean) {
+    let role = '';
+    let isLinked: boolean | undefined = telegramIsLinked;
+
+    if (typeof userOrRole === 'object' && userOrRole !== null) {
+      role = userOrRole.role || (userOrRole.roles && userOrRole.roles[0]) || '';
+      isLinked = userOrRole.telegram_is_linked;
+    } else if (typeof userOrRole === 'string') {
+      role = userOrRole;
+      if (isLinked === undefined && $currentUser) {
+        isLinked = $currentUser.telegram_is_linked;
+      }
+    } else if ($currentUser) {
+      role = $currentUser.role || ($currentUser.roles && $currentUser.roles[0]) || '';
+      isLinked = $currentUser.telegram_is_linked;
+    }
+
+    if (role === 'student' && isLinked === false) {
+      window.location.href = '/link-telegram';
+      return;
+    }
+
     let dest = '/dashboard';
     if (role === 'superadmin' || role === 'admin') {
       dest = '/admin';
@@ -43,9 +65,7 @@
     try {
       const res = await login(fetch, { email, password });
       if (res.data?.token) {
-        const user = res.data.user;
-        const role = user?.role || (user?.roles && user.roles[0]) || '';
-        redirectUser(role);
+        redirectUser(res.data.user);
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.message) {
@@ -78,7 +98,7 @@
         <h2>{$t.auth.login.alreadyLoggedInTitle}</h2>
         <p>{$t.auth.login.alreadyLoggedInWelcome} <strong>{$currentUser.name}</strong> ({$currentUser.email})</p>
         <div class="already-actions">
-          <button type="button" class="btn-submit" onclick={() => redirectUser($currentUser?.role)}>
+          <button type="button" class="btn-submit" onclick={() => redirectUser($currentUser)}>
             <span>{$t.auth.login.goToDashboard}</span>
             <span aria-hidden="true">{$currentLocale === 'ar' ? '←' : '→'}</span>
           </button>

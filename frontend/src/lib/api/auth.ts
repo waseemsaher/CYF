@@ -9,6 +9,7 @@ export type UserProfile = {
   academic_year: string | null;
   department: string | null;
   telegram_username: string | null;
+  telegram_is_linked?: boolean;
   phone: string | null;
   roles?: string[];
   role?: string;

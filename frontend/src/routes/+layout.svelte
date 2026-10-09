@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import { onMount } from 'svelte';
   import { page } from '$app/state';
+  import { goto } from '$app/navigation';
   import { currentUser, refreshUser, logout } from '$lib/api/auth';
   import { initLocale, currentLocale, toggleLocale, t } from '$lib/i18n';
   import { FEATURES } from '$lib/config';
@@ -22,14 +23,36 @@
     mobileMenuOpen = false;
   }
 
+  function isAllowedRoute(path: string): boolean {
+    const normalized = path.replace(/\/+$/, '') || '/';
+    if (normalized === '/link-telegram') return true;
+    if (normalized === '/' || normalized === '/login' || normalized === '/register') return true;
+    if (normalized === '/forgot-password' || normalized === '/reset-password') return true;
+    if (normalized === '/terms' || normalized === '/privacy' || normalized === '/refund') return true;
+    if (normalized === '/courses' || normalized.startsWith('/courses/')) return true;
+    return false;
+  }
+
+  function checkTelegramGuard(pathname: string) {
+    const user = $currentUser;
+    const role = user?.role || (user?.roles && user.roles[0]) || '';
+    if (user && role === 'student' && user.telegram_is_linked === false) {
+      if (!isAllowedRoute(pathname)) {
+        goto('/link-telegram');
+      }
+    }
+  }
+
   $effect(() => {
-    const _ = page.url.pathname;
+    const pathname = page.url.pathname;
     mobileMenuOpen = false;
+    checkTelegramGuard(pathname);
   });
 
   onMount(async () => {
     initLocale();
-    refreshUser(fetch);
+    await refreshUser(fetch);
+    checkTelegramGuard(page.url.pathname);
     if (pwaInfo) {
       try {
         const { registerSW } = await import('virtual:pwa-register');
