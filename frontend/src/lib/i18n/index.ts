@@ -454,7 +454,7 @@ export const translations: Record<Locale, Translations> = {
       login: {
         metaTitle: 'تسجيل الدخول | منصة Codeera',
         metaDesc: 'تسجيل الدخول إلى حسابك في منصة Codeera التعليمية.',
-        badge: 'بوابة الطلاب والمعلمين والإدارة',
+        badge: 'بوابة الطلاب',
         title: 'تسجيل الدخول',
         subtitle: 'أدخل بريدك الإلكتروني وكلمة المرور لمتابعة حسابك ومقرراتك.',
         emailLabel: 'البريد الإلكتروني',
