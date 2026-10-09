@@ -23,7 +23,7 @@ it('sends a password reset link to existing user with configured frontend URL', 
     ]);
 
     $response->assertStatus(200)
-        ->assertJsonPath('message', __('passwords.sent'));
+        ->assertJsonPath('message', 'لو كان البريد الإلكتروني ده مسجل عندنا، هيوصلك رابط إعادة تعيين كلمة السر خلال دقائق.');
 
     Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user): bool {
         $mail = $notification->toMail($user);

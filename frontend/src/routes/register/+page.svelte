@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { register } from '$lib/api/auth';
+  import { ApiError } from '$lib/api/client';
   import { t, currentLocale } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
@@ -14,6 +15,7 @@
   let department = $state('');
   let telegramUsername = $state('');
   let phone = $state('');
+  let phoneError = $state('');
 
   let loading = $state(false);
   let errorType = $state<'passwordMismatch' | 'passwordMinLength' | 'failed' | 'generic' | 'custom' | null>(null);
@@ -42,6 +44,7 @@
     e.preventDefault();
     errorType = null;
     customError = '';
+    phoneError = '';
 
     if (password !== passwordConfirmation) {
       errorType = 'passwordMismatch';
@@ -69,10 +72,21 @@
       });
 
       if (res.data?.token) {
-        window.location.href = '/dashboard';
+        window.location.href = '/link-telegram';
       }
     } catch (err: unknown) {
-      if (err instanceof Error && err.message) {
+      if (err instanceof ApiError) {
+        if (err.data?.errors?.phone?.[0]) {
+          phoneError = err.data.errors.phone[0];
+        }
+        if (err.data?.errors) {
+          const firstKey = Object.keys(err.data.errors)[0];
+          customError = err.data.errors[firstKey]?.[0] || err.message;
+        } else {
+          customError = err.message;
+        }
+        errorType = 'custom';
+      } else if (err instanceof Error && err.message) {
         customError = err.message;
         errorType = 'custom';
       } else {
@@ -238,9 +252,27 @@
             id="phone"
             type="tel"
             bind:value={phone}
+            required
+            maxlength="11"
+            inputmode="numeric"
             dir="ltr"
+            class:has-error={!!phoneError}
             placeholder={$t.auth.register.phonePlaceholder}
+            onbeforeinput={(e) => {
+              if (e.data && !/^\d+$/.test(e.data)) {
+                e.preventDefault();
+              }
+            }}
+            oninput={(e) => {
+              const target = e.currentTarget as HTMLInputElement;
+              target.value = target.value.replace(/\D/g, '').slice(0, 11);
+              phone = target.value;
+              phoneError = '';
+            }}
           />
+          {#if phoneError}
+            <span class="field-error" role="alert">{phoneError}</span>
+          {/if}
         </div>
       </div>
 
@@ -383,6 +415,25 @@
     border-color: var(--deep-cyan);
     outline: none;
     box-shadow: 0 0 0 3px rgba(var(--brand-navy-rgb), 0.15);
+  }
+
+  input.has-error {
+    border-color: #ef4444;
+  }
+
+  input.has-error:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  }
+
+  .field-error {
+    font-size: 0.82rem;
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  :global([data-theme='dark']) .field-error {
+    color: #f87171;
   }
 
   .radio-toggle {

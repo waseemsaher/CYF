@@ -24,6 +24,7 @@ class GetCurrentUserProfileAction
                 'academic_year' => $user->getAttribute('academic_year'),
                 'department' => $user->getAttribute('department'),
                 'telegram_username' => $user->getAttribute('telegram_username'),
+                'telegram_is_linked' => $user->getAttribute('telegram_user_id') !== null,
                 'phone' => $user->getAttribute('phone'),
                 'locale' => $user->getAttribute('locale'),
                 'email_verified_at' => $user->getAttribute('email_verified_at')?->toIso8601String(),

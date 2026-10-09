@@ -32,8 +32,19 @@ class RegisterUserRequest extends FormRequest
             'academic_year' => ['required', 'string', 'max:50'],
             'department' => ['required', 'string', 'max:100'],
             'telegram_username' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'phone' => ['required', 'string', 'regex:/^01[0125][0-9]{8}$/'],
             'locale' => ['nullable', 'string', 'in:ar,en'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'phone.required' => __('رقم محفظتك الإلكترونية مطلوب لاسترداد أي مبلغ عند الحاجة.'),
+            'phone.regex' => __('رقم المحفظة يجب أن يكون رقم موبايل مصري صحيح مكوّن من 11 رقمًا (مثال: 01012345678).'),
         ];
     }
 }
