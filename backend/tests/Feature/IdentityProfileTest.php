@@ -76,7 +76,7 @@ it('updates the authenticated user profile', function (): void {
     $this->assertDatabaseHas('users', [
         'id' => $user->getKey(),
         'name' => 'Updated Name',
-        'telegram_username' => '@updated',
+        'telegram_username' => 'updated',
         'phone' => '01012345678',
         'locale' => 'en',
     ]);
