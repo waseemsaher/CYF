@@ -100,4 +100,3 @@ it('validates phone format when updating user profile', function (): void {
         ->assertJsonValidationErrors(['phone'])
         ->assertJsonPath('errors.phone.0', 'رقم المحفظة يجب أن يكون رقم موبايل مصري صحيح مكوّن من 11 رقمًا (مثال: 01012345678).');
 });
-
