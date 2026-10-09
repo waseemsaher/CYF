@@ -86,12 +86,12 @@
     }
   }
 
-  function handleLogout() {
+  async function handleLogout() {
     if (pollInterval) {
       clearInterval(pollInterval);
       pollInterval = null;
     }
-    logout();
+    await logout(fetch);
     window.location.href = '/login';
   }
 

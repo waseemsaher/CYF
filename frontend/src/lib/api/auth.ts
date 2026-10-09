@@ -125,6 +125,10 @@ export async function refreshUser(fetcher: typeof fetch = fetch): Promise<UserPr
 }
 
 export async function login(fetcher: typeof fetch = fetch, credentials: LoginCredentials) {
+  clearAuthToken();
+  setStoredUser(null);
+  currentUser.set(null);
+
   const res = await apiPost<AuthResponse>(fetcher, '/login', credentials);
   if (res.data?.token) {
     setAuthToken(res.data.token);
@@ -140,6 +144,10 @@ export async function login(fetcher: typeof fetch = fetch, credentials: LoginCre
 }
 
 export async function register(fetcher: typeof fetch = fetch, data: RegisterData) {
+  clearAuthToken();
+  setStoredUser(null);
+  currentUser.set(null);
+
   const res = await apiPost<AuthResponse>(fetcher, '/register', data);
   if (res.data?.token) {
     setAuthToken(res.data.token);
@@ -154,11 +162,17 @@ export async function register(fetcher: typeof fetch = fetch, data: RegisterData
   return res;
 }
 
-export function logout(): void {
-  clearAuthToken();
-  setStoredUser(null);
-  currentUser.set(null);
-  authChecked.set(true);
+export async function logout(fetcher: typeof fetch = fetch): Promise<void> {
+  try {
+    await apiPost(fetcher, '/logout');
+  } catch (_) {
+    // If backend request fails or offline, continue to clear local auth state
+  } finally {
+    clearAuthToken();
+    setStoredUser(null);
+    currentUser.set(null);
+    authChecked.set(true);
+  }
 }
 
 export function isAuthenticated(): boolean {
