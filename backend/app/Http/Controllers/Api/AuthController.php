@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -22,6 +23,15 @@ class AuthController extends Controller
 
     public function register(RegisterUserRequest $request): JsonResponse
     {
+        if (Auth::guard('web')->check()) {
+            Auth::guard('web')->logout();
+        }
+        Auth::forgetGuards();
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
         $validated = $request->validated();
 
         $user = new User;
@@ -42,6 +52,12 @@ class AuthController extends Controller
         $user->save();
 
         $user->assignRole('student');
+
+        Auth::guard('web')->login($user);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
         $token = $user->createToken('auth-token')->plainTextToken;
 
         $payload = $this->profileAction->handle($user);
@@ -79,10 +95,19 @@ class AuthController extends Controller
         if (! $user->is_active) {
             $user->tokens()->delete();
             Auth::guard('web')->logout();
+            Auth::forgetGuards();
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
 
             return response()->json([
                 'message' => 'This account has been deactivated.',
             ], 403);
+        }
+
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;
@@ -98,7 +123,21 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        if ($user instanceof User) {
+            $currentToken = $user->currentAccessToken();
+            if ($currentToken instanceof PersonalAccessToken) {
+                $currentToken->delete();
+            }
+        }
+
+        Auth::guard('web')->logout();
+        Auth::forgetGuards();
+
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return response()->json([
             'message' => 'تم تسجيل الخروج بنجاح.',
