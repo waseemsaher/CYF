@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { beforeNavigate, goto } from '$app/navigation';
-  import { currentUser, refreshUser, logout } from '$lib/api/auth';
+  import { currentUser, refreshUser, logout, isUnlinkedStudentUser, getStoredUser } from '$lib/api/auth';
   import { initLocale, currentLocale, toggleLocale, t } from '$lib/i18n';
   import { FEATURES } from '$lib/config';
   import { socialLinks } from '$lib/socials';
@@ -24,11 +24,16 @@
   }
 
   let isUnlinkedStudent = $derived.by(() => {
-    const user = $currentUser;
-    if (!user) return false;
-    const role = user.role || (user.roles && user.roles[0]) || '';
-    return role === 'student' && user.telegram_is_linked === false;
+    return isUnlinkedStudentUser($currentUser || getStoredUser());
   });
+
+  // Synchronous client-side redirect on boot before any render
+  if (typeof window !== 'undefined') {
+    const cachedUser = getStoredUser();
+    if (isUnlinkedStudentUser(cachedUser) && window.location.pathname !== '/link-telegram') {
+      window.location.replace('/link-telegram');
+    }
+  }
 
   function checkTelegramGuard(pathname: string) {
     if (isUnlinkedStudent && pathname !== '/link-telegram') {
@@ -37,7 +42,7 @@
   }
 
   beforeNavigate((navigation) => {
-    if (isUnlinkedStudent && navigation.to && navigation.to.url.pathname !== '/link-telegram') {
+    if (isUnlinkedStudentUser($currentUser || getStoredUser()) && navigation.to && navigation.to.url.pathname !== '/link-telegram') {
       navigation.cancel();
       goto('/link-telegram');
     }
@@ -46,13 +51,49 @@
   $effect(() => {
     const pathname = page.url.pathname;
     mobileMenuOpen = false;
-    checkTelegramGuard(pathname);
+    if (isUnlinkedStudent && pathname !== '/link-telegram') {
+      goto('/link-telegram');
+    }
   });
 
   onMount(async () => {
     initLocale();
-    await refreshUser(fetch);
-    checkTelegramGuard(page.url.pathname);
+
+    // Listen to popstate (browser back/forward button)
+    const handlePopstate = () => {
+      if (isUnlinkedStudentUser($currentUser || getStoredUser()) && window.location.pathname !== '/link-telegram') {
+        window.location.replace('/link-telegram');
+      }
+    };
+    window.addEventListener('popstate', handlePopstate);
+
+    // Capture-phase link click interceptor to catch any escaping links
+    const handleClick = (e: MouseEvent) => {
+      if (isUnlinkedStudentUser($currentUser || getStoredUser())) {
+        const target = (e.target as HTMLElement)?.closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const href = target.getAttribute('href');
+          if (
+            href &&
+            !href.startsWith('#') &&
+            !href.startsWith('mailto:') &&
+            !href.startsWith('tel:') &&
+            href !== '/link-telegram' &&
+            !href.startsWith('https://t.me/')
+          ) {
+            e.preventDefault();
+            e.stopPropagation();
+            goto('/link-telegram');
+          }
+        }
+      }
+    };
+    window.addEventListener('click', handleClick, true);
+
+    const user = await refreshUser(fetch);
+    if (isUnlinkedStudentUser(user) && page.url.pathname !== '/link-telegram') {
+      goto('/link-telegram');
+    }
     if (pwaInfo) {
       try {
         const { registerSW } = await import('virtual:pwa-register');
@@ -252,31 +293,33 @@
           {/if}
         </button>
 
-        <button
-          type="button"
-          class="btn-menu-toggle"
-          onclick={toggleMobileMenu}
-          aria-expanded={mobileMenuOpen}
-          aria-label={mobileMenuOpen ? ($t.nav.menuCloseAria || 'إغلاق القائمة') : ($t.nav.menuToggleAria || 'فتح القائمة')}
-        >
-          {#if mobileMenuOpen}
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          {:else}
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          {/if}
-        </button>
+        {#if !isUnlinkedStudent}
+          <button
+            type="button"
+            class="btn-menu-toggle"
+            onclick={toggleMobileMenu}
+            aria-expanded={mobileMenuOpen}
+            aria-label={mobileMenuOpen ? ($t.nav.menuCloseAria || 'إغلاق القائمة') : ($t.nav.menuToggleAria || 'فتح القائمة')}
+          >
+            {#if mobileMenuOpen}
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            {:else}
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            {/if}
+          </button>
+        {/if}
       </div>
     </div>
 
     <!-- Mobile Drawer Panel -->
-    {#if mobileMenuOpen}
+    {#if mobileMenuOpen && !isUnlinkedStudent}
       <div class="mobile-drawer mobile-only">
         <nav class="mobile-nav-list" aria-label={$t.nav.mainNavAria}>
           {#each navLinks as link}
@@ -330,7 +373,17 @@
   </header>
 
   <main id="main-content" class="main-content" tabindex="-1">
-    {@render children()}
+    {#if isUnlinkedStudent && page.url.pathname !== '/link-telegram'}
+      <div class="lock-redirect-container" dir="rtl">
+        <div class="lock-redirect-card">
+          <div class="spinner-sm" aria-hidden="true"></div>
+          <h2>جاري التوجيه إلى صفحة ربط تليجرام...</h2>
+          <p>يجب ربط حسابك في تليجرام أولاً قبل المتابعة في المنصة.</p>
+        </div>
+      </div>
+    {:else}
+      {@render children()}
+    {/if}
   </main>
 
   {#if !isUnlinkedStudent}
@@ -1166,6 +1219,56 @@
 
   .main-content:focus {
     outline: none;
+  }
+
+  .lock-redirect-container {
+    min-height: 50vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .lock-redirect-card {
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 1.25rem;
+    padding: 2.5rem;
+    max-width: 480px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 10px 30px -10px rgba(15, 40, 47, 0.08);
+  }
+
+  .lock-redirect-card h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--storm);
+    margin: 0;
+  }
+
+  .lock-redirect-card p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  .spinner-sm {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(var(--brand-navy-rgb), 0.15);
+    border-top-color: var(--deep-cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .global-footer {

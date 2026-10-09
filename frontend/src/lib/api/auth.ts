@@ -47,8 +47,38 @@ export type RegisterData = {
   phone?: string;
 };
 
+const USER_KEY = 'codeera_user_profile';
+
+export function getStoredUser(): UserProfile | null {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const raw = localStorage.getItem(USER_KEY);
+      if (raw) return JSON.parse(raw) as UserProfile;
+    } catch (_) {}
+  }
+  return null;
+}
+
+export function setStoredUser(user: UserProfile | null): void {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    if (user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(USER_KEY);
+    }
+  }
+}
+
+export function isUnlinkedStudentUser(user: UserProfile | null | undefined): boolean {
+  if (!user) return false;
+  const role = (user.role || (user.roles && user.roles[0]) || '').toLowerCase();
+  const isStaff = role === 'admin' || role === 'superadmin' || role === 'teacher';
+  if (isStaff) return false;
+  return user.telegram_is_linked !== true;
+}
+
 // Global reactive user state accessible across all layouts and pages
-export const currentUser = writable<UserProfile | null>(null);
+export const currentUser = writable<UserProfile | null>(getStoredUser());
 export const authChecked = writable<boolean>(false);
 
 export async function getCurrentUser(fetcher: typeof fetch = fetch) {
@@ -58,6 +88,7 @@ export async function getCurrentUser(fetcher: typeof fetch = fetch) {
 export async function refreshUser(fetcher: typeof fetch = fetch): Promise<UserProfile | null> {
   const token = getAuthToken();
   if (!token) {
+    setStoredUser(null);
     currentUser.set(null);
     authChecked.set(true);
     return null;
@@ -66,6 +97,7 @@ export async function refreshUser(fetcher: typeof fetch = fetch): Promise<UserPr
   try {
     const res = await getCurrentUser(fetcher);
     const user = res.data?.user ?? null;
+    setStoredUser(user);
     currentUser.set(user);
     authChecked.set(true);
     return user;
@@ -73,6 +105,7 @@ export async function refreshUser(fetcher: typeof fetch = fetch): Promise<UserPr
     const message = err instanceof Error ? err.message : String(err);
     if (message.includes('401') || message.includes('Unauthenticated')) {
       clearAuthToken();
+      setStoredUser(null);
       currentUser.set(null);
     }
     authChecked.set(true);
@@ -85,6 +118,7 @@ export async function login(fetcher: typeof fetch = fetch, credentials: LoginCre
   if (res.data?.token) {
     setAuthToken(res.data.token);
     if (res.data.user) {
+      setStoredUser(res.data.user);
       currentUser.set(res.data.user);
       authChecked.set(true);
     } else {
@@ -99,6 +133,7 @@ export async function register(fetcher: typeof fetch = fetch, data: RegisterData
   if (res.data?.token) {
     setAuthToken(res.data.token);
     if (res.data.user) {
+      setStoredUser(res.data.user);
       currentUser.set(res.data.user);
       authChecked.set(true);
     } else {
@@ -110,6 +145,7 @@ export async function register(fetcher: typeof fetch = fetch, data: RegisterData
 
 export function logout(): void {
   clearAuthToken();
+  setStoredUser(null);
   currentUser.set(null);
   authChecked.set(true);
 }
