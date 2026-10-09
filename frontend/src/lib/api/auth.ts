@@ -97,6 +97,17 @@ export async function refreshUser(fetcher: typeof fetch = fetch): Promise<UserPr
   try {
     const res = await getCurrentUser(fetcher);
     const user = res.data?.user ?? null;
+    if (user && user.telegram_is_linked === undefined) {
+      const prev = getStoredUser();
+      if (prev && prev.id === user.id && prev.telegram_is_linked === true) {
+        user.telegram_is_linked = true;
+      } else {
+        try {
+          const statusRes = await apiGet<{ data: { is_linked: boolean } }>(fetcher, '/telegram/status');
+          user.telegram_is_linked = Boolean(statusRes.data?.is_linked);
+        } catch (_) {}
+      }
+    }
     setStoredUser(user);
     currentUser.set(user);
     authChecked.set(true);

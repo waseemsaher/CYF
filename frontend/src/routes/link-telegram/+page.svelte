@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { currentUser, isAuthenticated, refreshUser, logout } from '$lib/api/auth';
+  import { currentUser, isAuthenticated, refreshUser, logout, setStoredUser } from '$lib/api/auth';
   import { getTelegramStatus, generateTelegramLink } from '$lib/api/telegram';
   import { currentLocale } from '$lib/i18n';
 
   let loading = $state(true);
   let actionLoading = $state(false);
+  let checkingStatus = $state(false);
   let deepLink = $state('');
   let errorMsg = $state('');
   let pollInterval: ReturnType<typeof setInterval> | null = null;
@@ -19,6 +20,40 @@
     return '/dashboard';
   }
 
+  async function proceedIfLinked() {
+    let user = await refreshUser(fetch);
+    if (user) {
+      user.telegram_is_linked = true;
+      setStoredUser(user);
+      currentUser.set(user);
+    }
+    const role = user?.role || (user?.roles && user.roles[0]) || '';
+    window.location.href = getTargetRoute(role);
+  }
+
+  async function checkStatusNow() {
+    try {
+      checkingStatus = true;
+      errorMsg = '';
+      const status = await getTelegramStatus(fetch);
+      if (status.is_linked) {
+        if (pollInterval) {
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
+        await proceedIfLinked();
+      } else {
+        errorMsg = $currentLocale === 'en'
+          ? 'Telegram account not yet linked. Please open the bot in Telegram and press "Start".'
+          : 'لم يتم تأكيد الربط بعد. تأكد من فتح البوت في تليجرام والضغط على زر "Start / ابدأ".';
+      }
+    } catch (e: unknown) {
+      errorMsg = e instanceof Error ? e.message : 'تعذر التحقق من حالة الربط. يرجى المحاولة لاحقاً.';
+    } finally {
+      checkingStatus = false;
+    }
+  }
+
   function startPolling() {
     if (pollInterval) return;
     pollInterval = setInterval(async () => {
@@ -29,9 +64,7 @@
             clearInterval(pollInterval);
             pollInterval = null;
           }
-          const user = await refreshUser(fetch);
-          const role = user?.role || (user?.roles && user.roles[0]) || '';
-          window.location.href = getTargetRoute(role);
+          await proceedIfLinked();
         }
       } catch {
         // Transient error, continue polling
@@ -84,8 +117,7 @@
     try {
       const status = await getTelegramStatus(fetch);
       if (status.is_linked) {
-        await refreshUser(fetch);
-        window.location.href = getTargetRoute(role);
+        await proceedIfLinked();
         return;
       }
     } catch {
@@ -173,7 +205,18 @@
             : ($currentLocale === 'en' ? 'Open Telegram & Link Account' : 'فتح تليجرام وربط الحساب')}
         </button>
       {/if}
-      <button type="button" class="btn-guard-secondary" onclick={handleLogout}>
+      <button
+        type="button"
+        class="btn-guard-secondary"
+        onclick={checkStatusNow}
+        disabled={actionLoading || checkingStatus}
+      >
+        {checkingStatus
+          ? ($currentLocale === 'en' ? 'Checking status...' : 'جاري التحقق من الربط...')
+          : ($currentLocale === 'en' ? 'Already linked? Click here to proceed' : 'تم ربط الحساب؟ اضغط للمتابعة')}
+      </button>
+
+      <button type="button" class="btn-guard-text" onclick={handleLogout}>
         {$currentLocale === 'en' ? 'Log Out' : 'تسجيل الخروج'}
       </button>
     </div>
@@ -345,6 +388,22 @@
 
   .btn-guard-secondary:hover {
     background: var(--card-hover);
+  }
+
+  .btn-guard-text {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.5rem;
+    text-decoration: underline;
+    transition: color 150ms ease;
+  }
+
+  .btn-guard-text:hover {
+    color: var(--storm);
   }
 
   .error-banner {
