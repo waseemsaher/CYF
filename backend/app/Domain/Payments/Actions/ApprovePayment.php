@@ -110,8 +110,8 @@ class ApprovePayment
                 $course = $payment->course;
                 $courseTitle = htmlspecialchars((string) ($course->getTranslation('title', 'ar') ?: $course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-                if ($course->getAttribute('telegram_group_id')) {
-                    // Primary path: push a single-use invite link directly to the student
+                if ($course->getAttribute('telegram_group_id') || $course->getAttribute('telegram_channel_id')) {
+                    // Primary path: push invite links directly to the student
                     SendCourseInviteLinkJob::dispatch($student, $course)->afterCommit();
                 } else {
                     // Fallback: plain approval message with optional static invite link
