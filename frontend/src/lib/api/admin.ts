@@ -46,6 +46,7 @@ export type AdminCourse = {
   cover_image_path?: string | null;
   price_cents: number;
   status: 'draft' | 'published' | 'archived';
+  is_general?: boolean;
   telegram_channel_id?: number | null;
   telegram_group_id?: number | null;
   telegram_chat_id?: number | null;

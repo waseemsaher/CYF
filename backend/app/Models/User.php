@@ -8,6 +8,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -15,7 +16,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'branch', 'academic_year', 'department', 'telegram_username', 'phone', 'locale'])]
+#[Fillable(['name', 'email', 'password', 'branch', 'academic_year', 'academic_year_id', 'department', 'telegram_username', 'phone', 'locale'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -35,6 +36,7 @@ class User extends Authenticatable
         'password',
         'branch',
         'academic_year',
+        'academic_year_id',
         'department',
         'telegram_username',
         'telegram_user_id',
@@ -68,7 +70,16 @@ class User extends Authenticatable
             'must_change_password' => 'boolean',
             'is_active' => 'boolean',
             'telegram_user_id' => 'integer',
+            'academic_year_id' => 'integer',
         ];
+    }
+
+    /**
+     * @return BelongsTo<AcademicYear, $this>
+     */
+    public function academicYearModel(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
     }
 
     /**

@@ -16,6 +16,7 @@
   } from '$lib/api/admin';
   import { getAuthToken } from '$lib/api/client';
   import { getCurrentUser } from '$lib/api/auth';
+  import { getAcademicYears, getDepartments, type ReferenceOption } from '$lib/api/catalog';
   import { currentLocale, formatPrice } from '$lib/i18n';
   import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
   import TeacherManagement from '$lib/components/admin/TeacherManagement.svelte';
@@ -24,6 +25,8 @@
   let courses: AdminCourse[] = $state([]);
   let students: any[] = $state([]);
   let teachersList: AdminTeacher[] = $state([]);
+  let academicYearsList: ReferenceOption[] = $state([]);
+  let departmentsList: ReferenceOption[] = $state([]);
   let loading = $state(true);
   let errorMsg = $state('');
   let isUnauthenticated = $state(false);
@@ -52,6 +55,23 @@
   let formTelegramChannelId = $state('');
   let formTeacherId = $state<number | null>(null);
   let formTeacherShare = $state(70);
+  let formIsGeneral = $state(false);
+  let formSelectedAudiences = $state<{ academic_year_id: number; department_id: number }[]>([]);
+
+  function isAudienceChecked(yearId: number, deptId: number): boolean {
+    return formSelectedAudiences.some((a) => a.academic_year_id === yearId && a.department_id === deptId);
+  }
+
+  function toggleAudience(yearId: number, deptId: number) {
+    const exists = isAudienceChecked(yearId, deptId);
+    if (exists) {
+      formSelectedAudiences = formSelectedAudiences.filter(
+        (a) => !(a.academic_year_id === yearId && a.department_id === deptId)
+      );
+    } else {
+      formSelectedAudiences = [...formSelectedAudiences, { academic_year_id: yearId, department_id: deptId }];
+    }
+  }
 
   async function loadData() {
     loading = true;
@@ -71,17 +91,21 @@
         currentRole = userRes.data.user.role || '';
       }
 
-      const [overviewRes, coursesRes, studentsRes, teachersRes] = await Promise.all([
+      const [overviewRes, coursesRes, studentsRes, teachersRes, yearsRes, deptsRes] = await Promise.all([
         getAdminOverview(fetch),
         getAdminCourses(fetch, 1).catch(() => ({ data: [] })),
         getAdminStudents(fetch, 1).catch(() => ({ data: [] })),
         getAdminTeachers(fetch).catch(() => ({ data: [] })),
+        getAcademicYears(fetch).catch(() => ({ data: [] })),
+        getDepartments(fetch).catch(() => ({ data: [] })),
       ]);
 
       overview = overviewRes.data;
       courses = coursesRes.data || [];
       students = (studentsRes as any).data || [];
       teachersList = teachersRes.data || [];
+      academicYearsList = yearsRes.data || [];
+      departmentsList = deptsRes.data || [];
     } catch (e: any) {
       const msg = e?.message || '';
       if (msg.includes('401') || msg.includes('Unauthenticated')) {
@@ -96,15 +120,21 @@
     }
   }
 
-  async function refreshTeachersList() {
+  async function refreshReferenceData() {
     try {
-      const res = await getAdminTeachers(fetch);
-      teachersList = res.data || [];
+      const [teachersRes, yearsRes, deptsRes] = await Promise.all([
+        getAdminTeachers(fetch).catch(() => ({ data: [] })),
+        getAcademicYears(fetch).catch(() => ({ data: [] })),
+        getDepartments(fetch).catch(() => ({ data: [] })),
+      ]);
+      teachersList = teachersRes.data || [];
+      academicYearsList = yearsRes.data || [];
+      departmentsList = deptsRes.data || [];
     } catch (_) {}
   }
 
   async function openCreateCourseModal() {
-    await refreshTeachersList();
+    await refreshReferenceData();
     isEditingCourse = false;
     editingCourseId = null;
     formTitleAr = '';
@@ -119,12 +149,14 @@
     formTelegramChannelId = '';
     formTeacherId = null;
     formTeacherShare = 70;
+    formIsGeneral = false;
+    formSelectedAudiences = [];
     modalError = '';
     isCourseModalOpen = true;
   }
 
   async function openEditCourseModal(course: AdminCourse) {
-    await refreshTeachersList();
+    await refreshReferenceData();
     isEditingCourse = true;
     editingCourseId = course.id;
     formTitleAr = course.title?.ar || '';
@@ -140,6 +172,13 @@
     const assignedTeacher = teachersList.find((t) => t.courses?.some((c) => c.id === course.id));
     formTeacherId = assignedTeacher ? assignedTeacher.id : null;
     formTeacherShare = course.teacher_share_percent || 70;
+    formIsGeneral = Boolean(course.is_general);
+    formSelectedAudiences = Array.isArray(course.audiences)
+      ? course.audiences.map((a) => ({
+          academic_year_id: Number(a.academic_year_id),
+          department_id: Number(a.department_id),
+        }))
+      : [];
     modalError = '';
     isCourseModalOpen = true;
   }
@@ -164,6 +203,12 @@
     modalLoading = true;
     modalError = '';
 
+    if (!formIsGeneral && formSelectedAudiences.length === 0) {
+      modalError = 'يرجى تحديد السنة والقسم المستهدفين، أو تحديد المقرر كـ "كورس عام".';
+      modalLoading = false;
+      return;
+    }
+
     try {
       const payload: Record<string, unknown> = {
         title: {
@@ -177,6 +222,8 @@
         slug: formSlug,
         price_cents: Math.max(0, Math.round(formPricePounds * 100)),
         status: formStatus,
+        is_general: formIsGeneral,
+        audiences: formIsGeneral ? [] : formSelectedAudiences,
         teacher_share_percent: Number(formTeacherShare),
         telegram_invite_link: formTelegramLink.trim() || null,
         telegram_group_id: formTelegramGroupId.trim() ? Number(formTelegramGroupId.trim()) : null,
@@ -769,6 +816,56 @@
             bind:value={formDescAr}
             placeholder="أهداف المقرر وموضوعاته..."
           ></textarea>
+        </div>
+
+        <div class="audience-section">
+          <label class="checkbox-row is-general-toggle">
+            <input
+              type="checkbox"
+              bind:checked={formIsGeneral}
+              onchange={() => {
+                if (formIsGeneral) {
+                  formSelectedAudiences = [];
+                }
+              }}
+            />
+            <span class="checkbox-title">كورس عام (متاح لكل الطلاب بغض النظر عن السنة أو القسم)</span>
+          </label>
+          <small class="audience-hint">
+            عند تفعيل هذا الخيار، سيظهر هذا المقرر لجميع الفرق الدراسية والأقسام دون استثناء.
+          </small>
+
+          {#if !formIsGeneral}
+            <div class="audiences-picker-block">
+              <span class="picker-label">تحديد السنة والقسم المتاح لهما هذا المقرر: *</span>
+              <div class="audiences-matrix">
+                {#each academicYearsList as year}
+                  <div class="year-audience-group">
+                    <div class="year-group-title">
+                      {$currentLocale === 'en' ? (year.name.en || year.name.ar) : year.name.ar}
+                    </div>
+                    <div class="dept-checkboxes">
+                      {#each departmentsList as dept}
+                        <label class="dept-checkbox-item">
+                          <input
+                            type="checkbox"
+                            checked={isAudienceChecked(year.id, dept.id)}
+                            onchange={() => toggleAudience(year.id, dept.id)}
+                          />
+                          <span>{$currentLocale === 'en' ? (dept.name.en || dept.name.ar) : dept.name.ar}</span>
+                        </label>
+                      {/each}
+                    </div>
+                  </div>
+                {/each}
+              </div>
+              {#if formSelectedAudiences.length === 0}
+                <div class="audience-warning">
+                  ⚠️ يجب اختيار سنة وقسم على الأقل، أو تفعيل خيار "كورس عام".
+                </div>
+              {/if}
+            </div>
+          {/if}
         </div>
 
         <div class="form-row">
@@ -1511,6 +1608,96 @@
     border-radius: 0.5rem;
     font-weight: 800;
     cursor: pointer;
+  }
+
+  .audience-section {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+  }
+
+  .checkbox-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--storm);
+  }
+
+  .audience-hint {
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .audiences-picker-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--line);
+  }
+
+  .picker-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--storm);
+  }
+
+  .audiences-matrix {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .year-audience-group {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .year-group-title {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--deep-cyan);
+    margin-bottom: 0.5rem;
+  }
+
+  .dept-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .dept-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: var(--storm);
+    cursor: pointer;
+  }
+
+  .dept-checkbox-item input,
+  .is-general-toggle input {
+    width: auto !important;
+    cursor: pointer;
+  }
+
+  .audience-warning {
+    font-size: 0.8rem;
+    color: #b91c1c;
+    font-weight: 700;
   }
 
   .admin-loading-shell, .admin-error-shell {

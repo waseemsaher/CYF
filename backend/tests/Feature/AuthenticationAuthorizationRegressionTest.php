@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\AcademicYear;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
@@ -12,6 +13,10 @@ beforeEach(function (): void {
     Role::firstOrCreate(['name' => 'superadmin', 'guard_name' => 'web']);
     Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
     Role::firstOrCreate(['name' => 'student', 'guard_name' => 'web']);
+    $this->year = AcademicYear::create([
+        'name' => ['ar' => 'السنة الأولى', 'en' => '1st Year'],
+        'sort_order' => 1,
+    ]);
 });
 
 it('ensures new registrations create ordinary student users with least-privileged default role and unique id', function (): void {
@@ -21,7 +26,7 @@ it('ensures new registrations create ordinary student users with least-privilege
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
         'branch' => 'azhar_boys',
-        'academic_year' => '1st',
+        'academic_year_id' => $this->year->id,
         'department' => 'CS',
         'phone' => '01011111111',
     ]);
@@ -35,7 +40,7 @@ it('ensures new registrations create ordinary student users with least-privilege
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
         'branch' => 'azhar_girls',
-        'academic_year' => '2nd',
+        'academic_year_id' => $this->year->id,
         'department' => 'IS',
         'phone' => '01022222222',
     ]);
@@ -141,7 +146,7 @@ it('prevents new registration from resolving to admin profile when an admin sess
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
         'branch' => 'azhar_boys',
-        'academic_year' => '1st',
+        'academic_year_id' => $this->year->id,
         'department' => 'CS',
         'phone' => '01012345678',
     ]);
@@ -197,7 +202,7 @@ it('clears session on logout and prevents stale user reuse upon subsequent regis
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
         'branch' => 'azhar_boys',
-        'academic_year' => '1st',
+        'academic_year_id' => $this->year->id,
         'department' => 'CS',
         'phone' => '01012345678',
     ]);

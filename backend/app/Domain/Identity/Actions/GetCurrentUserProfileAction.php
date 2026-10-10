@@ -22,6 +22,7 @@ class GetCurrentUserProfileAction
                 'role' => $user->getRoleNames()->first(),
                 'branch' => $user->getAttribute('branch'),
                 'academic_year' => $user->getAttribute('academic_year'),
+                'academic_year_id' => $user->getAttribute('academic_year_id') !== null ? (int) $user->getAttribute('academic_year_id') : null,
                 'department' => $user->getAttribute('department'),
                 'telegram_username' => $user->getAttribute('telegram_username'),
                 'telegram_is_linked' => $user->getAttribute('telegram_user_id') !== null,

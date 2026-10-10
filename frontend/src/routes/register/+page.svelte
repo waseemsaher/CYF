@@ -11,7 +11,7 @@
   let password = $state('');
   let passwordConfirmation = $state('');
   let branch = $state<'azhar_boys' | 'azhar_girls'>('azhar_boys');
-  let academicYear = $state('');
+  let academicYearId = $state<number | null>(null);
   let department = $state('');
   let telegramUsername = $state('');
   let phone = $state('');
@@ -32,8 +32,8 @@
 
   // Default dropdown selections when loaded
   $effect(() => {
-    if (!academicYear) {
-      academicYear = data.academicYears.length > 0 ? data.academicYears[0].name.ar : 'السنة الأولى';
+    if (academicYearId === null && data.academicYears.length > 0) {
+      academicYearId = data.academicYears[0].id;
     }
     if (!department) {
       department = data.departments.length > 0 ? data.departments[0].name.ar : 'علوم الحاسب';
@@ -111,6 +111,12 @@
       return;
     }
 
+    if (academicYearId === null) {
+      customError = 'يرجى اختيار السنة الدراسية.';
+      errorType = 'custom';
+      return;
+    }
+
     loading = true;
 
     try {
@@ -120,7 +126,7 @@
         password,
         password_confirmation: passwordConfirmation,
         branch,
-        academic_year: academicYear,
+        academic_year_id: Number(academicYearId),
         department,
         telegram_username: telegramUsername || undefined,
         phone,
@@ -262,13 +268,12 @@
       <div class="form-row">
         <div class="form-group">
           <label for="academic_year">{$t.auth.register.academicYearLabel}</label>
-          <select id="academic_year" bind:value={academicYear} required>
+          <select id="academic_year" bind:value={academicYearId} required>
             {#if data.academicYears.length === 0}
-              <option value="السنة الأولى">{$t.auth.register.years.first}</option>
-              <option value="السنة الثانية">{$t.auth.register.years.second}</option>
+              <option value={null}>{$t.auth.register.years.first}</option>
             {:else}
               {#each data.academicYears as year}
-                <option value={year.name.ar}>
+                <option value={year.id}>
                   {$currentLocale === 'en' ? (year.name.en || year.name.ar) : (year.name.ar + (year.name.en ? ` (${year.name.en})` : ''))}
                 </option>
               {/each}

@@ -12,6 +12,7 @@ use App\Models\Department;
 use App\Models\Term;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class CatalogController extends Controller
 {
@@ -23,16 +24,35 @@ class CatalogController extends Controller
         $academicYearId = request()->query('academic_year_id');
         $departmentId = request()->query('department_id');
 
-        if (is_string($academicYearId) && $academicYearId !== '') {
-            $query->whereHas('audiences', function ($audienceQuery) use ($academicYearId): void {
-                $audienceQuery->where('academic_year_id', (int) $academicYearId);
+        $hasYear = is_string($academicYearId) && $academicYearId !== '';
+        $hasDept = is_string($departmentId) && $departmentId !== '';
+
+        if ($hasYear || $hasDept) {
+            $query->where(function ($sub) use ($hasYear, $academicYearId, $hasDept, $departmentId): void {
+                $sub->where('is_general', true)
+                    ->orWhere(function ($audienceSub) use ($hasYear, $academicYearId, $hasDept, $departmentId): void {
+                        $audienceSub->whereHas('audiences', function ($audienceQuery) use ($hasYear, $academicYearId, $hasDept, $departmentId): void {
+                            if ($hasYear) {
+                                $audienceQuery->where('academic_year_id', (int) $academicYearId);
+                            }
+                            if ($hasDept) {
+                                $audienceQuery->where('department_id', (int) $departmentId);
+                            }
+                        });
+                    });
             });
         }
 
-        if (is_string($departmentId) && $departmentId !== '') {
-            $query->whereHas('audiences', function ($audienceQuery) use ($departmentId): void {
-                $audienceQuery->where('department_id', (int) $departmentId);
-            });
+        // Flag courses that are neither general nor have audience rows configured
+        $unconfiguredCourses = Course::query()
+            ->where('status', 'published')
+            ->where('is_general', false)
+            ->whereDoesntHave('audiences')
+            ->pluck('slug')
+            ->all();
+
+        if (! empty($unconfiguredCourses)) {
+            Log::warning('Catalog contains published course(s) with neither is_general nor audience rows: '.implode(', ', $unconfiguredCourses));
         }
 
         $courses = $query
