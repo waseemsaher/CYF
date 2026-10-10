@@ -201,20 +201,41 @@ class TelegramController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        // 2. Handle Message (e.g. /start <token>)
+        // 2. Handle Message (e.g. /start <token> or general messages)
         if (isset($update['message'])) {
             try {
                 $message = $update['message'];
                 $text = trim((string) ($message['text'] ?? ''));
                 $fromId = $message['from']['id'] ?? null;
                 $username = $message['from']['username'] ?? null;
+                $chatType = $message['chat']['type'] ?? 'private';
 
-                if ($fromId !== null && str_starts_with($text, '/start')) {
-                    $parts = explode(' ', $text, 2);
-                    $token = isset($parts[1]) ? trim($parts[1]) : '';
+                if ($fromId !== null && $chatType === 'private') {
+                    $normalized = mb_strtolower($text);
+                    $isStart = str_starts_with($normalized, '/start')
+                        || str_starts_with($normalized, 'start')
+                        || $normalized === 'ابدأ'
+                        || $normalized === '/ابدأ';
+
+                    $parts = preg_split('/\s+/', $text, 2);
+                    $token = ($isStart && isset($parts[1]) && trim((string) $parts[1]) !== '') ? trim((string) $parts[1]) : '';
 
                     if ($token !== '') {
                         app(LinkTelegramUser::class)->handle((int) $fromId, $username, $token);
+                    } else {
+                        $existingUser = User::query()->where('telegram_user_id', (int) $fromId)->first();
+                        if ($existingUser) {
+                            $userName = htmlspecialchars((string) $existingUser->name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                            app(TelegramClient::class)->sendMessage(
+                                (int) $fromId,
+                                "أهلاً بك يا <b>{$userName}</b>!\nحسابك مرتبط بالفعل بمنصة Codeera بنجاح.\n\nYour account is already linked to Codeera!"
+                            );
+                        } else {
+                            app(TelegramClient::class)->sendMessage(
+                                (int) $fromId,
+                                "مرحباً بك في بوت منصة كوديرا (Codeera).\nلربط حسابك، يرجى تسجيل الدخول إلى الموقع والضغط على زر \"فتح تليجرام وربط الحساب\" ليتم فتح البوت بالرابط المخصص لحسابك تلقائياً.\n\nWelcome to Codeera Bot. To link your account, please log in to the platform and click \"Open Telegram & Link Account\"."
+                            );
+                        }
                     }
                 }
             } catch (\Throwable $e) {

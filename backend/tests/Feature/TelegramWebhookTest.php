@@ -463,3 +463,59 @@ it('always returns 200 ok even on unexpected or malformed chat_member updates', 
 
     $response->assertOk()->assertJsonPath('ok', true);
 });
+
+it('sends instructions when unlinked user sends start without token', function (): void {
+    $response = $this->withHeaders([
+        'X-Telegram-Bot-Api-Secret-Token' => 'my_secure_secret',
+    ])->postJson('/api/v1/telegram/webhook', [
+        'update_id' => 306,
+        'message' => [
+            'message_id' => 10,
+            'from' => [
+                'id' => 998877,
+                'username' => 'new_student',
+            ],
+            'chat' => [
+                'id' => 998877,
+                'type' => 'private',
+            ],
+            'text' => 'Start',
+        ],
+    ]);
+
+    $response->assertOk()->assertJsonPath('ok', true);
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'sendMessage')
+        && $req['chat_id'] === 998877
+        && str_contains($req['text'], 'مرحباً بك في بوت منصة كوديرا'));
+});
+
+it('informs user when already linked user sends start or greeting', function (): void {
+    $student = User::factory()->create([
+        'name' => 'Ahmed Ali',
+        'telegram_user_id' => 11223344,
+    ]);
+
+    $response = $this->withHeaders([
+        'X-Telegram-Bot-Api-Secret-Token' => 'my_secure_secret',
+    ])->postJson('/api/v1/telegram/webhook', [
+        'update_id' => 307,
+        'message' => [
+            'message_id' => 11,
+            'from' => [
+                'id' => 11223344,
+                'username' => 'ahmed_ali',
+            ],
+            'chat' => [
+                'id' => 11223344,
+                'type' => 'private',
+            ],
+            'text' => '/start',
+        ],
+    ]);
+
+    $response->assertOk()->assertJsonPath('ok', true);
+    Http::assertSent(fn ($req) => str_contains($req->url(), 'sendMessage')
+        && $req['chat_id'] === 11223344
+        && str_contains($req['text'], 'مرتبط بالفعل بمنصة Codeera'));
+});
+
