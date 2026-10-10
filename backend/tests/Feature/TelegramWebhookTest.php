@@ -518,4 +518,3 @@ it('informs user when already linked user sends start or greeting', function ():
         && $req['chat_id'] === 11223344
         && str_contains($req['text'], 'مرتبط بالفعل بمنصة Codeera'));
 });
-
