@@ -28,6 +28,11 @@
   let courseTitle = $state({ ar: '', en: '' });
   let courseSlug = $state('');
   let sections = $state<CourseSection[]>([]);
+  let collapsedSections = $state<Record<number, boolean>>({});
+
+  function toggleSection(sectionId: number) {
+    collapsedSections[sectionId] = !collapsedSections[sectionId];
+  }
 
   // Section Modal State
   let isSectionModalOpen = $state(false);
@@ -386,6 +391,17 @@
               <div class="section-card" data-testid={`section-card-${section.id}`}>
                 <div class="section-card-header">
                   <div class="section-title-group">
+                    <button
+                      type="button"
+                      class="btn-toggle-collapse"
+                      onclick={() => toggleSection(section.id)}
+                      aria-label={collapsedSections[section.id] ? 'توسيع الفصل' : 'طي الفصل'}
+                      title={collapsedSections[section.id] ? 'توسيع عرض محتوى الفصل' : 'طي محتوى الفصل'}
+                    >
+                      <svg class="chevron-icon" class:is-rotated={collapsedSections[section.id]} viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
                     <span class="section-index-badge">الفصل {sIndex + 1}</span>
                     <h2 class="section-title">{section.title.ar}</h2>
                     {#if section.title.en}
@@ -422,8 +438,9 @@
                   </div>
                 </div>
 
-                <!-- Items inside Section -->
-                <div class="section-items-list">
+                {#if !collapsedSections[section.id]}
+                  <!-- Items inside Section -->
+                  <div class="section-items-list">
                   {#if section.items.length === 0}
                     <div class="empty-items-row">
                       <p>لا توجد محاضرات أو عناصر في هذا الفصل بعد.</p>
@@ -522,6 +539,7 @@
                     {/each}
                   {/if}
                 </div>
+                {/if}
               </div>
             {/each}
           </div>
@@ -959,6 +977,32 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 0.75rem;
+  }
+
+  .btn-toggle-collapse {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem;
+    border-radius: 0.35rem;
+    transition: color 150ms ease, background 150ms ease;
+  }
+
+  .btn-toggle-collapse:hover {
+    color: var(--storm);
+    background: var(--card-hover);
+  }
+
+  .chevron-icon {
+    transition: transform 200ms ease;
+  }
+
+  .chevron-icon.is-rotated {
+    transform: rotate(90deg);
   }
 
   .section-title-group {

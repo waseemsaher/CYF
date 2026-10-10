@@ -47,6 +47,12 @@
     previewItemTitle = '';
   }
 
+  let collapsedSections = $state<Record<number, boolean>>({});
+
+  function toggleSection(sIdx: number) {
+    collapsedSections[sIdx] = !collapsedSections[sIdx];
+  }
+
   // Edit Modal State
   let isEditModalOpen = $state(false);
   let editTitleAr = $state('');
@@ -201,58 +207,72 @@
       <div class="curriculum-list">
         {#each data.content.sections as section, sIdx}
           <div class="curriculum-section">
-            <div class="curriculum-section-header">
-              <span class="section-idx">{$currentLocale === 'en' ? `Section ${sIdx + 1}` : `الفصل ${sIdx + 1}`}</span>
-              <h3>{getLocalizedText(section.title, $currentLocale)}</h3>
-              <span class="section-badge">{section.items.length} {$currentLocale === 'en' ? 'items' : 'عنصر'}</span>
-            </div>
+            <button
+              type="button"
+              class="curriculum-section-header"
+              onclick={() => toggleSection(sIdx)}
+              aria-expanded={!collapsedSections[sIdx]}
+            >
+              <div class="section-header-content">
+                <span class="section-idx">{$currentLocale === 'en' ? `Section ${sIdx + 1}` : `الفصل ${sIdx + 1}`}</span>
+                <h3>{getLocalizedText(section.title, $currentLocale)}</h3>
+                <span class="section-badge">{section.items.length} {$currentLocale === 'en' ? 'items' : 'عنصر'}</span>
+              </div>
+              <span class="chevron-wrapper" aria-hidden="true">
+                <svg class="chevron-icon" class:is-rotated={collapsedSections[sIdx]} viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </button>
 
-            <div class="curriculum-items">
-              {#each section.items as item}
-                <div class="curriculum-item" class:is-preview={item.is_free}>
-                  <div class="item-title-wrap">
-                    <span class="item-icon-tag" aria-hidden="true">
-                      {#if item.type === 'lecture_link'}
-                        🎬
-                      {:else if item.type === 'file'}
-                        📄
-                      {:else if item.type === 'quiz' || item.type === 'exam'}
-                        📝
-                      {:else}
-                        🔗
+            {#if !collapsedSections[sIdx]}
+              <div class="curriculum-items">
+                {#each section.items as item}
+                  <div class="curriculum-item" class:is-preview={item.is_free}>
+                    <div class="item-title-wrap">
+                      <span class="item-icon-tag" aria-hidden="true">
+                        {#if item.type === 'lecture_link'}
+                          🎬
+                        {:else if item.type === 'file'}
+                          📄
+                        {:else if item.type === 'quiz' || item.type === 'exam'}
+                          📝
+                        {:else}
+                          🔗
+                        {/if}
+                      </span>
+                      <span class="item-title">{getLocalizedText(item.title, $currentLocale)}</span>
+
+                      {#if item.is_free}
+                        <span class="preview-tag">
+                          {$currentLocale === 'en' ? 'Free Preview' : 'معاينة مجانية'}
+                        </span>
                       {/if}
-                    </span>
-                    <span class="item-title">{getLocalizedText(item.title, $currentLocale)}</span>
+                    </div>
 
-                    {#if item.is_free}
-                      <span class="preview-tag">
-                        {$currentLocale === 'en' ? 'Free Preview' : 'معاينة مجانية'}
-                      </span>
-                    {/if}
+                    <div class="item-status-wrap">
+                      {#if item.is_free && item.url}
+                        <button
+                          type="button"
+                          class="btn-watch-preview"
+                          onclick={() => openPreviewModal(getLocalizedText(item.title, $currentLocale), item.url!)}
+                        >
+                          {$currentLocale === 'en' ? 'Watch Preview ▶' : 'مشاهدة المعاينة ▶'}
+                        </button>
+                      {:else if item.is_locked}
+                        <span class="lock-indicator" title={$currentLocale === 'en' ? 'Requires enrollment' : 'يتطلب الاشتراك في المادة'}>
+                          🔒 {$currentLocale === 'en' ? 'Locked' : 'مغلق'}
+                        </span>
+                      {:else}
+                        <a href={`/my-courses/${data.course.slug}`} class="btn-item-open">
+                          {$currentLocale === 'en' ? 'Open Lesson' : 'فتح الدرس'}
+                        </a>
+                      {/if}
+                    </div>
                   </div>
-
-                  <div class="item-status-wrap">
-                    {#if item.is_free && item.url}
-                      <button
-                        type="button"
-                        class="btn-watch-preview"
-                        onclick={() => openPreviewModal(getLocalizedText(item.title, $currentLocale), item.url!)}
-                      >
-                        {$currentLocale === 'en' ? 'Watch Preview ▶' : 'مشاهدة المعاينة ▶'}
-                      </button>
-                    {:else if item.is_locked}
-                      <span class="lock-indicator" title={$currentLocale === 'en' ? 'Requires enrollment' : 'يتطلب الاشتراك في المادة'}>
-                        🔒 {$currentLocale === 'en' ? 'Locked' : 'مغلق'}
-                      </span>
-                    {:else}
-                      <a href={`/my-courses/${data.course.slug}`} class="btn-item-open">
-                        {$currentLocale === 'en' ? 'Open Lesson' : 'فتح الدرس'}
-                      </a>
-                    {/if}
-                  </div>
-                </div>
-              {/each}
-            </div>
+                {/each}
+              </div>
+            {/if}
           </div>
         {/each}
       </div>
@@ -893,8 +913,41 @@
     padding: 0.85rem 1.25rem;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: space-between;
+    width: 100%;
+    border: none;
     border-bottom: 1.5px solid var(--line);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: inherit;
+    transition: background 150ms ease;
+  }
+
+  .curriculum-section-header:hover {
+    background: var(--card-hover);
+  }
+
+  .section-header-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .chevron-wrapper {
+    display: inline-flex;
+    align-items: center;
+    color: var(--muted);
+    padding: 0.25rem;
+  }
+
+  .chevron-icon {
+    transition: transform 200ms ease;
+  }
+
+  .chevron-icon.is-rotated {
+    transform: rotate(90deg);
   }
 
   .section-idx {

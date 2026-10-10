@@ -10,6 +10,11 @@
   let resendMsg = $state<{ type: 'success' | 'error'; text: string } | null>(null);
   let loading = $state(true);
   let errorMsg = $state('');
+  let collapsedSections = $state<Record<number, boolean>>({});
+
+  function toggleSection(sectionId: number) {
+    collapsedSections[sectionId] = !collapsedSections[sectionId];
+  }
 
   const slug = page.params.slug || '';
 
@@ -133,14 +138,27 @@
         {:else}
           {#each content.sections as section}
             <div class="section-card">
-              <div class="section-header">
-                <h3>{section.title.ar}</h3>
+              <button
+                type="button"
+                class="section-header"
+                onclick={() => toggleSection(section.id)}
+                aria-expanded={!collapsedSections[section.id]}
+              >
+                <div class="section-title-wrap">
+                  <span class="chevron-wrapper" aria-hidden="true">
+                    <svg class="chevron-icon" class:is-rotated={collapsedSections[section.id]} viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </span>
+                  <h3>{section.title.ar}</h3>
+                </div>
                 <span class="item-count">{section.items.length} عنصر</span>
-              </div>
+              </button>
 
-              {#if section.items.length === 0}
-                <div class="empty-section">لا توجد عناصر في هذا القسم حالياً.</div>
-              {:else}
+              {#if !collapsedSections[section.id]}
+                {#if section.items.length === 0}
+                  <div class="empty-section">لا توجد عناصر في هذا القسم حالياً.</div>
+                {:else}
                 <div class="items-list">
                   {#each section.items as item}
                     <div class="item-row">
@@ -206,8 +224,9 @@
                   {/each}
                 </div>
               {/if}
-            </div>
-          {/each}
+            {/if}
+          </div>
+        {/each}
         {/if}
       </section>
     {/if}
@@ -403,10 +422,40 @@
   .section-header {
     background: var(--paper);
     padding: 1rem 1.25rem;
+    border: none;
     border-bottom: 2px solid var(--line);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: inherit;
+    transition: background 150ms ease;
+  }
+
+  .section-header:hover {
+    background: var(--card-hover);
+  }
+
+  .section-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .chevron-wrapper {
+    display: inline-flex;
+    align-items: center;
+    color: var(--muted);
+  }
+
+  .chevron-icon {
+    transition: transform 200ms ease;
+  }
+
+  .chevron-icon.is-rotated {
+    transform: rotate(90deg);
   }
 
   .section-header h3 {
