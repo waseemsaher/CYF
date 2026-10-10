@@ -58,7 +58,6 @@ class SettingsSetCommand extends Command
             }
         }
 
-
         Setting::setValue($group, $key, $parsedValue);
 
         activity('settings')
