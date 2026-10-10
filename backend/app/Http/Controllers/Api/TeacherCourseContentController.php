@@ -121,7 +121,7 @@ class TeacherCourseContentController extends Controller
         if ($request->has('title')) {
             $ar = $request->input('title.ar', $section->getTranslation('title', 'ar'));
             $en = $request->input('title.en', $section->getTranslation('title', 'en') ?: $ar);
-            $section->title = ['ar' => $ar, 'en' => $en ?: $ar];
+            $section->setTranslations('title', ['ar' => $ar, 'en' => $en ?: $ar]);
         }
         if ($request->has('position')) {
             $section->position = (int) $request->input('position');
@@ -229,10 +229,10 @@ class TeacherCourseContentController extends Controller
         if ($request->has('title')) {
             $ar = $request->input('title.ar', $item->getTranslation('title', 'ar'));
             $en = $request->input('title.en', $item->getTranslation('title', 'en') ?: $ar);
-            $item->title = ['ar' => $ar, 'en' => $en ?: $ar];
+            $item->setTranslations('title', ['ar' => $ar, 'en' => $en ?: $ar]);
         }
         if ($request->has('description')) {
-            $item->description = $request->input('description');
+            $item->setTranslations('description', (array) $request->input('description'));
         }
         if ($request->has('url')) {
             $item->url = $request->input('url');
@@ -288,4 +288,3 @@ class TeacherCourseContentController extends Controller
         }
     }
 }
-
