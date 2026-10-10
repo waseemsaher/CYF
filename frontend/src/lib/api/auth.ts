@@ -7,6 +7,7 @@ export type UserProfile = {
   email: string;
   branch: 'azhar_boys' | 'azhar_girls' | null;
   academic_year: string | null;
+  academic_year_id?: number | null;
   department: string | null;
   telegram_username: string | null;
   telegram_is_linked?: boolean;
@@ -41,7 +42,8 @@ export type RegisterData = {
   password: string;
   password_confirmation: string;
   branch: 'azhar_boys' | 'azhar_girls';
-  academic_year: string;
+  academic_year?: string;
+  academic_year_id: number;
   department: string;
   telegram_username?: string;
   phone?: string;

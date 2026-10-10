@@ -8,6 +8,7 @@ use App\Domain\Identity\Actions\GetCurrentUserProfileAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginUserRequest;
 use App\Http\Requests\RegisterUserRequest;
+use App\Models\AcademicYear;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,13 +35,21 @@ class AuthController extends Controller
 
         $validated = $request->validated();
 
+        $academicYearId = (int) $validated['academic_year_id'];
+        $academicYearName = $validated['academic_year'] ?? null;
+        if (! $academicYearName) {
+            $yearModel = AcademicYear::find($academicYearId);
+            $academicYearName = $yearModel?->getTranslation('name', 'ar') ?? (string) $academicYearId;
+        }
+
         $user = new User;
         $user->fill([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'branch' => $validated['branch'],
-            'academic_year' => $validated['academic_year'],
+            'academic_year' => $academicYearName,
+            'academic_year_id' => $academicYearId,
             'department' => $validated['department'],
             'telegram_username' => $validated['telegram_username'] ?? null,
             'phone' => $validated['phone'] ?? null,
