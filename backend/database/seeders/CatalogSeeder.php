@@ -65,11 +65,48 @@ class CatalogSeeder extends Seeder
     private function seedCourses(): void
     {
         foreach ([
-            ['slug' => 'cpp', 'title' => ['ar' => 'لغة ++C', 'en' => 'C++'], 'description' => ['ar' => 'أساسيات البرمجة بلغة ++C.', 'en' => 'Programming fundamentals with C++.'], 'sort_order' => 1],
-            ['slug' => 'discrete-mathematics', 'title' => ['ar' => 'الرياضيات المتقطعة', 'en' => 'Discrete Mathematics'], 'description' => ['ar' => 'مفاهيم المنطق والمجموعات والرسوم البيانية.', 'en' => 'Logic, sets, and graph fundamentals.'], 'sort_order' => 2],
-            ['slug' => 'computing-fundamentals', 'title' => ['ar' => 'أساسيات الحاسب', 'en' => 'Computing Fundamentals'], 'description' => ['ar' => 'مدخل إلى مفاهيم الحوسبة الأساسية.', 'en' => 'An introduction to core computing concepts.'], 'sort_order' => 3],
-            ['slug' => 'physics', 'title' => ['ar' => 'الفيزياء', 'en' => 'Physics'], 'description' => ['ar' => 'مراجعة موضوعات الفيزياء الأساسية.', 'en' => 'Review of essential physics topics.'], 'sort_order' => 4],
-            ['slug' => 'english', 'title' => ['ar' => 'اللغة الإنجليزية', 'en' => 'English'], 'description' => ['ar' => 'مهارات اللغة الإنجليزية لطلاب الكلية.', 'en' => 'English skills for FCAI students.'], 'sort_order' => 5],
+            [
+                'slug' => 'cpp',
+                'title' => ['ar' => 'لغة ++C', 'en' => 'C++'],
+                'description' => ['ar' => 'أساسيات البرمجة بلغة ++C.', 'en' => 'Programming fundamentals with C++.'],
+                'telegram_channel_id' => -1003971023546,
+                'telegram_group_id' => -1004465496651,
+                'telegram_invite_link' => 'https://t.me/+xUnX2LWnZBthMmY0',
+                'sort_order' => 1,
+            ],
+            [
+                'slug' => 'discrete-mathematics',
+                'title' => ['ar' => 'الرياضيات المتقطعة', 'en' => 'Discrete Mathematics'],
+                'description' => ['ar' => 'مفاهيم المنطق والمجموعات والرسوم البيانية.', 'en' => 'Logic, sets, and graph fundamentals.'],
+                'telegram_channel_id' => -1004307630442,
+                'telegram_group_id' => -1003911090116,
+                'telegram_invite_link' => 'https://t.me/+DQ9RCjnlTdRkZjQ0',
+                'sort_order' => 2,
+            ],
+            [
+                'slug' => 'computing-fundamentals',
+                'title' => ['ar' => 'أساسيات الحاسب', 'en' => 'Computing Fundamentals'],
+                'description' => ['ar' => 'مدخل إلى مفاهيم الحوسبة الأساسية.', 'en' => 'An introduction to core computing concepts.'],
+                'telegram_channel_id' => -1004335639720,
+                'telegram_group_id' => -1003956818346,
+                'telegram_invite_link' => 'https://t.me/+EAVQWCysWKRmNDQ0',
+                'sort_order' => 3,
+            ],
+            [
+                'slug' => 'physics',
+                'title' => ['ar' => 'الفيزياء', 'en' => 'Physics'],
+                'description' => ['ar' => 'مراجعة موضوعات الفيزياء الأساسية.', 'en' => 'Review of essential physics topics.'],
+                'telegram_channel_id' => -1004431704885,
+                'telegram_group_id' => -1003901991044,
+                'telegram_invite_link' => 'https://t.me/+PVtTL_dLGwtkYmJk',
+                'sort_order' => 4,
+            ],
+            [
+                'slug' => 'english',
+                'title' => ['ar' => 'اللغة الإنجليزية', 'en' => 'English'],
+                'description' => ['ar' => 'مهارات اللغة الإنجليزية لطلاب الكلية.', 'en' => 'English skills for FCAI students.'],
+                'sort_order' => 5,
+            ],
         ] as $course) {
             Course::query()->updateOrCreate(
                 ['slug' => $course['slug']],

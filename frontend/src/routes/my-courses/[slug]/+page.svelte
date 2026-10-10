@@ -3,7 +3,6 @@
   import { page } from '$app/state';
   import { getCourseContent, type CourseContentResponse } from '$lib/api/learning';
   import { getTelegramStatus, resendCourseInvite, type TelegramStatus } from '$lib/api/telegram';
-  import TelegramLinkCard from '$lib/components/TelegramLinkCard.svelte';
 
   let content: CourseContentResponse | null = $state(null);
   let telegramStatus: TelegramStatus | null = $state(null);
@@ -122,8 +121,6 @@
         </div>
       {/if}
 
-      <!-- Telegram Linking Reminder -->
-      <TelegramLinkCard />
 
       <!-- Course Content Sections -->
       <section class="sections-container">
