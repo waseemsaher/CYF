@@ -13,6 +13,14 @@ use DomainException;
 
 class ActivateEnrollment
 {
+    /**
+     * Activate an enrollment inside a caller's transaction.
+     * Locks any existing enrollment for (user, course, term).
+     *
+     * - active AND not expired -> throws DomainException
+     * - revoked or expired -> reactivates it
+     * - none -> creates it
+     */
     public function handle(
         User $user,
         Course $course,

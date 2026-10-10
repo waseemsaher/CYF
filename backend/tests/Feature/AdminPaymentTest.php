@@ -225,8 +225,9 @@ it('dispatches queued SendTelegramNotificationJob when admin approves a payment 
     Mail::assertNothingQueued();
 });
 
-it('dispatches queued SendCourseInviteLinkJob after commit when course has telegram_group_id', function (): void {
+it('dispatches queued SendCourseInviteLinkJob with afterCommit when course has telegram_group_id', function (): void {
     Queue::fake();
+    Mail::fake();
     $data = setupAdminPaymentTestData();
     $data['student']->update(['telegram_user_id' => 987654321]);
     $data['course']->update(['telegram_group_id' => -1001234567890]);
@@ -260,6 +261,47 @@ it('dispatches queued SendTelegramNotificationJob when admin rejects a payment w
             && $job->afterCommit === true;
     });
     Mail::assertNothingQueued();
+});
+
+it('queues PaymentApprovedMail with afterCommit when student has no telegram but has email', function (): void {
+    Queue::fake();
+    Mail::fake();
+    $data = setupAdminPaymentTestData();
+    $data['student']->update(['telegram_user_id' => null, 'email' => 'student@example.com']);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertOk();
+
+    Queue::assertNothingPushed();
+    Mail::assertQueued(PaymentApprovedMail::class, function (PaymentApprovedMail $mail) use ($data): bool {
+        return $mail->hasTo('student@example.com')
+            && $mail->payment->getKey() === $data['payment']->getKey()
+            && $mail->afterCommit === true;
+    });
+});
+
+it('queues PaymentRejectedMail with afterCommit and reason when student has no telegram but has email', function (): void {
+    Queue::fake();
+    Mail::fake();
+    $data = setupAdminPaymentTestData();
+    $data['student']->update(['telegram_user_id' => null, 'email' => 'student@example.com']);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'صورة غير واضحة',
+        ]);
+
+    $response->assertOk();
+
+    Queue::assertNothingPushed();
+    Mail::assertQueued(PaymentRejectedMail::class, function (PaymentRejectedMail $mail) use ($data): bool {
+        return $mail->hasTo('student@example.com')
+            && $mail->payment->getKey() === $data['payment']->getKey()
+            && $mail->payment->rejection_reason === 'صورة غير واضحة'
+            && $mail->afterCommit === true;
+    });
 });
 
 it('fails cleanly when attempting to approve an already rejected payment without creating an enrollment', function (): void {
@@ -341,8 +383,8 @@ it('reactivates a revoked enrollment when approving payment', function (): void 
         'term_id' => $data['term']->getKey(),
         'source' => 'admin_grant',
         'status' => 'revoked',
-        'starts_at' => now()->subMonths(1),
-        'expires_at' => now()->addMonths(1),
+        'starts_at' => now()->subMonth(),
+        'expires_at' => now()->subDay(),
     ]);
 
     $response = $this->actingAs($data['admin'], 'sanctum')
@@ -351,8 +393,11 @@ it('reactivates a revoked enrollment when approving payment', function (): void 
     $response->assertOk()
         ->assertJsonPath('data.status', 'active');
 
-    expect($revokedEnrollment->fresh()->status)->toBe('active');
-    expect($revokedEnrollment->fresh()->payment_id)->toBe($data['payment']->getKey());
+    $revokedEnrollment->refresh();
+    expect($revokedEnrollment->status)->toBe('active')
+        ->and($revokedEnrollment->payment_id)->toBe($data['payment']->getKey())
+        ->and($revokedEnrollment->source)->toBe('payment')
+        ->and($revokedEnrollment->expires_at->isFuture())->toBeTrue();
     expect(Enrollment::query()->where('user_id', $data['student']->getKey())->count())->toBe(1);
 });
 
@@ -421,6 +466,20 @@ it('fails with 422 when approving payment if teacher share percent is out of ran
 
     $response->assertStatus(422)
         ->assertJsonPath('message', 'Teacher share percent must be between 0 and 100. Current value: 120');
+});
+
+it('rejects teacher assignment when teacher_share_percent is out of range', function (): void {
+    $data = setupAdminPaymentTestData();
+    $teacher = User::factory()->create();
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/courses/'.$data['course']->getKey().'/teachers', [
+            'teacher_id' => $teacher->getKey(),
+            'teacher_share_percent' => 105,
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['teacher_share_percent']);
 });
 
 it('prevents a reviewer from approving their own payment', function (): void {

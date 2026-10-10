@@ -29,12 +29,21 @@ class AdminSettingsController extends Controller
     {
         $this->authorizeAdmin();
 
-        $validated = $request->validate([
+        $rules = [
             'settings' => ['required', 'array'],
             'settings.*.group' => ['required', 'string'],
             'settings.*.key' => ['required', 'string'],
             'settings.*.value' => ['required'],
-        ]);
+        ];
+
+        foreach ($request->input('settings', []) as $index => $item) {
+            $key = $item['key'] ?? '';
+            if ($key === 'default_teacher_share_percent' || $key === 'teacher_share_percent') {
+                $rules["settings.{$index}.value"] = ['required', 'integer', 'between:0,100'];
+            }
+        }
+
+        $validated = $request->validate($rules);
 
         foreach ($validated['settings'] as $item) {
             Setting::setValue($item['group'], $item['key'], $item['value']);
