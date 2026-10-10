@@ -43,7 +43,7 @@
   let formTelegramGroupId = $state('');
   let formTelegramChannelId = $state('');
   let formAcademicYearId = $state<number | ''>('');
-  let formDepartmentId = $state<number | ''>('');
+  let formDepartmentId = $state<number | 'all' | ''>('all');
 
   // Client search filter
   let searchQuery = $state('');
@@ -83,7 +83,7 @@
     formTelegramGroupId = '';
     formTelegramChannelId = '';
     formAcademicYearId = data.academicYears[0]?.id || '';
-    formDepartmentId = data.departments[0]?.id || '';
+    formDepartmentId = 'all';
     modalError = '';
     isModalOpen = true;
   }
@@ -102,7 +102,7 @@
     formTelegramGroupId = course.telegram_group_id ? String(course.telegram_group_id) : '';
     formTelegramChannelId = course.telegram_channel_id ? String(course.telegram_channel_id) : '';
     formAcademicYearId = data.academicYears[0]?.id || '';
-    formDepartmentId = data.departments[0]?.id || '';
+    formDepartmentId = 'all';
     modalError = '';
     isModalOpen = true;
   }
@@ -145,13 +145,20 @@
         telegram_channel_id: formTelegramChannelId.trim() ? Number(formTelegramChannelId.trim()) : null,
       };
 
-      if (formAcademicYearId && formDepartmentId) {
-        payload.audiences = [
-          {
+      if (!isEditing && formAcademicYearId) {
+        if (formDepartmentId === 'all') {
+          payload.audiences = data.departments.map((d) => ({
             academic_year_id: Number(formAcademicYearId),
-            department_id: Number(formDepartmentId),
-          },
-        ];
+            department_id: Number(d.id),
+          }));
+        } else if (formDepartmentId) {
+          payload.audiences = [
+            {
+              academic_year_id: Number(formAcademicYearId),
+              department_id: Number(formDepartmentId),
+            },
+          ];
+        }
       }
 
       if (isEditing && editingCourseId) {
@@ -554,7 +561,7 @@
               <label for="course-year">الفرقة الدراسية المستهدفة</label>
               <select id="course-year" bind:value={formAcademicYearId}>
                 {#each data.academicYears as y}
-                  <option value={y.id}>{y.name.ar}</option>
+                  <option value={y.id}>{getLocalizedText(y.name, $currentLocale) || y.name.ar}</option>
                 {/each}
               </select>
             </div>
@@ -562,8 +569,9 @@
             <div class="form-group">
               <label for="course-dept">القسم الأكاديمي المستهدف</label>
               <select id="course-dept" bind:value={formDepartmentId}>
+                <option value="all">{$t.courses.allDepts}</option>
                 {#each data.departments as d}
-                  <option value={d.id}>{d.name.ar}</option>
+                  <option value={d.id}>{getLocalizedText(d.name, $currentLocale) || d.name.ar}</option>
                 {/each}
               </select>
             </div>
