@@ -454,5 +454,5 @@ Every production environment variable required across Backend and Frontend:
    - Generate API key with Mail Send permissions.
    - Add DNS verification records (CNAME/TXT) for `codeera.tech` sender authentication.
 5. **Telegram**:
-   - Contact `@BotFather`, create bot (e.g. `@CodeeraBot`), and copy token.
+   - Contact `@BotFather`, create bot (e.g. `@Codeera_bot`), and copy token.
    - Add bot as administrator to course groups with permissions to invite and ban members.

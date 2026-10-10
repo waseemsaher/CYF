@@ -2,9 +2,13 @@
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { getCourseContent, type CourseContentResponse } from '$lib/api/learning';
+  import { getTelegramStatus, resendCourseInvite, type TelegramStatus } from '$lib/api/telegram';
   import TelegramLinkCard from '$lib/components/TelegramLinkCard.svelte';
 
   let content: CourseContentResponse | null = $state(null);
+  let telegramStatus: TelegramStatus | null = $state(null);
+  let resendingInvite = $state(false);
+  let resendMsg = $state<{ type: 'success' | 'error'; text: string } | null>(null);
   let loading = $state(true);
   let errorMsg = $state('');
 
@@ -14,12 +18,37 @@
     try {
       loading = true;
       errorMsg = '';
-      const res = await getCourseContent(fetch, slug);
+      const [res, tg] = await Promise.all([
+        getCourseContent(fetch, slug),
+        getTelegramStatus(fetch).catch(() => null)
+      ]);
       content = res.data;
+      telegramStatus = tg;
     } catch (e: any) {
       errorMsg = e?.message || 'تعذر تحميل محتوى المادة. تأكد من تفعيل اشتراكك في المادة.';
     } finally {
       loading = false;
+    }
+  }
+
+  async function handleResendInvite() {
+    if (!content?.course?.id || resendingInvite) return;
+    resendingInvite = true;
+    resendMsg = null;
+
+    try {
+      const res = await resendCourseInvite(content.course.id, fetch);
+      resendMsg = {
+        type: 'success',
+        text: res.message || 'تم إرسال رابط الانضمام الجديد إلى حسابك على تليجرام بنجاح.'
+      };
+    } catch (e: any) {
+      resendMsg = {
+        type: 'error',
+        text: e?.message || 'تعذر إعادة إرسال الرابط. يرجى المحاولة مرة أخرى لاحقاً.'
+      };
+    } finally {
+      resendingInvite = false;
     }
   }
 
@@ -58,17 +87,40 @@
           <h1>{content.course.title.ar}</h1>
         </div>
 
-        {#if content.is_unlocked && content.course.telegram_invite_link}
-          <a
-            href={content.course.telegram_invite_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn-telegram"
-          >
-            انضم لمجموعة التليجرام للمادة
-          </a>
-        {/if}
+        <div class="header-actions">
+          {#if content.is_unlocked && content.course.telegram_invite_link}
+            <a
+              href={content.course.telegram_invite_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-telegram"
+            >
+              انضم لمجموعة التليجرام للمادة
+            </a>
+          {/if}
+
+          {#if content.is_unlocked && telegramStatus?.is_linked}
+            <button
+              type="button"
+              class="btn-resend-telegram"
+              onclick={handleResendInvite}
+              disabled={resendingInvite}
+            >
+              {#if resendingInvite}
+                جاري الإرسال...
+              {:else}
+                إعادة إرسال رابط التليجرام
+              {/if}
+            </button>
+          {/if}
+        </div>
       </div>
+
+      {#if resendMsg}
+        <div class="resend-banner resend-banner-{resendMsg.type}" role="status">
+          {resendMsg.text}
+        </div>
+      {/if}
 
       <!-- Telegram Linking Reminder -->
       <TelegramLinkCard />
@@ -259,6 +311,13 @@
     margin: 0;
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
   .btn-telegram {
     display: inline-flex;
     align-items: center;
@@ -275,6 +334,52 @@
   }
 
   .btn-telegram:hover { opacity: 0.9; }
+
+  .btn-resend-telegram {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--paper);
+    color: var(--storm);
+    padding: 0.65rem 1.15rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    font-size: 0.84rem;
+    border: 2px solid var(--line);
+    cursor: pointer;
+    transition: background 150ms ease, border-color 150ms ease;
+  }
+
+  .btn-resend-telegram:hover:not(:disabled) {
+    background: var(--card);
+    border-color: #0088cc;
+    color: #0088cc;
+  }
+
+  .btn-resend-telegram:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .resend-banner {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .resend-banner-success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+
+  .resend-banner-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
 
   /* Sections */
   .sections-container {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { register } from '$lib/api/auth';
+  import { ApiError } from '$lib/api/client';
   import { t, currentLocale } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
@@ -14,6 +15,7 @@
   let department = $state('');
   let telegramUsername = $state('');
   let phone = $state('');
+  let phoneError = $state('');
 
   let loading = $state(false);
   let errorType = $state<'passwordMismatch' | 'passwordMinLength' | 'failed' | 'generic' | 'custom' | null>(null);
@@ -30,18 +32,67 @@
 
   // Default dropdown selections when loaded
   $effect(() => {
-    if (!academicYear && data.academicYears.length > 0) {
-      academicYear = data.academicYears[0].name.ar;
+    if (!academicYear) {
+      academicYear = data.academicYears.length > 0 ? data.academicYears[0].name.ar : 'السنة الأولى';
     }
-    if (!department && data.departments.length > 0) {
-      department = data.departments[0].name.ar;
+    if (!department) {
+      department = data.departments.length > 0 ? data.departments[0].name.ar : 'علوم الحاسب';
     }
   });
+
+  function sanitizePhone(raw: string): string {
+    const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    let clean = raw;
+    for (let i = 0; i < 10; i++) {
+      clean = clean.replaceAll(arabicDigits[i], String(i));
+      clean = clean.replaceAll(persianDigits[i], String(i));
+    }
+    clean = clean.replace(/\D/g, '');
+    if (clean.startsWith('0020') && clean.length === 14) {
+      clean = '0' + clean.slice(4);
+    } else if (clean.startsWith('20') && clean.length === 12) {
+      clean = '0' + clean.slice(2);
+    } else if (clean.startsWith('20') && clean.length === 13) {
+      clean = clean.slice(2);
+    } else if (clean.length === 10 && ['10', '11', '12', '15'].includes(clean.slice(0, 2))) {
+      clean = '0' + clean;
+    }
+    return clean.slice(0, 11);
+  }
+
+  function sanitizeName(raw: string): string {
+    return raw.replace(/[^\p{L}\s\-']/gu, '').replace(/\s+/g, ' ');
+  }
+
+  function sanitizeEmail(raw: string): string {
+    return raw.trim().toLowerCase();
+  }
+
+  function sanitizeTelegram(raw: string): string {
+    let clean = raw.trim();
+    clean = clean.replace(/^https?:\/\/t\.me\//i, '');
+    clean = clean.replace(/^@+/, '');
+    clean = clean.replace(/[^a-zA-Z0-9_]/g, '');
+    return clean.slice(0, 32);
+  }
 
   async function handleRegister(e: SubmitEvent) {
     e.preventDefault();
     errorType = null;
     customError = '';
+    phoneError = '';
+
+    name = sanitizeName(name).trim();
+    email = sanitizeEmail(email);
+    telegramUsername = sanitizeTelegram(telegramUsername);
+    phone = sanitizePhone(phone);
+
+    if (name.length < 3) {
+      customError = $currentLocale === 'en' ? 'Name must be at least 3 characters.' : 'يجب ألا يقل الاسم عن 3 أحرف.';
+      errorType = 'custom';
+      return;
+    }
 
     if (password !== passwordConfirmation) {
       errorType = 'passwordMismatch';
@@ -50,6 +101,13 @@
 
     if (password.length < 8) {
       errorType = 'passwordMinLength';
+      return;
+    }
+
+    if (!/^01[0125][0-9]{8}$/.test(phone)) {
+      phoneError = $currentLocale === 'en'
+        ? 'Phone number must be a valid 11-digit Egyptian mobile number (e.g. 01012345678).'
+        : 'رقم المحفظة يجب أن يكون رقم موبايل مصري مكوّن من 11 رقمًا (مثال: 01012345678).';
       return;
     }
 
@@ -64,15 +122,26 @@
         branch,
         academic_year: academicYear,
         department,
-        telegram_username: telegramUsername ? telegramUsername.replace(/^@/, '') : undefined,
-        phone: phone || undefined,
+        telegram_username: telegramUsername || undefined,
+        phone,
       });
 
       if (res.data?.token) {
-        window.location.href = '/dashboard';
+        window.location.href = '/link-telegram';
       }
     } catch (err: unknown) {
-      if (err instanceof Error && err.message) {
+      if (err instanceof ApiError) {
+        if (err.data?.errors?.phone?.[0]) {
+          phoneError = err.data.errors.phone[0];
+        }
+        if (err.data?.errors) {
+          const firstKey = Object.keys(err.data.errors)[0];
+          customError = err.data.errors[firstKey]?.[0] || err.message;
+        } else {
+          customError = err.message;
+        }
+        errorType = 'custom';
+      } else if (err instanceof Error && err.message) {
         customError = err.message;
         errorType = 'custom';
       } else {
@@ -116,8 +185,11 @@
           type="text"
           bind:value={name}
           required
+          maxlength="100"
           placeholder={$t.auth.register.namePlaceholder}
           autocomplete="name"
+          oninput={(e) => { name = sanitizeName((e.currentTarget as HTMLInputElement).value); }}
+          onblur={() => { name = name.trim(); }}
         />
       </div>
 
@@ -129,8 +201,11 @@
           bind:value={email}
           required
           dir="ltr"
+          maxlength="255"
           placeholder={$t.auth.register.emailPlaceholder}
           autocomplete="email"
+          oninput={(e) => { email = sanitizeEmail((e.currentTarget as HTMLInputElement).value); }}
+          onblur={() => { email = sanitizeEmail(email); }}
         />
       </div>
 
@@ -228,7 +303,10 @@
             type="text"
             bind:value={telegramUsername}
             dir="ltr"
+            maxlength="32"
             placeholder={$t.auth.register.telegramPlaceholder}
+            oninput={(e) => { telegramUsername = sanitizeTelegram((e.currentTarget as HTMLInputElement).value); }}
+            onblur={() => { telegramUsername = sanitizeTelegram(telegramUsername); }}
           />
         </div>
 
@@ -238,9 +316,30 @@
             id="phone"
             type="tel"
             bind:value={phone}
+            required
+            maxlength="11"
+            inputmode="numeric"
             dir="ltr"
+            class:has-error={!!phoneError}
             placeholder={$t.auth.register.phonePlaceholder}
+            oninput={(e) => {
+              phone = sanitizePhone((e.currentTarget as HTMLInputElement).value);
+              phoneError = '';
+            }}
+            onblur={() => {
+              phone = sanitizePhone(phone);
+              if (phone && !/^01[0125][0-9]{8}$/.test(phone)) {
+                phoneError = $currentLocale === 'en'
+                  ? 'Phone number must be a valid 11-digit Egyptian mobile number (e.g. 01012345678).'
+                  : 'رقم المحفظة يجب أن يكون رقم موبايل مصري مكوّن من 11 رقمًا (مثال: 01012345678).';
+              } else {
+                phoneError = '';
+              }
+            }}
           />
+          {#if phoneError}
+            <span class="field-error" role="alert">{phoneError}</span>
+          {/if}
         </div>
       </div>
 
@@ -339,15 +438,17 @@
 
   .form-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 1rem;
     width: 100%;
     box-sizing: border-box;
+    align-items: end;
   }
 
   .form-group {
     display: flex;
     flex-direction: column;
+    justify-content: flex-end;
     gap: 0.4rem;
     min-width: 0;
     width: 100%;
@@ -358,6 +459,9 @@
     font-size: 0.9rem;
     font-weight: 700;
     color: var(--storm);
+    display: flex;
+    align-items: flex-end;
+    min-height: 2.4rem;
   }
 
   input[type="text"],
@@ -367,6 +471,8 @@
   select {
     width: 100%;
     max-width: 100%;
+    height: 48px;
+    min-height: 48px;
     box-sizing: border-box;
     border: 2px solid var(--line);
     border-radius: 0.5rem;
@@ -383,6 +489,25 @@
     border-color: var(--deep-cyan);
     outline: none;
     box-shadow: 0 0 0 3px rgba(var(--brand-navy-rgb), 0.15);
+  }
+
+  input.has-error {
+    border-color: #ef4444;
+  }
+
+  input.has-error:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  }
+
+  .field-error {
+    font-size: 0.82rem;
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  :global([data-theme='dark']) .field-error {
+    color: #f87171;
   }
 
   .radio-toggle {
@@ -472,6 +597,10 @@
   @media (max-width: 600px) {
     .form-row {
       grid-template-columns: 1fr;
+    }
+
+    label, .field-label {
+      min-height: unset;
     }
   }
 </style>

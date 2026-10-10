@@ -8,9 +8,11 @@ use App\Domain\Enrollment\Actions\ActivateEnrollment;
 use App\Jobs\SendCourseInviteLinkJob;
 use App\Jobs\SendTelegramNotificationJob;
 use App\Mail\PaymentApprovedMail;
+use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Setting;
+use App\Models\Term;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -46,7 +48,7 @@ class ApprovePayment
                     ->first();
 
                 if ($existing === null) {
-                    throw new \DomainException('Payment approved but enrollment missing.');
+                    throw new \DomainException('Payment is approved but associated enrollment is missing.');
                 }
 
                 return $existing;
@@ -72,11 +74,18 @@ class ApprovePayment
                 'platform_share_cents' => $platformShareCents,
             ]);
 
-            // Activate enrollment
+            /** @var Term $term */
+            $term = $payment->term ?? Term::query()->findOrFail($payment->getAttribute('term_id'));
+            /** @var User $student */
+            $student = $payment->user ?? User::query()->findOrFail($payment->getAttribute('user_id'));
+            /** @var Course $course */
+            $course = $payment->course ?? Course::query()->findOrFail($payment->getAttribute('course_id'));
+
+            // Create or reactivate enrollment
             $enrollment = $this->activateEnrollment->handle(
-                user: $payment->user,
-                course: $payment->course,
-                term: $payment->term,
+                user: $student,
+                course: $course,
+                term: $term,
                 source: 'payment',
                 paymentId: $payment->getKey(),
                 grantedBy: null,
@@ -99,7 +108,7 @@ class ApprovePayment
             $student = $payment->user;
             if ($student && $student->telegram_user_id) {
                 $course = $payment->course;
-                $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;
+                $courseTitle = htmlspecialchars((string) ($course->getTranslation('title', 'ar') ?: $course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
                 if ($course->getAttribute('telegram_group_id')) {
                     // Primary path: push a single-use invite link directly to the student
@@ -110,7 +119,8 @@ class ApprovePayment
 
                     $inviteLink = $course->telegram_invite_link;
                     if ($inviteLink) {
-                        $msg .= "\n\n<a href=\"{$inviteLink}\">انضم إلى القناة / Join Channel</a>";
+                        $escapedInviteLink = htmlspecialchars((string) $inviteLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                        $msg .= "\n\n<a href=\"{$escapedInviteLink}\">انضم إلى القناة / Join Channel</a>";
                     }
 
                     SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg)->afterCommit();
@@ -129,14 +139,14 @@ class ApprovePayment
         $course = $payment->course;
 
         $courseOverride = $course->getAttribute('teacher_share_percent');
-        $sharePercent = $courseOverride !== null
+        $percent = $courseOverride !== null
             ? (int) $courseOverride
             : (int) Setting::getValue('revenue', 'default_teacher_share_percent', 70);
 
-        if ($sharePercent < 0 || $sharePercent > 100) {
-            throw new \DomainException("Teacher share percent must be between 0 and 100. Got: {$sharePercent}");
+        if ($percent < 0 || $percent > 100) {
+            throw new \DomainException("Teacher share percent must be between 0 and 100. Current value: {$percent}");
         }
 
-        return $sharePercent;
+        return $percent;
     }
 }

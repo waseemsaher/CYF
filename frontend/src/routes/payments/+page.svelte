@@ -17,7 +17,8 @@
     pending: { label: 'قيد المراجعة', cls: 'badge-pending' },
     approved: { label: 'تمت الموافقة', cls: 'badge-approved' },
     rejected: { label: 'مرفوض', cls: 'badge-rejected' },
-    cancelled: { label: 'ملغى', cls: 'badge-cancelled' }
+    cancelled: { label: 'ملغى', cls: 'badge-cancelled' },
+    refunded: { label: 'مسترد', cls: 'badge-refunded' }
   };
 
   async function loadPayments() {
@@ -159,6 +160,7 @@
   .badge-approved { background: #d1fae5; color: #065f46; }
   .badge-rejected { background: #fee2e2; color: #991b1b; }
   .badge-cancelled { background: #e5e7eb; color: #374151; }
+  .badge-refunded { background: #ede9fe; color: #5b21b6; }
   .payment-date { color: var(--muted); font-size: 0.82rem; white-space: nowrap; }
   .payment-method { background: var(--paper); border-radius: 0.3rem; color: var(--muted); font-size: 0.78rem; font-weight: 700; padding: 0.25rem 0.6rem; border: 2px solid var(--line); white-space: nowrap; }
   .payment-body h2 { font-size: 1.15rem; font-weight: 800; margin: 0 0 0.75rem; color: var(--storm); word-break: break-word; }

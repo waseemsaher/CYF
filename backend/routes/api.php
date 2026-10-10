@@ -72,6 +72,8 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/status', [TelegramController::class, 'status']);
             Route::post('/link-token', [TelegramController::class, 'generateLinkToken']);
             Route::post('/unlink', [TelegramController::class, 'unlink']);
+            Route::post('/courses/{course}/resend-invite', [TelegramController::class, 'resendInvite'])
+                ->middleware('throttle:6,1');
         });
         Route::get('/lessons/{item}/watch', [TelegramController::class, 'watchLesson']);
 

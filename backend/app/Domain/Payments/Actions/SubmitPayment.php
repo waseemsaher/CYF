@@ -29,68 +29,75 @@ class SubmitPayment
      */
     public function handle(User $user, Course $course, Term $term, UploadedFile $proof, array $data): Payment|Enrollment
     {
-        return DB::transaction(function () use ($user, $course, $term, $proof, $data): Payment|Enrollment {
-            // Lock user's row so concurrent submissions serialize
-            User::query()->whereKey($user->getKey())->lockForUpdate()->first();
+        $proofPath = null;
 
-            // Reject ended term (term ends_at + grace_days not in the future)
-            $graceDays = (int) Setting::getValue('enrollment', 'grace_days', 0);
-            $termExpiry = $term->getAttribute('ends_at') ? $term->getAttribute('ends_at')->addDays($graceDays) : null;
-            if ($termExpiry === null || ! $termExpiry->isFuture()) {
-                throw ValidationException::withMessages([
-                    'term_id' => [__('الفصل الدراسي المختار قد انتهى.')],
-                ]);
-            }
+        try {
+            return DB::transaction(function () use ($user, $course, $term, $proof, $data, &$proofPath): Payment|Enrollment {
+                // Lock user's row so concurrent submissions serialize
+                User::query()
+                    ->whereKey($user->getKey())
+                    ->lockForUpdate()
+                    ->first();
 
-            // Check for existing active, non-expired enrollment
-            $existingEnrollment = Enrollment::query()
-                ->where('user_id', $user->getKey())
-                ->where('course_id', $course->getKey())
-                ->where('term_id', $term->getKey())
-                ->first();
+                // Check if term is already over
+                $graceDays = (int) Setting::getValue('enrollment', 'grace_days', 0);
+                $endsAt = $term->getAttribute('ends_at');
+                $expiresAt = $endsAt?->copy()->addDays($graceDays);
+                if ($expiresAt && ! $expiresAt->isFuture()) {
+                    throw ValidationException::withMessages([
+                        'term_id' => [__('الفصل الدراسي المختار قد انتهى بالفعل.')],
+                    ]);
+                }
 
-            if ($existingEnrollment !== null
-                && $existingEnrollment->getAttribute('status') === 'active'
-                && $existingEnrollment->getAttribute('expires_at') !== null
-                && $existingEnrollment->getAttribute('expires_at')->isFuture()
-            ) {
-                throw ValidationException::withMessages([
-                    'course_id' => [__('You already have an active enrollment for this course in this term.')],
-                ]);
-            }
+                // Check for existing active non-expired enrollment
+                $existingActiveEnrollment = Enrollment::query()
+                    ->where('user_id', $user->getKey())
+                    ->where('course_id', $course->getKey())
+                    ->where('term_id', $term->getKey())
+                    ->where('status', 'active')
+                    ->where(function ($query) {
+                        $query->whereNull('expires_at')
+                            ->orWhere('expires_at', '>', now());
+                    })
+                    ->exists();
 
-            // Check for existing pending payment
-            $existingPending = Payment::query()
-                ->where('user_id', $user->getKey())
-                ->where('course_id', $course->getKey())
-                ->where('term_id', $term->getKey())
-                ->where('status', 'pending')
-                ->exists();
+                if ($existingActiveEnrollment) {
+                    throw ValidationException::withMessages([
+                        'course_id' => [__('You already have an active enrollment for this course in this term.')],
+                    ]);
+                }
 
-            if ($existingPending) {
-                throw ValidationException::withMessages([
-                    'course_id' => [__('You already have a pending payment for this course in this term.')],
-                ]);
-            }
+                // Check for existing pending payment
+                $existingPending = Payment::query()
+                    ->where('user_id', $user->getKey())
+                    ->where('course_id', $course->getKey())
+                    ->where('term_id', $term->getKey())
+                    ->where('status', 'pending')
+                    ->exists();
 
-            // Calculate pricing
-            $pricing = $this->calculateCoursePrice->handle($course);
+                if ($existingPending) {
+                    throw ValidationException::withMessages([
+                        'course_id' => [__('You already have a pending payment for this course in this term.')],
+                    ]);
+                }
 
-            // If free → instant enrollment
-            if ($pricing['amount_due_cents'] === 0) {
-                return $this->activateEnrollment->handle(
-                    user: $user,
-                    course: $course,
-                    term: $term,
-                    source: 'free',
-                );
-            }
+                // Calculate pricing
+                $pricing = $this->calculateCoursePrice->handle($course);
 
-            // Process proof image
-            $proofHash = hash_file('sha256', $proof->getRealPath());
-            $proofPath = $this->storeProof($proof);
+                // If free → instant enrollment
+                if ($pricing['amount_due_cents'] === 0) {
+                    return $this->activateEnrollment->handle(
+                        user: $user,
+                        course: $course,
+                        term: $term,
+                        source: 'free',
+                    );
+                }
 
-            try {
+                // Process proof image
+                $proofHash = hash_file('sha256', $proof->getRealPath());
+                $proofPath = $this->storeProof($proof);
+
                 return Payment::create([
                     'user_id' => $user->getKey(),
                     'course_id' => $course->getKey(),
@@ -105,13 +112,15 @@ class SubmitPayment
                     'student_note' => $data['student_note'] ?? null,
                     'status' => 'pending',
                 ]);
-            } catch (\Throwable $e) {
+            });
+        } catch (\Throwable $e) {
+            if ($proofPath !== null) {
                 $disk = config('filesystems.default', 'local');
                 Storage::disk($disk)->delete($proofPath);
-
-                throw $e;
             }
-        });
+
+            throw $e;
+        }
     }
 
     private function storeProof(UploadedFile $file): string

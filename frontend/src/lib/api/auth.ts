@@ -9,6 +9,7 @@ export type UserProfile = {
   academic_year: string | null;
   department: string | null;
   telegram_username: string | null;
+  telegram_is_linked?: boolean;
   phone: string | null;
   roles?: string[];
   role?: string;
@@ -46,8 +47,38 @@ export type RegisterData = {
   phone?: string;
 };
 
+const USER_KEY = 'codeera_user_profile';
+
+export function getStoredUser(): UserProfile | null {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const raw = localStorage.getItem(USER_KEY);
+      if (raw) return JSON.parse(raw) as UserProfile;
+    } catch (_) {}
+  }
+  return null;
+}
+
+export function setStoredUser(user: UserProfile | null): void {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    if (user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(USER_KEY);
+    }
+  }
+}
+
+export function isUnlinkedStudentUser(user: UserProfile | null | undefined): boolean {
+  if (!user) return false;
+  const role = (user.role || (user.roles && user.roles[0]) || '').toLowerCase();
+  const isStaff = role === 'admin' || role === 'superadmin' || role === 'teacher';
+  if (isStaff) return false;
+  return user.telegram_is_linked !== true;
+}
+
 // Global reactive user state accessible across all layouts and pages
-export const currentUser = writable<UserProfile | null>(null);
+export const currentUser = writable<UserProfile | null>(getStoredUser());
 export const authChecked = writable<boolean>(false);
 
 export async function getCurrentUser(fetcher: typeof fetch = fetch) {
@@ -57,6 +88,7 @@ export async function getCurrentUser(fetcher: typeof fetch = fetch) {
 export async function refreshUser(fetcher: typeof fetch = fetch): Promise<UserProfile | null> {
   const token = getAuthToken();
   if (!token) {
+    setStoredUser(null);
     currentUser.set(null);
     authChecked.set(true);
     return null;
@@ -65,6 +97,18 @@ export async function refreshUser(fetcher: typeof fetch = fetch): Promise<UserPr
   try {
     const res = await getCurrentUser(fetcher);
     const user = res.data?.user ?? null;
+    if (user && user.telegram_is_linked === undefined) {
+      const prev = getStoredUser();
+      if (prev && prev.id === user.id && prev.telegram_is_linked === true) {
+        user.telegram_is_linked = true;
+      } else {
+        try {
+          const statusRes = await apiGet<{ data: { is_linked: boolean } }>(fetcher, '/telegram/status');
+          user.telegram_is_linked = Boolean(statusRes.data?.is_linked);
+        } catch (_) {}
+      }
+    }
+    setStoredUser(user);
     currentUser.set(user);
     authChecked.set(true);
     return user;
@@ -72,6 +116,7 @@ export async function refreshUser(fetcher: typeof fetch = fetch): Promise<UserPr
     const message = err instanceof Error ? err.message : String(err);
     if (message.includes('401') || message.includes('Unauthenticated')) {
       clearAuthToken();
+      setStoredUser(null);
       currentUser.set(null);
     }
     authChecked.set(true);
@@ -80,10 +125,15 @@ export async function refreshUser(fetcher: typeof fetch = fetch): Promise<UserPr
 }
 
 export async function login(fetcher: typeof fetch = fetch, credentials: LoginCredentials) {
+  clearAuthToken();
+  setStoredUser(null);
+  currentUser.set(null);
+
   const res = await apiPost<AuthResponse>(fetcher, '/login', credentials);
   if (res.data?.token) {
     setAuthToken(res.data.token);
     if (res.data.user) {
+      setStoredUser(res.data.user);
       currentUser.set(res.data.user);
       authChecked.set(true);
     } else {
@@ -94,10 +144,15 @@ export async function login(fetcher: typeof fetch = fetch, credentials: LoginCre
 }
 
 export async function register(fetcher: typeof fetch = fetch, data: RegisterData) {
+  clearAuthToken();
+  setStoredUser(null);
+  currentUser.set(null);
+
   const res = await apiPost<AuthResponse>(fetcher, '/register', data);
   if (res.data?.token) {
     setAuthToken(res.data.token);
     if (res.data.user) {
+      setStoredUser(res.data.user);
       currentUser.set(res.data.user);
       authChecked.set(true);
     } else {
@@ -107,10 +162,17 @@ export async function register(fetcher: typeof fetch = fetch, data: RegisterData
   return res;
 }
 
-export function logout(): void {
-  clearAuthToken();
-  currentUser.set(null);
-  authChecked.set(true);
+export async function logout(fetcher: typeof fetch = fetch): Promise<void> {
+  try {
+    await apiPost(fetcher, '/logout');
+  } catch (_) {
+    // If backend request fails or offline, continue to clear local auth state
+  } finally {
+    clearAuthToken();
+    setStoredUser(null);
+    currentUser.set(null);
+    authChecked.set(true);
+  }
 }
 
 export function isAuthenticated(): boolean {

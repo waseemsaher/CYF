@@ -86,7 +86,8 @@ export async function apiPost<T>(fetcher: typeof fetch, path: string, body?: unk
   }
 
   const token = getAuthToken();
-  if (token) {
+  const isPublicAuthRoute = ['/register', '/login', '/forgot-password', '/reset-password'].some((p) => path.startsWith(p));
+  if (token && !isPublicAuthRoute) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 

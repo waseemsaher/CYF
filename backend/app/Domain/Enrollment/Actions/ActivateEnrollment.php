@@ -9,6 +9,7 @@ use App\Models\Enrollment;
 use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;
+use DomainException;
 
 class ActivateEnrollment
 {
@@ -29,6 +30,7 @@ class ActivateEnrollment
         ?int $grantedBy = null,
     ): Enrollment {
         $graceDays = (int) Setting::getValue('enrollment', 'grace_days', 0);
+        $startsAt = now();
         $expiresAt = $term->getAttribute('ends_at')->addDays($graceDays);
 
         /** @var Enrollment|null $existing */
@@ -40,16 +42,16 @@ class ActivateEnrollment
             ->first();
 
         if ($existing !== null) {
-            $isNotExpired = $existing->getAttribute('expires_at') !== null
-                && $existing->getAttribute('expires_at')->isFuture();
+            $isExpired = $existing->getAttribute('expires_at') !== null && $existing->getAttribute('expires_at')->isPast();
+            $isActive = $existing->getAttribute('status') === 'active';
 
-            if ($existing->getAttribute('status') === 'active' && $isNotExpired) {
-                throw new \DomainException('Student already has an active enrollment for this course in this term.');
+            if ($isActive && ! $isExpired) {
+                throw new DomainException('The user already has an active enrollment for this course in this term.');
             }
 
             $existing->update([
                 'status' => 'active',
-                'starts_at' => now(),
+                'starts_at' => $startsAt,
                 'expires_at' => $expiresAt,
                 'payment_id' => $paymentId,
                 'source' => $source,
@@ -63,11 +65,11 @@ class ActivateEnrollment
             'user_id' => $user->getKey(),
             'course_id' => $course->getKey(),
             'term_id' => $term->getKey(),
-            'payment_id' => $paymentId,
             'source' => $source,
             'status' => 'active',
-            'starts_at' => now(),
+            'starts_at' => $startsAt,
             'expires_at' => $expiresAt,
+            'payment_id' => $paymentId,
             'granted_by' => $grantedBy,
         ]);
     }

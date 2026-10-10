@@ -2,7 +2,8 @@
   import type { Snippet } from 'svelte';
   import { onMount } from 'svelte';
   import { page } from '$app/state';
-  import { currentUser, refreshUser, logout } from '$lib/api/auth';
+  import { beforeNavigate, goto } from '$app/navigation';
+  import { currentUser, refreshUser, logout, isUnlinkedStudentUser, getStoredUser } from '$lib/api/auth';
   import { initLocale, currentLocale, toggleLocale, t } from '$lib/i18n';
   import { FEATURES } from '$lib/config';
   import { socialLinks } from '$lib/socials';
@@ -22,14 +23,77 @@
     mobileMenuOpen = false;
   }
 
+  let isUnlinkedStudent = $derived.by(() => {
+    return isUnlinkedStudentUser($currentUser || getStoredUser());
+  });
+
+  // Synchronous client-side redirect on boot before any render
+  if (typeof window !== 'undefined') {
+    const cachedUser = getStoredUser();
+    if (isUnlinkedStudentUser(cachedUser) && window.location.pathname !== '/link-telegram') {
+      window.location.replace('/link-telegram');
+    }
+  }
+
+  function checkTelegramGuard(pathname: string) {
+    if (isUnlinkedStudent && pathname !== '/link-telegram') {
+      goto('/link-telegram');
+    }
+  }
+
+  beforeNavigate((navigation) => {
+    if (isUnlinkedStudentUser($currentUser || getStoredUser()) && navigation.to && navigation.to.url.pathname !== '/link-telegram') {
+      navigation.cancel();
+      goto('/link-telegram');
+    }
+  });
+
   $effect(() => {
-    const _ = page.url.pathname;
+    const pathname = page.url.pathname;
     mobileMenuOpen = false;
+    if (isUnlinkedStudent && pathname !== '/link-telegram') {
+      goto('/link-telegram');
+    }
   });
 
   onMount(async () => {
     initLocale();
-    refreshUser(fetch);
+
+    // Listen to popstate (browser back/forward button)
+    const handlePopstate = () => {
+      if (isUnlinkedStudentUser($currentUser || getStoredUser()) && window.location.pathname !== '/link-telegram') {
+        window.location.replace('/link-telegram');
+      }
+    };
+    window.addEventListener('popstate', handlePopstate);
+
+    // Capture-phase link click interceptor to catch any escaping links
+    const handleClick = (e: MouseEvent) => {
+      if (isUnlinkedStudentUser($currentUser || getStoredUser())) {
+        const target = (e.target as HTMLElement)?.closest('a');
+        if (target && target instanceof HTMLAnchorElement) {
+          const href = target.getAttribute('href');
+          if (
+            href &&
+            !href.startsWith('#') &&
+            !href.startsWith('mailto:') &&
+            !href.startsWith('tel:') &&
+            href !== '/link-telegram' &&
+            !href.startsWith('https://t.me/')
+          ) {
+            e.preventDefault();
+            e.stopPropagation();
+            goto('/link-telegram');
+          }
+        }
+      }
+    };
+    window.addEventListener('click', handleClick, true);
+
+    const user = await refreshUser(fetch);
+    if (isUnlinkedStudentUser(user) && page.url.pathname !== '/link-telegram') {
+      goto('/link-telegram');
+    }
     if (pwaInfo) {
       try {
         const { registerSW } = await import('virtual:pwa-register');
@@ -70,12 +134,15 @@
     }
   }
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout(fetch);
     window.location.href = '/';
   }
 
   let navLinks = $derived.by(() => {
+    if (isUnlinkedStudent) {
+      return [];
+    }
     const tr = $t.nav;
     const links = [
       { href: '/', label: tr.home },
@@ -125,7 +192,7 @@
 <div class="layout-container">
   <header class="global-header">
     <div class="header-inner">
-      <a class="brand" href="/" aria-label={$t.nav.brandAria} onclick={closeMobileMenu}>
+      <a class="brand" href={isUnlinkedStudent ? '/link-telegram' : '/'} aria-label={$t.nav.brandAria} onclick={closeMobileMenu}>
         <img src="/logo/app-icon.svg" alt="" aria-hidden="true" class="brand-logo" width="36" height="36" />
         <span class="brand-text">Codeera</span>
       </a>
@@ -226,31 +293,33 @@
           {/if}
         </button>
 
-        <button
-          type="button"
-          class="btn-menu-toggle"
-          onclick={toggleMobileMenu}
-          aria-expanded={mobileMenuOpen}
-          aria-label={mobileMenuOpen ? ($t.nav.menuCloseAria || 'إغلاق القائمة') : ($t.nav.menuToggleAria || 'فتح القائمة')}
-        >
-          {#if mobileMenuOpen}
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          {:else}
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          {/if}
-        </button>
+        {#if !isUnlinkedStudent}
+          <button
+            type="button"
+            class="btn-menu-toggle"
+            onclick={toggleMobileMenu}
+            aria-expanded={mobileMenuOpen}
+            aria-label={mobileMenuOpen ? ($t.nav.menuCloseAria || 'إغلاق القائمة') : ($t.nav.menuToggleAria || 'فتح القائمة')}
+          >
+            {#if mobileMenuOpen}
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            {:else}
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            {/if}
+          </button>
+        {/if}
       </div>
     </div>
 
     <!-- Mobile Drawer Panel -->
-    {#if mobileMenuOpen}
+    {#if mobileMenuOpen && !isUnlinkedStudent}
       <div class="mobile-drawer mobile-only">
         <nav class="mobile-nav-list" aria-label={$t.nav.mainNavAria}>
           {#each navLinks as link}
@@ -304,87 +373,99 @@
   </header>
 
   <main id="main-content" class="main-content" tabindex="-1">
-    {@render children()}
+    {#if isUnlinkedStudent && page.url.pathname !== '/link-telegram'}
+      <div class="lock-redirect-container" dir="rtl">
+        <div class="lock-redirect-card">
+          <div class="spinner-sm" aria-hidden="true"></div>
+          <h2>جاري التوجيه إلى صفحة ربط تليجرام...</h2>
+          <p>يجب ربط حسابك في تليجرام أولاً قبل المتابعة في المنصة.</p>
+        </div>
+      </div>
+    {:else}
+      {@render children()}
+    {/if}
   </main>
 
-  <footer class="global-footer">
-    <div class="footer-inner">
-      <div class="footer-start">
-        <a href="/" class="footer-brand" aria-label={$t.nav.brandAria}>
-          <span class="footer-logo-fcai">CODE</span>
-          <span class="footer-logo-courses">ERA</span>
-        </a>
-        <span class="footer-sep" aria-hidden="true">|</span>
-        <span class="footer-tagline">{$t.nav.footer.tagline}</span>
+  {#if !isUnlinkedStudent}
+    <footer class="global-footer">
+      <div class="footer-inner">
+        <div class="footer-start">
+          <a href="/" class="footer-brand" aria-label={$t.nav.brandAria}>
+            <span class="footer-logo-fcai">CODE</span>
+            <span class="footer-logo-courses">ERA</span>
+          </a>
+          <span class="footer-sep" aria-hidden="true">|</span>
+          <span class="footer-tagline">{$t.nav.footer.tagline}</span>
+        </div>
+
+        <div class="footer-social" aria-label={$t.nav.footer.socialAria}>
+          <a
+            href={socialLinks[0].url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="social-btn social-facebook"
+            aria-label={socialLinks[0].ariaLabel}
+            title={socialLinks[0].nameAr}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+          </a>
+
+          <a
+            href={socialLinks[1].url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="social-btn social-youtube"
+            aria-label={socialLinks[1].ariaLabel}
+            title={socialLinks[1].nameAr}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+          </a>
+
+          <a
+            href={socialLinks[2].url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="social-btn social-whatsapp"
+            aria-label={socialLinks[2].ariaLabel}
+            title={socialLinks[2].nameAr}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+            </svg>
+          </a>
+
+          <a
+            href={socialLinks[3].url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="social-btn social-telegram"
+            aria-label={socialLinks[3].ariaLabel}
+            title={socialLinks[3].nameAr}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
+            </svg>
+          </a>
+        </div>
+
+        <nav class="footer-links" aria-label={$t.nav.footer.legalNavAria}>
+          <a href="/terms">{$t.nav.footer.terms}</a>
+          <span class="separator" aria-hidden="true">•</span>
+          <a href="/privacy">{$t.nav.footer.privacy}</a>
+          <span class="separator" aria-hidden="true">•</span>
+          <a href="/refund">{$t.nav.footer.refund}</a>
+        </nav>
+
+        <div class="footer-copy">
+          <small>© 2026 Codeera. {$t.nav.footer.rights}</small>
+        </div>
       </div>
-
-      <div class="footer-social" aria-label={$t.nav.footer.socialAria}>
-        <a
-          href={socialLinks[0].url}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="social-btn social-facebook"
-          aria-label={socialLinks[0].ariaLabel}
-          title={socialLinks[0].nameAr}
-        >
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-          </svg>
-        </a>
-
-        <a
-          href={socialLinks[1].url}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="social-btn social-youtube"
-          aria-label={socialLinks[1].ariaLabel}
-          title={socialLinks[1].nameAr}
-        >
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-          </svg>
-        </a>
-
-        <a
-          href={socialLinks[2].url}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="social-btn social-whatsapp"
-          aria-label={socialLinks[2].ariaLabel}
-          title={socialLinks[2].nameAr}
-        >
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
-          </svg>
-        </a>
-
-        <a
-          href={socialLinks[3].url}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="social-btn social-telegram"
-          aria-label={socialLinks[3].ariaLabel}
-          title={socialLinks[3].nameAr}
-        >
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
-          </svg>
-        </a>
-      </div>
-
-      <nav class="footer-links" aria-label={$t.nav.footer.legalNavAria}>
-        <a href="/terms">{$t.nav.footer.terms}</a>
-        <span class="separator" aria-hidden="true">•</span>
-        <a href="/privacy">{$t.nav.footer.privacy}</a>
-        <span class="separator" aria-hidden="true">•</span>
-        <a href="/refund">{$t.nav.footer.refund}</a>
-      </nav>
-
-      <div class="footer-copy">
-        <small>© 2026 Codeera. {$t.nav.footer.rights}</small>
-      </div>
-    </div>
-  </footer>
+    </footer>
+  {/if}
 </div>
 
 <style>
@@ -1138,6 +1219,56 @@
 
   .main-content:focus {
     outline: none;
+  }
+
+  .lock-redirect-container {
+    min-height: 50vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  .lock-redirect-card {
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-radius: 1.25rem;
+    padding: 2.5rem;
+    max-width: 480px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 10px 30px -10px rgba(15, 40, 47, 0.08);
+  }
+
+  .lock-redirect-card h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--storm);
+    margin: 0;
+  }
+
+  .lock-redirect-card p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin: 0;
+  }
+
+  .spinner-sm {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(var(--brand-navy-rgb), 0.15);
+    border-top-color: var(--deep-cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .global-footer {

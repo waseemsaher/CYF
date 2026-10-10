@@ -390,16 +390,18 @@ it('reactivates a revoked enrollment when approving payment', function (): void 
     $response = $this->actingAs($data['admin'], 'sanctum')
         ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertJsonPath('data.status', 'active');
 
     $revokedEnrollment->refresh();
     expect($revokedEnrollment->status)->toBe('active')
         ->and($revokedEnrollment->payment_id)->toBe($data['payment']->getKey())
         ->and($revokedEnrollment->source)->toBe('payment')
         ->and($revokedEnrollment->expires_at->isFuture())->toBeTrue();
+    expect(Enrollment::query()->where('user_id', $data['student']->getKey())->count())->toBe(1);
 });
 
-it('returns 422 when approving payment if enrollment is already active and not expired', function (): void {
+it('fails with 422 when approving payment if user already has an active enrollment', function (): void {
     $data = setupAdminPaymentTestData();
 
     Enrollment::create([
@@ -409,26 +411,61 @@ it('returns 422 when approving payment if enrollment is already active and not e
         'source' => 'admin_grant',
         'status' => 'active',
         'starts_at' => now(),
-        'expires_at' => now()->addMonths(2),
+        'expires_at' => now()->addMonths(3),
     ]);
 
     $response = $this->actingAs($data['admin'], 'sanctum')
         ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
 
     $response->assertStatus(422)
-        ->assertJsonPath('message', 'Student already has an active enrollment for this course in this term.');
+        ->assertJsonPath('message', 'The user already has an active enrollment for this course in this term.');
 });
 
-it('returns 422 when teacher share percent is out of range during approval', function (): void {
+it('sends PaymentApprovedMail when approved student has email but no telegram', function (): void {
+    Mail::fake();
+    Queue::fake();
     $data = setupAdminPaymentTestData();
 
-    $data['course']->update(['teacher_share_percent' => 150]);
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
+
+    $response->assertOk();
+
+    Mail::assertQueued(PaymentApprovedMail::class, function (PaymentApprovedMail $mail) use ($data): bool {
+        return $mail->hasTo($data['student']->email) && $mail->afterCommit === true;
+    });
+    Queue::assertNotPushed(SendTelegramNotificationJob::class);
+});
+
+it('sends PaymentRejectedMail with reason when rejected student has email but no telegram', function (): void {
+    Mail::fake();
+    Queue::fake();
+    $data = setupAdminPaymentTestData();
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
+            'rejection_reason' => 'صورة غير واضحة',
+        ]);
+
+    $response->assertOk();
+
+    Mail::assertQueued(PaymentRejectedMail::class, function (PaymentRejectedMail $mail) use ($data): bool {
+        return $mail->hasTo($data['student']->email)
+            && $mail->reason === 'صورة غير واضحة'
+            && $mail->afterCommit === true;
+    });
+    Queue::assertNotPushed(SendTelegramNotificationJob::class);
+});
+
+it('fails with 422 when approving payment if teacher share percent is out of range', function (): void {
+    $data = setupAdminPaymentTestData();
+    $data['course']->update(['teacher_share_percent' => 120]);
 
     $response = $this->actingAs($data['admin'], 'sanctum')
         ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
 
     $response->assertStatus(422)
-        ->assertJsonPath('message', 'Teacher share percent must be between 0 and 100. Got: 150');
+        ->assertJsonPath('message', 'Teacher share percent must be between 0 and 100. Current value: 120');
 });
 
 it('rejects teacher assignment when teacher_share_percent is out of range', function (): void {
@@ -445,9 +482,8 @@ it('rejects teacher assignment when teacher_share_percent is out of range', func
         ->assertJsonValidationErrors(['teacher_share_percent']);
 });
 
-it('blocks a reviewer from approving their own payment', function (): void {
+it('prevents a reviewer from approving their own payment', function (): void {
     $data = setupAdminPaymentTestData();
-
     $data['payment']->update(['user_id' => $data['admin']->getKey()]);
 
     $response = $this->actingAs($data['admin'], 'sanctum')
@@ -457,28 +493,34 @@ it('blocks a reviewer from approving their own payment', function (): void {
         ->assertJsonPath('message', 'Reviewers cannot approve their own payments.');
 });
 
-it('blocks a reviewer from rejecting their own payment', function (): void {
+it('prevents a reviewer from rejecting their own payment', function (): void {
     $data = setupAdminPaymentTestData();
-
     $data['payment']->update(['user_id' => $data['admin']->getKey()]);
 
     $response = $this->actingAs($data['admin'], 'sanctum')
         ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/reject', [
-            'rejection_reason' => 'Invalid self payment',
+            'rejection_reason' => 'Invalid receipt',
         ]);
 
     $response->assertStatus(422)
         ->assertJsonPath('message', 'Reviewers cannot reject their own payments.');
 });
 
-it('returns 422 with clear message when approved payment is missing its enrollment', function (): void {
+it('throws DomainException and returns 422 when approving an already approved payment whose enrollment is missing', function (): void {
     $data = setupAdminPaymentTestData();
 
-    $data['payment']->update(['status' => 'approved']);
+    // Approve first
+    $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve')
+        ->assertOk();
 
+    // Force delete enrollment to simulate corrupted state
+    Enrollment::query()->where('payment_id', $data['payment']->getKey())->delete();
+
+    // Try approving again
     $response = $this->actingAs($data['admin'], 'sanctum')
         ->postJson('/api/v1/admin/payments/'.$data['payment']->getKey().'/approve');
 
     $response->assertStatus(422)
-        ->assertJsonPath('message', 'Payment approved but enrollment missing.');
+        ->assertJsonPath('message', 'Payment is approved but associated enrollment is missing.');
 });

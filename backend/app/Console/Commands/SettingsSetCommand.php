@@ -51,16 +51,13 @@ class SettingsSetCommand extends Command
         };
 
         if ($key === 'default_teacher_share_percent' || $key === 'teacher_share_percent') {
-            $validator = validator(
-                ['value' => $parsedValue],
-                ['value' => ['required', 'integer', 'between:0,100']]
-            );
-            if ($validator->fails()) {
-                $this->error('The teacher_share_percent must be an integer between 0 and 100.');
+            if (! is_int($parsedValue) || $parsedValue < 0 || $parsedValue > 100) {
+                $this->error("The {$key} setting must be an integer between 0 and 100.");
 
                 return self::FAILURE;
             }
         }
+
 
         Setting::setValue($group, $key, $parsedValue);
 

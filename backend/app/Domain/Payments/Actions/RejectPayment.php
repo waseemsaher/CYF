@@ -47,13 +47,14 @@ class RejectPayment
 
             $student = $payment->user;
             if ($student && $student->telegram_user_id) {
-                $courseTitle = $payment->course->getTranslation('title', 'ar') ?: $payment->course->slug;
+                $courseTitle = htmlspecialchars((string) ($payment->course->getTranslation('title', 'ar') ?: $payment->course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                $escapedReason = htmlspecialchars((string) $reason, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-                $msg = "نأسف، تم رفض إيصال الدفع لمادة: <b>{$courseTitle}</b>.\nالسبب: <i>{$reason}</i>\nيمكنك إعادة رفع إيصال صحيح من حسابك.\n\nYour payment proof was rejected. Reason: {$reason}";
+                $msg = "نأسف، تم رفض إيصال الدفع لمادة: <b>{$courseTitle}</b>.\nالسبب: <i>{$escapedReason}</i>\nيمكنك إعادة رفع إيصال صحيح من حسابك.\n\nYour payment proof was rejected. Reason: {$escapedReason}";
 
                 SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg)->afterCommit();
             } elseif ($student && $student->email) {
-                Mail::to($student->email)->queue((new PaymentRejectedMail($payment))->afterCommit());
+                Mail::to($student->email)->queue((new PaymentRejectedMail($payment, $reason))->afterCommit());
             }
 
             return $payment;

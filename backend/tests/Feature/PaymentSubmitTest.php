@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Payments\Actions\CancelPayment;
 use App\Domain\Payments\Actions\SubmitPayment;
 use App\Models\Course;
 use App\Models\Enrollment;
@@ -107,6 +108,35 @@ it('rejects a second pending payment for the same course/term', function (): voi
     ]);
 
     $proof = UploadedFile::fake()->image('receipt2.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+            'method' => 'vodafone_cash',
+            'sender_identifier' => '01012345678',
+            'proof' => $proof,
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['course_id']);
+});
+
+it('rejects submitting payment when student already has an active enrollment', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'source' => 'admin_grant',
+        'status' => 'active',
+        'starts_at' => now(),
+        'expires_at' => now()->addMonths(3),
+    ]);
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
 
     $response = $this->actingAs($data['student'], 'sanctum')
         ->postJson('/api/v1/payments', [
@@ -237,6 +267,56 @@ it('allows a student to cancel their own pending payment', function (): void {
         ->assertJsonPath('data.status', 'cancelled');
 });
 
+it('throws DomainException when attempting to cancel non-pending payment in CancelPayment action', function (): void {
+    $data = setupPaymentTestData();
+
+    $payment = Payment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'method' => 'vodafone_cash',
+        'list_price_cents' => 30000,
+        'discount_cents' => 0,
+        'amount_due_cents' => 30000,
+        'sender_identifier' => '01012345678',
+        'proof_path' => 'proofs/test.jpg',
+        'proof_hash' => hash('sha256', 'cancel_race_test'),
+        'status' => 'approved',
+    ]);
+
+    $action = app(CancelPayment::class);
+
+    expect(fn () => $action->handle($payment, $data['student']))
+        ->toThrow(DomainException::class, 'Only pending payments can be cancelled. Current status: approved');
+});
+
+it('returns 422 when CancelPayment throws DomainException during cancel request', function (): void {
+    $data = setupPaymentTestData();
+
+    $payment = Payment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'method' => 'vodafone_cash',
+        'list_price_cents' => 30000,
+        'discount_cents' => 0,
+        'amount_due_cents' => 30000,
+        'sender_identifier' => '01012345678',
+        'proof_path' => 'proofs/test.jpg',
+        'proof_hash' => hash('sha256', 'cancel_race_test_2'),
+        'status' => 'pending',
+    ]);
+
+    $mock = Mockery::mock(CancelPayment::class);
+    $mock->shouldReceive('handle')->andThrow(new DomainException('Only pending payments can be cancelled. Current status: approved'));
+    $this->app->instance(CancelPayment::class, $mock);
+
+    $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments/'.$payment->getKey().'/cancel')
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Only pending payments can be cancelled. Current status: approved');
+});
+
 it('returns 422 when student cancels a payment that was approved concurrently', function (): void {
     $data = setupPaymentTestData();
 
@@ -320,6 +400,32 @@ it('cleans up stored proof file if payment creation fails', function (): void {
     expect(Storage::disk('local')->allFiles('proofs'))->toBeEmpty();
 });
 
+it('deletes stored proof file when payment creation fails to prevent orphan files via http', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    Payment::saving(function () {
+        throw new RuntimeException('Database failure on saving payment');
+    });
+
+    try {
+        $this->actingAs($data['student'], 'sanctum')
+            ->postJson('/api/v1/payments', [
+                'course_id' => $data['course']->getKey(),
+                'term_id' => $data['term']->getKey(),
+                'method' => 'vodafone_cash',
+                'sender_identifier' => '01012345678',
+                'proof' => $proof,
+            ]);
+    } catch (RuntimeException $e) {
+        // Expected
+    }
+
+    expect(Storage::disk('local')->allFiles('proofs'))->toBeEmpty();
+});
+
 it('serializes concurrent duplicate payment submissions and prevents two pending payments', function (): void {
     Storage::fake('local');
     $data = setupPaymentTestData();
@@ -343,7 +449,7 @@ it('serializes concurrent duplicate payment submissions and prevents two pending
     expect(Payment::query()->where('user_id', $data['student']->getKey())->count())->toBe(1);
 });
 
-it('rejects payment submission for an academic term that has already ended', function (): void {
+it('rejects payment submission for a term that has already ended', function (): void {
     Storage::fake('local');
     $data = setupPaymentTestData();
 
@@ -352,7 +458,7 @@ it('rejects payment submission for an academic term that has already ended', fun
         'starts_at' => now()->subMonths(6),
         'ends_at' => now()->subDays(5),
         'is_current' => false,
-        'sort_order' => 2,
+        'sort_order' => 99,
     ]);
 
     $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
@@ -370,7 +476,7 @@ it('rejects payment submission for an academic term that has already ended', fun
         ->assertJsonValidationErrors(['term_id']);
 });
 
-it('rejects payment submission with an invalid or unconfigured payment method', function (): void {
+it('rejects payment submission with an invalid payment method', function (): void {
     Storage::fake('local');
     $data = setupPaymentTestData();
 
@@ -386,5 +492,6 @@ it('rejects payment submission with an invalid or unconfigured payment method', 
         ]);
 
     $response->assertUnprocessable()
-        ->assertJsonValidationErrors(['method']);
+        ->assertJsonValidationErrors(['method'])
+        ->assertJsonPath('errors.method.0', 'طريقة الدفع المختارة غير صالحة.');
 });

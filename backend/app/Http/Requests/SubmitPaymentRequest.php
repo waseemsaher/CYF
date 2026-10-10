@@ -24,12 +24,12 @@ class SubmitPaymentRequest extends FormRequest
     {
         $maxSizeKb = (int) Setting::getValue('uploads', 'proof_max_size_kb', 5120);
 
-        $configuredMethods = Setting::getValue('payments', 'methods');
+        $methodsSetting = Setting::getValue('payments', 'methods');
         $allowedMethods = [];
-        if (is_array($configuredMethods)) {
-            foreach ($configuredMethods as $method) {
-                if (is_array($method) && isset($method['key']) && ($method['is_active'] ?? true)) {
-                    $allowedMethods[] = (string) $method['key'];
+        if (is_array($methodsSetting)) {
+            foreach ($methodsSetting as $m) {
+                if (is_array($m) && isset($m['key']) && (! isset($m['is_active']) || $m['is_active'])) {
+                    $allowedMethods[] = (string) $m['key'];
                 }
             }
         } else {
@@ -47,21 +47,22 @@ class SubmitPaymentRequest extends FormRequest
     }
 
     /**
-     * @return array<int, \Closure(Validator): void>
+     * @return array<int, callable(Validator): void>
      */
     public function after(): array
     {
         return [
             function (Validator $validator): void {
                 $termId = $this->input('term_id');
-                if ($termId) {
+                if ($termId && ! $validator->errors()->has('term_id')) {
                     /** @var Term|null $term */
                     $term = Term::find($termId);
-                    if ($term && $term->getAttribute('ends_at')) {
+                    if ($term) {
                         $graceDays = (int) Setting::getValue('enrollment', 'grace_days', 0);
-                        $termExpiry = $term->getAttribute('ends_at')->addDays($graceDays);
-                        if (! $termExpiry->isFuture()) {
-                            $validator->errors()->add('term_id', __('الفصل الدراسي المختار قد انتهى.'));
+                        $endsAt = $term->getAttribute('ends_at');
+                        $expiresAt = $endsAt?->copy()->addDays($graceDays);
+                        if ($expiresAt && ! $expiresAt->isFuture()) {
+                            $validator->errors()->add('term_id', __('الفصل الدراسي المختار قد انتهى بالفعل.'));
                         }
                     }
                 }
