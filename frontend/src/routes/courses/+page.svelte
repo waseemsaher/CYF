@@ -1,10 +1,25 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/state';
   import { currentUser } from '$lib/api/auth';
   import { createAdminCourse, updateAdminCourse } from '$lib/api/admin';
   import { currentLocale, t, formatPrice, getLocalizedText } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
+
+  let hasAutoFiltered = $state(false);
+
+  $effect(() => {
+    // If student has registered academic_year_id and URL doesn't have an academic_year_id filter, apply it
+    if (!hasAutoFiltered && $currentUser?.academic_year_id && !page.url.searchParams.has('academic_year_id')) {
+      hasAutoFiltered = true;
+      const params = new URLSearchParams(page.url.searchParams);
+      params.set('academic_year_id', String($currentUser.academic_year_id));
+      goto(`/courses?${params.toString()}`, { replaceState: true, keepFocus: true });
+    }
+  });
 
   let isAdmin = $derived(
     $currentUser?.role === 'admin' || $currentUser?.role === 'superadmin'

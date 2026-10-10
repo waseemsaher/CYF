@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\AcademicYear;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
@@ -10,6 +11,7 @@ uses(RefreshDatabase::class);
 
 it('registers a new student and returns a token', function (): void {
     Role::create(['name' => 'student']);
+    $year = AcademicYear::create(['name' => ['ar' => 'السنة الأولى', 'en' => '1st Year'], 'sort_order' => 1]);
 
     $response = $this->postJson('/api/v1/register', [
         'name' => 'Test Student',
@@ -17,7 +19,7 @@ it('registers a new student and returns a token', function (): void {
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
         'branch' => 'azhar_boys',
-        'academic_year' => '1st',
+        'academic_year_id' => $year->id,
         'department' => 'CS',
         'phone' => '01012345678',
     ]);
@@ -25,16 +27,19 @@ it('registers a new student and returns a token', function (): void {
     $response->assertStatus(201)
         ->assertJsonPath('data.user.email', 'student@example.com')
         ->assertJsonPath('data.user.role', 'student')
+        ->assertJsonPath('data.user.academic_year_id', $year->id)
         ->assertJsonPath('data.user.telegram_is_linked', false);
 
     $this->assertDatabaseHas('users', [
         'email' => 'student@example.com',
         'phone' => '01012345678',
+        'academic_year_id' => $year->id,
     ]);
 });
 
 it('validates mandatory phone number and format on registration', function (): void {
     Role::create(['name' => 'student']);
+    $year = AcademicYear::create(['name' => ['ar' => 'السنة الأولى', 'en' => '1st Year'], 'sort_order' => 1]);
 
     $missingPhone = $this->postJson('/api/v1/register', [
         'name' => 'No Phone',
@@ -42,7 +47,7 @@ it('validates mandatory phone number and format on registration', function (): v
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
         'branch' => 'azhar_boys',
-        'academic_year' => '1st',
+        'academic_year_id' => $year->id,
         'department' => 'CS',
     ]);
 
@@ -56,7 +61,7 @@ it('validates mandatory phone number and format on registration', function (): v
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
         'branch' => 'azhar_boys',
-        'academic_year' => '1st',
+        'academic_year_id' => $year->id,
         'department' => 'CS',
         'phone' => '01312345678',
     ]);
