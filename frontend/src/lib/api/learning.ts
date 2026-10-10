@@ -15,6 +15,7 @@ export type CourseItem = {
   telegram_message_id?: number | null;
   has_telegram_video?: boolean;
   is_locked: boolean;
+  is_free?: boolean;
   position: number;
   quiz?: {
     id: number;

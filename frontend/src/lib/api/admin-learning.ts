@@ -52,6 +52,7 @@ export type CourseItem = {
   has_telegram_video?: boolean;
   position: number;
   is_published?: boolean;
+  is_free?: boolean;
   is_locked?: boolean;
   quiz?: CourseQuiz | null;
 };
@@ -126,8 +127,10 @@ export type CreateItemPayload = {
   url?: string | null;
   file?: File | null;
   quiz_id?: number | null;
+  telegram_message_id?: number | null;
   position?: number | null;
   is_published?: boolean;
+  is_free?: boolean;
 };
 
 export type UpdateItemPayload = {
@@ -137,6 +140,7 @@ export type UpdateItemPayload = {
   telegram_message_id?: number | null;
   position?: number | null;
   is_published?: boolean;
+  is_free?: boolean;
 };
 
 export function createCourseItem(
@@ -229,4 +233,94 @@ export function createQuizQuestion(
 
 export function deleteQuizQuestion(fetcher: typeof fetch = fetch, questionId: number) {
   return apiDelete<{ message: string }>(fetcher, `/admin/questions/${questionId}`);
+}
+
+// ================= Teacher Learning Content =================
+
+export function getTeacherCourseContent(
+  fetcher: typeof fetch = fetch,
+  courseId: number
+) {
+  return apiGet<{ data: { course: { id: number; slug: string; title: MultilingualText }; sections: CourseSection[] } }>(
+    fetcher,
+    `/teacher/courses/${courseId}/content`
+  );
+}
+
+export function createTeacherCourseSection(
+  fetcher: typeof fetch = fetch,
+  courseId: number,
+  payload: CreateSectionPayload
+) {
+  return apiPost<{ data: CourseSection }>(fetcher, `/teacher/courses/${courseId}/sections`, payload);
+}
+
+export function updateTeacherCourseSection(
+  fetcher: typeof fetch = fetch,
+  courseId: number,
+  sectionId: number,
+  payload: UpdateSectionPayload
+) {
+  return apiPut<{ data: CourseSection }>(fetcher, `/teacher/courses/${courseId}/sections/${sectionId}`, payload);
+}
+
+export function deleteTeacherCourseSection(
+  fetcher: typeof fetch = fetch,
+  courseId: number,
+  sectionId: number
+) {
+  return apiDelete<{ message: string }>(fetcher, `/teacher/courses/${courseId}/sections/${sectionId}`);
+}
+
+export function createTeacherCourseItem(
+  fetcher: typeof fetch = fetch,
+  courseId: number,
+  sectionId: number,
+  payload: CreateItemPayload
+) {
+  if (payload.file) {
+    const formData = new FormData();
+    formData.append('type', payload.type);
+    formData.append('title[ar]', payload.title.ar);
+    formData.append('title[en]', payload.title.en);
+    if (payload.description?.ar) formData.append('description[ar]', payload.description.ar);
+    if (payload.description?.en) formData.append('description[en]', payload.description.en);
+    if (payload.url) formData.append('url', payload.url);
+    if (payload.telegram_message_id) formData.append('telegram_message_id', String(payload.telegram_message_id));
+    if (payload.position !== undefined && payload.position !== null) {
+      formData.append('position', String(payload.position));
+    }
+    formData.append('is_published', payload.is_published !== false ? '1' : '0');
+    formData.append('is_free', payload.is_free ? '1' : '0');
+    formData.append('file', payload.file);
+
+    return apiPost<{ data: CourseItem }>(
+      fetcher,
+      `/teacher/courses/${courseId}/sections/${sectionId}/items`,
+      formData
+    );
+  }
+
+  return apiPost<{ data: CourseItem }>(
+    fetcher,
+    `/teacher/courses/${courseId}/sections/${sectionId}/items`,
+    payload
+  );
+}
+
+export function updateTeacherCourseItem(
+  fetcher: typeof fetch = fetch,
+  courseId: number,
+  itemId: number,
+  payload: UpdateItemPayload
+) {
+  return apiPut<{ data: CourseItem }>(fetcher, `/teacher/courses/${courseId}/items/${itemId}`, payload);
+}
+
+export function deleteTeacherCourseItem(
+  fetcher: typeof fetch = fetch,
+  courseId: number,
+  itemId: number
+) {
+  return apiDelete<{ message: string }>(fetcher, `/teacher/courses/${courseId}/items/${itemId}`);
 }

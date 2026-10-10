@@ -137,9 +137,14 @@
                   </span>
                 </div>
                 <h3>{course.title.ar}</h3>
-                <a href="/my-courses/{course.slug}" class="btn-view-content">
-                  عرض محتوى المادة
-                </a>
+                <div class="course-card-actions">
+                  <a href="/teacher/courses/{course.id}/content" class="btn-manage-content">
+                    إدارة المحتوى الدراسي
+                  </a>
+                  <a href="/my-courses/{course.slug}" class="btn-view-content">
+                    عرض المحتوى (طالب)
+                  </a>
+                </div>
               </article>
             {/each}
           </div>
@@ -375,21 +380,46 @@
     margin: 0;
   }
 
-  .btn-view-content {
-    background: var(--storm);
-    color: var(--cyan);
+  .course-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .btn-manage-content {
+    background: var(--deep-cyan, #0284c7);
+    color: #ffffff;
     font-size: 0.85rem;
     font-weight: 700;
+    padding: 0.6rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    text-align: center;
+    border: 2px solid var(--deep-cyan, #0284c7);
+    transition: opacity 150ms ease, transform 150ms ease;
+  }
+
+  .btn-manage-content:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+  }
+
+  .btn-view-content {
+    background: transparent;
+    color: var(--storm);
+    font-size: 0.85rem;
+    font-weight: 600;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     text-decoration: none;
     text-align: center;
-    border: 2px solid var(--storm);
-    transition: opacity 150ms ease;
+    border: 1.5px solid var(--line);
+    transition: background 150ms ease;
   }
 
   .btn-view-content:hover {
-    opacity: 0.9;
+    background: var(--card-hover, rgba(0, 0, 0, 0.04));
   }
 
   /* Empty States */
