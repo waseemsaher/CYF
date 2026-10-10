@@ -172,6 +172,33 @@ it('fails with 422 when granting enrollment twice to the same student in the sam
         ->assertJsonPath('message', 'The user already has an active enrollment for this course in this term.');
 });
 
+it('reactivates a revoked enrollment when granting again', function (): void {
+    $data = setupEnrollmentTestData();
+
+    $enrollment = Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'source' => 'payment',
+        'status' => 'revoked',
+        'starts_at' => now()->subMonth(),
+        'expires_at' => now()->subDay(),
+    ]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/enrollments/grant', [
+            'user_id' => $data['student']->getKey(),
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+        ]);
+
+    $response->assertCreated();
+    $enrollment->refresh();
+    expect($enrollment->status)->toBe('active')
+        ->and($enrollment->source)->toBe('admin_grant')
+        ->and($enrollment->granted_by)->toBe($data['admin']->getKey());
+});
+
 it('allows admin to revoke an enrollment without refunding payment', function (): void {
     $data = setupEnrollmentTestData();
 

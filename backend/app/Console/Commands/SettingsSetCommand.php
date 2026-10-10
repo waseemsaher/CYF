@@ -50,13 +50,14 @@ class SettingsSetCommand extends Command
                 : (json_validate($rawValue) ? json_decode($rawValue, true) : $rawValue),
         };
 
-        if ($group === 'revenue' && $key === 'default_teacher_share_percent') {
+        if ($key === 'default_teacher_share_percent' || $key === 'teacher_share_percent') {
             if (! is_int($parsedValue) || $parsedValue < 0 || $parsedValue > 100) {
-                $this->error('The default_teacher_share_percent setting must be an integer between 0 and 100.');
+                $this->error("The {$key} setting must be an integer between 0 and 100.");
 
                 return self::FAILURE;
             }
         }
+
 
         Setting::setValue($group, $key, $parsedValue);
 

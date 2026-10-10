@@ -33,6 +33,7 @@ class SubmitPayment
 
         try {
             return DB::transaction(function () use ($user, $course, $term, $proof, $data, &$proofPath): Payment|Enrollment {
+                // Lock user's row so concurrent submissions serialize
                 User::query()
                     ->whereKey($user->getKey())
                     ->lockForUpdate()

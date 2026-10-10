@@ -55,6 +55,7 @@ class SubmitPaymentRequest extends FormRequest
             function (Validator $validator): void {
                 $termId = $this->input('term_id');
                 if ($termId && ! $validator->errors()->has('term_id')) {
+                    /** @var Term|null $term */
                     $term = Term::find($termId);
                     if ($term) {
                         $graceDays = (int) Setting::getValue('enrollment', 'grace_days', 0);
