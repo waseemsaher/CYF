@@ -117,6 +117,7 @@ export interface CoursesTranslations {
   filterFormAria: string;
   yearLabel: string;
   allYears: string;
+  generalForAll: string;
   deptLabel: string;
   allDepts: string;
   applyFilter: string;
@@ -438,6 +439,7 @@ export const translations: Record<Locale, Translations> = {
       filterFormAria: 'تصفية الدورات حسب الفرقة والقسم',
       yearLabel: 'الفرقة الدراسية:',
       allYears: 'كل الفرق الدراسية',
+      generalForAll: 'عام للجميع (كافة الفرق الدراسية)',
       deptLabel: 'القسم الأكاديمي:',
       allDepts: 'جميع الأقسام',
       applyFilter: 'تطبيق الفلتر',
@@ -749,6 +751,7 @@ export const translations: Record<Locale, Translations> = {
       filterFormAria: 'Filter courses by academic year and department',
       yearLabel: 'Academic Year:',
       allYears: 'All Academic Years',
+      generalForAll: 'General for all (All Academic Years)',
       deptLabel: 'Department:',
       allDepts: 'All Departments',
       applyFilter: 'Apply Filters',
