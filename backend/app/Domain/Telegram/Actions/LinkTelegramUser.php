@@ -75,7 +75,7 @@ class LinkTelegramUser
 
             foreach ($activeEnrollments as $enrollment) {
                 $course = $enrollment->course;
-                if ($course && ($course->getAttribute('telegram_group_id') || $course->getAttribute('telegram_chat_id'))) {
+                if ($course && ($course->getAttribute('telegram_group_id') || $course->getAttribute('telegram_channel_id') || $course->getAttribute('telegram_chat_id') || $course->getAttribute('telegram_invite_link'))) {
                     SendCourseInviteLinkJob::dispatch($user, $course);
                 }
             }
