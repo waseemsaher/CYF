@@ -62,6 +62,7 @@
   let itemDescEn = $state('');
   let itemUrl = $state('');
   let itemTelegramMessageId = $state<string>('');
+  let itemIsFree = $state<boolean>(false);
   let itemQuizId = $state<number | null>(null);
   let itemPosition = $state<number>(1);
   let itemIsPublished = $state<boolean>(true);
@@ -258,6 +259,7 @@
     itemDescEn = '';
     itemUrl = '';
     itemTelegramMessageId = '';
+    itemIsFree = false;
     itemQuizId = createdQuizzes.length > 0 ? createdQuizzes[0].id : null;
     const sec = sections.find((s) => s.id === secId);
     itemPosition = (sec?.items?.length || 0) + 1;
@@ -278,6 +280,7 @@
     itemDescEn = item.description?.en || '';
     itemUrl = item.url || '';
     itemTelegramMessageId = item.telegram_message_id ? String(item.telegram_message_id) : '';
+    itemIsFree = Boolean(item.is_free);
     itemQuizId = item.quiz?.id || null;
     itemPosition = item.position;
     itemIsPublished = item.is_published !== false;
@@ -314,6 +317,7 @@
           } : undefined,
           url: itemUrl.trim() || null,
           telegram_message_id: telId,
+          is_free: itemIsFree,
           position: Number(itemPosition),
           is_published: itemIsPublished,
         });
@@ -331,6 +335,8 @@
           url: itemUrl.trim() || null,
           file: itemFile,
           quiz_id: (itemType === 'quiz' || itemType === 'exam') ? itemQuizId : null,
+          is_free: itemIsFree,
+          telegram_message_id: telId,
           position: Number(itemPosition),
           is_published: itemIsPublished,
         });
@@ -734,6 +740,11 @@
                             {#if item.title.en}
                               <small class="item-title-en" dir="ltr">{item.title.en}</small>
                             {/if}
+                            {#if item.is_free}
+                              <span class="free-preview-pill" title="متاح كمعاينة مجانية لجميع الطلاب">
+                                ★ معاينة مجانية
+                              </span>
+                            {/if}
                             <span class="item-status-pill {item.is_published !== false ? 'pill-pub' : 'pill-draft'}">
                               {item.is_published !== false ? 'منشور' : 'مسودة'}
                             </span>
@@ -985,6 +996,18 @@
             placeholder="ملاحظات توضيحية حول الدرس..."
             data-testid="input-item-desc-ar"
           ></textarea>
+        </div>
+
+        <div class="form-group checkbox-highlight-box">
+          <label class="checkbox-label">
+            <input type="checkbox" bind:checked={itemIsFree} data-testid="input-item-is-free" />
+            <div>
+              <strong>معاينة مجانية للجميع (Free Preview)</strong>
+              <p class="checkbox-subtext">
+                عند تفعيل هذا الخيار، سيتمكن أي طالب أو زائر من مشاهدة هذا الفيديو أو فتح الرابط حتى لو لم يكن مسجلاً في المقرر.
+              </p>
+            </div>
+          </label>
         </div>
 
         <div class="form-row-compact">
@@ -1652,6 +1675,16 @@
     font-weight: 700;
     padding: 0.1rem 0.4rem;
     border-radius: 4px;
+  }
+
+  .free-preview-pill {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
   }
 
   .pill-pub {

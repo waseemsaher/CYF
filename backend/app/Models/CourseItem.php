@@ -31,6 +31,7 @@ class CourseItem extends Model
         'telegram_message_id',
         'position',
         'is_published',
+        'is_free',
     ];
 
     /**
@@ -43,6 +44,7 @@ class CourseItem extends Model
             'description' => 'array',
             'position' => 'integer',
             'is_published' => 'boolean',
+            'is_free' => 'boolean',
             'telegram_message_id' => 'integer',
         ];
     }

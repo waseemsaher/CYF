@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\CourseContentController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\QuizController;
+use App\Http\Controllers\Api\TeacherCourseContentController;
 use App\Http\Controllers\Api\TeacherDashboardController;
 use App\Http\Controllers\Api\TelegramController;
 use Illuminate\Support\Facades\Route;
@@ -65,6 +66,16 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/dashboard', [TeacherDashboardController::class, 'dashboard']);
             Route::get('/courses/{course}/students', [TeacherDashboardController::class, 'courseStudents']);
             Route::get('/quizzes/{quiz}/analytics', [TeacherDashboardController::class, 'quizAnalytics']);
+
+            // Teacher course content management
+            Route::get('/courses/{course}/content', [TeacherCourseContentController::class, 'show']);
+            Route::post('/courses/{course}/sections', [TeacherCourseContentController::class, 'storeSection']);
+            Route::put('/courses/{course}/sections/{section}', [TeacherCourseContentController::class, 'updateSection']);
+            Route::delete('/courses/{course}/sections/{section}', [TeacherCourseContentController::class, 'destroySection']);
+
+            Route::post('/courses/{course}/sections/{section}/items', [TeacherCourseContentController::class, 'storeItem']);
+            Route::put('/courses/{course}/items/{item}', [TeacherCourseContentController::class, 'updateItem']);
+            Route::delete('/courses/{course}/items/{item}', [TeacherCourseContentController::class, 'destroyItem']);
         });
 
         // Telegram student endpoints

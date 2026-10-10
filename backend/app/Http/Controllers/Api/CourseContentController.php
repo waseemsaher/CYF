@@ -33,7 +33,8 @@ class CourseContentController extends Controller
         $isUnlocked = false;
         if ($user !== null) {
             $isStaff = $user->hasRole(['superadmin', 'admin']) || $user->can('courses.manage');
-            if ($isStaff) {
+            $isTeacher = $user->hasRole('teacher') && $course->teachers()->where('users.id', $user->id)->exists();
+            if ($isStaff || $isTeacher) {
                 $isUnlocked = true;
             } else {
                 $isUnlocked = Enrollment::query()
@@ -57,21 +58,25 @@ class CourseContentController extends Controller
                     continue;
                 }
 
+                $isItemFree = (bool) $item->is_free;
+                $itemUnlocked = $isUnlocked || $isItemFree;
+
                 $itemData = [
                     'id' => $item->id,
                     'type' => $item->type,
                     'title' => $item->getTranslations('title'),
                     'position' => $item->position,
-                    'is_locked' => ! $isUnlocked,
+                    'is_locked' => ! $itemUnlocked,
+                    'is_free' => $isItemFree,
                 ];
 
-                if ($isUnlocked) {
+                if ($itemUnlocked) {
                     $itemData['description'] = $item->getTranslations('description');
                     $itemData['url'] = $item->url;
                     $itemData['has_file'] = $item->file_path !== null;
                     $itemData['telegram_message_id'] = $item->telegram_message_id;
                     $itemData['has_telegram_video'] = $item->telegram_message_id !== null;
-                    if ($item->quiz !== null) {
+                    if ($item->quiz !== null && $isUnlocked) {
                         $itemData['quiz'] = [
                             'id' => $item->quiz->id,
                             'kind' => $item->quiz->kind,

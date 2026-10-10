@@ -10,6 +10,43 @@
     $currentUser?.role === 'admin' || $currentUser?.role === 'superadmin'
   );
 
+  // Free Preview Modal State
+  let isPreviewModalOpen = $state(false);
+  let previewItemTitle = $state('');
+  let previewVideoUrl = $state('');
+  let previewEmbedUrl = $derived.by(() => {
+    if (!previewVideoUrl) return '';
+    try {
+      // Check for youtube.com/watch?v= or youtu.be/
+      if (previewVideoUrl.includes('youtube.com/watch')) {
+        const url = new URL(previewVideoUrl);
+        const v = url.searchParams.get('v');
+        if (v) return `https://www.youtube.com/embed/${v}?autoplay=1`;
+      } else if (previewVideoUrl.includes('youtu.be/')) {
+        const parts = previewVideoUrl.split('youtu.be/');
+        const id = parts[1]?.split(/[?#]/)[0];
+        if (id) return `https://www.youtube.com/embed/${id}?autoplay=1`;
+      } else if (previewVideoUrl.includes('youtube.com/embed/')) {
+        return previewVideoUrl;
+      }
+    } catch {
+      // ignore
+    }
+    return '';
+  });
+
+  function openPreviewModal(title: string, url: string) {
+    previewItemTitle = title;
+    previewVideoUrl = url;
+    isPreviewModalOpen = true;
+  }
+
+  function closePreviewModal() {
+    isPreviewModalOpen = false;
+    previewVideoUrl = '';
+    previewItemTitle = '';
+  }
+
   // Edit Modal State
   let isEditModalOpen = $state(false);
   let editTitleAr = $state('');
@@ -160,6 +197,67 @@
     <h2>{$currentLocale === 'en' ? 'Curriculum & Course Structure' : 'محتوى وتفاصيل المنهج'}</h2>
     <p>{$currentLocale === 'en' ? 'Inside this course you will find structured lessons, video lecture links, and interactive quizzes for regular review and final exam preparation.' : 'ستجد داخل الدورة محتوى مرتبًا وروابط المحاضرات والاختبارات الخاصة بالمقرر للمساعدة في المذاكرة والمراجعة النهائية.'}</p>
     
+    {#if data.content?.sections && data.content.sections.length > 0}
+      <div class="curriculum-list">
+        {#each data.content.sections as section, sIdx}
+          <div class="curriculum-section">
+            <div class="curriculum-section-header">
+              <span class="section-idx">{$currentLocale === 'en' ? `Section ${sIdx + 1}` : `الفصل ${sIdx + 1}`}</span>
+              <h3>{getLocalizedText(section.title, $currentLocale)}</h3>
+              <span class="section-badge">{section.items.length} {$currentLocale === 'en' ? 'items' : 'عنصر'}</span>
+            </div>
+
+            <div class="curriculum-items">
+              {#each section.items as item}
+                <div class="curriculum-item" class:is-preview={item.is_free}>
+                  <div class="item-title-wrap">
+                    <span class="item-icon-tag" aria-hidden="true">
+                      {#if item.type === 'lecture_link'}
+                        🎬
+                      {:else if item.type === 'file'}
+                        📄
+                      {:else if item.type === 'quiz' || item.type === 'exam'}
+                        📝
+                      {:else}
+                        🔗
+                      {/if}
+                    </span>
+                    <span class="item-title">{getLocalizedText(item.title, $currentLocale)}</span>
+
+                    {#if item.is_free}
+                      <span class="preview-tag">
+                        {$currentLocale === 'en' ? 'Free Preview' : 'معاينة مجانية'}
+                      </span>
+                    {/if}
+                  </div>
+
+                  <div class="item-status-wrap">
+                    {#if item.is_free && item.url}
+                      <button
+                        type="button"
+                        class="btn-watch-preview"
+                        onclick={() => openPreviewModal(getLocalizedText(item.title, $currentLocale), item.url!)}
+                      >
+                        {$currentLocale === 'en' ? 'Watch Preview ▶' : 'مشاهدة المعاينة ▶'}
+                      </button>
+                    {:else if item.is_locked}
+                      <span class="lock-indicator" title={$currentLocale === 'en' ? 'Requires enrollment' : 'يتطلب الاشتراك في المادة'}>
+                        🔒 {$currentLocale === 'en' ? 'Locked' : 'مغلق'}
+                      </span>
+                    {:else}
+                      <a href={`/my-courses/${data.course.slug}`} class="btn-item-open">
+                        {$currentLocale === 'en' ? 'Open Lesson' : 'فتح الدرس'}
+                      </a>
+                    {/if}
+                  </div>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/each}
+      </div>
+    {/if}
+
     {#if isAdmin}
       <div class="admin-inline-notice">
         <p>{$currentLocale === 'en' ? 'As an administrator, you can manage lectures, quizzes, and materials by clicking "Manage Lectures & Content" above.' : 'بصفتك مسؤولاً، يمكنك الوصول للمحتوى وإضافة المحاضرات والاختبارات بالضغط على زر "إدارة المحتوى والمحاضرات" بالأعلى.'}</p>
@@ -170,6 +268,50 @@
     {/if}
   </section>
 </div>
+
+<!-- Modal: Free Preview Video Player -->
+{#if isPreviewModalOpen}
+  <div class="modal-backdrop" onclick={closePreviewModal} role="presentation">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="modal-card preview-player-modal" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabindex="-1" dir="rtl">
+      <div class="modal-header">
+        <div class="preview-modal-titles">
+          <span class="preview-tag-modal">معاينة مجانية</span>
+          <h3>{previewItemTitle}</h3>
+        </div>
+        <button type="button" class="btn-close-modal" onclick={closePreviewModal} aria-label="إغلاق">&times;</button>
+      </div>
+
+      <div class="preview-player-body">
+        {#if previewEmbedUrl}
+          <div class="video-responsive-wrapper">
+            <iframe
+              src={previewEmbedUrl}
+              title={previewItemTitle}
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          </div>
+        {:else if previewVideoUrl}
+          <div class="external-preview-card">
+            <p>هذا المحتوى متاح للمشاهدة الخارجية عبر الرابط المباشر:</p>
+            <a href={previewVideoUrl} target="_blank" rel="noopener noreferrer" class="btn-open-external">
+              فتح الرابط في نافذة جديدة ↗
+            </a>
+          </div>
+        {/if}
+      </div>
+
+      <div class="preview-modal-footer">
+        <p>أعجبك الشرح؟ يمكنك الاشتراك في المنهج الكامل الآن والوصول لجميع المحاضرات والملفات والاختبارات.</p>
+        <a href={`/courses/${data.course.slug}/checkout`} class="btn-enroll-from-preview">
+          الاشتراك في المقرر الكامل
+        </a>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <!-- Edit Course Modal for Admin -->
 {#if isEditModalOpen}
@@ -731,9 +873,237 @@
     cursor: pointer;
   }
 
+  /* Curriculum Syllabus */
+  .curriculum-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+  }
+
+  .curriculum-section {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .curriculum-section-header {
+    background: var(--card);
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1.5px solid var(--line);
+  }
+
+  .section-idx {
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--storm);
+    color: #fff;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.35rem;
+  }
+
+  .curriculum-section-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--storm);
+    flex: 1;
+  }
+
+  .section-badge {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .curriculum-items {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .curriculum-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    gap: 1rem;
+    transition: background 150ms ease;
+  }
+
+  .curriculum-item:last-child {
+    border-bottom: none;
+  }
+
+  .curriculum-item.is-preview {
+    background: #fffdf5;
+  }
+
+  .item-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+
+  .item-icon-tag {
+    font-size: 1.1rem;
+  }
+
+  .item-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--storm);
+  }
+
+  .preview-tag {
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    border: 1px solid #fde68a;
+  }
+
+  .item-status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-watch-preview {
+    background: #059669;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 0.45rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+    transition: opacity 150ms ease;
+  }
+
+  .btn-watch-preview:hover {
+    opacity: 0.9;
+  }
+
+  .lock-indicator {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .btn-item-open {
+    font-size: 0.8rem;
+    color: var(--deep-cyan);
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  /* Preview Player Modal */
+  .preview-player-modal {
+    max-width: 760px;
+  }
+
+  .preview-modal-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .preview-modal-titles h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--storm);
+  }
+
+  .preview-tag-modal {
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    width: fit-content;
+  }
+
+  .preview-player-body {
+    margin: 1.25rem 0;
+  }
+
+  .video-responsive-wrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 ratio */
+    height: 0;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    background: #000;
+  }
+
+  .video-responsive-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .external-preview-card {
+    background: var(--paper);
+    border: 2px dashed var(--line);
+    border-radius: 0.75rem;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--storm);
+  }
+
+  .btn-open-external {
+    display: inline-block;
+    margin-top: 1rem;
+    background: var(--deep-cyan);
+    color: #ffffff;
+    font-weight: 700;
+    padding: 0.6rem 1.25rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+  }
+
+  .preview-modal-footer {
+    border-top: 1.5px solid var(--line);
+    padding-top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+    text-align: center;
+  }
+
+  .preview-modal-footer p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+
+  .btn-enroll-from-preview {
+    background: var(--storm);
+    color: var(--cyan);
+    padding: 0.65rem 1.75rem;
+    border-radius: 0.5rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
   @media (max-width: 760px) {
     .detail-shell { padding-inline: 1rem; }
     .course-hero { grid-template-columns: 1fr; }
     .form-row { grid-template-columns: 1fr; }
+    .curriculum-item { flex-direction: column; align-items: flex-start; }
   }
 </style>
