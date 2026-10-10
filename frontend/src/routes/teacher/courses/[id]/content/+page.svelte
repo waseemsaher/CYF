@@ -760,8 +760,8 @@
     display: inline-block;
     margin-top: 1rem;
     padding: 0.5rem 1.25rem;
-    background: var(--storm);
-    color: #fff;
+    background: var(--deep-cyan);
+    color: #ffffff;
     border-radius: 0.5rem;
     text-decoration: none;
     font-weight: 700;
@@ -969,8 +969,8 @@
   }
 
   .section-index-badge {
-    background: var(--storm);
-    color: #fff;
+    background: var(--deep-cyan);
+    color: #ffffff;
     font-size: 0.75rem;
     font-weight: 700;
     padding: 0.2rem 0.5rem;
@@ -1120,6 +1120,12 @@
     border: 1px solid #fde68a;
   }
 
+  :global([data-theme='dark']) .free-preview-pill {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.35);
+  }
+
   .item-status-pill {
     font-size: 0.7rem;
     font-weight: 600;
@@ -1132,9 +1138,19 @@
     color: #059669;
   }
 
+  :global([data-theme='dark']) .pill-pub {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+  }
+
   .pill-draft {
     background: #f3f4f6;
     color: #6b7280;
+  }
+
+  :global([data-theme='dark']) .pill-draft {
+    background: rgba(156, 163, 175, 0.2);
+    color: #9ca3af;
   }
 
   .item-meta-line {
@@ -1301,6 +1317,11 @@
     font-family: inherit;
   }
 
+  .form-group select option {
+    background: var(--card);
+    color: var(--storm);
+  }
+
   .form-group input:focus,
   .form-group select:focus,
   .form-group textarea:focus {
@@ -1314,8 +1335,8 @@
   }
 
   .checkbox-highlight-box {
-    background: #f8fafc;
-    border: 1.5px solid #cbd5e1;
+    background: var(--card);
+    border: 1.5px solid var(--line);
     border-radius: 0.65rem;
     padding: 0.85rem 1rem;
   }

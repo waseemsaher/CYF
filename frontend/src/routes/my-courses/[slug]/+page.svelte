@@ -453,7 +453,7 @@
   }
 
   .item-row:last-child { border-bottom: none; }
-  .item-row:hover { background: #f8faf9; }
+  .item-row:hover { background: var(--card-hover); }
 
   .item-info {
     display: flex;

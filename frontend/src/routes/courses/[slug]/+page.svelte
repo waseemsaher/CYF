@@ -900,8 +900,8 @@
   .section-idx {
     font-size: 0.75rem;
     font-weight: 700;
-    background: var(--storm);
-    color: #fff;
+    background: var(--deep-cyan);
+    color: #ffffff;
     padding: 0.15rem 0.5rem;
     border-radius: 0.35rem;
   }
@@ -940,7 +940,11 @@
   }
 
   .curriculum-item.is-preview {
-    background: #fffdf5;
+    background: rgba(245, 158, 11, 0.06);
+  }
+
+  :global([data-theme='dark']) .curriculum-item.is-preview {
+    background: rgba(245, 158, 11, 0.12);
   }
 
   .item-title-wrap {
@@ -968,6 +972,12 @@
     padding: 0.15rem 0.5rem;
     border-radius: 9999px;
     border: 1px solid #fde68a;
+  }
+
+  :global([data-theme='dark']) .preview-tag {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.35);
   }
 
   .item-status-wrap {

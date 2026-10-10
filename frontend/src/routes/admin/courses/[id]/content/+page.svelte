@@ -1859,6 +1859,11 @@
     outline: none;
   }
 
+  .form-group select option {
+    background: #0f282f;
+    color: #fff;
+  }
+
   .form-group input:focus,
   .form-group select:focus,
   .form-group textarea:focus {
