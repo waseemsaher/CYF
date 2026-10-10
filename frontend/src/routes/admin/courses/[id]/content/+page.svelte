@@ -948,9 +948,11 @@
           />
         </div>
 
-        {#if itemType === 'lecture_link' || itemType === 'external_link'}
+        {#if itemType === 'lecture_link' || itemType === 'external_link' || itemType === 'file'}
           <div class="form-group">
-            <label for="item-url">رابط المحاضرة / الفيديو (URL)</label>
+            <label for="item-url">
+              {itemType === 'file' ? 'رابط الملف الخارجي (تليجرام / سحابي - اختياري إذا رفعت ملفاً)' : 'رابط المحاضرة / الفيديو (URL)'}
+            </label>
             <input
               id="item-url"
               type="url"

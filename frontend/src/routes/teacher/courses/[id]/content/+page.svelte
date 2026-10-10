@@ -59,6 +59,7 @@
   let itemIsFree = $state<boolean>(false);
   let itemPosition = $state<number>(1);
   let itemIsPublished = $state<boolean>(true);
+  let itemFile = $state<File | null>(null);
   let itemLoading = $state(false);
   let itemError = $state('');
 
@@ -187,6 +188,7 @@
     const sec = sections.find((s) => s.id === secId);
     itemPosition = (sec?.items?.length || 0) + 1;
     itemIsPublished = true;
+    itemFile = null;
     itemError = '';
     isItemModalOpen = true;
   }
@@ -205,12 +207,14 @@
     itemIsFree = Boolean(item.is_free);
     itemPosition = item.position;
     itemIsPublished = item.is_published !== false;
+    itemFile = null;
     itemError = '';
     isItemModalOpen = true;
   }
 
   function closeItemModal() {
     isItemModalOpen = false;
+    itemFile = null;
     itemError = '';
   }
 
@@ -253,6 +257,7 @@
             en: itemDescEn.trim() || itemDescAr.trim(),
           } : undefined,
           url: itemUrl.trim() || null,
+          file: itemFile,
           telegram_message_id: telId,
           is_free: itemIsFree,
           position: Number(itemPosition),
@@ -661,19 +666,35 @@
         </div>
 
         <div class="form-group">
-          <label for="item-url">رابط المحاضرة / الفيديو / الملف</label>
+          <label for="item-url">رابط المحاضرة / الفيديو / الرابط الخارجي (أو رابط الملف)</label>
           <input
             id="item-url"
             type="url"
             dir="ltr"
             bind:value={itemUrl}
-            placeholder="https://t.me/... أو https://youtube.com/..."
+            placeholder="https://t.me/... أو https://youtube.com/... أو رابط درايف"
             data-testid="input-item-url"
           />
           <small class="hint-text">
-            ضع رابط الفيديو على قناة تليجرام الخاصة أو رابط يوتيوب للمعاينة المجانية.
+            ضع رابط الفيديو أو رابط المذكرة على تليجرام أو رابط يوتيوب/درايف.
           </small>
         </div>
+
+        {#if itemType === 'file' && !isEditingItem}
+          <div class="form-group">
+            <label for="teacher-item-file-upload">أو رفع ملف مباشر من جهازك (اختياري)</label>
+            <input
+              id="teacher-item-file-upload"
+              type="file"
+              onchange={(e) => {
+                const target = e.currentTarget as HTMLInputElement;
+                itemFile = target.files && target.files[0] ? target.files[0] : null;
+              }}
+              data-testid="input-item-file"
+            />
+            <small class="hint-text">يمكنك إما وضع رابط تليجرام/سحابي بالأعلى، أو رفع ملف PDF/مستند مباشرة.</small>
+          </div>
+        {/if}
 
         <div class="form-group">
           <label for="item-tel-msg-id">معرّف الرسالة بتليجرام (Telegram Message ID - اختياري)</label>

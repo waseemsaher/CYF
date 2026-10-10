@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page } from '$app/state';
-  import { getCourseContent, type CourseContentResponse } from '$lib/api/learning';
+  import { getCourseContent, downloadCourseItemFile, type CourseContentResponse, type CourseItem } from '$lib/api/learning';
   import { getTelegramStatus, resendCourseInvite, type TelegramStatus } from '$lib/api/telegram';
 
   let content: CourseContentResponse | null = $state(null);
@@ -10,10 +10,27 @@
   let resendMsg = $state<{ type: 'success' | 'error'; text: string } | null>(null);
   let loading = $state(true);
   let errorMsg = $state('');
+  let downloadingItemId = $state<number | null>(null);
+  let fileError = $state<string | null>(null);
   let collapsedSections = $state<Record<number, boolean>>({});
 
   function toggleSection(sectionId: number) {
     collapsedSections[sectionId] = !collapsedSections[sectionId];
+  }
+
+  async function handleDownloadFile(item: CourseItem) {
+    if (downloadingItemId) return;
+    fileError = null;
+    downloadingItemId = item.id;
+    try {
+      const fileName = item.title?.ar || item.title?.en || 'file';
+      await downloadCourseItemFile(fetch, slug, item.id, fileName);
+    } catch (e: any) {
+      fileError = e?.message || 'تعذر تحميل الملف. يرجى المحاولة مرة أخرى.';
+      alert(fileError);
+    } finally {
+      downloadingItemId = null;
+    }
   }
 
   const slug = page.params.slug || '';
@@ -210,9 +227,29 @@
                               </a>
                             {/if}
                           {:else if item.type === 'file'}
-                            <a href="/api/v1/courses/{slug}/items/{item.id}/file" class="btn-item btn-file">
-                              تحميل الملف ↓
-                            </a>
+                            {#if item.has_file}
+                              <button
+                                type="button"
+                                class="btn-item btn-file"
+                                onclick={() => handleDownloadFile(item)}
+                                disabled={downloadingItemId === item.id}
+                              >
+                                {downloadingItemId === item.id ? 'جاري التحميل...' : 'تحميل الملف ↓'}
+                              </button>
+                            {:else if item.url}
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn-item btn-file"
+                              >
+                                تحميل الملف ↗
+                              </a>
+                            {:else}
+                              <button type="button" class="btn-item btn-file" disabled>
+                                غير متوفر حالياً
+                              </button>
+                            {/if}
                           {:else if (item.type === 'quiz' || item.type === 'exam') && item.quiz}
                             <a href="/quizzes/{item.quiz.id}" class="btn-item btn-quiz">
                               ابدأ {item.quiz.kind === 'exam' ? 'الامتحان' : 'الاختبار'}

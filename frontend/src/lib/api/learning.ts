@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './client';
+import { apiGet, apiPost, getApiBaseUrl, getAuthToken } from './client';
 
 export type Translation = {
   ar: string;
@@ -131,3 +131,51 @@ export function getQuizResult(
     `/quizzes/${quizId}/attempts/${attemptId}`
   );
 }
+
+export async function downloadCourseItemFile(
+  fetcher: typeof fetch = fetch,
+  slug: string,
+  itemId: number,
+  fallbackName = 'course_file'
+): Promise<void> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/courses/${slug}/items/${itemId}/file`;
+
+  const res = await fetcher(url, { headers });
+  if (!res.ok) {
+    let errMsg = `Failed to download file (${res.status})`;
+    try {
+      const errJson = await res.json();
+      if (errJson?.message) errMsg = errJson.message;
+    } catch {}
+    throw new Error(errMsg);
+  }
+
+  const blob = await res.blob();
+  let filename = fallbackName;
+  const disposition = res.headers.get('content-disposition');
+  if (disposition) {
+    const filenameMatch = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i);
+    if (filenameMatch && filenameMatch[1]) {
+      filename = filenameMatch[1].replace(/['"]/g, '').trim();
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    const objectUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(objectUrl);
+  }
+}
+

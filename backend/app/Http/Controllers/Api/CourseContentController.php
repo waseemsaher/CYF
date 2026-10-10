@@ -126,7 +126,8 @@ class CourseContentController extends Controller
         $user = $request->user();
 
         $isStaff = $user->hasRole(['superadmin', 'admin']) || $user->can('courses.manage');
-        if (! $isStaff) {
+        $isTeacher = $user->hasRole('teacher') && $course->teachers()->where('users.id', $user->id)->exists();
+        if (! $isStaff && ! $isTeacher) {
             $isEnrolled = Enrollment::query()
                 ->where('user_id', $user->id)
                 ->where('course_id', $course->id)
