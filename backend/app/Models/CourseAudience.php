@@ -38,4 +38,20 @@ class CourseAudience extends Model
     {
         return $this->belongsTo(Course::class);
     }
+
+    /**
+     * @return BelongsTo<AcademicYear, $this>
+     */
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class, 'academic_year_id');
+    }
+
+    /**
+     * @return BelongsTo<Department, $this>
+     */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
 }
