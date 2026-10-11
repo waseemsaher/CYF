@@ -324,6 +324,9 @@
           <button type="button" class="btn-create-course-header" onclick={openCreateCourseModal}>
             <span>إضافة مقرر جديد</span>
           </button>
+          <a href="/admin/ctas" class="btn-payments-queue">
+            <span>إدارة أزرار الدعوة (CTA)</span>
+          </a>
           <a href="/admin/payments" class="btn-payments-queue">
             <span>طابور مراجعة الإيصالات</span>
             {#if overview.pending_payments_count > 0}
