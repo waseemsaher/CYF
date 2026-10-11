@@ -3,11 +3,159 @@
   import { currentUser } from '$lib/api/auth';
   import { updateAdminCourse } from '$lib/api/admin';
   import { currentLocale, formatPrice, getLocalizedText } from '$lib/i18n';
+  import {
+    COURSE_PRICE_EGP,
+    BUNDLE_COURSES_COUNT,
+    BUNDLE_PRICE,
+    EARLY_BIRD_PRICE,
+    EARLY_BIRD_END_DATE,
+    REVIEW_TIME_TEXT,
+    REFUND_GUARANTEE_SHORT,
+    getBundleSavingEgp,
+    isEarlyBirdActive,
+    formatEarlyBirdEndDate,
+    getPerLessonCostEgp
+  } from '$lib/pricing.config';
+  import { resolveCtaSlot } from '$lib/api/ctas';
+  import { getSampleLessonForCourse } from '$lib/data/sample-lessons';
 
   let { data }: { data: PageData } = $props();
 
   let isAdmin = $derived(
     $currentUser?.role === 'admin' || $currentUser?.role === 'superadmin'
+  );
+
+  // Audience year & department labels for direct answer & SEO
+  let yearNameAr = $derived.by(() => {
+    const audiences = data.course.audiences ?? [];
+    const years = Array.from(
+      new Set(
+        audiences
+          .map((a) => a.academic_year_name?.ar)
+          .filter((v): v is string => Boolean(v))
+      )
+    );
+    return years.length > 0 ? years.join(' و') : 'الفرقة الأولى';
+  });
+
+  let deptNameAr = $derived.by(() => {
+    if (data.course.is_general) return 'جميع الأقسام';
+    const audiences = data.course.audiences ?? [];
+    const depts = Array.from(
+      new Set(
+        audiences
+          .map((a) => a.department_name?.ar)
+          .filter((v): v is string => Boolean(v))
+      )
+    );
+    if (depts.length === 0 || depts.length > 2) return 'جميع الأقسام';
+    return depts.join(' و');
+  });
+
+  let courseTitleAr = $derived(data.course.title?.ar || getLocalizedText(data.course.title, $currentLocale));
+  let courseDescAr = $derived(
+    data.course.description?.ar ||
+      getLocalizedText(data.course.description, $currentLocale) ||
+      `شرح منظم لمقرر ${courseTitleAr} لطلاب حاسبات الأزهر (${yearNameAr}) يشمل المحاضرات والكويزات.`
+  );
+
+  // Direct answer at the top of the course page (GEO & clarity requirement)
+  let directAnswerAr = $derived(
+    `كورس ${courseTitleAr} لطلاب فرقة ${yearNameAr.replace(/^الفرقة\s*/, '')}، قسم ${deptNameAr} بكلية الحاسبات والذكاء الاصطناعي جامعة الأزهر.`
+  );
+
+  // Counts (from API or content sections)
+  let lessonsCount = $derived.by(() => {
+    if (typeof data.course.lessons_count === 'number' && data.course.lessons_count > 0) {
+      return data.course.lessons_count;
+    }
+    const sections = data.content?.sections ?? [];
+    return sections.reduce(
+      (acc, sec) => acc + sec.items.filter((i) => i.type === 'lecture_link' || i.type === 'file').length,
+      0
+    );
+  });
+
+  let quizzesCount = $derived.by(() => {
+    if (typeof data.course.quizzes_count === 'number' && data.course.quizzes_count > 0) {
+      return data.course.quizzes_count;
+    }
+    const sections = data.content?.sections ?? [];
+    return sections.reduce(
+      (acc, sec) => acc + sec.items.filter((i) => i.type === 'quiz' || i.type === 'exam').length,
+      0
+    );
+  });
+
+  // Pricing & framing calculations from pricing.config
+  let baseCoursePriceEgp = $derived(
+    data.course.amount_due_cents > 0
+      ? Math.round(data.course.amount_due_cents / 100)
+      : data.course.amount_due_cents === 0
+        ? 0
+        : COURSE_PRICE_EGP
+  );
+  let earlyBirdActive = $derived(isEarlyBirdActive());
+  let earlyBirdDateLabel = $derived(formatEarlyBirdEndDate(EARLY_BIRD_END_DATE));
+  let effectivePriceEgp = $derived(
+    baseCoursePriceEgp === 0
+      ? 0
+      : earlyBirdActive && EARLY_BIRD_PRICE < baseCoursePriceEgp
+        ? EARLY_BIRD_PRICE
+        : baseCoursePriceEgp
+  );
+  let perLessonCostEgp = $derived(getPerLessonCostEgp(effectivePriceEgp, lessonsCount));
+  let bundleSavingEgp = $derived(getBundleSavingEgp());
+
+  // Admin-editable CTA slot for course page
+  let courseCta = $derived(resolveCtaSlot(data.ctas, 'course_page_default'));
+  let courseCtaHref = $derived(
+    courseCta.url === '/checkout' || courseCta.url === 'checkout'
+      ? `/courses/${data.course.slug}/checkout`
+      : courseCta.url
+  );
+
+  // Data-driven Free Sample Lesson (from sample-lessons.ts or free curriculum item with URL)
+  let sampleLesson = $derived.by(() => {
+    const configured = getSampleLessonForCourse(data.course.slug);
+    if (configured) return configured;
+    for (const sec of data.content?.sections ?? []) {
+      for (const item of sec.items ?? []) {
+        if (item.is_free && item.url) {
+          return {
+            courseSlug: data.course.slug,
+            titleAr: getLocalizedText(item.title, 'ar'),
+            descriptionAr: 'معاينة مجانية من محتوى المقرر لتجربة طريقة الشرح.',
+            videoUrl: item.url
+          };
+        }
+      }
+    }
+    return null;
+  });
+
+  // Course JSON-LD structured data
+  let courseJsonLd = $derived(
+    `<script type="application/ld+json">${JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Course',
+      name: courseTitleAr,
+      description: `${directAnswerAr} ${courseDescAr}`,
+      provider: {
+        '@type': 'Organization',
+        name: 'Codeera - كوديرا',
+        url: 'https://codeera.tech'
+      },
+      educationalCredentialAwarded: undefined,
+      inLanguage: 'ar',
+      offers: {
+        '@type': 'Offer',
+        price: String(effectivePriceEgp),
+        priceCurrency: 'EGP',
+        availability: 'https://schema.org/InStock',
+        url: `https://codeera.tech/courses/${data.course.slug}`
+      }
+    })}<\/script>`
   );
 
   // Free Preview Modal State
@@ -120,28 +268,66 @@
 </script>
 
 <svelte:head>
-  <title>{getLocalizedText(data.course.title, $currentLocale)} | {$currentLocale === 'en' ? 'Codeera Platform' : 'منصة Codeera'}</title>
-  <meta name="description" content={getLocalizedText(data.course.description, $currentLocale)} />
+  <title>كورس {courseTitleAr} | حاسبات الأزهر ({yearNameAr}) | Codeera - كوديرا</title>
+  <meta name="description" content="{directAnswerAr} {courseDescAr}" />
+  <meta property="og:title" content="كورس {courseTitleAr} | حاسبات الأزهر ({yearNameAr}) | Codeera - كوديرا" />
+  <meta property="og:description" content="{directAnswerAr} {courseDescAr}" />
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html courseJsonLd}
 </svelte:head>
 
 <div class="detail-shell">
   <nav class="breadcrumb-nav" aria-label={$currentLocale === 'en' ? 'Breadcrumbs' : 'مسار التنقل'}>
     <a class="back-link" href="/courses">
       <span aria-hidden="true">{$currentLocale === 'en' ? '←' : '→'}</span>
-      {$currentLocale === 'en' ? 'Back to Courses Catalog' : 'العودة إلى قائمة الدورات'}
+      {$currentLocale === 'en' ? 'Back to Courses Catalog' : 'العودة إلى قائمة المقررات'}
     </a>
   </nav>
 
   <section class="course-hero">
     <div class="hero-copy">
       <div class="hero-tag-row">
-        <p class="kicker">{isAdmin ? ($currentLocale === 'en' ? 'Course Management' : 'لوحة إدارة المقرر الدراسي') : ($currentLocale === 'en' ? 'Available Course' : 'دورة متاحة للتسجيل')}</p>
+        <p class="kicker">{isAdmin ? ($currentLocale === 'en' ? 'Course Management' : 'لوحة إدارة المقرر الدراسي') : ($currentLocale === 'en' ? 'Available Course' : 'مبني على توصيف مقرر فرقتك')}</p>
         {#if isAdmin}
           <span class="admin-badge">{$currentLocale === 'en' ? 'Admin Mode' : 'وضع المسؤول'}</span>
         {/if}
       </div>
       <h1>{getLocalizedText(data.course.title, $currentLocale)}</h1>
+
+      <!-- Direct answer at the top of the course page -->
+      <p class="mt-2 mb-3 rounded-xl bg-white/10 border border-white/15 px-4 py-3 text-sm font-bold text-cyan-200 leading-relaxed">
+        {directAnswerAr}
+      </p>
+
       <p class="description">{getLocalizedText(data.course.description, $currentLocale)}</p>
+
+      <!-- What's included summary badges -->
+      <div class="mt-5 flex flex-wrap gap-2.5 text-xs font-bold text-slate-200">
+        {#if lessonsCount > 0}
+          <span class="rounded-lg bg-white/10 border border-white/15 px-3 py-1.5">
+            📚 {lessonsCount} درس مشروح
+          </span>
+        {:else}
+          <span class="rounded-lg bg-white/10 border border-white/15 px-3 py-1.5">
+            📚 شرح منظم لمحاضرات المقرر
+          </span>
+        {/if}
+        {#if quizzesCount > 0}
+          <span class="rounded-lg bg-white/10 border border-white/15 px-3 py-1.5">
+            📝 {quizzesCount} كويز وتدريب
+          </span>
+        {:else}
+          <span class="rounded-lg bg-white/10 border border-white/15 px-3 py-1.5">
+            📝 كويزات وتطبيقات عملية
+          </span>
+        {/if}
+        <span class="rounded-lg bg-white/10 border border-white/15 px-3 py-1.5">
+          💬 متابعة الأسئلة طوال الترم
+        </span>
+        <span class="rounded-lg bg-white/10 border border-white/15 px-3 py-1.5">
+          ⏱️ تفعيل الاشتراك: {REVIEW_TIME_TEXT}
+        </span>
+      </div>
     </div>
 
     <!-- Side Panel: Admin Controls OR Student Enrollment -->
@@ -177,31 +363,99 @@
         </div>
       </aside>
     {:else}
-      <aside class="enrollment-panel" aria-label={$currentLocale === 'en' ? 'Price & Enrollment Details' : 'تفاصيل السعر والتسجيل'}>
-        <p>{$currentLocale === 'en' ? 'Current Price' : 'السعر الحالي'}</p>
+      <aside class="enrollment-panel" aria-label={$currentLocale === 'en' ? 'Price & Enrollment Details' : 'تفاصيل السعر والاشتراك'}>
+        <p>{$currentLocale === 'en' ? 'Current Price' : 'سعر الاشتراك في المقرر'}</p>
         {#if data.course.discount_cents > 0}
           <span class="old-price">{formatPrice(data.course.list_price_cents, $currentLocale)}</span>
+        {:else if earlyBirdActive && EARLY_BIRD_PRICE < baseCoursePriceEgp}
+          <span class="old-price">{baseCoursePriceEgp} ج.م</span>
         {/if}
-        <strong>{formatPrice(data.course.amount_due_cents, $currentLocale)}</strong>
+        <strong>{effectivePriceEgp} ج.م</strong>
+
+        {#if earlyBirdActive && earlyBirdDateLabel}
+          <span class="mt-1 inline-block rounded-md bg-amber-400/20 border border-amber-300/40 px-2.5 py-1 text-xs font-bold text-amber-200">
+            السعر ده لحد {earlyBirdDateLabel} قبل الميد
+          </span>
+        {/if}
+
+        {#if perLessonCostEgp && effectivePriceEgp > 0}
+          <p class="mt-1 text-xs font-bold text-cyan-300">
+            أقل من {perLessonCostEgp} جنيه للدرس الواحد ({lessonsCount} درس)
+          </p>
+        {/if}
+
         {#if data.course.amount_due_cents === 0}
           <span class="free-label">{$currentLocale === 'en' ? 'Free' : 'مجانية'}</span>
           <a class="enroll-btn free" href={`/courses/${data.course.slug}/checkout`}>
-            {$currentLocale === 'en' ? 'Enroll Now — Free' : 'سجّل فورًا — مجانًا'}
+            {$currentLocale === 'en' ? 'Start Course — Free' : 'ابدأ المقرر مجاناً'}
           </a>
         {:else}
-          <a class="enroll-btn" href={`/courses/${data.course.slug}/checkout`}>
-            <span>{$currentLocale === 'en' ? 'Enroll Now' : 'سجّل الآن'}</span>
+          <a
+            class="enroll-btn"
+            href={courseCtaHref}
+            target={courseCta.open_in_new_tab ? '_blank' : undefined}
+            rel={courseCta.open_in_new_tab ? 'noopener noreferrer' : undefined}
+          >
+            <span>{courseCta.label_ar}</span>
             <span aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
           </a>
         {/if}
+
+        <!-- Bundle Option Card -->
+        <div class="mt-4 rounded-xl bg-white/10 border border-white/15 p-3 text-right text-xs text-slate-200">
+          <div class="flex items-center justify-between gap-2 font-extrabold text-white">
+            <span>باقة {BUNDLE_COURSES_COUNT} مواد: {BUNDLE_PRICE} ج.م</span>
+            {#if bundleSavingEgp > 0}
+              <span class="rounded-full bg-brand-cyan px-2 py-0.5 text-[11px] font-extrabold text-brand-navy">
+                وفّر {bundleSavingEgp} جنيه
+              </span>
+            {/if}
+          </div>
+          <p class="mt-1 text-[11px] text-slate-300 leading-relaxed">
+            تقدر تشترك في باقة {BUNDLE_COURSES_COUNT} مواد مع بعض بالتنسيق مع الدعم بعد رفع الإيصال.
+          </p>
+        </div>
+
+        <!-- Prominent Refund Guarantee Line -->
+        <div class="mt-3 rounded-xl bg-emerald-500/15 border border-emerald-400/30 p-3 text-right text-xs text-emerald-100">
+          <p class="leading-relaxed">{REFUND_GUARANTEE_SHORT}</p>
+          <a href="/refund" class="mt-1.5 inline-block font-extrabold text-white underline underline-offset-4">
+            اقرأ سياسة الاسترجاع كاملة
+          </a>
+        </div>
       </aside>
     {/if}
   </section>
 
+  <!-- Free Sample Lesson Section (Data-Driven, Hidden if None Configured) -->
+  {#if sampleLesson}
+    <section class="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <span class="inline-block rounded-full bg-brand-cyan/20 px-3 py-1 text-xs font-extrabold text-brand-navy">
+            درس تجريبي مجاني
+          </span>
+          <h2 class="mt-2 text-xl font-extrabold text-brand-navy">{sampleLesson.titleAr}</h2>
+          {#if sampleLesson.descriptionAr}
+            <p class="mt-1 text-sm text-slate-600">{sampleLesson.descriptionAr}</p>
+          {/if}
+        </div>
+        <button
+          type="button"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-navy px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-blue shrink-0"
+          onclick={() => openPreviewModal(sampleLesson.titleAr, sampleLesson.videoUrl)}
+        >
+          <span>شوف الدرس التجريبي</span>
+          <span aria-hidden="true">▶</span>
+        </button>
+      </div>
+    </section>
+  {/if}
+
   <section class="outline">
     <p class="kicker">{$currentLocale === 'en' ? 'Course Overview' : 'نظرة عامة على المقرر'}</p>
     <h2>{$currentLocale === 'en' ? 'Curriculum & Course Structure' : 'محتوى وتفاصيل المنهج'}</h2>
-    <p>{$currentLocale === 'en' ? 'Inside this course you will find structured lessons, video lecture links, and interactive quizzes for regular review and final exam preparation.' : 'ستجد داخل الدورة محتوى مرتبًا وروابط المحاضرات والاختبارات الخاصة بالمقرر للمساعدة في المذاكرة والمراجعة النهائية.'}</p>
+    <p>{$currentLocale === 'en' ? 'Inside this course you will find structured lessons, video lecture links, and interactive quizzes for regular review and final exam preparation.' : 'هتلاقي جوه المقرر شرح المحاضرات مترتب خطوة بخطوة، مع الكويزات والملفات التدريبية عشان تذاكر وتراجع قبل الميد والفاينال.'}</p>
     
     {#if data.content?.sections && data.content.sections.length > 0}
       <div class="curriculum-list">

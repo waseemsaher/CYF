@@ -56,6 +56,13 @@ class CatalogController extends Controller
         }
 
         $courses = $query
+            ->with(['audiences.academicYear', 'audiences.department'])
+            ->withCount([
+                'items as lessons_count' => function ($q): void {
+                    $q->whereIn('type', ['lecture_link', 'file']);
+                },
+                'quizzes as quizzes_count',
+            ])
             ->orderBy('sort_order')
             ->orderBy('id')
             ->paginate(12);
@@ -65,16 +72,7 @@ class CatalogController extends Controller
         foreach ($courses->getCollection() as $course) {
             $pricing = $calculateCoursePrice->handle($course);
 
-            $payload[] = [
-                'id' => $course->getKey(),
-                'slug' => $course->getAttribute('slug'),
-                'title' => $course->getTranslations('title'),
-                'description' => $course->getTranslations('description'),
-                'price_cents' => (int) $course->getAttribute('price_cents'),
-                ...$pricing,
-                'status' => $course->getAttribute('status'),
-                'sort_order' => (int) $course->getAttribute('sort_order'),
-            ];
+            $payload[] = $this->formatCoursePayload($course, $pricing);
         }
 
         return response()->json([
@@ -92,6 +90,13 @@ class CatalogController extends Controller
     {
         /** @var Course|null $course */
         $course = Course::query()
+            ->with(['audiences.academicYear', 'audiences.department'])
+            ->withCount([
+                'items as lessons_count' => function ($q): void {
+                    $q->whereIn('type', ['lecture_link', 'file']);
+                },
+                'quizzes as quizzes_count',
+            ])
             ->where('slug', $slug)
             ->where('status', 'published')
             ->first();
@@ -105,17 +110,40 @@ class CatalogController extends Controller
         $pricing = $calculateCoursePrice->handle($course);
 
         return response()->json([
-            'data' => [
-                'id' => $course->getKey(),
-                'slug' => $course->getAttribute('slug'),
-                'title' => $course->getTranslations('title'),
-                'description' => $course->getTranslations('description'),
-                'price_cents' => (int) $course->getAttribute('price_cents'),
-                ...$pricing,
-                'status' => $course->getAttribute('status'),
-                'sort_order' => (int) $course->getAttribute('sort_order'),
-            ],
+            'data' => $this->formatCoursePayload($course, $pricing),
         ]);
+    }
+
+    /**
+     * @param  array{list_price_cents: int, discount_cents: int, amount_due_cents: int, discount_id: int|null}  $pricing
+     * @return array<string, mixed>
+     */
+    private function formatCoursePayload(Course $course, array $pricing): array
+    {
+        $audiences = $course->audiences->map(function ($aud): array {
+            return [
+                'academic_year_id' => (int) $aud->academic_year_id,
+                'department_id' => (int) $aud->department_id,
+                'academic_year_name' => $aud->academicYear ? $aud->academicYear->getTranslations('name') : null,
+                'department_name' => $aud->department ? $aud->department->getTranslations('name') : null,
+                'department_code' => $aud->department ? $aud->department->getAttribute('code') : null,
+            ];
+        })->all();
+
+        return [
+            'id' => $course->getKey(),
+            'slug' => $course->getAttribute('slug'),
+            'title' => $course->getTranslations('title'),
+            'description' => $course->getTranslations('description'),
+            'price_cents' => (int) $course->getAttribute('price_cents'),
+            ...$pricing,
+            'status' => $course->getAttribute('status'),
+            'is_general' => (bool) $course->getAttribute('is_general'),
+            'audiences' => $audiences,
+            'lessons_count' => (int) ($course->getAttribute('lessons_count') ?? 0),
+            'quizzes_count' => (int) ($course->getAttribute('quizzes_count') ?? 0),
+            'sort_order' => (int) $course->getAttribute('sort_order'),
+        ];
     }
 
     public function academicYears(): JsonResponse

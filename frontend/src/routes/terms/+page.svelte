@@ -1,131 +1,36 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { getContentBlock } from '$lib/api/admin';
+  export let data: {
+    block?: {
+      title?: { ar?: string; en?: string };
+      body?: { ar?: string; en?: string };
+    } | null;
+  };
 
-  let content: string = $state('');
-  let loading = $state(true);
+  const defaultTitle = 'شروط الاستخدام';
+  const defaultBody = `أهلاً بك في منصة Codeera - كوديرا. باستخدامك للمنصة أنت بتوافق على الشروط البسيطة دي عشان نحافظ على حقك وحق زمايلك:
+1) الحساب شخصي لطالب واحد فقط، وممنوع مشاركة بيانات الدخول أو إعادة نشر الفيديوهات والملفات خارج المنصة.
+2) الدفع بيتم عن طريق فودافون كاش أو انستاباي على الأرقام الرسمية الموضحة في صفحة الدفع، وبيتم تفعيل الاشتراك بعد مراجعة الإيصال يدوياً من فريق الإدارة.
+3) Codeera منصة تعليمية مستقلة وغير تابعة رسمياً لجامعة الأزهر.`;
 
-  async function loadBlock() {
-    try {
-      const res = await getContentBlock(fetch, 'legal.terms');
-      content = res.data.content.ar;
-    } catch {
-      content = 'هذه الصفحة قيد الإعداد والمراجعة، وسيتم نشر شروط الاستخدام المعتمدة قبل فتح المنصة للاستخدام العام للطلاب.';
-    } finally {
-      loading = false;
-    }
-  }
-
-  onMount(() => {
-    loadBlock();
-  });
+  $: title = data?.block?.title?.ar || defaultTitle;
+  $: body = data?.block?.body?.ar || defaultBody;
 </script>
 
 <svelte:head>
-  <title>شروط الاستخدام | منصة Codeera</title>
+  <title>شروط الاستخدام | حاسبات الأزهر | Codeera - كوديرا</title>
+  <meta
+    name="description"
+    content="شروط وأحكام استخدام منصة Codeera - كوديرا التعليمية لطلاب كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر (الفرقة الأولى وباقي الفرق)."
+  />
 </svelte:head>
 
-<div class="legal-page" dir="rtl">
-  <div class="legal-container">
-    <div class="legal-header">
-      <h1>شروط الاستخدام (Terms of Use)</h1>
-      <p class="legal-date">آخر تحديث: سبتمبر 2026</p>
+<div class="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8" dir="rtl">
+  <div class="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:p-12">
+    <h1 class="mb-6 border-b border-slate-100 pb-6 text-2xl font-extrabold text-brand-navy sm:text-3xl">
+      {title}
+    </h1>
+    <div class="prose prose-slate max-w-none leading-loose text-slate-700 whitespace-pre-line">
+      {body}
     </div>
-
-    {#if loading}
-      <div class="loading-skeleton">
-        <div class="skeleton-line wide"></div>
-        <div class="skeleton-block"></div>
-      </div>
-    {:else}
-      <div class="legal-content">
-        {content}
-      </div>
-    {/if}
   </div>
 </div>
-
-<style>
-  .legal-page {
-    background-color: var(--paper);
-    min-height: calc(100vh - 140px);
-    padding: 3rem 1.25rem 5rem;
-  }
-
-  .legal-container {
-    max-width: 780px;
-    margin-inline: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-
-  .legal-header {
-    border-bottom: 2px solid var(--line);
-    padding-bottom: 1.5rem;
-  }
-
-  .legal-header h1 {
-    font-size: 1.85rem;
-    font-weight: 800;
-    color: var(--storm);
-    margin: 0 0 0.35rem;
-    letter-spacing: -0.02em;
-  }
-
-  .legal-date {
-    font-size: 0.82rem;
-    color: var(--muted);
-    margin: 0;
-  }
-
-  .loading-skeleton {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .skeleton-line {
-    height: 1.5rem;
-    background: var(--line);
-    border-radius: 0.35rem;
-    opacity: 0.3;
-    animation: pulse-skeleton 1.2s ease-in-out infinite;
-  }
-
-  .skeleton-line.wide {
-    width: 75%;
-  }
-
-  .skeleton-block {
-    height: 5rem;
-    background: var(--line);
-    border-radius: 0.5rem;
-    opacity: 0.2;
-    animation: pulse-skeleton 1.2s ease-in-out infinite;
-    animation-delay: 0.2s;
-  }
-
-  @keyframes pulse-skeleton {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.35; }
-  }
-
-  .legal-content {
-    background: var(--card);
-    border: 2px solid var(--line);
-    border-radius: 1rem;
-    padding: 2rem;
-    font-size: 0.95rem;
-    line-height: 1.85;
-    color: var(--ink);
-    white-space: pre-line;
-    box-shadow: 0 4px 12px rgba(15, 40, 47, 0.04);
-  }
-
-  @media (max-width: 600px) {
-    .legal-page {
-      padding: 2rem 1rem 4rem;
-    }
-  }
-</style>

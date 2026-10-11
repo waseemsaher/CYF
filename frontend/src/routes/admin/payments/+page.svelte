@@ -174,7 +174,7 @@
 {:else}
 <main class="admin-shell">
   <header class="admin-header">
-    <a class="brand" href="/">CODEERA <span>ADMIN</span></a>
+    <a class="brand" href="/">Codeera <span>Admin</span></a>
     <span class="header-title">مراجعة الدفعات</span>
   </header>
 

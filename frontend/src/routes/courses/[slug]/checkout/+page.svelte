@@ -2,21 +2,32 @@
   import type { PageData } from './$types';
   import { submitPayment } from '$lib/api/payments';
   import { currentLocale, formatPrice } from '$lib/i18n';
+  import {
+    REVIEW_TIME_TEXT,
+    REFUND_GUARANTEE_SHORT,
+    REFERRAL_DISCOUNT_EGP,
+    BUNDLE_COURSES_COUNT,
+    BUNDLE_PRICE,
+    getBundleSavingEgp
+  } from '$lib/pricing.config';
 
   let { data }: { data: PageData } = $props();
 
   let method = $state('vodafone_cash');
   let senderIdentifier = $state('');
   let proof: File | null = $state(null);
+  let referralCode = $state('');
   let studentNote = $state('');
   let submitting = $state(false);
   let submitted = $state(false);
   let errorMsg = $state('');
 
+  const bundleSavingEgp = $derived(getBundleSavingEgp());
+
   const methods = [
-    { key: 'vodafone_cash', label: 'فودافون كاش', instructions: 'حوّل المبلغ المطلوب على رقم فودافون كاش، ثم ارفع صورة الإيصال.' },
-    { key: 'instapay', label: 'إنستاباي', instructions: 'حوّل المبلغ عبر إنستاباي إلى الحساب الموضح، ثم ارفع صورة الإيصال.' },
-    { key: 'other_ewallet', label: 'محفظة إلكترونية أخرى', instructions: 'حوّل المبلغ بأي محفظة إلكترونية وارفع صورة الإيصال مع رقم المحفظة.' }
+    { key: 'vodafone_cash', label: 'فودافون كاش', instructions: 'حوّل المبلغ المطلوب على رقم فودافون كاش الرسمي، وبعدها ارفع صورة الإيصال هنا.' },
+    { key: 'instapay', label: 'إنستاباي', instructions: 'حوّل المبلغ عبر إنستاباي للحساب الرسمي الموضح، وبعدها ارفع صورة الإيصال هنا.' },
+    { key: 'other_ewallet', label: 'محفظة إلكترونية أخرى', instructions: 'حوّل المبلغ بأي محفظة إلكترونية وارفع صورة الإيصال مع رقم المحفظة اللي حوّلت منه.' }
   ];
 
   function handleFileChange(e: Event) {
@@ -37,7 +48,7 @@
 
     try {
       if (!data.course?.id) {
-        errorMsg = 'لم يتم العثور على بيانات الدورة. يرجى إعادة تحميل الصفحة.';
+        errorMsg = 'لم يتم العثور على بيانات المقرر. يرجى إعادة تحميل الصفحة.';
         return;
       }
 
@@ -48,14 +59,22 @@
       formData.append('method', method);
       formData.append('sender_identifier', senderIdentifier);
       formData.append('proof', proof);
-      if (studentNote.trim()) {
-        formData.append('student_note', studentNote);
+
+      const combinedNotes = [
+        referralCode.trim() ? `[كود ترشيح: ${referralCode.trim()}]` : '',
+        studentNote.trim()
+      ]
+        .filter(Boolean)
+        .join(' — ');
+
+      if (combinedNotes) {
+        formData.append('student_note', combinedNotes);
       }
 
       await submitPayment(fetch, formData);
       submitted = true;
     } catch (err) {
-      errorMsg = err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال الدفعة.';
+      errorMsg = err instanceof Error ? err.message : 'حدث خطأ أثناء إرسال الإيصال.';
     } finally {
       submitting = false;
     }
@@ -65,13 +84,13 @@
 </script>
 
 <svelte:head>
-  <title>الدفع — {data.course.title.ar} | منصة Codeera</title>
-  <meta name="description" content="إتمام عملية الدفع لدورة {data.course.title.ar}" />
+  <title>الاشتراك والدفع — {data.course.title.ar} | Codeera - كوديرا</title>
+  <meta name="description" content="إتمام الاشتراك ورفع إيصال الدفع لمقرر {data.course.title.ar} لطلاب حاسبات الأزهر على منصة Codeera - كوديرا." />
 </svelte:head>
 
 <div class="checkout-shell">
   <nav class="breadcrumb-nav" aria-label="مسار التنقل">
-    <a class="back-link" href={`/courses/${data.course.slug}`}><span aria-hidden="true">→</span> العودة إلى تفاصيل الدورة</a>
+    <a class="back-link" href={`/courses/${data.course.slug}`}><span aria-hidden="true">→</span> العودة إلى تفاصيل المقرر</a>
   </nav>
 
   {#if submitted}
@@ -81,18 +100,21 @@
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
       </div>
-      <h1>تم إرسال الدفعة بنجاح</h1>
-      <p>دفعتك قيد المراجعة الآن. سيتم إخطارك فور الموافقة عليها.</p>
-      <p class="wait-note">عادةً ما تتم المراجعة خلال فترة قصيرة.</p>
+      <h1>تم استلام إيصال الدفع بنجاح</h1>
+      <p>إيصالك بيتراجع يدوياً دلوقتي من فريق الإدارة، وهيتفتحلك المقرر بعد التأكيد.</p>
+      <p class="wait-note">وقت المراجعة المتوقع: <strong>{REVIEW_TIME_TEXT}</strong></p>
       <div class="success-actions">
-        <a href="/payments">عرض دفعاتي</a>
-        <a href="/courses" class="secondary">تصفح الدورات</a>
+        <a href="/payments">متابعة حالة طلباتي</a>
+        <a href="/courses" class="secondary">تصفح المقررات</a>
       </div>
     </section>
   {:else}
     <section class="checkout-grid">
       <div class="checkout-form">
-        <h1>إتمام الدفع</h1>
+        <h1>إتمام الاشتراك ورفع الإيصال</h1>
+        <p class="mb-5 text-sm text-slate-600 leading-relaxed">
+          بتدفع على رقم رسمي وبتستلم تأكيد بعد مراجعة الإيصال يدوياً ({REVIEW_TIME_TEXT}).
+        </p>
 
         {#if errorMsg}
           <div class="error-banner" role="alert">{errorMsg}</div>
@@ -114,45 +136,67 @@
         </fieldset>
 
         <label class="field">
-          <span>رقم / حساب المرسل <span class="required">*</span></span>
+          <span>رقم المحفظة أو حساب إنستاباي اللي حوّلت منه <span class="required">*</span></span>
           <input
             type="text"
             bind:value={senderIdentifier}
-            placeholder="أدخل رقم المحفظة أو حساب إنستاباي"
+            placeholder="مثال: 010xxxxxxxx أو username@instapay"
             required
           />
         </label>
 
         <label class="field">
-          <span>صورة إثبات الدفع <span class="required">*</span></span>
+          <span>صورة إيصال التحويل <span class="required">*</span></span>
           <div class="upload-area">
             <input type="file" accept="image/jpeg,image/png,image/webp" onchange={handleFileChange} required />
             {#if proof}
               <p class="file-name">{proof.name}</p>
             {:else}
-              <p class="upload-hint">اسحب الصورة أو انقر للرفع (JPG, PNG, WebP — حد أقصى 5 ميجا)</p>
+              <p class="upload-hint">اسحب لقطة الشاشة (Screenshot) أو اضغط للرفع (JPG, PNG, WebP — حد أقصى 5 ميجا)</p>
             {/if}
           </div>
         </label>
 
         <label class="field">
-          <span>ملاحظة (اختياري)</span>
-          <textarea bind:value={studentNote} rows="3" placeholder="أي ملاحظة تريد إرسالها للمراجع"></textarea>
+          <span>كود ترشيح من زميل (اختياري)</span>
+          <input
+            type="text"
+            dir="ltr"
+            bind:value={referralCode}
+            placeholder="مثال: CODEERA-FRIEND"
+          />
+          <small class="text-xs text-slate-500">
+            لو معاك كود ترشيح من زميل مشترك، اكتبه هنا ونسّق قيمة الخصم ({REFERRAL_DISCOUNT_EGP} ج.م) مع الدعم قبل التحويل أو في الملاحظات.
+          </small>
         </label>
 
+        <label class="field">
+          <span>ملاحظة للإدارة (اختياري)</span>
+          <textarea bind:value={studentNote} rows="3" placeholder="لو مشترك في باقة الـ {BUNDLE_COURSES_COUNT} مواد، اكتب أسماء المواد هنا"></textarea>
+        </label>
+
+        <!-- Prominent Refund Guarantee Box inside Checkout Form -->
+        <div class="mb-5 rounded-lg border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs leading-relaxed text-emerald-950">
+          <strong class="block mb-1 text-emerald-900">ضمان الاسترجاع وحفظ الحقوق:</strong>
+          <span>{REFUND_GUARANTEE_SHORT}</span>
+          <a href="/refund" class="mr-1 font-extrabold text-brand-navy underline underline-offset-4">
+            اقرأ سياسة الاسترجاع كاملة
+          </a>
+        </div>
+
         <button type="button" onclick={handleSubmit} disabled={submitting} class="submit-btn">
-          {submitting ? 'جاري الإرسال...' : 'إرسال الدفعة'}
+          {submitting ? 'جاري إرسال الإيصال...' : 'إرسال إيصال الدفع للمراجعة'}
         </button>
       </div>
 
       <aside class="order-summary">
-        <h2>ملخص الطلب</h2>
+        <h2>ملخص الاشتراك</h2>
         <div class="summary-course">
-          <span class="summary-label">الدورة</span>
+          <span class="summary-label">المقرر</span>
           <strong>{data.course.title.ar}</strong>
         </div>
         <div class="summary-row">
-          <span>السعر الأصلي</span>
+          <span>سعر المقرر</span>
           <span>{formatPrice(data.course.list_price_cents, $currentLocale)}</span>
         </div>
         {#if data.course.discount_cents > 0}
@@ -162,8 +206,20 @@
           </div>
         {/if}
         <div class="summary-total">
-          <span>المطلوب</span>
+          <span>المطلوب تحويله</span>
           <strong>{formatPrice(data.course.amount_due_cents, $currentLocale)}</strong>
+        </div>
+
+        <div class="mt-4 border-t border-white/15 pt-4 text-xs text-slate-300 space-y-2 leading-relaxed">
+          <p>
+            <strong class="text-white">وقت تفعيل الاشتراك:</strong> {REVIEW_TIME_TEXT} بعد مراجعة الإيصال يدوياً.
+          </p>
+          <p>
+            <strong class="text-cyan-300">باقة {BUNDLE_COURSES_COUNT} مواد:</strong> متاحة بسعر {BUNDLE_PRICE} ج.م {bundleSavingEgp > 0 ? `(توفير ${bundleSavingEgp} ج.م)` : ''} — اكتب أسماء المواد في خانة الملاحظات.
+          </p>
+          <p>
+            <strong class="text-emerald-300">سياسة الاسترجاع:</strong> استرداد كامل لو الإيصال اترفض، أو خلال 7 أيام من التفعيل لو المشاهدة أقل من 20%.
+          </p>
         </div>
       </aside>
     </section>

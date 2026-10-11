@@ -6,6 +6,16 @@
   import { currentUser } from '$lib/api/auth';
   import { createAdminCourse, updateAdminCourse } from '$lib/api/admin';
   import { currentLocale, t, formatPrice, getLocalizedText } from '$lib/i18n';
+  import {
+    COURSE_PRICE_EGP,
+    BUNDLE_COURSES_COUNT,
+    BUNDLE_PRICE,
+    EARLY_BIRD_PRICE,
+    EARLY_BIRD_END_DATE,
+    getBundleSavingEgp,
+    isEarlyBirdActive,
+    formatEarlyBirdEndDate
+  } from '$lib/pricing.config';
 
   let { data }: { data: PageData } = $props();
 
@@ -25,6 +35,10 @@
     $currentUser?.role === 'admin' || $currentUser?.role === 'superadmin'
   );
 
+  let bundleSavingEgp = $derived(getBundleSavingEgp());
+  let earlyBirdActive = $derived(isEarlyBirdActive());
+  let earlyBirdDateLabel = $derived(formatEarlyBirdEndDate(EARLY_BIRD_END_DATE));
+
   let isModalOpen = $state(false);
   let isEditing = $state(false);
   let editingCourseId = $state<number | null>(null);
@@ -37,7 +51,7 @@
   let formSlug = $state('');
   let formDescAr = $state('');
   let formDescEn = $state('');
-  let formPricePounds = $state(150);
+  let formPricePounds = $state(COURSE_PRICE_EGP);
   let formStatus = $state<'published' | 'draft'>('published');
   let formTelegramLink = $state('');
   let formTelegramGroupId = $state('');
@@ -61,11 +75,11 @@
     })
   );
 
-  const pageHref = (page: number) => {
+  const pageHref = (pageNum: number) => {
     const params = new URLSearchParams();
     if (data.selectedAcademicYear) params.set('academic_year_id', data.selectedAcademicYear);
     if (data.selectedDepartment) params.set('department_id', data.selectedDepartment);
-    params.set('page', String(page));
+    params.set('page', String(pageNum));
     return `/courses?${params.toString()}`;
   };
 
@@ -77,7 +91,7 @@
     formSlug = '';
     formDescAr = '';
     formDescEn = '';
-    formPricePounds = 150;
+    formPricePounds = COURSE_PRICE_EGP;
     formStatus = 'published';
     formTelegramLink = '';
     formTelegramGroupId = '';
@@ -187,6 +201,8 @@
 <svelte:head>
   <title>{$t.courses.metaTitle}</title>
   <meta name="description" content={$t.courses.metaDesc} />
+  <meta property="og:title" content={$t.courses.metaTitle} />
+  <meta property="og:description" content={$t.courses.metaDesc} />
 </svelte:head>
 
 <div class="catalog-shell">
@@ -202,6 +218,21 @@
       <p class="catalog-subtitle">
         {$t.courses.desc}
       </p>
+
+      <!-- Bundle & Early Bird Info Strip -->
+      <div class="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm">
+        <span class="rounded-full bg-white/10 border border-white/20 px-4 py-1.5 font-bold text-white">
+          سعر المادة: {earlyBirdActive ? EARLY_BIRD_PRICE : COURSE_PRICE_EGP} جنيه
+        </span>
+        <span class="rounded-full bg-brand-cyan/20 border border-brand-cyan/40 px-4 py-1.5 font-extrabold text-brand-cyan">
+          باقة {BUNDLE_COURSES_COUNT} مواد بـ {BUNDLE_PRICE} جنيه {bundleSavingEgp > 0 ? `(وفّر ${bundleSavingEgp} جنيه)` : ''}
+        </span>
+        {#if earlyBirdActive && earlyBirdDateLabel}
+          <span class="rounded-full bg-amber-400/20 border border-amber-300/40 px-4 py-1.5 font-bold text-amber-200">
+            السعر ده لحد {earlyBirdDateLabel} قبل الميد
+          </span>
+        {/if}
+      </div>
 
       <!-- Admin Quick Action Toolbar -->
       {#if isAdmin}
@@ -310,7 +341,7 @@
         {#if $currentLocale === 'en'}
           Found <strong>{filteredCourses.length}</strong> {filteredCourses.length === 1 ? 'course' : 'courses'}
         {:else}
-          تم العثور على <strong>{filteredCourses.length}</strong> مقرر دراسي
+          متاح حالياً <strong>{filteredCourses.length}</strong> مقرر دراسي
         {/if}
       </span>
     </div>
@@ -344,7 +375,7 @@
             </div>
 
             <p class="course-description">
-              {getLocalizedText(course.description, $currentLocale) || ($currentLocale === 'en' ? 'Structured curriculum with detailed lectures and interactive quizzes.' : 'محتوى دراسي منظم يتضمن شرحاً تفصيلياً لأهم محاور المقرر واختبارات تفاعلية دورية.')}
+              {getLocalizedText(course.description, $currentLocale) || ($currentLocale === 'en' ? 'Structured curriculum with detailed lectures and interactive quizzes.' : 'محتوى دراسي مترتب حسب توصيف مقرر فرقتك مع كويزات دورية ومتابعة للأسئلة.')}
             </p>
           </div>
 

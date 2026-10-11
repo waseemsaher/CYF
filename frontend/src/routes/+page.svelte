@@ -1,1163 +1,718 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  import HeroCanvas from '$lib/components/HeroCanvas.svelte';
-  import HeroTypewriter from '$lib/components/HeroTypewriter.svelte';
-  import { currentHeroTranslations, currentLocale, t, formatPrice, getLocalizedText } from '$lib/i18n';
-  import { currentUser } from '$lib/api/auth';
+  import { page } from '$app/stores';
+  import { onMount } from 'svelte';
+  import { t } from '$lib/i18n';
+  import {
+    COURSE_PRICE_EGP,
+    BUNDLE_COURSES_COUNT,
+    BUNDLE_PRICE,
+    EARLY_BIRD_PRICE,
+    EARLY_BIRD_END_DATE,
+    REVIEW_TIME_TEXT,
+    SUBSCRIPTION_VALIDITY_TEXT,
+    FOUNDER_TRUST_CONFIG,
+    REFUND_GUARANTEE_SHORT,
+    getBundleSavingEgp,
+    isEarlyBirdActive,
+    formatEarlyBirdEndDate
+  } from '$lib/pricing.config';
+  import { resolveCtaSlot } from '$lib/api/ctas';
+  import { HOME_SAMPLE_LESSON, getSampleLessonForCourse } from '$lib/data/sample-lessons';
+  import { WHATSAPP_SUPPORT_URL } from '$lib/socials';
+  import TestimonialsSection from '$lib/components/TestimonialsSection.svelte';
 
-  let { data }: { data: PageData } = $props();
+  export let data;
 
-  let openFaqIndex = $state<number | null>(0);
+  let videoEl: HTMLVideoElement;
+  let videoLoaded = false;
 
+  onMount(() => {
+    if (videoEl) {
+      videoEl.play().catch(() => {
+        // Fallback to poster if autoplay is blocked
+      });
+    }
+  });
+
+  // Admin-editable CTAs with safe codebase fallbacks
+  $: heroPrimaryCta = resolveCtaSlot(data.ctas, 'home_hero_primary');
+  $: heroSecondaryCta = resolveCtaSlot(data.ctas, 'home_hero_secondary');
+  $: homeBottomCta = resolveCtaSlot(data.ctas, 'home_bottom');
+
+  // Dynamic courses count for stats bar
+  $: coursesCountStat =
+    data.totalCoursesCount && data.totalCoursesCount > 0
+      ? `${data.totalCoursesCount} مقررات متاحة`
+      : 'فرقة أولى والباقي جاي';
+
+  // Pricing calculations from config
+  $: bundleSavingEgp = getBundleSavingEgp();
+  $: earlyBirdActive = isEarlyBirdActive();
+  $: earlyBirdDateLabel = formatEarlyBirdEndDate(EARLY_BIRD_END_DATE);
+
+  // Sample lessons (data-driven, hidden if none configured)
+  $: configuredSampleLessons = [
+    ...(HOME_SAMPLE_LESSON ? [HOME_SAMPLE_LESSON] : []),
+    ...(data.courses ?? [])
+      .map((course: { slug: string }) => getSampleLessonForCourse(course.slug))
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+  ];
+  $: hasSampleLessons = configuredSampleLessons.length > 0;
+
+  // Steps data (honest manual receipt review on step 3, no Telegram icon)
+  $: steps = [
+    {
+      num: '1',
+      title: $t.home.steps.step1Title,
+      desc: $t.home.steps.step1Desc,
+      icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'
+    },
+    {
+      num: '2',
+      title: $t.home.steps.step2Title,
+      desc: $t.home.steps.step2Desc,
+      icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'
+    },
+    {
+      num: '3',
+      title: $t.home.steps.step3Title,
+      desc: $t.home.steps.step3Desc,
+      icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'
+    }
+  ];
+
+  const featureIcons = [
+    {
+      icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+      color: 'from-brand-cyan/20 to-brand-cyan/5',
+      iconColor: 'text-brand-cyan'
+    },
+    {
+      icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+      color: 'from-emerald-500/20 to-emerald-500/5',
+      iconColor: 'text-emerald-400'
+    },
+    {
+      icon: 'M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z',
+      color: 'from-purple-500/20 to-purple-500/5',
+      iconColor: 'text-purple-400'
+    },
+    {
+      icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+      color: 'from-amber-500/20 to-amber-500/5',
+      iconColor: 'text-amber-400'
+    }
+  ];
+
+  $: features = $t.home.features.items.map((item, idx) => ({
+    title: item.title,
+    desc: item.desc,
+    ...(featureIcons[idx] ?? featureIcons[0])
+  }));
+
+  // FAQ items: always rendered in DOM for crawlers and GEO citation
+  $: faqs = $t.home.faq.items;
+
+  let openFaqIndex: number | null = 0;
   function toggleFaq(index: number) {
     openFaqIndex = openFaqIndex === index ? null : index;
+  }
+
+  // JSON-LD FAQPage schema
+  $: faqJsonLd = `<script type="application/ld+json">${JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.a
+      }
+    }))
+  })}<\/script>`;
+
+  function getCtaButtonClass(style: string, variant: 'hero' | 'bottom' = 'hero'): string {
+    if (style === 'primary') {
+      return 'group inline-flex items-center justify-center gap-2 rounded-full bg-brand-cyan px-8 py-4 text-base font-extrabold text-brand-navy shadow-lg shadow-brand-cyan/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-xl';
+    }
+    if (style === 'secondary') {
+      return variant === 'bottom'
+        ? 'inline-flex items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-8 py-4 text-base font-bold text-white backdrop-blur-sm transition-all duration-300 hover:bg-white/20'
+        : 'inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-8 py-4 text-base font-bold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/40 hover:bg-white/15';
+    }
+    return 'inline-flex items-center justify-center gap-2 rounded-full border-2 border-brand-cyan px-8 py-4 text-base font-bold text-brand-cyan transition-all duration-300 hover:bg-brand-cyan hover:text-brand-navy';
   }
 </script>
 
 <svelte:head>
   <title>{$t.home.metaTitle}</title>
   <meta name="description" content={$t.home.metaDesc} />
+  <meta property="og:title" content={$t.home.metaTitle} />
+  <meta property="og:description" content={$t.home.metaDesc} />
+  <meta name="twitter:title" content={$t.home.metaTitle} />
+  <meta name="twitter:description" content={$t.home.metaDesc} />
+  <link rel="preload" as="image" href="/images/hero-poster.webp" fetchpriority="high" />
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html faqJsonLd}
 </svelte:head>
 
-  <!-- Immersive Tech-Forward Full-Bleed Hero Section -->
-  <section class="hero-section" aria-label={$currentLocale === 'en' ? 'Platform Introduction' : 'مقدمة المنصة'}>
-    <HeroCanvas />
-    <div class="hero-overlay" aria-hidden="true"></div>
+<div class="overflow-hidden font-sans selection:bg-brand-cyan selection:text-brand-navy">
 
-    <div class="hero-content">
-      <div class="badge-pill">
-        <span class="badge-pulse" aria-hidden="true"></span>
-        <span class="badge-text">{$currentHeroTranslations.badge}</span>
+  <!-- ============================================ -->
+  <!-- HERO SECTION                                 -->
+  <!-- ============================================ -->
+  <section class="relative min-h-[82vh] flex items-center justify-center overflow-hidden bg-brand-navy">
+    <div class="absolute inset-0 z-0">
+      <img
+        src="/images/hero-poster.webp"
+        alt="منصة Codeera - كوديرا لطلاب كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر"
+        width="1920"
+        height="1080"
+        fetchpriority="high"
+        class="h-full w-full object-cover object-center transition-opacity duration-1000 {videoLoaded ? 'opacity-0' : 'opacity-50'}"
+      />
+      <video
+        bind:this={videoEl}
+        on:canplay={() => (videoLoaded = true)}
+        src="/videos/hero-bg.mp4"
+        poster="/images/hero-poster.webp"
+        autoplay
+        loop
+        muted
+        playsinline
+        preload="metadata"
+        class="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 {videoLoaded ? 'opacity-50' : 'opacity-0'}"
+      ></video>
+      <div class="absolute inset-0 bg-gradient-to-b from-brand-navy/65 via-brand-navy/75 to-brand-navy"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-brand-navy/80 via-transparent to-brand-navy/80"></div>
+    </div>
+
+    <div class="pointer-events-none absolute -top-32 right-1/4 h-[420px] w-[420px] rounded-full bg-brand-cyan/10 blur-[120px]"></div>
+    <div class="pointer-events-none absolute -bottom-32 left-1/4 h-[360px] w-[360px] rounded-full bg-brand-blue/15 blur-[100px]"></div>
+
+    <div class="relative z-10 mx-auto max-w-4xl px-4 py-20 text-center">
+      <!-- Badge -->
+      <div class="mb-7 inline-flex items-center gap-2.5 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 px-5 py-2 backdrop-blur-md">
+        <span class="relative flex h-2 w-2">
+          <span class="relative inline-flex h-2 w-2 rounded-full bg-brand-cyan"></span>
+        </span>
+        <span class="text-xs sm:text-sm font-bold text-brand-cyan tracking-wide">{$t.hero.badge}</span>
       </div>
 
-      <h1 class="hero-title">
-        <span>{$currentHeroTranslations.titlePrefix}</span><br />
-        <span class="hero-cyan-gradient">{$currentHeroTranslations.titleHighlight}</span>
+      <!-- Single H1 on homepage -->
+      <h1 class="mb-6 text-3xl font-extrabold leading-[1.3] tracking-tight text-white sm:text-5xl lg:text-6xl">
+        {$t.hero.titlePrefix}
+        <span class="block mt-2 bg-gradient-to-l from-brand-cyan via-cyan-300 to-white bg-clip-text text-transparent">
+          {$t.hero.titleHighlight}
+        </span>
       </h1>
 
-      <HeroTypewriter
-        prefix={$currentHeroTranslations.typewriterPrefix}
-        phrases={$currentHeroTranslations.typewriterPhrases}
-      />
-
-      <p class="hero-description">
-        {$currentHeroTranslations.subheading}
+      <!-- Subtitle -->
+      <p class="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg lg:text-xl font-normal">
+        {$t.hero.subheading}
       </p>
 
-      <div class="hero-actions">
-        <a href="/courses" class="btn-hero-primary">
-          <span>{$currentHeroTranslations.primaryCta}</span>
-          <svg class="hero-btn-arrow" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            {#if $currentLocale === 'en'}
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            {:else}
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            {/if}
+      <!-- Admin-editable CTA Buttons (Primary + Secondary) -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href={heroPrimaryCta.url}
+          target={heroPrimaryCta.open_in_new_tab ? '_blank' : undefined}
+          rel={heroPrimaryCta.open_in_new_tab ? 'noopener noreferrer' : undefined}
+          class={getCtaButtonClass(heroPrimaryCta.style, 'hero')}
+        >
+          <span>{heroPrimaryCta.label_ar}</span>
+          <svg class="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </a>
 
-        {#if $currentUser}
-          <a href="/dashboard" class="btn-hero-secondary">
-            <span>{$currentHeroTranslations.dashboardCta}</span>
+        {#if hasSampleLessons || heroSecondaryCta.url !== '#sample-lesson'}
+          <a
+            href={heroSecondaryCta.url}
+            target={heroSecondaryCta.open_in_new_tab ? '_blank' : undefined}
+            rel={heroSecondaryCta.open_in_new_tab ? 'noopener noreferrer' : undefined}
+            class={getCtaButtonClass(heroSecondaryCta.style, 'hero')}
+          >
+            {heroSecondaryCta.label_ar}
           </a>
         {:else}
-          <a href="/register" class="btn-hero-secondary">
-            <span>{$currentHeroTranslations.secondaryCta}</span>
+          <a
+            href="#how-it-works"
+            class={getCtaButtonClass(heroSecondaryCta.style, 'hero')}
+          >
+            {heroSecondaryCta.label_ar}
           </a>
         {/if}
       </div>
 
-      <!-- Glassmorphic Stats Ribbon -->
-      <div class="stats-glass-bar">
-        {#each $currentHeroTranslations.stats as stat, i}
-          {#if i > 0}
-            <div class="stat-separator" aria-hidden="true"></div>
-          {/if}
-          <div class="stat-pill">
-            <div class="stat-icon-wrap" aria-hidden="true">
-              {#if i === 0}
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                </svg>
-              {:else if i === 1}
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-              {:else}
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                </svg>
-              {/if}
+      <!-- Honest Stats Bar (true numbers + config values only) -->
+      <div class="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-4 mx-auto max-w-3xl rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md">
+        <div class="text-center">
+          <div class="text-lg sm:text-xl font-extrabold text-brand-cyan">{coursesCountStat}</div>
+          <div class="mt-1 text-xs font-medium text-slate-300">حاسبات الأزهر</div>
+        </div>
+        <div class="text-center">
+          <div class="text-sm sm:text-base font-extrabold text-white">{REVIEW_TIME_TEXT}</div>
+          <div class="mt-1 text-xs font-medium text-slate-300">مراجعة يدوية للإيصال</div>
+        </div>
+        <div class="text-center">
+          <div class="text-sm sm:text-base font-extrabold text-brand-cyan">مبني على توصيف مقرر فرقتك</div>
+          <div class="mt-1 text-xs font-medium text-slate-300">تنظيم حسب القسم</div>
+        </div>
+        <div class="text-center">
+          <div class="text-sm sm:text-base font-extrabold text-white">فودافون كاش / انستاباي</div>
+          <div class="mt-1 text-xs font-medium text-slate-300">بتدفع على رقم رسمي وبتستلم تأكيد</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- HOW IT WORKS - 3 STEPS                       -->
+  <!-- ============================================ -->
+  <section id="how-it-works" class="relative bg-slate-50 py-24 px-4">
+    <div class="mx-auto max-w-6xl">
+      <div class="mb-16 text-center">
+        <span class="mb-3 inline-block rounded-full bg-brand-navy/10 px-4 py-1 text-xs font-extrabold text-brand-navy">
+          {$t.home.steps.eyebrow}
+        </span>
+        <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{$t.home.steps.title}</h2>
+      </div>
+
+      <div class="grid gap-8 md:grid-cols-3 relative">
+        <div class="hidden md:block absolute top-16 right-[16%] left-[16%] h-0.5 bg-gradient-to-l from-brand-cyan/30 via-brand-navy/20 to-brand-cyan/30"></div>
+
+        {#each steps as step}
+          <div class="group relative flex flex-col items-center text-center">
+            <div class="relative z-10 mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-navy text-white shadow-xl shadow-brand-navy/20 transition-all duration-300 group-hover:-translate-y-1 group-hover:bg-brand-blue group-hover:shadow-2xl">
+              <svg class="h-8 w-8 text-brand-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d={step.icon} />
+              </svg>
+              <span class="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full bg-brand-cyan text-xs font-extrabold text-brand-navy shadow-md">
+                {step.num}
+              </span>
             </div>
-            <div class="stat-details">
-              <strong class="stat-number">{stat.value}</strong>
-              <span class="stat-label">{stat.label}</span>
-            </div>
+
+            <h3 class="mb-2 text-xl font-bold text-brand-navy">{step.title}</h3>
+            <p class="max-w-xs text-sm leading-relaxed text-slate-600">{step.desc}</p>
           </div>
         {/each}
       </div>
     </div>
   </section>
 
-  <div class="landing-container">
-    <!-- How It Works Section -->
-    <section class="steps-section" aria-labelledby="steps-title">
-    <div class="section-heading-center">
-      <span class="eyebrow-pill">{$t.home.steps.eyebrow}</span>
-      <h2 id="steps-title" class="section-title">{$t.home.steps.title}</h2>
-      <p class="section-subtitle">{$t.home.steps.subtitle}</p>
-    </div>
-
-    <div class="steps-grid">
-      <div class="step-card">
-        <div class="step-header">
-          <span class="step-index">01</span>
-          <div class="step-icon-wrap">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </div>
+  <!-- ============================================ -->
+  <!-- FREE SAMPLE LESSON (DATA-DRIVEN, OPTIONAL)   -->
+  <!-- ============================================ -->
+  {#if hasSampleLessons}
+    <section id="sample-lesson" class="relative bg-white py-20 px-4 border-b border-slate-100">
+      <div class="mx-auto max-w-5xl">
+        <div class="mb-10 text-center">
+          <span class="mb-3 inline-block rounded-full bg-brand-cyan/15 px-4 py-1 text-xs font-extrabold text-brand-navy">
+            جرّب الشرح بنفسك
+          </span>
+          <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">درس تجريبي مجاني</h2>
+          <p class="mx-auto mt-2 max-w-xl text-sm text-slate-600">
+            شوف طريقة الشرح وتنظيم الأفكار قبل ما تقرر تشترك في أي مقرر.
+          </p>
         </div>
-        <h3 class="step-title">{$t.home.steps.step1Title}</h3>
-        <p class="step-desc">{$t.home.steps.step1Desc}</p>
-      </div>
 
-      <div class="step-card">
-        <div class="step-header">
-          <span class="step-index">02</span>
-          <div class="step-icon-wrap">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-              <line x1="1" y1="10" x2="23" y2="10"></line>
-            </svg>
-          </div>
-        </div>
-        <h3 class="step-title">{$t.home.steps.step2Title}</h3>
-        <p class="step-desc">{$t.home.steps.step2Desc}</p>
-      </div>
-
-      <div class="step-card featured-step-card">
-        <div class="step-header">
-          <span class="step-index highlight-index">03</span>
-          <div class="step-icon-wrap highlight-icon">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
-            </svg>
-          </div>
-        </div>
-        <h3 class="step-title">{$t.home.steps.step3Title}</h3>
-        <p class="step-desc">{$t.home.steps.step3Desc}</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Featured Courses Section -->
-  <section class="courses-section" aria-labelledby="courses-title">
-    <div class="section-header-flex">
-      <div>
-        <span class="eyebrow-pill">{$t.home.courses.eyebrow}</span>
-        <h2 id="courses-title" class="section-title">{$t.home.courses.title}</h2>
-      </div>
-      <a href="/courses" class="link-view-all">
-        <span>{$t.home.courses.viewAll}</span>
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          {#if $currentLocale === 'en'}
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-            <polyline points="12 5 19 12 12 19"></polyline>
-          {:else}
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          {/if}
-        </svg>
-      </a>
-    </div>
-
-    {#if data.error}
-      <div class="notice-card error" role="status">
-        <p>{data.error}</p>
-      </div>
-    {:else if data.courses.length === 0}
-      <div class="notice-card">
-        <p>{$t.home.courses.emptyNotice}</p>
-      </div>
-    {:else}
-      <div class="courses-grid">
-        {#each data.courses as course}
-          <article class="course-modern-card">
-            <div class="card-top-row">
-              <span class="course-slug-badge">{course.slug}</span>
-              {#if course.discount_cents > 0}
-                <span class="discount-badge">{$t.home.courses.onSale}</span>
-              {/if}
-            </div>
-
-            <div class="card-titles">
-              <h3 class="card-title-ar">{getLocalizedText(course.title, $currentLocale)}</h3>
-              {#if $currentLocale === 'ar' && course.title?.en}
-                <p class="card-title-en">{course.title.en}</p>
-              {:else if $currentLocale === 'en' && course.title?.ar}
-                <p class="card-title-en">{course.title.ar}</p>
-              {/if}
-            </div>
-
-            <div class="card-bottom-row">
-              <div class="price-stack">
-                <span class="price-caption">{$t.home.courses.priceCaption}</span>
-                <div class="price-value-row">
-                  {#if course.discount_cents > 0}
-                    <span class="strikethrough-price">{formatPrice(course.list_price_cents, $currentLocale)}</span>
+        <div class="grid gap-6 md:grid-cols-2">
+          {#each configuredSampleLessons as sample (sample.courseSlug + sample.titleAr)}
+            <div class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+              <div>
+                <div class="mb-2 flex items-center justify-between gap-2">
+                  <span class="rounded-full bg-brand-navy px-3 py-1 text-xs font-bold text-brand-cyan">درس تجريبي</span>
+                  {#if sample.durationMinutes || sample.durationText}
+                    <span class="text-xs font-medium text-slate-500">
+                      {sample.durationText || `${sample.durationMinutes} دقيقة`}
+                    </span>
                   {/if}
-                  <strong class="final-price">{formatPrice(course.amount_due_cents, $currentLocale)}</strong>
                 </div>
+                <h3 class="mb-2 text-lg font-extrabold text-brand-navy">{sample.titleAr}</h3>
+                {#if sample.descriptionAr}
+                  <p class="mb-4 text-sm leading-relaxed text-slate-600">{sample.descriptionAr}</p>
+                {/if}
               </div>
-
-              <a href={`/courses/${course.slug}`} class="btn-card-explore">
-                <span>{$t.home.courses.details}</span>
-                <span aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
+              <a
+                href={sample.videoUrl}
+                target={sample.videoUrl.startsWith('https://') ? '_blank' : undefined}
+                rel={sample.videoUrl.startsWith('https://') ? 'noopener noreferrer' : undefined}
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-navy px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-blue"
+              >
+                <span>شغّل الدرس التجريبي</span>
+                <svg class="h-4 w-4 text-brand-cyan" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                </svg>
               </a>
             </div>
-          </article>
-        {/each}
+          {/each}
+        </div>
       </div>
-    {/if}
-  </section>
+    </section>
+  {/if}
 
-  <!-- Platform Features Grid -->
-  <section class="features-section" aria-labelledby="features-title">
-    <div class="section-heading-center">
-      <span class="eyebrow-pill">{$t.home.features.eyebrow}</span>
-      <h2 id="features-title" class="section-title">{$t.home.features.title}</h2>
-      <p class="section-subtitle">{$t.home.features.subtitle}</p>
-    </div>
+  <!-- ============================================ -->
+  <!-- FEATURED COURSES & HONEST PRICING            -->
+  <!-- ============================================ -->
+  <section class="relative bg-white py-24 px-4">
+    <div class="mx-auto max-w-6xl">
+      <div class="mb-14 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-slate-100 pb-6">
+        <div>
+          <span class="mb-2 inline-block rounded-full bg-brand-cyan/15 px-3.5 py-1 text-xs font-extrabold text-brand-navy">
+            {$t.home.courses.eyebrow}
+          </span>
+          <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{$t.home.courses.title}</h2>
+          <p class="mt-1 text-base text-slate-600">مواد مترتبة حسب فرقتك وقسمك في كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر</p>
+        </div>
+        <a
+          href="/courses"
+          class="group inline-flex items-center gap-2 self-start sm:self-auto rounded-full border border-slate-200 bg-slate-50 px-5 py-2.5 text-sm font-bold text-brand-navy transition-all hover:border-brand-navy hover:bg-brand-navy hover:text-white"
+        >
+          <span>{$t.home.courses.viewAll}</span>
+          <svg class="h-4 w-4 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </a>
+      </div>
 
-    <div class="features-grid">
-      {#each $t.home.features.items as feature, i}
-        <div class="feature-item">
-          <div class="feature-icon-box" aria-hidden="true">
-            {#if i === 0}
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
-                <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path>
-              </svg>
-            {:else if i === 1}
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-              </svg>
-            {:else if i === 2}
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
+      <!-- Pricing & Bundle Summary Banner (all values from pricing.config) -->
+      <div class="mb-12 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-6 md:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-xl bg-white p-5 border border-slate-200/80 shadow-sm">
+          <span class="text-xs font-bold text-slate-500">اشتراك المادة الواحدة</span>
+          <div class="mt-1 flex items-baseline gap-1.5">
+            {#if earlyBirdActive}
+              <span class="text-2xl font-black text-brand-navy">{EARLY_BIRD_PRICE}</span>
+              <span class="text-sm font-bold text-slate-600">{$t.home.courses.currency}</span>
+              <span class="mr-2 text-sm text-slate-400 line-through">{COURSE_PRICE_EGP} {$t.home.courses.currency}</span>
             {:else}
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
+              <span class="text-2xl font-black text-brand-navy">{COURSE_PRICE_EGP}</span>
+              <span class="text-sm font-bold text-slate-600">{$t.home.courses.currency}</span>
             {/if}
           </div>
-          <h3>{feature.title}</h3>
-          <p>{feature.desc}</p>
-        </div>
-      {/each}
-    </div>
-  </section>
-
-  <!-- FAQ Section -->
-  <section class="faq-section" aria-labelledby="faq-title">
-    <div class="section-heading-center">
-      <span class="eyebrow-pill">{$t.home.faq.eyebrow}</span>
-      <h2 id="faq-title" class="section-title">{$t.home.faq.title}</h2>
-      <p class="section-subtitle">{$t.home.faq.subtitle}</p>
-    </div>
-
-    <div class="faq-accordion">
-      {#each $t.home.faq.items as faq, index}
-        <div class="faq-card" class:faq-card-open={openFaqIndex === index}>
-          <button
-            type="button"
-            class="faq-trigger"
-            onclick={() => toggleFaq(index)}
-            aria-expanded={openFaqIndex === index}
-          >
-            <span class="faq-question">{faq.q}</span>
-            <span class="faq-icon-arrow" aria-hidden="true">
-              {openFaqIndex === index ? '−' : '+'}
-            </span>
-          </button>
-
-          {#if openFaqIndex === index}
-            <div class="faq-content">
-              <p>{faq.a}</p>
-            </div>
+          {#if earlyBirdActive && earlyBirdDateLabel}
+            <p class="mt-2 inline-block rounded-md bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 border border-amber-200">
+              السعر ده لحد {earlyBirdDateLabel} قبل الميد
+            </p>
+          {:else}
+            <p class="mt-2 text-xs text-slate-600">شامل الشرح، الكويزات، ومتابعة الأسئلة ({SUBSCRIPTION_VALIDITY_TEXT})</p>
           {/if}
         </div>
-      {/each}
+
+        <div class="rounded-xl bg-brand-navy p-5 text-white shadow-md">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-bold text-brand-cyan">باقة {BUNDLE_COURSES_COUNT} مواد</span>
+            {#if bundleSavingEgp > 0}
+              <span class="rounded-full bg-brand-cyan px-2.5 py-0.5 text-xs font-extrabold text-brand-navy">
+                وفّر {bundleSavingEgp} {$t.home.courses.currency}
+              </span>
+            {/if}
+          </div>
+          <div class="mt-1 flex items-baseline gap-1.5">
+            <span class="text-2xl font-black text-white">{BUNDLE_PRICE}</span>
+            <span class="text-sm font-bold text-slate-300">{$t.home.courses.currency}</span>
+            <span class="mr-2 text-xs text-slate-400 line-through">{COURSE_PRICE_EGP * BUNDLE_COURSES_COUNT} {$t.home.courses.currency}</span>
+          </div>
+          <p class="mt-2 text-xs text-slate-300">
+            اختار أي {BUNDLE_COURSES_COUNT} مواد في فرقتك ونسّق تفعيل الباقة مع الدعم بعد التحويل.
+          </p>
+        </div>
+
+        <div class="flex flex-col justify-between rounded-xl bg-white p-5 border border-slate-200/80 shadow-sm md:col-span-2 lg:col-span-1">
+          <div>
+            <span class="text-xs font-bold text-emerald-700">سياسة استرجاع واضحة</span>
+            <p class="mt-1.5 text-xs leading-relaxed text-slate-600">
+              {REFUND_GUARANTEE_SHORT}
+            </p>
+          </div>
+          <a href="/refund" class="mt-3 inline-flex items-center gap-1 text-xs font-bold text-brand-navy hover:text-brand-blue underline underline-offset-4">
+            اقرأ تفاصيل سياسة الاسترجاع كاملة
+          </a>
+        </div>
+      </div>
+
+      {#if data.error}
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center text-sm font-medium text-amber-800">
+          {data.error}
+        </div>
+      {:else if data.courses.length === 0}
+        <div class="rounded-3xl border border-dashed border-slate-200 bg-slate-50/50 py-16 text-center">
+          <svg class="mx-auto mb-4 h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          <p class="text-base font-medium text-slate-500">{$t.home.courses.emptyNotice}</p>
+        </div>
+      {:else}
+        <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {#each data.courses as course}
+            <a
+              href={`/courses/${course.slug}`}
+              class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-cyan/40 hover:shadow-xl hover:shadow-brand-navy/8"
+            >
+              <div class="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-navy to-brand-blue p-6 text-center">
+                  <span class="text-lg font-bold text-white/90 leading-snug">{course.title?.ar || course.slug}</span>
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+              </div>
+
+              <div class="flex flex-1 flex-col p-6">
+                <div class="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  {#if course.lessons_count && course.lessons_count > 0}
+                    <span class="rounded-md bg-slate-100 px-2.5 py-0.5 font-semibold text-slate-700">{course.lessons_count} درس</span>
+                  {/if}
+                  {#if course.quizzes_count && course.quizzes_count > 0}
+                    <span class="rounded-md bg-slate-100 px-2.5 py-0.5 font-semibold text-slate-700">{course.quizzes_count} كويز</span>
+                  {/if}
+                </div>
+
+                <h3 class="mb-2 text-lg font-extrabold text-brand-navy transition-colors group-hover:text-brand-blue line-clamp-1">
+                  {course.title?.ar || course.slug}
+                </h3>
+                <p class="mb-6 line-clamp-2 text-sm leading-relaxed text-slate-500 flex-1">
+                  {course.description?.ar || 'محتوى دراسي مبني على توصيف مقرر فرقتك مع كويزات دورية.'}
+                </p>
+
+                <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+                  <div>
+                    <span class="text-xs font-medium text-slate-400 block">{$t.home.courses.priceCaption}</span>
+                    <span class="text-xl font-black text-brand-navy">
+                      {course.amount_due_cents > 0 ? Math.round(course.amount_due_cents / 100) : COURSE_PRICE_EGP}
+                      <span class="text-xs font-bold text-slate-500">{$t.home.courses.currency}</span>
+                    </span>
+                  </div>
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-navy px-4 py-2 text-xs font-bold text-white transition-all group-hover:bg-brand-cyan group-hover:text-brand-navy">
+                    <span>{$t.home.courses.details}</span>
+                    <svg class="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </a>
+          {/each}
+        </div>
+      {/if}
     </div>
   </section>
 
-  <!-- Immersive CTA Banner -->
-  <section class="cta-banner">
-    <div class="cta-banner-bg" aria-hidden="true"></div>
-    <div class="cta-content">
-      <span class="cta-badge">{$t.home.cta.badge}</span>
-      <h2>{$t.home.cta.title}</h2>
-      <p>{$t.home.cta.desc}</p>
-      <div class="cta-actions">
-        <a href="/courses" class="btn-cta-primary">{$t.home.cta.primary}</a>
-        <a href="/register" class="btn-cta-secondary">{$t.home.cta.secondary}</a>
+  <!-- ============================================ -->
+  <!-- WHY Codeera - FEATURES                       -->
+  <!-- ============================================ -->
+  <section class="relative overflow-hidden bg-brand-navy py-24 px-4 text-white">
+    <div class="pointer-events-none absolute top-0 left-1/3 h-96 w-96 rounded-full bg-brand-cyan/5 blur-[120px]"></div>
+    <div class="pointer-events-none absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-brand-blue/10 blur-[100px]"></div>
+
+    <div class="relative z-10 mx-auto max-w-6xl">
+      <div class="mb-16 text-center">
+        <span class="mb-3 inline-block rounded-full border border-brand-cyan/30 bg-brand-cyan/10 px-4 py-1 text-xs font-extrabold text-brand-cyan">
+          {$t.home.features.eyebrow}
+        </span>
+        <h2 class="text-3xl font-extrabold text-white sm:text-4xl">{$t.home.features.title}</h2>
+      </div>
+
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {#each features as feat}
+          <div class="group relative rounded-2xl border border-white/10 bg-white/[0.04] p-7 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-cyan/30 hover:bg-white/[0.08]">
+            <div class="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br {feat.color}">
+              <svg class="h-7 w-7 {feat.iconColor}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d={feat.icon} />
+              </svg>
+            </div>
+            <h3 class="mb-2 text-lg font-bold text-white">{feat.title}</h3>
+            <p class="text-sm leading-relaxed text-slate-300">{feat.desc}</p>
+          </div>
+        {/each}
       </div>
     </div>
   </section>
+
+  <!-- ============================================ -->
+  <!-- WHY TRUST US (FOUNDER STORY + REFUND + WA)   -->
+  <!-- ============================================ -->
+  <section class="relative bg-white py-24 px-4 border-b border-slate-100">
+    <div class="mx-auto max-w-5xl">
+      <div class="mb-12 text-center">
+        <span class="mb-3 inline-block rounded-full bg-brand-navy/10 px-4 py-1 text-xs font-extrabold text-brand-navy">
+          {FOUNDER_TRUST_CONFIG.eyebrow}
+        </span>
+        <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{FOUNDER_TRUST_CONFIG.title}</h2>
+      </div>
+
+      <div class="grid gap-8 md:grid-cols-2">
+        <!-- Founder / Developer Story Card -->
+        <div class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-7 shadow-sm">
+          <div>
+            <div class="mb-4 inline-flex items-center gap-3">
+              <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-navy text-brand-cyan font-extrabold text-lg">
+                &lt;/&gt;
+              </div>
+              <div>
+                <h3 class="text-lg font-extrabold text-brand-navy">{FOUNDER_TRUST_CONFIG.headlineAr}</h3>
+                <p class="text-xs font-semibold text-slate-500">{FOUNDER_TRUST_CONFIG.roleAr}</p>
+              </div>
+            </div>
+            <p class="text-sm leading-relaxed text-slate-700">
+              {FOUNDER_TRUST_CONFIG.storyPlaceholder}
+            </p>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
+            <span>عندك سؤال قبل ما تشترك؟</span>
+            <a
+              href={WHATSAPP_SUPPORT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1.5 font-extrabold text-emerald-700 hover:text-emerald-800"
+            >
+              <span>اسألنا على واتساب قبل ما تشترك</span>
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Refund Guarantee & Transparency Card -->
+        <div class="flex flex-col justify-between rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-7 shadow-sm">
+          <div>
+            <div class="mb-4 inline-flex items-center gap-3">
+              <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-extrabold text-brand-navy">ضمان استرجاع واضح</h3>
+                <p class="text-xs font-semibold text-emerald-800">حقك محفوظ بشروط واضحة ومكتوبة</p>
+              </div>
+            </div>
+
+            <p class="text-sm leading-relaxed text-slate-700">
+              {FOUNDER_TRUST_CONFIG.refundSummary}
+            </p>
+
+            <ul class="mt-4 space-y-2 text-xs text-slate-600">
+              <li class="flex items-center gap-2">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+                <span>مراجعة يدوية لكل إيصال دفع ({REVIEW_TIME_TEXT}).</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+                <span>استرجاع كامل لو الإيصال اترفض أو حصل خطأ في التحويل.</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+                <span>استرجاع خلال 7 أيام من التفعيل لو المشاهدة أقل من 20%.</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-emerald-200/60 flex flex-wrap items-center justify-between gap-3">
+            <a
+              href="/refund"
+              class="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy px-4 py-2.5 text-xs font-bold text-white transition hover:bg-brand-blue"
+            >
+              <span>اقرأ سياسة الاسترجاع كاملة</span>
+            </a>
+            <a
+              href={WHATSAPP_SUPPORT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1.5 rounded-xl border border-emerald-700/30 bg-white px-4 py-2.5 text-xs font-bold text-emerald-800 transition hover:bg-emerald-50"
+            >
+              <span>تواصل عبر واتساب</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- TESTIMONIALS (HIDDEN WHEN EMPTY)             -->
+  <!-- ============================================ -->
+  <TestimonialsSection />
+
+  <!-- ============================================ -->
+  <!-- FAQ SECTION (VISIBLE IN DOM FOR CRAWLERS)    -->
+  <!-- ============================================ -->
+  <section id="faq" class="bg-slate-50 py-24 px-4">
+    <div class="mx-auto max-w-3xl">
+      <div class="mb-14 text-center">
+        <span class="mb-3 inline-block rounded-full bg-brand-navy/10 px-4 py-1 text-xs font-extrabold text-brand-navy">
+          {$t.home.faq.eyebrow}
+        </span>
+        <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{$t.home.faq.title}</h2>
+      </div>
+
+      <div class="space-y-3">
+        {#each faqs as faq, index}
+          <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white transition-all duration-200 {openFaqIndex === index ? 'shadow-md border-brand-cyan/40' : 'shadow-sm'}">
+            <h3 class="m-0">
+              <button
+                type="button"
+                aria-expanded={openFaqIndex === index}
+                aria-controls={`faq-answer-${index}`}
+                on:click={() => toggleFaq(index)}
+                class="flex w-full items-center justify-between px-6 py-5 text-right font-bold text-brand-navy transition-colors hover:text-brand-blue"
+              >
+                <span class="text-base">{faq.q}</span>
+                <svg
+                  class="h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200 mr-4 {openFaqIndex === index ? 'rotate-180 text-brand-cyan' : ''}"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </h3>
+            <div
+              id={`faq-answer-${index}`}
+              class="grid transition-all duration-200 ease-in-out {openFaqIndex === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}"
+            >
+              <div class="overflow-hidden">
+                <div class="border-t border-slate-100 px-6 pb-5 pt-3 text-sm leading-relaxed text-slate-600">
+                  {faq.a}
+                </div>
+              </div>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- BOTTOM CTA BANNER (ADMIN-EDITABLE)           -->
+  <!-- ============================================ -->
+  {#if !$page.data.user}
+    <section class="relative overflow-hidden bg-gradient-to-br from-brand-navy via-brand-blue to-brand-navy py-20 px-4 text-center text-white">
+      <div class="pointer-events-none absolute -top-20 right-1/3 h-64 w-64 rounded-full bg-brand-cyan/15 blur-[80px]"></div>
+
+      <div class="relative z-10 mx-auto max-w-2xl">
+        <h2 class="mb-4 text-3xl font-extrabold sm:text-4xl">
+          {homeBottomCta.headline_ar || $t.home.cta.title}
+        </h2>
+        <p class="mb-8 text-base text-slate-300 sm:text-lg">
+          {homeBottomCta.subtext_ar || $t.home.cta.desc}
+        </p>
+        <a
+          href={homeBottomCta.url}
+          target={homeBottomCta.open_in_new_tab ? '_blank' : undefined}
+          rel={homeBottomCta.open_in_new_tab ? 'noopener noreferrer' : undefined}
+          class={getCtaButtonClass(homeBottomCta.style, 'bottom')}
+        >
+          <span>{homeBottomCta.label_ar}</span>
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </a>
+      </div>
+    </section>
+  {/if}
+
 </div>
-
-<style>
-  .landing-container {
-    display: flex;
-    flex-direction: column;
-    gap: 5rem;
-    max-width: 1200px;
-    margin-inline: auto;
-    padding: 5rem 1.25rem;
-  }
-
-  /* ---------------- HERO SECTION (Full-Bleed Layered Video + Particle Canvas) ---------------- */
-  .hero-section {
-    position: relative;
-    overflow: hidden;
-    min-height: 100dvh;
-    width: 100%;
-    margin: 0;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: clamp(4rem, 8vw, 6rem) clamp(1.5rem, 5vw, 3.5rem);
-    box-sizing: border-box;
-    background: radial-gradient(135% 120% at 50% 0%, #1E2B4D 0%, #1A1918 100%);
-    background-color: var(--text-main, #1A1918);
-    color: #FAF8F5;
-  }
-
-  :global(:root[data-theme='dark']) .hero-section {
-    border: none;
-    box-shadow: none;
-  }
-
-  /* Semi-transparent Navy-to-Charcoal overlay for guaranteed WCAG AA+ contrast */
-  .hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-      ellipse at 50% 40%,
-      rgba(30, 43, 77, 0.78) 0%,
-      rgba(26, 25, 24, 0.92) 100%
-    );
-    backdrop-filter: blur(2px);
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  .hero-content {
-    position: relative;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 1.6rem;
-    max-width: 860px;
-    margin-inline: auto;
-  }
-
-  .badge-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.4rem 1.1rem;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1.5px solid rgba(34, 211, 238, 0.45);
-    border-radius: 9999px;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 0 18px rgba(34, 211, 238, 0.18);
-  }
-
-  .badge-pulse {
-    width: 0.55rem;
-    height: 0.55rem;
-    border-radius: 50%;
-    background: var(--brand-accent, #22D3EE);
-    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.35);
-    animation: pulseGlow 2s infinite ease-in-out;
-  }
-
-  @keyframes pulseGlow {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.3); opacity: 0.7; }
-  }
-
-  .badge-text {
-    font-size: 0.84rem;
-    font-weight: 700;
-    color: #FAF8F5;
-    letter-spacing: 0.01em;
-  }
-
-  .hero-title {
-    font-size: clamp(2.1rem, 4.5vw, 3.4rem);
-    font-weight: 900;
-    line-height: 1.25;
-    color: #FAF8F5;
-    margin: 0;
-  }
-
-  .hero-cyan-gradient {
-    background: linear-gradient(135deg, #FAF8F5 35%, #67E3F5 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: #67E3F5;
-  }
-
-  .hero-description {
-    font-size: clamp(1rem, 1.8vw, 1.18rem);
-    line-height: 1.8;
-    color: #D5CBC1;
-    max-width: 700px;
-    margin: 0;
-  }
-
-  .hero-actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.1rem;
-    flex-wrap: wrap;
-    margin-top: 0.5rem;
-  }
-
-  .btn-hero-primary {
-    background: var(--brand-accent, #22D3EE);
-    color: #0a0f1a;
-    font-weight: 800;
-    font-size: 1.05rem;
-    padding: 0.85rem 2rem;
-    border-radius: 0.75rem;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.65rem;
-    border: 2px solid var(--brand-accent, #22D3EE);
-    box-shadow: 0 0 25px rgba(34, 211, 238, 0.4);
-    transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
-  }
-
-  .btn-hero-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 35px rgba(34, 211, 238, 0.65);
-    background: #0FA8C2;
-  }
-
-  .hero-btn-arrow {
-    transition: transform 150ms ease;
-  }
-
-  :global([dir="rtl"]) .hero-btn-arrow {
-    transform: scaleX(-1);
-  }
-
-  :global([dir="rtl"]) .btn-hero-primary:hover .hero-btn-arrow {
-    transform: scaleX(-1) translateX(3px);
-  }
-
-  :global([dir="ltr"]) .btn-hero-primary:hover .hero-btn-arrow {
-    transform: translateX(3px);
-  }
-
-  .btn-hero-secondary {
-    background: rgba(42, 59, 106, 0.4);
-    color: #FAF8F5;
-    font-weight: 700;
-    font-size: 1.05rem;
-    padding: 0.85rem 1.85rem;
-    border-radius: 0.75rem;
-    text-decoration: none;
-    border: 2px solid rgba(213, 203, 193, 0.4);
-    backdrop-filter: blur(8px);
-    transition: background 150ms ease, border-color 150ms ease, transform 150ms ease, color 150ms ease;
-  }
-
-  .btn-hero-secondary:hover {
-    background: rgba(42, 59, 106, 0.75);
-    border-color: rgba(213, 203, 193, 0.8);
-    color: #FFFFFF;
-    transform: translateY(-2px);
-  }
-
-  /* Glassmorphic Stats Ribbon */
-  .stats-glass-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    gap: 1.5rem;
-    width: 100%;
-    max-width: 760px;
-    margin-top: 1.25rem;
-    padding: 1.25rem 2rem;
-    background: rgba(26, 25, 24, 0.65);
-    border: 1.5px solid rgba(213, 203, 193, 0.25);
-    border-radius: 1.25rem;
-    backdrop-filter: blur(16px);
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
-  }
-
-  .stat-pill {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-  }
-
-  .stat-icon-wrap {
-    width: 2.35rem;
-    height: 2.35rem;
-    border-radius: 0.6rem;
-    background: rgba(34, 211, 238, 0.15);
-    color: #67E3F5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(34, 211, 238, 0.3);
-  }
-
-  .stat-details {
-    display: flex;
-    flex-direction: column;
-    text-align: start;
-  }
-
-  .stat-number {
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: var(--brand-accent, #22D3EE);
-    line-height: 1.2;
-  }
-
-  .stat-label {
-    font-size: 0.82rem;
-    color: #FAF8F5;
-    opacity: 0.85;
-    font-weight: 500;
-  }
-
-  .stat-separator {
-    width: 1px;
-    height: 2rem;
-    background: rgba(213, 203, 193, 0.2);
-  }
-
-  /* ---------------- SECTION HEADINGS ---------------- */
-  .section-heading-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 0.6rem;
-    margin-bottom: 2.5rem;
-  }
-
-  .eyebrow-pill {
-    display: inline-block;
-    font-size: 0.78rem;
-    font-weight: 800;
-    color: var(--brand-navy);
-    background: rgba(var(--brand-navy-rgb), 0.08);
-    border: 1.5px solid rgba(var(--brand-navy-rgb), 0.25);
-    padding: 0.25rem 0.85rem;
-    border-radius: 9999px;
-  }
-
-  :global(:root[data-theme='dark']) .eyebrow-pill {
-    color: var(--brand-accent);
-    background: rgba(var(--brand-accent-rgb), 0.15);
-    border-color: rgba(var(--brand-accent-rgb), 0.35);
-  }
-
-  .section-title {
-    font-size: clamp(1.6rem, 3.2vw, 2.25rem);
-    font-weight: 900;
-    color: var(--storm);
-    margin: 0;
-    line-height: 1.3;
-  }
-
-  .section-subtitle {
-    color: var(--muted);
-    font-size: 1rem;
-    max-width: 580px;
-    margin: 0;
-    line-height: 1.6;
-  }
-
-  /* ---------------- STEPS SECTION ---------------- */
-  .steps-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-  }
-
-  .step-card {
-    background: var(--card);
-    border: 2px solid var(--line);
-    border-radius: 1.25rem;
-    padding: 2rem 1.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    box-shadow: var(--shadow-sm);
-    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-  }
-
-  .step-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--deep-cyan);
-  }
-
-  .step-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .step-index {
-    font-size: 1.85rem;
-    font-weight: 900;
-    color: var(--deep-cyan);
-    opacity: 0.45;
-  }
-
-  .step-icon-wrap {
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 0.75rem;
-    background: var(--paper);
-    color: var(--deep-cyan);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1.5px solid var(--line);
-  }
-
-  .featured-step-card {
-    border-color: var(--brand-accent);
-    background: linear-gradient(180deg, var(--card) 0%, rgba(var(--brand-accent-rgb), 0.04) 100%);
-  }
-
-  .highlight-index {
-    color: var(--brand-accent);
-    opacity: 0.95;
-  }
-
-  .highlight-icon {
-    background: rgba(var(--brand-accent-rgb), 0.12);
-    color: var(--brand-accent);
-    border-color: rgba(var(--brand-accent-rgb), 0.4);
-  }
-
-  .step-title {
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: var(--storm);
-    margin: 0;
-  }
-
-  .step-desc {
-    color: var(--muted);
-    font-size: 0.92rem;
-    line-height: 1.65;
-    margin: 0;
-  }
-
-  /* ---------------- COURSES SECTION ---------------- */
-  .section-header-flex {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-  }
-
-  .link-view-all {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--deep-cyan);
-    font-weight: 700;
-    font-size: 0.95rem;
-    text-decoration: none;
-    transition: transform 150ms ease, color 150ms ease;
-  }
-
-  :global(:root[data-theme='dark']) .link-view-all {
-    color: var(--brand-accent);
-  }
-
-  .link-view-all:hover {
-    transform: translateX(-3px);
-  }
-
-  .courses-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-  }
-
-  .course-modern-card {
-    background: var(--card);
-    border: 2px solid var(--line);
-    border-radius: 1.25rem;
-    padding: 1.75rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 1.5rem;
-    box-shadow: var(--shadow-sm);
-    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-  }
-
-  .course-modern-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--deep-cyan);
-  }
-
-  :global(:root[data-theme='dark']) .course-modern-card:hover {
-    border-color: var(--brand-accent);
-    box-shadow: 0 8px 30px rgba(var(--brand-accent-rgb), 0.15);
-  }
-
-  .card-top-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .course-slug-badge {
-    font-size: 0.78rem;
-    font-weight: 800;
-    color: var(--deep-cyan);
-    background: var(--paper);
-    padding: 0.25rem 0.65rem;
-    border-radius: 0.4rem;
-    border: 1px solid var(--line);
-    text-transform: uppercase;
-  }
-
-  :global(:root[data-theme='dark']) .course-slug-badge {
-    color: var(--deep-cyan);
-    background: rgba(91, 122, 199, 0.15);
-    border-color: rgba(91, 122, 199, 0.3);
-  }
-
-  .discount-badge {
-    font-size: 0.72rem;
-    font-weight: 800;
-    color: #92400e;
-    background: #fef3c7;
-    padding: 0.2rem 0.55rem;
-    border-radius: 0.35rem;
-  }
-
-  .card-titles {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-  }
-
-  .card-title-ar {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: var(--storm);
-    margin: 0;
-  }
-
-  .card-title-en {
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin: 0;
-  }
-
-  .card-bottom-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 1.25rem;
-    border-top: 2px solid var(--line);
-  }
-
-  .price-stack {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .price-caption {
-    font-size: 0.75rem;
-    color: var(--muted);
-  }
-
-  .price-value-row {
-    display: flex;
-    align-items: baseline;
-    gap: 0.45rem;
-  }
-
-  .strikethrough-price {
-    font-size: 0.82rem;
-    color: var(--muted);
-    text-decoration: line-through;
-  }
-
-  .final-price {
-    font-size: 1.2rem;
-    font-weight: 900;
-    color: var(--storm);
-  }
-
-  .btn-card-explore {
-    background: var(--brand-navy);
-    color: #FAF8F5;
-    font-weight: 800;
-    font-size: 0.88rem;
-    padding: 0.55rem 1.15rem;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    border: 2px solid var(--brand-navy);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    transition: opacity 150ms ease, transform 120ms ease, background-color 150ms ease, border-color 150ms ease;
-  }
-
-  .btn-card-explore:hover {
-    opacity: 0.95;
-    transform: translateY(-1px);
-    background-color: var(--brand-accent);
-    border-color: var(--brand-accent);
-    color: #0a0f1a;
-  }
-
-  /* ---------------- FEATURES SECTION ---------------- */
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-  }
-
-  .feature-item {
-    background: var(--card);
-    border: 2px solid var(--line);
-    border-radius: 1.25rem;
-    padding: 2rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    box-shadow: var(--shadow-sm);
-    transition: transform 160ms ease, border-color 160ms ease;
-  }
-
-  .feature-item:hover {
-    transform: translateY(-3px);
-    border-color: var(--deep-cyan);
-  }
-
-  .feature-icon-box {
-    width: 3.25rem;
-    height: 3.25rem;
-    border-radius: 0.75rem;
-    background: rgba(var(--brand-navy-rgb), 0.08);
-    color: var(--brand-navy);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 0.35rem;
-  }
-
-  :global([data-theme='dark']) .feature-icon-box {
-    background: rgba(91, 122, 199, 0.15);
-    color: var(--deep-cyan);
-  }
-
-  .feature-item h3 {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: var(--storm);
-    margin: 0;
-  }
-
-  .feature-item p {
-    color: var(--muted);
-    font-size: 0.9rem;
-    line-height: 1.65;
-    margin: 0;
-  }
-
-  /* ---------------- FAQ ACCORDION ---------------- */
-  .faq-accordion {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-    max-width: 820px;
-    margin-inline: auto;
-    width: 100%;
-  }
-
-  .faq-card {
-    background: var(--card);
-    border: 2px solid var(--line);
-    border-radius: 0.85rem;
-    overflow: hidden;
-    transition: border-color 150ms ease;
-  }
-
-  .faq-card:hover {
-    border-color: var(--deep-cyan);
-  }
-
-  .faq-card-open {
-    border-color: var(--deep-cyan);
-  }
-
-  :global(:root[data-theme='dark']) .faq-card-open {
-    border-color: var(--brand-accent);
-  }
-
-  .faq-trigger {
-    width: 100%;
-    padding: 1.25rem 1.5rem;
-    background: none;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    cursor: pointer;
-    text-align: right;
-    font-family: inherit;
-  }
-
-  .faq-question {
-    font-size: 1.05rem;
-    font-weight: 800;
-    color: var(--storm);
-  }
-
-  .faq-icon-arrow {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--deep-cyan);
-    flex-shrink: 0;
-  }
-
-  :global(:root[data-theme='dark']) .faq-icon-arrow {
-    color: var(--brand-accent);
-  }
-
-  .faq-content {
-    padding: 0 1.5rem 1.25rem;
-    border-top: 2px solid var(--line);
-  }
-
-  .faq-content p {
-    color: var(--muted);
-    line-height: 1.75;
-    margin: 0.75rem 0 0;
-    font-size: 0.92rem;
-  }
-
-  /* ---------------- CTA BANNER ---------------- */
-  .cta-banner {
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(135deg, #1A1918 0%, #1E2B4D 100%);
-    color: white;
-    border-radius: 1.75rem;
-    border: 2px solid var(--line);
-    padding: clamp(2.5rem, 5vw, 4rem) 2rem;
-    text-align: center;
-    box-shadow: 0 20px 40px -10px rgba(26, 25, 24, 0.4);
-  }
-
-  :global(:root[data-theme='dark']) .cta-banner {
-    background: linear-gradient(135deg, #121211 0%, #17223D 100%);
-    border-color: rgba(91, 122, 199, 0.3);
-  }
-
-  .cta-banner-bg {
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(rgba(213, 203, 193, 0.18) 1px, transparent 1px);
-    background-size: 24px 24px;
-    opacity: 0.4;
-  }
-
-  .cta-content {
-    position: relative;
-    z-index: 2;
-    max-width: 650px;
-    margin-inline: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .cta-badge {
-    font-size: 0.78rem;
-    font-weight: 800;
-    background: rgba(var(--brand-accent-rgb), 0.15);
-    color: var(--brand-accent);
-    padding: 0.25rem 0.85rem;
-    border-radius: 9999px;
-    border: 1px solid rgba(var(--brand-accent-rgb), 0.35);
-  }
-
-  .cta-banner h2 {
-    color: white;
-    font-size: clamp(1.8rem, 3.5vw, 2.4rem);
-    font-weight: 900;
-    margin: 0;
-  }
-
-  .cta-banner p {
-    color: #D5CBC1;
-    font-size: 1.05rem;
-    line-height: 1.75;
-    margin: 0;
-  }
-
-  .cta-actions {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: 0.75rem;
-  }
-
-  .btn-cta-primary {
-    background: var(--brand-accent);
-    color: #0a0f1a;
-    font-weight: 800;
-    padding: 0.75rem 1.65rem;
-    border-radius: 0.6rem;
-    text-decoration: none;
-    border: 2px solid var(--brand-accent);
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.35);
-    transition: transform 150ms ease, box-shadow 150ms ease;
-  }
-
-  .btn-cta-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 28px rgba(34, 211, 238, 0.55);
-  }
-
-  .btn-cta-secondary {
-    background: transparent;
-    color: white;
-    font-weight: 700;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.6rem;
-    text-decoration: none;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    transition: background 150ms ease, border-color 150ms ease;
-  }
-
-  .btn-cta-secondary:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: white;
-  }
-
-  .notice-card {
-    background: var(--card);
-    border: 2px solid var(--line);
-    border-radius: 1rem;
-    padding: 2.5rem;
-    text-align: center;
-    color: var(--muted);
-  }
-
-  .notice-card.error {
-    border-color: #f87171;
-    color: #991b1b;
-  }
-
-  /* ---------------- RESPONSIVENESS ---------------- */
-  @media (max-width: 860px) {
-    .steps-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .stats-glass-bar {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 1.25rem;
-      padding: 1.25rem 1.5rem;
-    }
-
-    .stat-pill {
-      justify-content: flex-start;
-    }
-
-    .stat-separator {
-      display: none;
-    }
-
-    .section-header-flex {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .courses-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .landing-container {
-      gap: 3.5rem;
-      padding: 3rem 0.75rem 3.5rem;
-    }
-
-    .hero-section {
-      border-radius: 0;
-      border: none;
-      padding: 3.5rem 1.25rem;
-    }
-
-    .hero-actions {
-      flex-direction: column;
-      width: 100%;
-    }
-
-    .btn-hero-primary, .btn-hero-secondary {
-      width: 100%;
-      justify-content: center;
-    }
-
-    .cta-actions {
-      flex-direction: column;
-      width: 100%;
-    }
-
-    .btn-cta-primary, .btn-cta-secondary {
-      width: 100%;
-      text-align: center;
-    }
-  }
-</style>

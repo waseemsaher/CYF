@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
         $this->call(CatalogSeeder::class);
         $this->call(SettingsSeeder::class);
         $this->call(ContentBlockSeeder::class);
+        $this->call(CtaBlockSeeder::class);
 
         // Demo user accounts are strictly restricted to local and testing environments
         if (app()->environment(['local', 'testing'])) {

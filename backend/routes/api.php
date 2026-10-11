@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\ContentBlockController;
 use App\Http\Controllers\Api\CourseContentController;
+use App\Http\Controllers\Api\CtaBlockController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\QuizController;
@@ -30,6 +31,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/reference/departments', [CatalogController::class, 'departments']);
     Route::get('/reference/terms', [CatalogController::class, 'terms']);
     Route::get('/content-blocks/{key}', [ContentBlockController::class, 'show']);
+    Route::get('/ctas', [CtaBlockController::class, 'publicIndex']);
 
     Route::post('/register', [AuthController::class, 'register'])
         ->middleware('throttle:register');
@@ -133,6 +135,11 @@ Route::prefix('v1')->group(function (): void {
             Route::put('/settings', [AdminSettingsController::class, 'update']);
             Route::get('/content-blocks', [ContentBlockController::class, 'index']);
             Route::put('/content-blocks/{key}', [ContentBlockController::class, 'update']);
+
+            // CTA management (admin role enforced inside controller)
+            Route::get('/ctas', [CtaBlockController::class, 'adminIndex']);
+            Route::put('/ctas/{key}', [CtaBlockController::class, 'update']);
+            Route::post('/ctas/{key}/toggle', [CtaBlockController::class, 'toggle']);
 
             // Payment review queue
             Route::get('/payments', [AdminPaymentController::class, 'index']);

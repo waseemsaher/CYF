@@ -1,19 +1,84 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import type { LayoutData } from './$types';
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   import { beforeNavigate, goto } from '$app/navigation';
   import { currentUser, refreshUser, logout, isUnlinkedStudentUser, getStoredUser } from '$lib/api/auth';
   import { initLocale, currentLocale, toggleLocale, t } from '$lib/i18n';
-  import { FEATURES } from '$lib/config';
-  import { socialLinks } from '$lib/socials';
+  import { FEATURES, SITE_ORIGIN, BRAND_DISCLAIMER_AR } from '$lib/config';
+  import { socialLinks, SAME_AS_URLS } from '$lib/socials';
+  import { resolveAnnouncementBar } from '$lib/api/ctas';
   import { pwaInfo } from 'virtual:pwa-info';
 
-  let { children }: { children: Snippet } = $props();
+  let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
   let isDark = $state(false);
   let mobileMenuOpen = $state(false);
+  let announcementDismissed = $state(false);
   let webManifestLink = $derived(pwaInfo ? pwaInfo.webManifest.linkTag : '');
+
+  let announcementBar = $derived(resolveAnnouncementBar(data?.ctas));
+
+  let canonicalUrl = $derived(`${SITE_ORIGIN}${page.url.pathname === '/' ? '' : page.url.pathname}`);
+  let isNoIndexRoute = $derived.by(() => {
+    const p = page.url.pathname;
+    return (
+      p.startsWith('/login') ||
+      p.startsWith('/register') ||
+      p.startsWith('/forgot-password') ||
+      p.startsWith('/reset-password') ||
+      p.startsWith('/dashboard') ||
+      p.startsWith('/payments') ||
+      p.startsWith('/my-courses') ||
+      p.startsWith('/quizzes') ||
+      p.startsWith('/link-telegram') ||
+      p.startsWith('/teacher') ||
+      p.startsWith('/admin') ||
+      p.includes('/checkout')
+    );
+  });
+
+  const globalJsonLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${SITE_ORIGIN}/#organization`,
+        name: 'Codeera - كوديرا',
+        alternateName: ['Codeera', 'كوديرا'],
+        url: SITE_ORIGIN,
+        logo: `${SITE_ORIGIN}/pwa-512x512.png`,
+        description:
+          'منصة Codeera - كوديرا لطلاب كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر. شروحات مترتبة حسب فرقتك وقسمك، كويزات بإجابات مشروحة، ومتابعة خلال الترم.',
+        sameAs: SAME_AS_URLS
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${SITE_ORIGIN}/#website`,
+        url: SITE_ORIGIN,
+        name: 'Codeera - كوديرا',
+        inLanguage: 'ar-EG',
+        publisher: { '@id': `${SITE_ORIGIN}/#organization` }
+      }
+    ]
+  });
+
+  function formatAnnouncementEndDate(iso: string | null): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' });
+  }
+
+  function dismissAnnouncement() {
+    announcementDismissed = true;
+    if (typeof window !== 'undefined' && announcementBar) {
+      try {
+        sessionStorage.setItem(`codeera_ann_dismissed_${announcementBar.updated_at || '1'}`, '1');
+      } catch (_) {}
+    }
+  }
 
   function toggleMobileMenu() {
     mobileMenuOpen = !mobileMenuOpen;
@@ -58,6 +123,14 @@
 
   onMount(async () => {
     initLocale();
+
+    if (typeof window !== 'undefined' && announcementBar) {
+      try {
+        if (sessionStorage.getItem(`codeera_ann_dismissed_${announcementBar.updated_at || '1'}`) === '1') {
+          announcementDismissed = true;
+        }
+      } catch (_) {}
+    }
 
     // Listen to popstate (browser back/forward button)
     const handlePopstate = () => {
@@ -156,6 +229,7 @@
     if (role === 'superadmin' || role === 'admin') {
       links.push({ href: '/admin', label: tr.admin });
       links.push({ href: '/admin/payments', label: tr.reviewQueue });
+      links.push({ href: '/admin/ctas', label: tr.ctas });
     } else if (role === 'teacher') {
       links.push({ href: '/teacher', label: tr.teacher });
     } else {
@@ -183,6 +257,22 @@
 </script>
 
 <svelte:head>
+  <link rel="canonical" href={canonicalUrl} />
+  {#if isNoIndexRoute}
+    <meta name="robots" content="noindex, nofollow" />
+  {:else}
+    <meta name="robots" content="index, follow" />
+  {/if}
+  <meta property="og:site_name" content="Codeera - كوديرا" />
+  <meta property="og:locale" content="ar_EG" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:image" content={`${SITE_ORIGIN}/images/hero-poster.jpg`} />
+  <meta property="og:image:alt" content="Codeera - كوديرا | منصة لطلاب كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content={`${SITE_ORIGIN}/images/hero-poster.jpg`} />
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html `<script type="application/ld+json">${globalJsonLd}</script>`}
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html webManifestLink}
 </svelte:head>
@@ -190,11 +280,48 @@
 <a href="#main-content" class="skip-link">{$t.nav.skipLink}</a>
 
 <div class="layout-container">
+  {#if announcementBar && !announcementDismissed && !isUnlinkedStudent}
+    <aside class="announcement-bar" aria-label="عرض حالي">
+      <div class="announcement-inner">
+        <div class="announcement-text">
+          {#if announcementBar.headline_ar}
+            <strong class="announcement-headline">{announcementBar.headline_ar}</strong>
+          {/if}
+          {#if announcementBar.subtext_ar}
+            <span class="announcement-subtext">{announcementBar.subtext_ar}</span>
+          {/if}
+          {#if announcementBar.ends_at}
+            <span class="announcement-date-badge">لحد {formatAnnouncementEndDate(announcementBar.ends_at)}</span>
+          {/if}
+        </div>
+        <div class="announcement-actions">
+          <a
+            href={announcementBar.url}
+            class="announcement-cta"
+            target={announcementBar.open_in_new_tab ? '_blank' : undefined}
+            rel={announcementBar.open_in_new_tab ? 'noopener noreferrer' : undefined}
+          >
+            {announcementBar.label_ar}
+          </a>
+          <button
+            type="button"
+            class="announcement-dismiss"
+            onclick={dismissAnnouncement}
+            aria-label="إخفاء الإعلان"
+            title="إخفاء"
+          >
+            &times;
+          </button>
+        </div>
+      </div>
+    </aside>
+  {/if}
+
   <header class="global-header">
     <div class="header-inner">
       <a class="brand" href={isUnlinkedStudent ? '/link-telegram' : '/'} aria-label={$t.nav.brandAria} onclick={closeMobileMenu}>
-        <img src="/logo/app-icon.svg" alt="" aria-hidden="true" class="brand-logo" width="36" height="36" />
-        <span class="brand-text">Codeera</span>
+        <img src="/logo/app-icon.svg" alt="شعار منصة Codeera - كوديرا" class="brand-logo" width="36" height="36" />
+        <span class="brand-text">Codeera <span class="brand-ar-sub">كوديرا</span></span>
       </a>
 
       <!-- Desktop nav -->
@@ -391,8 +518,8 @@
       <div class="footer-inner">
         <div class="footer-start">
           <a href="/" class="footer-brand" aria-label={$t.nav.brandAria}>
-            <span class="footer-logo-fcai">CODE</span>
-            <span class="footer-logo-courses">ERA</span>
+            <span class="footer-logo-fcai">Codeera</span>
+            <span class="footer-logo-courses">كوديرا</span>
           </a>
           <span class="footer-sep" aria-hidden="true">|</span>
           <span class="footer-tagline">{$t.nav.footer.tagline}</span>
@@ -437,19 +564,6 @@
               <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
             </svg>
           </a>
-
-          <a
-            href={socialLinks[3].url}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="social-btn social-telegram"
-            aria-label={socialLinks[3].ariaLabel}
-            title={socialLinks[3].nameAr}
-          >
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
-            </svg>
-          </a>
         </div>
 
         <nav class="footer-links" aria-label={$t.nav.footer.legalNavAria}>
@@ -461,8 +575,12 @@
         </nav>
 
         <div class="footer-copy">
-          <small>© 2026 Codeera. {$t.nav.footer.rights}</small>
+          <small>© 2026 Codeera - كوديرا. {$t.nav.footer.rights}</small>
         </div>
+      </div>
+
+      <div class="footer-disclaimer-bar">
+        <p class="footer-disclaimer-text">{BRAND_DISCLAIMER_AR}</p>
       </div>
     </footer>
   {/if}
@@ -1605,6 +1723,103 @@
   .mobile-lang-btn {
     width: 100%;
     height: 2.6rem;
+  }
+
+  .brand-ar-sub {
+    font-size: 0.78em;
+    font-weight: 700;
+    color: var(--deep-cyan);
+    margin-inline-start: 0.25rem;
+  }
+
+  .announcement-bar {
+    background: var(--brand-navy);
+    color: #FAF8F5;
+    border-bottom: 1.5px solid rgba(34, 211, 238, 0.35);
+    padding: 0.55rem 1.25rem;
+  }
+
+  .announcement-inner {
+    max-width: 1200px;
+    margin-inline: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+  }
+
+  .announcement-text {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .announcement-headline {
+    color: var(--brand-accent);
+    font-weight: 800;
+  }
+
+  .announcement-subtext {
+    color: #FAF8F5;
+  }
+
+  .announcement-date-badge {
+    background: rgba(34, 211, 238, 0.16);
+    border: 1px solid rgba(34, 211, 238, 0.4);
+    color: #67E3F5;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.1rem 0.55rem;
+    border-radius: 9999px;
+  }
+
+  .announcement-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .announcement-cta {
+    background: var(--brand-accent);
+    color: #0a0f1a;
+    font-weight: 800;
+    font-size: 0.82rem;
+    padding: 0.3rem 0.85rem;
+    border-radius: 0.4rem;
+    text-decoration: none;
+  }
+
+  .announcement-dismiss {
+    background: transparent;
+    border: 1px solid rgba(250, 248, 245, 0.3);
+    color: #FAF8F5;
+    border-radius: 0.35rem;
+    width: 1.65rem;
+    height: 1.65rem;
+    cursor: pointer;
+    font-size: 1.05rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .footer-disclaimer-bar {
+    max-width: 1200px;
+    margin: 0.75rem auto 0;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--line);
+    text-align: center;
+  }
+
+  .footer-disclaimer-text {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 600;
   }
 
   @media (max-width: 768px) {

@@ -1,4 +1,9 @@
 import { writable, derived } from 'svelte/store';
+import {
+  REVIEW_TIME_TEXT,
+  SUBSCRIPTION_VALIDITY_TEXT,
+  BRAND_DISCLAIMER_AR
+} from '$lib/pricing.config';
 
 export type Locale = 'ar' | 'en';
 
@@ -23,6 +28,7 @@ export interface NavTranslations {
   courses: string;
   admin: string;
   reviewQueue: string;
+  ctas: string;
   teacher: string;
   dashboard: string;
   payments: string;
@@ -48,6 +54,7 @@ export interface NavTranslations {
   };
   footer: {
     tagline: string;
+    disclaimer: string;
     socialAria: string;
     terms: string;
     privacy: string;
@@ -285,43 +292,46 @@ export interface Translations {
 export const translations: Record<Locale, Translations> = {
   ar: {
     hero: {
-      badge: 'منصة تعليمية لطلاب حاسبات الأزهر',
-      titlePrefix: 'شروحات برمجية مركزة،',
-      titleHighlight: 'خطوتك الواثقة نحو الامتياز الأكاديمي.',
-      subheading: 'منصة Codeera توفر محتوى دراسي متخصص يغطي مناهج كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر، مع دعم أكاديمي مباشر ومتابعة مستمرة لحد ما توصل للنتيجة اللي تستحقها.',
-      description: 'منصة Codeera توفر محتوى دراسي متخصص يغطي مناهج كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر، مع دعم أكاديمي مباشر ومتابعة مستمرة لحد ما توصل للنتيجة اللي تستحقها.',
-      typewriterPrefix: 'المسارات الأكاديمية:',
+      badge: 'Codeera - كوديرا | لطلاب حاسبات وذكاء اصطناعي الأزهر',
+      titlePrefix: 'مواد حاسبات الأزهر مترتبة حسب فرقتك وقسمك،',
+      titleHighlight: 'من الفيديو للكويز في مكان واحد.',
+      subheading:
+        'اختار مادتك، حول الاشتراك بفودافون كاش أو إنستاباي وارفع لقطة شاشة للإيصال، وهنراجعه يدوي ونفتحلك الشرح والكويزات ومتابعة الأسئلة.',
+      description:
+        'منصة Codeera - كوديرا بتجمعلك مواد كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر بنظام واضح: محاضرات مترتبة، كويزات بإجابات مشروحة، ودعم للأسئلة طول الترم.',
+      typewriterPrefix: 'أقسام ومواد الكلية:',
       typewriterPhrases: [
-        'تراك الذكاء الاصطناعي وتعلم الآلة',
-        'علوم الحاسب والخوارزميات المتقدمة',
-        'نظم المعلومات وقواعد البيانات الحديثة',
-        'بيئة تفاعلية لاجتياز الامتحانات بتفوق'
+        'مواد الفرقة الأولى الأساسية',
+        'علوم الحاسب والبرمجة (CS)',
+        'الذكاء الاصطناعي وعلم البيانات (AI & DS)',
+        'الأمن السيبراني والشبكات (CY)'
       ],
-      primaryCta: 'تصفح الكورسات',
-      secondaryCta: 'إنشاء حساب',
-      dashboardCta: 'لوحة التحكم',
+      primaryCta: 'ابدأ بمادة واحدة',
+      secondaryCta: 'شوف الدرس التجريبي',
+      dashboardCta: 'لوحة الطالب',
       stats: [
-        { value: '+10', label: 'مقررات تخصصية متكاملة' },
-        { value: '100%', label: 'تطابق مع توصيف المقرر الأكاديمي' },
-        { value: 'فوري', label: 'تفعيل المحتوى بعد اعتماد الدفع' }
+        { value: 'فرقة أولى والباقي جاي', label: 'مواد متاحة حالياً على المنصة' },
+        { value: REVIEW_TIME_TEXT, label: 'وقت مراجعة الإيصال وتفعيل المقرر' },
+        { value: 'مبني على توصيف مقرر فرقتك', label: 'محتوى مترتب حسب منهج الكلية' }
       ],
       langToggleAria: 'Switch to English',
       langToggleLabel: 'English'
     },
     nav: {
       home: 'الرئيسية',
-      courses: 'الدورات',
+      courses: 'المواد الدراسية',
       admin: 'لوحة الإدارة',
-      reviewQueue: 'طابور المراجعة',
-      teacher: 'لوحة المعلم',
-      dashboard: 'لوحة الطالب',
+      reviewQueue: 'مراجعة الإيصالات',
+      ctas: 'إدارة أزرار CTA',
+      teacher: 'لوحة المحاضر',
+      dashboard: 'مقرراتي',
       payments: 'مدفوعاتي',
       login: 'دخول',
       register: 'حساب جديد',
       logout: 'خروج',
       skipLink: 'انتقل إلى المحتوى الرئيسي',
       mainNavAria: 'التنقل الرئيسي',
-      brandAria: 'الصفحة الرئيسية لمنصة Codeera',
+      brandAria: 'الصفحة الرئيسية لمنصة Codeera - كوديرا',
       themeLight: 'الوضع الفاتح',
       themeDark: 'الوضع الداكن',
       themeToggleAriaLight: 'التبديل إلى الوضع الفاتح',
@@ -337,227 +347,249 @@ export const translations: Record<Locale, Translations> = {
         student: 'طالب'
       },
       footer: {
-        tagline: 'منصة Codeera التعليمية',
-        socialAria: 'حسابات التواصل الاجتماعي',
+        tagline: 'Codeera - كوديرا | شرح وتدريب لطلاب حاسبات الأزهر',
+        disclaimer: BRAND_DISCLAIMER_AR,
+        socialAria: 'حسابات التواصل الاجتماعي لمنصة Codeera - كوديرا',
         terms: 'الشروط والأحكام',
-        privacy: 'الخصوصية',
-        refund: 'الاسترداد',
-        rights: 'جميع الحقوق محفوظة',
-        legalNavAria: 'روابط المنصة القانونية'
+        privacy: 'سياسة الخصوصية',
+        refund: 'سياسة الاسترداد',
+        rights: 'جميع الحقوق محفوظة لمنصة Codeera - كوديرا',
+        legalNavAria: 'روابط السياسات والشروط'
       }
     },
     home: {
-      metaTitle: 'منصة Codeera | شروحات ومقررات برمجية تفاعلية',
-      metaDesc: 'منصة Codeera التعليمية التفاعلية لشروحات ومقررات واختبارات البرمجة والذكاء الاصطناعي.',
+      metaTitle: 'كورسات حاسبات وذكاء اصطناعي الأزهر | فرقة أولى | Codeera - كوديرا',
+      metaDesc:
+        'منصة Codeera - كوديرا لطلاب كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر (فرقة أولى وجميع الأقسام). شروحات مترتبة، كويزات بحلول مشروحة، ودفع بفودافون كاش أو إنستاباي.',
       steps: {
-        eyebrow: 'خطوات سريعة',
-        title: 'كيف تبدأ دراستك معنا؟',
-        subtitle: 'ثلاث خطوات بسيطة ومباشرة تفصلك عن المحتوى الأكاديمي ومجموعات المناقشة.',
-        step1Title: 'اختر مقررك الدراسي',
-        step1Desc: 'تصفح المقررات المتاحة لفرقتك وقسمك (علوم حاسب، نظم، ذكاء اصطناعي)، واطلع على تفاصيل المنهج وشروحاته.',
-        step2Title: 'سدد الرسوم وارفع الإيصال',
-        step2Desc: 'حول الرسوم بسهولة عبر فودافون كاش أو إنستاباي، ثم ارفع لقطة شاشة للإيصال في نموذج الاشتراك المباشر.',
-        step3Title: 'ابدأ دراستك فوراً',
-        step3Desc: 'فور اعتماد الدفع، يفتح لك المحتوى التعليمي بالكامل ويتم تفعيل اشتراكك تلقائياً — بدون انتظار أو تعقيد.'
+        eyebrow: 'طريقة الاشتراك',
+        title: 'إزاي تبدأ تذاكر على Codeera - كوديرا؟',
+        subtitle:
+          'خطوات واضحة من لحظة اختيار المادة لحد ما يفتحلك المحتوى بعد مراجعة إيصال الدفع.',
+        step1Title: 'اختار مادتك حسب فرقتك وقسمك',
+        step1Desc:
+          'ادخل على صفحة المواد، شوف المنهج المتقسم فصول ودروس، وتأكد من تفاصيل المقرر قبل ما تشترك.',
+        step2Title: 'ادفع بفودافون كاش أو إنستاباي وارفع الإيصال',
+        step2Desc:
+          'بتدفع على رقم رسمي عبر فودافون كاش أو إنستاباي، وبترفع صورة إيصال التحويل من موبايلك في ثواني.',
+        step3Title: 'مراجعة يدوية للإيصال وتفعيل المقرر',
+        step3Desc: `فريق الإدارة بيراجع إيصال الدفع يدوياً للتأكد من التحويل (${REVIEW_TIME_TEXT})، وبعد الاعتماد بيفتحلك المحتوى بالكامل وبيوصلك تأكيد.`
       },
       courses: {
-        eyebrow: 'المقررات الدراسية',
-        title: 'أحدث المقررات المتاحة',
-        viewAll: 'عرض كامل الدليل الأكاديمي',
-        priceCaption: 'رسوم المقرر',
-        onSale: 'خصم ساري',
-        details: 'التفاصيل',
+        eyebrow: 'مواد الكلية',
+        title: 'المقررات المتاحة لفرقتك',
+        viewAll: 'شوف كل المواد المتاحة',
+        priceCaption: 'اشتراك الترم للمقرر',
+        onSale: 'خصم حالي',
+        details: 'تفاصيل المقرر',
         currency: 'ج.م',
-        emptyNotice: 'ستظهر المقررات الدراسية المتاحة هنا فور إطلاقها.'
+        emptyNotice: 'جاري تجهيز المواد الدراسية للفرقة، وهتظهر هنا أول ما تتاح للتسجيل.'
       },
       features: {
-        eyebrow: 'لماذا Codeera؟',
-        title: 'بيئة أكاديمية متكاملة لطلاب الحاسبات',
-        subtitle: 'صممت منصة Codeera خصيصاً لتلائم طبيعة ومناهج كلية الحاسبات بجامعة الأزهر.',
+        eyebrow: 'إيه اللي هتلاقيه جوه المنصة؟',
+        title: 'كل اللي محتاجه عشان تذاكر مادتك من غير تشتت',
+        subtitle:
+          'بدل ما تدور في مصادر كتير متفرقة، جمعنالك الشرح والتدريب والمتابعة في مكان واحد واضح.',
         items: [
           {
-            title: 'تغطية شاملة لمقررات الكلية',
-            desc: 'محتوى مصور ومكتوب متوافق 100% مع توصيف المقررات الأكاديمية والمناهج المعتمدة.'
+            title: 'مترتبة حسب فرقتك وقسمك',
+            desc: 'المحتوى مبني على توصيف مقرر فرقتك في حاسبات الأزهر، ومتقسم فصول وموضوعات بنفس تسلسل الدراسة.'
           },
           {
-            title: 'تفعيل فوري للمحتوى',
-            desc: 'محتوى المقرر بيفتح أمامك مباشرة فور اعتماد الدفع، بدون أي انتظار أو خطوات إضافية.'
+            title: 'كويزات بإجابات مشروحة',
+            desc: 'بعد كل جزء بتحل كويزات تفاعلية بتوريك درجتك، والأهم إنها بتشرحلك ليه الإجابة صح أو غلط.'
           },
           {
-            title: 'اختبارات تقييم ذاتي ذكية',
-            desc: 'اختبر معلوماتك بعد كل باب دراسي عبر نظام كويزات تفاعلي يعرض نتيجتك وحلول الأسئلة.'
+            title: 'متابعة ودعم خلال الترم',
+            desc: 'لو وقفت قدامك نقطة في الشرح أو المسائل، تقدر تسأل وتتابع مع فريق المادة خلال فترة الدراسة.'
           },
           {
-            title: 'دفع آمن ومعالجة مباشرة',
-            desc: 'ادفع عبر المحافظ الإلكترونية المألوفة (فودافون كاش، إنستاباي) مع نظام توثيق فوري للإيصالات.'
+            title: 'بتدفع على رقم رسمي وبتستلم تأكيد',
+            desc: 'الدفع متاح عبر فودافون كاش أو إنستاباي، ولو الإيصال اترفض لأي سبب حقك محفوظ وفلوسك بترجعلك.'
           }
         ]
       },
       faq: {
         eyebrow: 'الأسئلة الشائعة',
-        title: 'كل ما تريد معرفته عن المنصة',
-        subtitle: 'إجابات واضحة ومباشرة عن كافة تساؤلات الطلاب.',
+        title: 'إجابات صريحة على كل أسئلتك قبل الاشتراك',
+        subtitle:
+          'كل التفاصيل عن طريقة الدفع، وقت المراجعة، تشغيل الفيديوهات، وسياسة الاسترداد.',
         items: [
           {
-            q: 'إزاي أقدر أتواصل مع فريق المادة أو أحصل على دعم خلال المقرر؟',
-            a: 'بعد اعتماد إيصال السداد، هتلاقي في لوحة التحكم رابط الانضمام لقناة النقاش الخاصة بالمقرر. فور إرسال طلب الانضمام، هيتم تفعيله تلقائياً وفوراً من غير انتظار.'
+            q: 'إيه هي طرق الدفع المتاحة للاشتراك في المواد؟',
+            a: 'تقدر تدفع بسهولة عن طريق فودافون كاش (Vodafone Cash) أو إنستاباي (InstaPay) أو أي محفظة إلكترونية في مصر. بتحول المبلغ على الرقم الرسمي الموضح في صفحة الدفع، وبعدها بترفع لقطة شاشة (Screenshot) للإيصال.'
           },
           {
-            q: 'ما هي طرق الدفع المتاحة للاشتراك؟',
-            a: 'نوفر الدفع السهل والمباشر عبر فودافون كاش (Vodafone Cash)، أو إنستاباي (InstaPay)، أو أي محفظة إلكترونية بنكية. بعد إتمام التحويل، تقوم برفع صورة إيصال التحويل في صفحة إتمام الطلب لتأكيد اشتراكك.'
+            q: 'إيصال الدفع بياخد وقت قد إيه عشان يتراجع ويتفعل الكورس؟',
+            a: `مراجعة الإيصالات بتتم بشكل يدوي من فريق الإدارة عشان نضمن دقة كل عملية دفع، وده بياخد ${REVIEW_TIME_TEXT}. أول ما الإيصال يتعتمد، المقرر بيفتح في حسابك وبتوصلك رسالة تأكيد.`
           },
           {
-            q: 'كم يستغرق وقت مراجعة وتأكيد الاشتراك؟',
-            a: 'تتم مراجعة إيصالات الدفع بواسطة فريق الإدارة بانتظام وفي أسرع وقت ممكن (عادة خلال دقائق إلى ساعات معدودة). ستصلك رسالة تأكيد عبر البريد الإلكتروني فور الاعتماد مع فتح صلاحيات المادة فوراً.'
+            q: 'اشتراك المادة بيفضل شغال معايا لحد إمتى؟',
+            a: `اشتراكك في أي مقرر بيفضل متاح معاك ${SUBSCRIPTION_VALIDITY_TEXT}، عشان تقدر تذاكر وتراجع براحتك ليلة الامتحان.`
           },
           {
-            q: 'ما مدة صلاحية اشتراكي في المادة؟',
-            a: 'يستمر اشتراكك فعالاً ومتاحاً لك حتى نهاية الفصل الدراسي الرسمي للمقرر، مع فترة سماح إضافية لمراجعة المحتوى والاختبارات حتى انتهاء موسم الامتحانات النهائية.'
+            q: 'إيه هي سياسة استرداد الرسوم لو غيرت رأيي أو حصلت مشكلة؟',
+            a: 'لو إيصال الدفع اترفض أو حصل خطأ في التحويل، المبلغ بيرجعلك بالكامل. وكمان بعد التفعيل، تقدر تطلب استرداد كامل المبلغ خلال 7 أيام من تاريخ التفعيل طالما مشاهدتك متعدتش 20% من دروس المقرر، وراجعت صفحة سياسة الاسترداد للتفاصيل.'
+          },
+          {
+            q: 'إيه المتطلبات التقنية عشان أشوف فيديوهات الشرح؟',
+            a: 'فيديوهات الشرح بتفتح من خلال رابط تليجرام مخصص للمشتركين، وعشان كدة هتحتاج يكون عندك حساب تليجرام مربوط بحسابك على المنصة.'
+          },
+          {
+            q: 'إزاي أتواصل مع الدعم الفني لو عندي سؤال قبل أو بعد الاشتراك؟',
+            a: 'تقدر تبعتلنا في أي وقت على واتساب الدعم الفني الموجود في أسفل الموقع وفي قسم الثقة، وهنرد عليك في أسرع وقت لمساعدتك في أي خطوة.'
+          },
+          {
+            q: 'مين اللي ورا منصة Codeera - كوديرا؟ وهل هي تابعة للجامعة؟',
+            a: 'منصة Codeera - كوديرا بناها مبرمج زميل ليكم بهدف تنظيم شرح مواد حاسبات الأزهر بطريقة عملية وبسيطة. المنصة مستقلة تماماً وغير تابعة رسمياً لجامعة الأزهر.'
           }
         ]
       },
       cta: {
-        badge: 'ابدأ دراستك الآن',
-        title: 'جاهز للتفوق في فصلك الدراسي؟',
-        desc: 'انضم لزملائك في كلية الحاسبات والذكاء الاصطناعي واستفد من شروحات المقررات والدعم الأكاديمي المباشر اليوم.',
-        primary: 'استكشف جميع المقررات',
-        secondary: 'إنشاء حساب طالب'
+        badge: 'Codeera - كوديرا',
+        title: 'جاهز تبدأ مذاكرة بنظام واضح؟',
+        desc: 'اختار مادتك، ادفع بفودافون كاش أو إنستاباي على رقم رسمي، وهنراجع الإيصال ونفتحلك المحتوى.',
+        primary: 'شوف مواد فرقتك',
+        secondary: 'تواصل معنا على واتساب'
       }
     },
     courses: {
-      metaTitle: 'دليل المقررات الأكاديمية | منصة Codeera',
-      metaDesc: 'تصفح المقررات الدراسية المتاحة لطلاب كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر.',
-      title: 'دليل المقررات الأكاديمية',
-      subtitle: 'تصفح جميع المواد الدراسية التخصصية لكلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر.',
-      desc: 'محتوى تعليمي أكاديمي دقيق، شروحات مسجلة، بنك أسئلة واختبارات تفاعلية، مع وصول فوري لمجموعات التليجرام الخاصة بكل مادة.',
+      metaTitle: 'مواد كلية حاسبات وذكاء اصطناعي الأزهر | فرقة أولى | Codeera - كوديرا',
+      metaDesc:
+        'تصفح كورسات ومواد كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر (فرقة أولى والأقسام المتاحة) على منصة Codeera - كوديرا. محتوى مبني على توصيف مقرر فرقتك مع كويزات ودعم.',
+      title: 'مواد حاسبات وذكاء اصطناعي الأزهر',
+      subtitle: 'اختار فرقتك وقسمك وشوف المقررات المتاحة للشرح والتدريب على Codeera - كوديرا.',
+      desc: 'محتوى مبني على توصيف مقرر فرقتك، متقسم محاضرات وملفات وكويزات بإجابات مشروحة، مع مراجعة واضحة للإيصالات وضمان استرداد.',
       adminTitle: 'صلاحيات إدارة المقررات',
       adminDesc: 'يمكنك إنشاء مقررات جديدة أو تعديل المحتوى والأسعار مباشرة من هنا.',
       addCourse: 'إضافة مقرر دراسي جديد',
-      searchPlaceholder: 'ابحث بالاسم أو الرمز (مثال: برمجيات، ذكاء اصطناعي، CS)...',
+      searchPlaceholder: 'ابحث باسم المادة أو الكود (مثال: C++، رياضيات متقطعة، فيزياء)...',
       searchAria: 'البحث في المقررات',
       filterSectionAria: 'أدوات البحث والتصفية',
-      filterFormAria: 'تصفية الدورات حسب الفرقة والقسم',
+      filterFormAria: 'تصفية المواد حسب الفرقة والقسم',
       yearLabel: 'الفرقة الدراسية:',
       allYears: 'كل الفرق الدراسية',
-      generalForAll: 'عام للجميع (كافة الفرق الدراسية)',
+      generalForAll: 'عام لكل الفرق والأقسام',
       deptLabel: 'القسم الأكاديمي:',
-      allDepts: 'جميع الأقسام',
-      applyFilter: 'تطبيق الفلتر',
-      resetFilter: 'إلغاء التصفية',
-      priceCaption: 'رسوم المقرر',
+      allDepts: 'كل الأقسام',
+      applyFilter: 'عرض المواد',
+      resetFilter: 'مسح الفلتر',
+      priceCaption: 'اشتراك الترم',
       currency: 'جنيه',
-      exploreDetails: 'التفاصيل والتسجيل',
-      onSale: 'خصم ساري',
-      emptyTitle: 'لا توجد مقررات دراسية تطابق خيارات البحث الحالية.',
-      emptyDesc: 'جرب تغيير معايير البحث أو اختيار قسم وفرقة دراسية أخرى لعرض المواد المتاحة.',
-      clearFilters: 'مسح خيارات التصفية والبحث'
+      exploreDetails: 'تفاصيل المقرر والاشتراك',
+      onSale: 'خصم حالي',
+      emptyTitle: 'مفيش مواد مطابقة لبحثك حالياً.',
+      emptyDesc: 'جرب تغير كلمة البحث أو تختار فرقة أو قسم تاني عشان تشوف المواد المتاحة.',
+      clearFilters: 'عرض كل المواد'
     },
     auth: {
       login: {
-        metaTitle: 'تسجيل الدخول | منصة Codeera',
-        metaDesc: 'تسجيل الدخول إلى حسابك في منصة Codeera التعليمية.',
-        badge: 'بوابة الطلاب',
+        metaTitle: 'تسجيل الدخول | Codeera - كوديرا',
+        metaDesc: 'سجل دخولك لحسابك على منصة Codeera - كوديرا لمتابعة موادك في حاسبات الأزهر.',
+        badge: 'حسابك على Codeera - كوديرا',
         title: 'تسجيل الدخول',
-        subtitle: 'أدخل بريدك الإلكتروني وكلمة المرور لمتابعة حسابك ومقرراتك.',
+        subtitle: 'اكتب بريدك الإلكتروني وكلمة السر عشان تكمل مذاكرة موادك.',
         emailLabel: 'البريد الإلكتروني',
         emailPlaceholder: 'name@example.com',
         passwordLabel: 'كلمة المرور',
         passwordPlaceholder: '••••••••',
         forgotPasswordLink: 'نسيت كلمة السر؟',
         submit: 'دخول',
-        submitting: 'جاري تسجيل الدخول...',
-        noAccount: 'ليس لديك حساب بعد؟',
-        registerLink: 'إنشاء حساب طالب جديد',
-        alreadyLoggedInTitle: 'أنت مسجل الدخول بالفعل',
-        alreadyLoggedInWelcome: 'مرحباً بك مجدداً،',
-        goToDashboard: 'الدخول إلى لوحة التحكم',
-        browseCourses: 'تصفح المقررات',
+        submitting: 'جاري الدخول...',
+        noAccount: 'لسه معندكش حساب؟',
+        registerLink: 'اعمل حساب طالب جديد',
+        alreadyLoggedInTitle: 'أنت مسجل دخول بالفعل',
+        alreadyLoggedInWelcome: 'أهلاً بيك يا',
+        goToDashboard: 'ادخل على لوحة الطالب',
+        browseCourses: 'تصفح المواد الدراسية',
         errors: {
-          required: 'يرجى إدخال البريد الإلكتروني وكلمة المرور.',
-          invalid: 'بيانات الدخول غير صحيحة، يرجى المحاولة مرة أخرى.',
-          generic: 'حدث خطأ أثناء تسجيل الدخول.'
+          required: 'من فضلك اكتب البريد الإلكتروني وكلمة المرور.',
+          invalid: 'بيانات الدخول مش مظبوطة، راجع الإيميل وكلمة السر وجرب تاني.',
+          generic: 'حصلت مشكلة أثناء تسجيل الدخول، جرب تاني.'
         }
       },
       forgotPassword: {
-        metaTitle: 'استعادة كلمة المرور | منصة Codeera',
-        metaDesc: 'استعادة وتعيين كلمة المرور لحسابك في منصة Codeera التعليمية.',
+        metaTitle: 'استعادة كلمة المرور | Codeera - كوديرا',
+        metaDesc: 'استعادة وتعيين كلمة المرور لحسابك في منصة Codeera - كوديرا.',
         badge: 'استعادة الحساب',
         title: 'نسيت كلمة المرور؟',
-        subtitle: 'أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.',
+        subtitle: 'اكتب بريدك الإلكتروني وهنبعتلك رابط تعمل بيه كلمة سر جديدة.',
         emailLabel: 'البريد الإلكتروني',
         emailPlaceholder: 'name@example.com',
-        submit: 'إرسال رابط استعادة كلمة المرور',
+        submit: 'إرسال رابط الاستعادة',
         submitting: 'جاري الإرسال...',
-        backToLogin: 'العودة لتسجيل الدخول',
-        successTitle: 'تم إرسال الرابط',
-        successMessage: 'إذا كان هذا البريد مسجلاً لدينا، فستصلك رسالة تحتوي على رابط لإعادة تعيين كلمة السر خلال دقائق.',
-        resendNote: 'لم تصلك الرسالة؟ تأكد من مجلد الرسائل غير المرغوب فيها (Spam) أو حاول مجدداً بعد قليل.',
+        backToLogin: 'الرجوع لتسجيل الدخول',
+        successTitle: 'بعتنالك الرابط',
+        successMessage:
+          'لو الإيميل ده مسجل عندنا، هتوصلك رسالة فيها رابط تغيير كلمة السر خلال دقايق.',
+        resendNote: 'ملقيتش الرسالة؟ بص في مجلد الرسائل غير المرغوب فيها (Spam) أو جرب تاني بعد شوية.',
         errors: {
-          required: 'يرجى إدخال البريد الإلكتروني.',
-          invalidEmail: 'يرجى إدخال بريد إلكتروني صالح.',
-          throttled: 'لقد تجاوزت عدد المحاولات المسموح بها. يرجى الانتظار والمحاولة لاحقاً.',
-          generic: 'حدث خطأ أثناء إرسال الرابط، يرجى المحاولة مرة أخرى.'
+          required: 'من فضلك اكتب البريد الإلكتروني.',
+          invalidEmail: 'من فضلك اكتب بريد إلكتروني صحيح.',
+          throttled: 'حاولت مرات كتير في وقت قصير. استنى شوية وجرب تاني.',
+          generic: 'حصل خطأ أثناء إرسال الرابط، جرب تاني.'
         }
       },
       resetPassword: {
-        metaTitle: 'إعادة تعيين كلمة المرور | منصة Codeera',
-        metaDesc: 'تعيين كلمة مرور جديدة لحسابك في منصة Codeera التعليمية.',
-        badge: 'أمان الحساب',
-        title: 'تعيين كلمة المرور الجديدة',
-        subtitle: 'يرجى إدخال كلمة المرور الجديدة وتأكيدها لمتابعة الدخول لحسابك.',
+        metaTitle: 'تعيين كلمة مرور جديدة | Codeera - كوديرا',
+        metaDesc: 'تعيين كلمة مرور جديدة لحسابك في منصة Codeera - كوديرا.',
+        badge: 'تأمين الحساب',
+        title: 'تعيين كلمة مرور جديدة',
+        subtitle: 'اكتب كلمة المرور الجديدة وأكدها عشان تقدر تدخل لحسابك.',
         emailLabel: 'البريد الإلكتروني',
         passwordLabel: 'كلمة المرور الجديدة',
-        passwordPlaceholder: '8 أحرف على الأقل',
+        passwordPlaceholder: '8 حروف أو أرقام على الأقل',
         confirmPasswordLabel: 'تأكيد كلمة المرور الجديدة',
-        confirmPasswordPlaceholder: 'أعد إدخال كلمة المرور',
-        submit: 'تغيير كلمة المرور',
-        submitting: 'جاري حفظ كلمة المرور...',
-        backToLogin: 'العودة لتسجيل الدخول',
-        requestNewLink: 'طلب رابط جديد',
-        successTitle: 'تم تغيير كلمة المرور بنجاح!',
-        successMessage: 'تم تحديث كلمة المرور لحسابك. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.',
-        redirecting: 'جاري نقلك لصفحة الدخول...',
-        invalidLinkTitle: 'رابط غير صالح أو منتهي الصلاحية',
-        invalidLinkMessage: 'يبدو أن رابط إعادة تعيين كلمة المرور غير صالح أو انتهت مدة صلاحيته (صالح لمدة 60 دقيقة). يمكنك طلب رابط جديد في أي وقت.',
+        confirmPasswordPlaceholder: 'اكتب كلمة المرور مرة تانية',
+        submit: 'حفظ كلمة المرور',
+        submitting: 'جاري الحفظ...',
+        backToLogin: 'الرجوع لتسجيل الدخول',
+        requestNewLink: 'اطلب رابط جديد',
+        successTitle: 'تم تغيير كلمة المرور',
+        successMessage: 'حدثنا كلمة السر لحسابك. تقدر دلوقتي تسجل دخولك بيها.',
+        redirecting: 'جاري تحويلك لصفحة الدخول...',
+        invalidLinkTitle: 'الرابط غير صالح أو انتهت مدته',
+        invalidLinkMessage:
+          'الرابط ده منتهي (مدته 60 دقيقة بس) أو اتستخدم قبل كدة. تقدر تطلب رابط جديد في أي وقت.',
         errors: {
-          required: 'يرجى ملء جميع الحقول المطلوبة.',
-          passwordMin: 'كلمة المرور يجب أن تتكون من 8 أحرف على الأقل.',
-          passwordMismatch: 'كلمتا المرور غير متطابقتين.',
-          tokenInvalid: 'رابط إعادة التعيين غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.',
-          throttled: 'لقد تجاوزت عدد المحاولات المسموح بها. يرجى الانتظار والمحاولة لاحقاً.',
-          generic: 'حدث خطأ أثناء إعادة تعيين كلمة المرور.'
+          required: 'من فضلك املأ كل الحقول المطلوبة.',
+          passwordMin: 'كلمة المرور لازم تكون 8 حروف أو أرقام على الأقل.',
+          passwordMismatch: 'كلمتين المرور مش متطابقين.',
+          tokenInvalid: 'رابط التعيين غير صالح أو منتهي. اطلب رابط جديد.',
+          throttled: 'حاولت مرات كتير، استنى شوية وجرب تاني.',
+          generic: 'حصل خطأ أثناء حفظ كلمة المرور.'
         }
       },
       register: {
-        metaTitle: 'إنشاء حساب طالب جديد | منصة Codeera',
-        metaDesc: 'تسجيل حساب طالب جديد في منصة Codeera التعليمية للبرمجة وعلوم الحاسب.',
-        badge: 'انضم لزملائك',
-        title: 'إنشاء حساب طالب',
-        subtitle: 'سجل بياناتك الأكاديمية للوصول إلى مقرراتك وشروحات المناهج واختباراتها.',
-        nameLabel: 'الاسم بالكامل (ثلاثي أو رباعي)',
+        metaTitle: 'إنشاء حساب طالب | Codeera - كوديرا',
+        metaDesc: 'اعمل حساب طالب على منصة Codeera - كوديرا لطلاب حاسبات وذكاء اصطناعي الأزهر.',
+        badge: 'حساب طالب جديد',
+        title: 'إنشاء حساب على Codeera - كوديرا',
+        subtitle: 'سجل بياناتك واختار فرقتك وقسمك عشان تشوف المواد المناسبة ليك.',
+        nameLabel: 'الاسم ثلاثي أو رباعي',
         namePlaceholder: 'محمد أحمد علي',
         emailLabel: 'البريد الإلكتروني',
         emailPlaceholder: 'name@example.com',
         passwordLabel: 'كلمة المرور',
-        passwordPlaceholder: '8 أحرف على الأقل',
+        passwordPlaceholder: '8 حروف أو أرقام على الأقل',
         confirmPasswordLabel: 'تأكيد كلمة المرور',
-        confirmPasswordPlaceholder: 'أعد إدخال كلمة المرور',
+        confirmPasswordPlaceholder: 'اكتب كلمة المرور مرة تانية',
         branchLabel: 'فرع الكلية',
         branchBoys: 'بنين (القاهرة)',
         branchGirls: 'بنات (القاهرة)',
-        academicYearLabel: 'السنة الدراسية',
+        academicYearLabel: 'الفرقة الدراسية',
         departmentLabel: 'القسم الأكاديمي',
         telegramLabel: 'اسم مستخدم تليجرام (اختياري)',
         telegramPlaceholder: '@username',
-        phoneLabel: 'رقم المحفظة الإلكترونية (فودافون كاش / إنستاباي)',
+        phoneLabel: 'رقم الموبايل (فودافون كاش / إنستاباي)',
         phonePlaceholder: '01012345678',
-        submit: 'إنشاء الحساب وبدء التعلم',
+        submit: 'إنشاء الحساب والمتابعة',
         submitting: 'جاري إنشاء الحساب...',
-        hasAccount: 'لديك حساب بالفعل؟',
-        loginLink: 'تسجيل الدخول',
+        hasAccount: 'عندك حساب بالفعل؟',
+        loginLink: 'سجل دخولك',
         years: {
-          first: 'السنة الأولى',
-          second: 'السنة الثانية'
+          first: 'الفرقة الأولى',
+          second: 'الفرقة الثانية'
         },
         departments: {
           cs: 'علوم الحاسب (CS)',
@@ -566,29 +598,29 @@ export const translations: Record<Locale, Translations> = {
           ai: 'الذكاء الاصطناعي (AI)'
         },
         errors: {
-          passwordMismatch: 'كلمة المرور وتأكيدها غير متطابقين.',
-          passwordMinLength: 'يجب ألا تقل كلمة المرور عن 8 أحرف.',
-          failed: 'تعذر إنشاء الحساب، يرجى مراجعة البيانات المدخلة.',
-          generic: 'حدث خطأ أثناء إنشاء الحساب.'
+          passwordMismatch: 'كلمة المرور وتأكيدها مش متطابقين.',
+          passwordMinLength: 'كلمة المرور لازم متقلش عن 8 حروف أو أرقام.',
+          failed: 'مقدرناش ننشئ الحساب، راجع البيانات المكتوبة وجرب تاني.',
+          generic: 'حصل خطأ أثناء إنشاء الحساب.'
         }
       },
       guard: {
         loginRequiredTitle: 'تسجيل الدخول مطلوب',
-        loginRequiredDescPrefix: 'هذه الصفحة مخصصة لـ',
-        loginRequiredDescSuffix: 'فقط. يرجى تسجيل الدخول بحساب معتمد للوصول إلى لوحة التحكم.',
-        accessDeniedTitle: 'غير مصرح لك بالوصول',
+        loginRequiredDescPrefix: 'الصفحة دي مخصصة لـ',
+        loginRequiredDescSuffix: 'بس. سجل دخولك الأول عشان تقدر تكمل.',
+        accessDeniedTitle: 'غير مصرح بالوصول',
         accessDeniedDescCurrent: 'أنت مسجل حالياً بحساب',
-        accessDeniedDescRequired: 'وهذه اللوحة مخصصة حصرياً لـ',
-        cannotAccessTitle: 'تعذر الوصول إلى اللوحة',
-        defaultError: 'حدث خطأ أثناء التحقق من الصلاحيات أو تحميل البيانات.',
+        accessDeniedDescRequired: 'والصفحة دي مخصصة لـ',
+        cannotAccessTitle: 'مقدرناش نفتح الصفحة',
+        defaultError: 'حصلت مشكلة أثناء التحقق من الصلاحيات أو تحميل البيانات.',
         loginBtn: 'تسجيل الدخول',
-        homeBtn: 'العودة للرئيسية',
-        browseCoursesBtn: 'تصفح المقررات الدراسية',
+        homeBtn: 'الرجوع للرئيسية',
+        browseCoursesBtn: 'تصفح المواد الدراسية',
         switchAccountBtn: 'تبديل الحساب (خروج)',
-        retryBtn: 'إعادة المحاولة',
+        retryBtn: 'حاول مرة تانية',
         roles: {
           admin: 'المسؤولين',
-          teacher: 'أعضاء هيئة التدريس والمحاضرين',
+          teacher: 'المحاضرين',
           student: 'الطلاب المسجلين',
           superadmin: 'المدير العام'
         }
@@ -597,25 +629,27 @@ export const translations: Record<Locale, Translations> = {
   },
   en: {
     hero: {
-      badge: 'Educational Platform for FCAI Al-Azhar Students',
-      titlePrefix: 'Focused Tech Curriculum,',
-      titleHighlight: 'Your Definitive Path to Academic Excellence.',
-      subheading: 'Codeera provides specialized coursework tailored for Faculty of Computers & Artificial Intelligence Al-Azhar students, with direct academic support and continuous follow-up to achieve the results you deserve.',
-      description: 'Codeera provides specialized coursework tailored for Faculty of Computers & Artificial Intelligence Al-Azhar students, with direct academic support and continuous follow-up to achieve the results you deserve.',
+      badge: 'Codeera - كوديرا | For Al-Azhar FCAI Students',
+      titlePrefix: 'Al-Azhar Computing & AI courses organized by your year and department,',
+      titleHighlight: 'from video lessons to quizzes in one place.',
+      subheading:
+        'Pick your course, pay via Vodafone Cash or InstaPay to our official number and upload the receipt screenshot — we review it manually and unlock your lessons, quizzes, and Q&A support.',
+      description:
+        'Codeera organizes coursework for Faculty of Computers & AI students at Al-Azhar University with structured video lectures, explained quizzes, and continuous support.',
       typewriterPrefix: 'Academic Tracks:',
       typewriterPhrases: [
-        'Artificial Intelligence & Machine Learning',
-        'Advanced Computer Science & Algorithms',
-        'Information Systems & Modern Databases',
-        'Interactive Platform for Exam Readiness'
+        'First Year Core Courses',
+        'Computer Science & Programming (CS)',
+        'Artificial Intelligence & Data Science (AI & DS)',
+        'Cybersecurity & Networks (CY)'
       ],
-      primaryCta: 'Browse Courses',
-      secondaryCta: 'Create Account',
+      primaryCta: 'Start With One Course',
+      secondaryCta: 'Watch Sample Lesson',
       dashboardCta: 'My Dashboard',
       stats: [
-        { value: '+10', label: 'Comprehensive Tech Courses' },
-        { value: '100%', label: 'Match with Academic Course Specifications' },
-        { value: 'Instant', label: 'Content Access Upon Payment Approval' }
+        { value: '1st Year & More Coming', label: 'Available Courses in Catalog' },
+        { value: REVIEW_TIME_TEXT, label: 'Manual Receipt Review Window' },
+        { value: 'Built on Your Year Syllabus', label: 'Structured Around Faculty Modules' }
       ],
       langToggleAria: 'التبديل إلى العربية',
       langToggleLabel: 'عربي'
@@ -625,6 +659,7 @@ export const translations: Record<Locale, Translations> = {
       courses: 'Courses',
       admin: 'Admin Panel',
       reviewQueue: 'Review Queue',
+      ctas: 'CTA Management',
       teacher: 'Teacher Panel',
       dashboard: 'Dashboard',
       payments: 'My Payments',
@@ -633,7 +668,7 @@ export const translations: Record<Locale, Translations> = {
       logout: 'Logout',
       skipLink: 'Skip to main content',
       mainNavAria: 'Main navigation',
-      brandAria: 'Codeera Platform Home',
+      brandAria: 'Codeera - كوديرا Home',
       themeLight: 'Light Mode',
       themeDark: 'Dark Mode',
       themeToggleAriaLight: 'Switch to light mode',
@@ -649,7 +684,8 @@ export const translations: Record<Locale, Translations> = {
         student: 'Student'
       },
       footer: {
-        tagline: 'Codeera Educational Platform',
+        tagline: 'Codeera - كوديرا Educational Platform',
+        disclaimer: BRAND_DISCLAIMER_AR,
         socialAria: 'Social media links',
         terms: 'Terms & Conditions',
         privacy: 'Privacy Policy',
@@ -659,93 +695,107 @@ export const translations: Record<Locale, Translations> = {
       }
     },
     home: {
-      metaTitle: 'Codeera Platform | Interactive Programming & CS Courses',
-      metaDesc: 'Codeera is an interactive educational platform for programming, computer science, and AI curriculum with direct academic support.',
+      metaTitle: 'كورسات حاسبات وذكاء اصطناعي الأزهر | فرقة أولى | Codeera - كوديرا',
+      metaDesc:
+        'Codeera - كوديرا لطلاب حاسبات الأزهر فرقة أولى. شروحات منظمة وكويزات ودفع بفودافون كاش أو إنستاباي.',
       steps: {
-        eyebrow: 'Quick Steps',
-        title: 'How to Start Learning With Us',
-        subtitle: 'Three direct steps connecting you to accredited academic content and private discussion groups.',
-        step1Title: 'Choose Your Course',
-        step1Desc: 'Browse courses tailored to your academic year and department (CS, IS, AI) and preview syllabus outlines.',
-        step2Title: 'Pay Fees & Upload Receipt',
-        step2Desc: 'Transfer securely via Vodafone Cash, InstaPay, or mobile wallets, then upload the receipt screenshot.',
-        step3Title: 'Start Studying Immediately',
-        step3Desc: 'Once payment is approved, your full course content is unlocked and your access is activated automatically — no waiting or hassle.'
+        eyebrow: 'How It Works',
+        title: 'How to Start Studying on Codeera',
+        subtitle: 'Three clear steps from choosing your subject to unlocking access after receipt review.',
+        step1Title: 'Choose Your Course by Year & Department',
+        step1Desc: 'Browse the courses for your year and department and check the syllabus breakdown.',
+        step2Title: 'Pay via Vodafone Cash or InstaPay & Upload Receipt',
+        step2Desc: 'Transfer the course fee to our official wallet/account and upload a screenshot of your receipt.',
+        step3Title: 'Manual Receipt Review & Access Activation',
+        step3Desc: `Our admin team manually reviews your receipt (${REVIEW_TIME_TEXT}). Once approved, your course content unlocks and you receive confirmation.`
       },
       courses: {
         eyebrow: 'Course Catalog',
-        title: 'Latest Available Courses',
-        viewAll: 'View Full Academic Catalog',
-        priceCaption: 'Course Fee',
-        onSale: 'On Sale',
-        details: 'Details',
+        title: 'Available Courses for Your Year',
+        viewAll: 'Browse All Courses',
+        priceCaption: 'Term Fee',
+        onSale: 'Offer',
+        details: 'Course Details',
         currency: 'EGP',
-        emptyNotice: 'Available courses will appear here once released.'
+        emptyNotice: 'Courses for this year will appear here once published.'
       },
       features: {
-        eyebrow: 'Why Codeera?',
-        title: 'Integrated Academic Platform for Tech Students',
-        subtitle: 'Codeera is designed specifically around the syllabus and exam standards of the Faculty of Computers & AI at Al-Azhar University.',
+        eyebrow: 'What You Get',
+        title: 'Organized Material, Quizzes & Support',
+        subtitle: 'Built around the syllabus of the Faculty of Computers & AI at Al-Azhar University.',
         items: [
           {
-            title: 'Full Curriculum Coverage',
-            desc: 'Video lectures and notes 100% aligned with verified academic course specifications.'
+            title: 'Organized by Year & Department',
+            desc: 'Built on your academic year syllabus and organized into logical chapters and lessons.'
           },
           {
-            title: 'Instant Content Activation',
-            desc: 'Course content opens directly upon payment approval, without any waiting or extra steps.'
+            title: 'Quizzes With Explanations',
+            desc: 'Practice after each topic with quizzes that show your score and explain the correct answers.'
           },
           {
-            title: 'Smart Self-Assessment Quizzes',
-            desc: 'Test your understanding after each module with interactive quizzes, instant scores, and answer keys.'
+            title: 'Support During the Course',
+            desc: 'Get answers to your academic questions throughout the semester.'
           },
           {
-            title: 'Direct & Secure Payment',
-            desc: 'Pay with popular local payment methods (Vodafone Cash, InstaPay) with streamlined receipt verification.'
+            title: 'Pay to an Official Number With Refund Guarantee',
+            desc: 'Pay via Vodafone Cash or InstaPay with a full refund if your receipt is rejected.'
           }
         ]
       },
       faq: {
-        eyebrow: 'Frequently Asked Questions',
-        title: 'Everything You Need to Know',
-        subtitle: 'Direct and clear answers to common student inquiries.',
+        eyebrow: 'FAQ',
+        title: 'Clear Answers Before You Enroll',
+        subtitle: 'Everything about payment methods, manual review time, content access, and refunds.',
         items: [
           {
-            q: 'How can I contact course instructors or get support during the course?',
-            a: 'After your payment receipt is approved, you will find the discussion channel link in your dashboard. Upon sending a join request, it is activated automatically and immediately without waiting.'
+            q: 'What payment methods are available?',
+            a: 'You can pay via Vodafone Cash, InstaPay, or any Egyptian mobile wallet, then upload a screenshot of your transfer receipt.'
           },
           {
-            q: 'What payment methods are supported?',
-            a: 'We support straightforward payments via Vodafone Cash, InstaPay, and standard Egyptian bank digital wallets. Once you transfer, submit a screenshot of your transfer receipt to confirm your subscription.'
+            q: 'How long does payment review and approval take?',
+            a: `Payment receipts are reviewed manually by an admin (${REVIEW_TIME_TEXT}). Access opens right after approval.`
           },
           {
-            q: 'How long does subscription verification take?',
-            a: 'Payment receipts are reviewed regularly by administrators as quickly as possible (usually within minutes to a few hours). You will receive an email confirmation and immediate access upon approval.'
+            q: 'How long is my subscription valid?',
+            a: `Your subscription remains valid for: ${SUBSCRIPTION_VALIDITY_TEXT}.`
           },
           {
-            q: 'How long does my course subscription remain valid?',
-            a: 'Your access remains active through the end of the official academic semester, plus a generous extension period for review and exam preparation until finals finish.'
+            q: 'What is the refund policy?',
+            a: 'Full refund if your receipt is rejected, or within 7 days of activation if you have watched less than 20% of the course.'
+          },
+          {
+            q: 'What is required to watch the video lessons?',
+            a: 'Videos open via a dedicated Telegram link, so a linked Telegram account is required.'
+          },
+          {
+            q: 'How can I contact support?',
+            a: 'You can reach us directly via our official WhatsApp link in the footer and trust section.'
+          },
+          {
+            q: 'Who is behind Codeera?',
+            a: 'Codeera is built by a fellow software developer to organize Al-Azhar FCAI study materials. Codeera is an independent platform and not officially affiliated with Al-Azhar University.'
           }
         ]
       },
       cta: {
-        badge: 'Start Learning Now',
-        title: 'Ready to Excel This Semester?',
-        desc: 'Join your classmates in the Faculty of Computers & Artificial Intelligence and benefit from course lectures and direct academic support today.',
-        primary: 'Explore All Courses',
-        secondary: 'Create Student Account'
+        badge: 'Codeera - كوديرا',
+        title: 'Ready to Study With a Clear Plan?',
+        desc: 'Pick your course, pay via Vodafone Cash or InstaPay, and our team will review your receipt and unlock your access.',
+        primary: 'Browse Your Year Courses',
+        secondary: 'Ask on WhatsApp'
       }
     },
     courses: {
-      metaTitle: 'Academic Course Catalog | Codeera',
-      metaDesc: 'Browse available courses for Faculty of Computers & Artificial Intelligence Al-Azhar University students.',
+      metaTitle: 'مواد كلية حاسبات وذكاء اصطناعي الأزهر | فرقة أولى | Codeera - كوديرا',
+      metaDesc:
+        'تصفح كورسات ومواد كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر فرقة أولى على منصة Codeera - كوديرا.',
       title: 'Academic Course Catalog',
-      subtitle: 'Explore specialized coursework for the Faculty of Computers & Artificial Intelligence, Al-Azhar University.',
-      desc: 'Precise academic curriculum, recorded lectures, question banks, and interactive quizzes with instant access to course Telegram groups.',
+      subtitle: 'Explore coursework for the Faculty of Computers & AI, Al-Azhar University.',
+      desc: 'Built on your year syllabus with structured lessons, explained quizzes, and discussion support.',
       adminTitle: 'Course Management Privileges',
       adminDesc: 'You can create new courses or update content and pricing directly from here.',
       addCourse: 'Add New Course',
-      searchPlaceholder: 'Search by title or code (e.g. Software, AI, CS)...',
+      searchPlaceholder: 'Search by title or code (e.g. C++, Discrete Math, Physics)...',
       searchAria: 'Search courses',
       filterSectionAria: 'Search and filter tools',
       filterFormAria: 'Filter courses by academic year and department',
@@ -759,16 +809,16 @@ export const translations: Record<Locale, Translations> = {
       priceCaption: 'Course Fee',
       currency: 'EGP',
       exploreDetails: 'Details & Enroll',
-      onSale: 'On Sale',
+      onSale: 'Offer',
       emptyTitle: 'No courses match your current search filters.',
-      emptyDesc: 'Try adjusting your search query or selecting a different year and department to view courses.',
+      emptyDesc: 'Try adjusting your search query or selecting a different year and department.',
       clearFilters: 'Clear filters and search'
     },
     auth: {
       login: {
-        metaTitle: 'Sign In | Codeera Platform',
-        metaDesc: 'Sign in to your account on Codeera educational platform.',
-        badge: 'Portal for Students, Instructors & Staff',
+        metaTitle: 'Sign In | Codeera - كوديرا',
+        metaDesc: 'Sign in to your account on Codeera - كوديرا educational platform.',
+        badge: 'Student & Staff Portal',
         title: 'Sign In',
         subtitle: 'Enter your email and password to access your account and coursework.',
         emailLabel: 'Email Address',
@@ -791,85 +841,87 @@ export const translations: Record<Locale, Translations> = {
         }
       },
       forgotPassword: {
-        metaTitle: 'Forgot Password | Codeera Platform',
-        metaDesc: 'Recover and reset your account password on Codeera educational platform.',
+        metaTitle: 'Forgot Password | Codeera - كوديرا',
+        metaDesc: 'Recover and reset your account password on Codeera - كوديرا.',
         badge: 'Account Recovery',
         title: 'Forgot Password?',
         subtitle: 'Enter your registered email address and we will send you a reset link.',
         emailLabel: 'Email Address',
         emailPlaceholder: 'name@example.com',
-        submit: 'Send Reset Link',
+        submit: 'Send Password Reset Link',
         submitting: 'Sending...',
         backToLogin: 'Back to Sign In',
         successTitle: 'Reset Link Sent',
-        successMessage: 'If this email is registered with us, you will receive an email with a password reset link within a few minutes.',
-        resendNote: "Didn't receive the email? Check your spam folder or try again in a few minutes.",
+        successMessage:
+          'If an account exists with this email, you will receive a password reset link within a few minutes.',
+        resendNote: 'Did not receive the email? Check your Spam folder or try again shortly.',
         errors: {
           required: 'Please enter your email address.',
           invalidEmail: 'Please enter a valid email address.',
-          throttled: 'Too many attempts. Please wait and try again later.',
-          generic: 'An unexpected error occurred. Please try again.'
+          throttled: 'Too many attempts. Please wait before trying again.',
+          generic: 'An error occurred while sending the reset link. Please try again.'
         }
       },
       resetPassword: {
-        metaTitle: 'Reset Password | Codeera Platform',
-        metaDesc: 'Set a new password for your account on Codeera educational platform.',
+        metaTitle: 'Reset Password | Codeera - كوديرا',
+        metaDesc: 'Set a new password for your account on Codeera - كوديرا.',
         badge: 'Account Security',
-        title: 'Reset Your Password',
-        subtitle: 'Enter and confirm your new password to restore access to your account.',
+        title: 'Set New Password',
+        subtitle: 'Please enter and confirm your new password to access your account.',
         emailLabel: 'Email Address',
         passwordLabel: 'New Password',
         passwordPlaceholder: 'At least 8 characters',
         confirmPasswordLabel: 'Confirm New Password',
         confirmPasswordPlaceholder: 'Re-enter your new password',
-        submit: 'Reset Password',
-        submitting: 'Resetting password...',
+        submit: 'Update Password',
+        submitting: 'Saving password...',
         backToLogin: 'Back to Sign In',
-        requestNewLink: 'Request a new reset link',
-        successTitle: 'Password Reset Successfully!',
-        successMessage: 'Your password has been updated. You can now log in with your new password.',
-        redirecting: 'Redirecting to sign in...',
-        invalidLinkTitle: 'Invalid or Expired Link',
-        invalidLinkMessage: 'This password reset link is invalid or has expired (links expire after 60 minutes). Please request a new link.',
+        requestNewLink: 'Request a New Link',
+        successTitle: 'Password Updated',
+        successMessage: 'Your account password has been updated. You can now sign in.',
+        redirecting: 'Redirecting to sign in page...',
+        invalidLinkTitle: 'Invalid or Expired Reset Link',
+        invalidLinkMessage:
+          'This password reset link appears to be invalid or has expired (valid for 60 minutes). You can request a new link at any time.',
         errors: {
           required: 'Please fill in all required fields.',
-          passwordMin: 'Password must be at least 8 characters long.',
+          passwordMin: 'Password must be at least 8 characters.',
           passwordMismatch: 'Passwords do not match.',
           tokenInvalid: 'This password reset link is invalid or has expired. Please request a new one.',
-          throttled: 'Too many attempts. Please wait and try again later.',
+          throttled: 'Too many attempts. Please wait before trying again.',
           generic: 'An error occurred while resetting your password.'
         }
       },
       register: {
-        metaTitle: 'Create Student Account | Codeera Platform',
-        metaDesc: 'Create a student account on Codeera educational platform for computer science and programming.',
-        badge: 'Join Your Peers',
+        metaTitle: 'Create Student Account | Codeera - كوديرا',
+        metaDesc: 'Register a new student account on Codeera - كوديرا.',
+        badge: 'New Student Account',
         title: 'Create Student Account',
-        subtitle: 'Enter your academic information to access courses, lecture notes, and quizzes.',
+        subtitle: 'Register your academic details to access your courses, lectures, and quizzes.',
         nameLabel: 'Full Name',
-        namePlaceholder: 'e.g. John Doe',
+        namePlaceholder: 'Mohamed Ahmed Ali',
         emailLabel: 'Email Address',
         emailPlaceholder: 'name@example.com',
         passwordLabel: 'Password',
         passwordPlaceholder: 'At least 8 characters',
         confirmPasswordLabel: 'Confirm Password',
-        confirmPasswordPlaceholder: 'Re-enter your password',
-        branchLabel: 'Faculty Branch',
+        confirmPasswordPlaceholder: 'Re-enter password',
+        branchLabel: 'Campus Branch',
         branchBoys: 'Boys (Cairo)',
         branchGirls: 'Girls (Cairo)',
         academicYearLabel: 'Academic Year',
-        departmentLabel: 'Academic Department',
-        telegramLabel: 'Telegram Username (optional)',
+        departmentLabel: 'Department',
+        telegramLabel: 'Telegram Username (Optional)',
         telegramPlaceholder: '@username',
-        phoneLabel: 'E-Wallet Number (Vodafone Cash / InstaPay)',
+        phoneLabel: 'Mobile Wallet Number (Vodafone Cash / InstaPay)',
         phonePlaceholder: '01012345678',
-        submit: 'Create Account & Start Learning',
+        submit: 'Create Account & Continue',
         submitting: 'Creating account...',
         hasAccount: 'Already have an account?',
         loginLink: 'Sign In',
         years: {
-          first: 'First Year',
-          second: 'Second Year'
+          first: '1st Year',
+          second: '2nd Year'
         },
         departments: {
           cs: 'Computer Science (CS)',
@@ -878,102 +930,96 @@ export const translations: Record<Locale, Translations> = {
           ai: 'Artificial Intelligence (AI)'
         },
         errors: {
-          passwordMismatch: 'Passwords do not match.',
+          passwordMismatch: 'Password and confirmation do not match.',
           passwordMinLength: 'Password must be at least 8 characters long.',
-          failed: 'Could not create account, please check the entered details.',
-          generic: 'An error occurred while creating your account.'
+          failed: 'Could not create account, please verify your inputs.',
+          generic: 'An error occurred during registration.'
         }
       },
       guard: {
         loginRequiredTitle: 'Sign In Required',
         loginRequiredDescPrefix: 'This page is restricted to',
-        loginRequiredDescSuffix: 'only. Please sign in with an authorized account to access this panel.',
+        loginRequiredDescSuffix: 'only. Please sign in with an authorized account.',
         accessDeniedTitle: 'Access Denied',
         accessDeniedDescCurrent: 'You are currently signed in as',
-        accessDeniedDescRequired: 'and this panel is exclusively for',
-        cannotAccessTitle: 'Unable to Access Panel',
+        accessDeniedDescRequired: 'while this dashboard is exclusively for',
+        cannotAccessTitle: 'Unable to Load Dashboard',
         defaultError: 'An error occurred while verifying permissions or loading data.',
         loginBtn: 'Sign In',
-        homeBtn: 'Back to Home',
-        browseCoursesBtn: 'Browse Courses',
+        homeBtn: 'Return Home',
+        browseCoursesBtn: 'Browse Course Catalog',
         switchAccountBtn: 'Switch Account (Logout)',
-        retryBtn: 'Retry',
+        retryBtn: 'Try Again',
         roles: {
           admin: 'Administrators',
-          teacher: 'Faculty Members & Instructors',
-          student: 'Enrolled Students',
-          superadmin: 'Super Admin'
+          teacher: 'Instructors & Faculty',
+          student: 'Registered Students',
+          superadmin: 'Superadmin'
         }
       }
     }
   }
 };
 
-function getInitialLocale(): Locale {
-  if (typeof document !== 'undefined') {
-    const saved = localStorage.getItem('codeera_locale');
-    if (saved === 'en' || saved === 'ar') {
-      return saved;
-    }
-    const htmlLang = document.documentElement.getAttribute('lang');
-    if (htmlLang === 'en') return 'en';
-  }
-  return 'ar';
-}
+const STORAGE_KEY = 'codeera_locale';
 
 export const currentLocale = writable<Locale>('ar');
 
-export function initLocale(): void {
-  if (typeof document !== 'undefined') {
-    const initial = getInitialLocale();
-    currentLocale.set(initial);
-    applyDocumentLocale(initial);
-  }
-}
-
-export function setLocale(locale: Locale): void {
-  currentLocale.set(locale);
-  if (typeof document !== 'undefined') {
-    try {
-      localStorage.setItem('codeera_locale', locale);
-    } catch (_) {}
-    applyDocumentLocale(locale);
-  }
-}
-
-export function toggleLocale(): void {
-  currentLocale.update((prev) => {
-    const next: Locale = prev === 'ar' ? 'en' : 'ar';
-    if (typeof document !== 'undefined') {
-      try {
-        localStorage.setItem('codeera_locale', next);
-      } catch (_) {}
-      applyDocumentLocale(next);
-    }
-    return next;
-  });
-}
-
-function applyDocumentLocale(locale: Locale): void {
-  document.documentElement.setAttribute('lang', locale);
-  document.documentElement.setAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
-  document.documentElement.classList.toggle('locale-ar', locale === 'ar');
-  document.documentElement.classList.toggle('locale-en', locale === 'en');
-}
-
 export const t = derived(currentLocale, ($locale) => translations[$locale]);
-export const currentHeroTranslations = derived(currentLocale, ($locale) => translations[$locale].hero);
 
-export function formatPrice(cents: number, locale: Locale = 'ar'): string {
-  const amount = (cents / 100).toLocaleString('en-US');
-  if (locale === 'en') {
-    return `${amount} EGP`;
+export const currentHeroTranslations = derived(
+  currentLocale,
+  ($locale) => translations[$locale].hero
+);
+
+export function applyLocaleToDocument(locale: Locale) {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = locale;
+    document.documentElement.dir = locale === 'en' ? 'ltr' : 'rtl';
   }
-  return `${amount} ج.م`;
 }
 
+export function initLocale() {
+  applyLocaleToDocument('ar');
+  currentLocale.set('ar');
+}
+
+export function setLocale(locale: Locale) {
+  currentLocale.set(locale);
+  applyLocaleToDocument(locale);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY, locale);
+    } catch {
+      // ignore storage errors
+    }
+  }
+}
+
+export function toggleLocale() {
+  let active: Locale = 'ar';
+  const unsub = currentLocale.subscribe((val) => {
+    active = val;
+  });
+  unsub();
+
+  const next: Locale = active === 'ar' ? 'en' : 'ar';
+  setLocale(next);
+}
+
+/**
+ * Helper to format prices from cents according to active locale
+ */
+export function formatPrice(cents: number, locale: Locale = 'ar'): string {
+  const pounds = Math.round(cents / 100);
+  return locale === 'en' ? `${pounds} EGP` : `${pounds} ج.م`;
+}
+
+/**
+ * Helper to select localized text from backend {ar, en} object
+ */
 export function getLocalizedText(
-  field: { ar?: string; en?: string } | string | undefined | null,
+  field: { ar?: string; en?: string } | string | null | undefined,
   locale: Locale = 'ar'
 ): string {
   if (!field) return '';

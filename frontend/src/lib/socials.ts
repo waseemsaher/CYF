@@ -1,14 +1,16 @@
 /**
  * Social Media Accounts Configuration
- * Replace the href values with your actual links when ready.
+ * Consistent across the footer, trust section, and JSON-LD `sameAs`.
  */
 export interface SocialLink {
-  id: string;
+  id: 'facebook' | 'youtube' | 'whatsapp';
   name: string;
   nameAr: string;
   url: string;
   ariaLabel: string;
 }
+
+export const WHATSAPP_SUPPORT_URL = 'https://wa.me/201555444726';
 
 export const socialLinks: SocialLink[] = [
   {
@@ -16,27 +18,22 @@ export const socialLinks: SocialLink[] = [
     name: 'Facebook',
     nameAr: 'فيسبوك',
     url: 'https://www.facebook.com/profile.php?id=61594746782523',
-    ariaLabel: 'صفحة منصة Codeera على فيسبوك'
+    ariaLabel: 'صفحة Codeera - كوديرا على فيسبوك'
   },
   {
     id: 'youtube',
     name: 'YouTube',
     nameAr: 'يوتيوب',
     url: 'https://www.youtube.com/channel/UC6XPPHNpQJU2MpBhSPVarvA',
-    ariaLabel: 'قناة منصة Codeera على يوتيوب'
+    ariaLabel: 'قناة Codeera - كوديرا على يوتيوب'
   },
   {
     id: 'whatsapp',
     name: 'WhatsApp',
     nameAr: 'واتساب',
-    url: 'https://wa.me/201555444726',
-    ariaLabel: 'تواصل معنا عبر واتساب'
-  },
-  {
-    id: 'telegram',
-    name: 'Telegram',
-    nameAr: 'تليجرام',
-    url: 'https://t.me/code_eraa',
-    ariaLabel: 'قناة منصة Codeera على تليجرام'
+    url: WHATSAPP_SUPPORT_URL,
+    ariaLabel: 'تواصل مع دعم Codeera - كوديرا على واتساب'
   }
 ];
+
+export const SAME_AS_URLS: string[] = socialLinks.map((s) => s.url);
