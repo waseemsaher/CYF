@@ -13,9 +13,12 @@
  * }
  */
 export interface SampleLessonConfig {
+  courseSlug?: string;
+  courseNameAr?: string;
   titleAr: string;
   descriptionAr?: string;
   durationText?: string;
+  durationMinutes?: number;
   videoUrl: string;
 }
 
@@ -27,4 +30,15 @@ export const SAMPLE_LESSONS_BY_COURSE_SLUG: Record<string, SampleLessonConfig> =
  * Optional homepage featured sample lesson.
  * Leave null until a real sample video URL is provided.
  */
-export const HOME_SAMPLE_LESSON: (SampleLessonConfig & { courseSlug?: string; courseNameAr?: string }) | null = null;
+export const HOME_SAMPLE_LESSON: (SampleLessonConfig & { courseSlug: string }) | null = null;
+
+/**
+ * Retrieve configured sample lesson for a course slug, or null if none configured.
+ */
+export function getSampleLessonForCourse(
+  slug: string
+): (SampleLessonConfig & { courseSlug: string }) | null {
+  const entry = SAMPLE_LESSONS_BY_COURSE_SLUG[slug];
+  if (!entry || !entry.videoUrl) return null;
+  return { ...entry, courseSlug: slug };
+}

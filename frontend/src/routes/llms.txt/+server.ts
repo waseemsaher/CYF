@@ -18,9 +18,9 @@ export const GET: RequestHandler = async ({ fetch }) => {
       coursesSection = published
         .map(
           (c) =>
-            `- [${c.title_ar || c.title?.ar || c.slug}](https://codeera.tech/courses/${c.slug}): ${
-              c.description_ar || c.description?.ar || 'مقرر دراسي لطلاب حاسبات الأزهر'
-            } (${c.price_egp ?? COURSE_PRICE_EGP} EGP)`
+            `- [${c.title?.ar || c.slug}](https://codeera.tech/courses/${c.slug}): ${
+              c.description?.ar || 'مقرر دراسي لطلاب حاسبات الأزهر'
+            } (${Math.round((c.amount_due_cents || c.price_cents || COURSE_PRICE_EGP * 100) / 100)} EGP)`
         )
         .join('\n');
     }

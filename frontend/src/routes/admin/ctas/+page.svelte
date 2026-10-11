@@ -9,14 +9,14 @@
     CTA_SLOT_METADATA,
     DEFAULT_CTA_BLOCKS,
     isValidCtaUrl,
-    type CtaBlockItem,
+    type CtaBlock,
     type CtaStyle
   } from '$lib/api/ctas';
 
   let loading = $state(true);
   let errorMsg = $state('');
   let successMsg = $state('');
-  let ctas = $state<CtaBlockItem[]>([]);
+  let ctas = $state<CtaBlock[]>([]);
   let togglingKey = $state<string | null>(null);
 
   // Edit form state
@@ -46,7 +46,8 @@
     loading = true;
     errorMsg = '';
     try {
-      ctas = await getAdminCtas(fetch);
+      const res = await getAdminCtas(fetch);
+      ctas = res.data ?? [];
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : 'تعذر تحميل بيانات أزرار الدعوة (CTAs).';
     } finally {
@@ -62,7 +63,7 @@
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  function openEditSlot(item: CtaBlockItem) {
+  function openEditSlot(item: CtaBlock) {
     editingSlotKey = item.key;
     formLabelAr = item.label_ar || '';
     formHeadlineAr = item.headline_ar || '';
@@ -82,13 +83,13 @@
     formError = '';
   }
 
-  async function handleToggle(item: CtaBlockItem) {
+  async function handleToggle(item: CtaBlock) {
     togglingKey = item.key;
     errorMsg = '';
     successMsg = '';
     try {
-      const updated = await toggleAdminCta(fetch, item.key);
-      ctas = ctas.map((c) => (c.key === item.key ? updated : c));
+      const res = await toggleAdminCta(fetch, item.key);
+      ctas = ctas.map((c) => (c.key === item.key ? res.data : c));
       successMsg = `تم تحديث حالة "${CTA_SLOT_METADATA[item.key]?.titleAr || item.key}" بنجاح.`;
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : 'تعذر تغيير حالة الزر.';
@@ -143,7 +144,7 @@
     successMsg = '';
 
     try {
-      const updated = await updateAdminCta(fetch, editingSlotKey, {
+      const res = await updateAdminCta(fetch, editingSlotKey, {
         label_ar: formLabelAr.trim(),
         headline_ar: formHeadlineAr.trim() || null,
         subtext_ar: formSubtextAr.trim() || null,
@@ -155,7 +156,7 @@
         open_in_new_tab: formOpenInNewTab
       });
 
-      ctas = ctas.map((c) => (c.key === editingSlotKey ? updated : c));
+      ctas = ctas.map((c) => (c.key === editingSlotKey ? res.data : c));
       successMsg = `تم حفظ تعديلات "${CTA_SLOT_METADATA[editingSlotKey]?.titleAr || editingSlotKey}" بنجاح.`;
       closeEditModal();
     } catch (err) {
@@ -266,8 +267,8 @@
               <h2 class="text-lg font-extrabold text-brand-navy">
                 {meta?.titleAr || item.key}
               </h2>
-              {#if meta?.descriptionAr}
-                <p class="text-xs text-slate-500">{meta.descriptionAr}</p>
+              {#if meta?.locationAr}
+                <p class="text-xs text-slate-500">{meta.locationAr}</p>
               {/if}
 
               <div class="mt-3 grid gap-2 sm:grid-cols-2 text-xs text-slate-700 bg-slate-50 rounded-xl p-3.5 border border-slate-100">

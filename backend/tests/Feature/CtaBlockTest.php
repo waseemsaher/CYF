@@ -116,3 +116,4 @@ it('toggles CTA active status in one click and respects starts_at / ends_at sche
     expect($announcement['status'])->toBe('expired')
         ->and($announcement['is_visible'])->toBeFalse();
 });
+

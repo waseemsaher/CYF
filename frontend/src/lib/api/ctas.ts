@@ -274,3 +274,4 @@ export function toggleAdminCta(fetcher: typeof fetch = fetch, key: string) {
   clearCtaCache();
   return apiPost<{ data: CtaBlock }>(fetcher, `/admin/ctas/${encodeURIComponent(key)}/toggle`);
 }
+

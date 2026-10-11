@@ -43,7 +43,7 @@
   $: coursesCountStat =
     data.totalCoursesCount && data.totalCoursesCount > 0
       ? `${data.totalCoursesCount} مقررات متاحة`
-      : $t('home.stats.coursesCountFallback');
+      : 'فرقة أولى والباقي جاي';
 
   // Pricing calculations from config
   $: bundleSavingEgp = getBundleSavingEgp();
@@ -63,65 +63,55 @@
   $: steps = [
     {
       num: '1',
-      title: $t('home.steps.step1.title'),
-      desc: $t('home.steps.step1.desc'),
+      title: $t.home.steps.step1Title,
+      desc: $t.home.steps.step1Desc,
       icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'
     },
     {
       num: '2',
-      title: $t('home.steps.step2.title'),
-      desc: $t('home.steps.step2.desc'),
+      title: $t.home.steps.step2Title,
+      desc: $t.home.steps.step2Desc,
       icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'
     },
     {
       num: '3',
-      title: $t('home.steps.step3.title'),
-      desc: $t('home.steps.step3.desc'),
+      title: $t.home.steps.step3Title,
+      desc: $t.home.steps.step3Desc,
       icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'
     }
   ];
 
-  $: features = [
+  const featureIcons = [
     {
-      title: $t('home.features.f1.title'),
-      desc: $t('home.features.f1.desc'),
       icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
       color: 'from-brand-cyan/20 to-brand-cyan/5',
       iconColor: 'text-brand-cyan'
     },
     {
-      title: $t('home.features.f2.title'),
-      desc: $t('home.features.f2.desc'),
       icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
       color: 'from-emerald-500/20 to-emerald-500/5',
       iconColor: 'text-emerald-400'
     },
     {
-      title: $t('home.features.f3.title'),
-      desc: $t('home.features.f3.desc'),
       icon: 'M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z',
       color: 'from-purple-500/20 to-purple-500/5',
       iconColor: 'text-purple-400'
     },
     {
-      title: $t('home.features.f4.title'),
-      desc: $t('home.features.f4.desc'),
       icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
       color: 'from-amber-500/20 to-amber-500/5',
       iconColor: 'text-amber-400'
     }
   ];
 
+  $: features = $t.home.features.items.map((item, idx) => ({
+    title: item.title,
+    desc: item.desc,
+    ...(featureIcons[idx] ?? featureIcons[0])
+  }));
+
   // FAQ items: always rendered in DOM for crawlers and GEO citation
-  $: faqs = [
-    { q: $t('home.faq.q1.q'), a: $t('home.faq.q1.a') },
-    { q: $t('home.faq.q2.q'), a: $t('home.faq.q2.a') },
-    { q: $t('home.faq.q3.q'), a: $t('home.faq.q3.a') },
-    { q: $t('home.faq.q4.q'), a: $t('home.faq.q4.a') },
-    { q: $t('home.faq.q5.q'), a: $t('home.faq.q5.a') },
-    { q: $t('home.faq.q6.q'), a: $t('home.faq.q6.a') },
-    { q: $t('home.faq.q7.q'), a: $t('home.faq.q7.a') }
-  ];
+  $: faqs = $t.home.faq.items;
 
   let openFaqIndex: number | null = 0;
   function toggleFaq(index: number) {
@@ -156,12 +146,12 @@
 </script>
 
 <svelte:head>
-  <title>{$t('meta.title')}</title>
-  <meta name="description" content={$t('meta.description')} />
-  <meta property="og:title" content={$t('meta.title')} />
-  <meta property="og:description" content={$t('meta.description')} />
-  <meta name="twitter:title" content={$t('meta.title')} />
-  <meta name="twitter:description" content={$t('meta.description')} />
+  <title>{$t.home.metaTitle}</title>
+  <meta name="description" content={$t.home.metaDesc} />
+  <meta property="og:title" content={$t.home.metaTitle} />
+  <meta property="og:description" content={$t.home.metaDesc} />
+  <meta name="twitter:title" content={$t.home.metaTitle} />
+  <meta name="twitter:description" content={$t.home.metaDesc} />
   <link rel="preload" as="image" href="/images/hero-poster.webp" fetchpriority="high" />
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
   {@html faqJsonLd}
@@ -207,20 +197,20 @@
         <span class="relative flex h-2 w-2">
           <span class="relative inline-flex h-2 w-2 rounded-full bg-brand-cyan"></span>
         </span>
-        <span class="text-xs sm:text-sm font-bold text-brand-cyan tracking-wide">{$t('home.hero.badge')}</span>
+        <span class="text-xs sm:text-sm font-bold text-brand-cyan tracking-wide">{$t.hero.badge}</span>
       </div>
 
       <!-- Single H1 on homepage -->
       <h1 class="mb-6 text-3xl font-extrabold leading-[1.3] tracking-tight text-white sm:text-5xl lg:text-6xl">
-        {$t('home.hero.titleLine1')}
+        {$t.hero.titlePrefix}
         <span class="block mt-2 bg-gradient-to-l from-brand-cyan via-cyan-300 to-white bg-clip-text text-transparent">
-          {$t('home.hero.titleLine2')}
+          {$t.hero.titleHighlight}
         </span>
       </h1>
 
       <!-- Subtitle -->
       <p class="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg lg:text-xl font-normal">
-        {$t('home.hero.subtitle')}
+        {$t.hero.subheading}
       </p>
 
       <!-- Admin-editable CTA Buttons (Primary + Secondary) -->
@@ -264,15 +254,15 @@
         </div>
         <div class="text-center">
           <div class="text-sm sm:text-base font-extrabold text-white">{REVIEW_TIME_TEXT}</div>
-          <div class="mt-1 text-xs font-medium text-slate-300">{$t('home.stats.reviewLabel')}</div>
+          <div class="mt-1 text-xs font-medium text-slate-300">مراجعة يدوية للإيصال</div>
         </div>
         <div class="text-center">
-          <div class="text-sm sm:text-base font-extrabold text-brand-cyan">{$t('home.stats.curriculumMatch')}</div>
+          <div class="text-sm sm:text-base font-extrabold text-brand-cyan">مبني على توصيف مقرر فرقتك</div>
           <div class="mt-1 text-xs font-medium text-slate-300">تنظيم حسب القسم</div>
         </div>
         <div class="text-center">
           <div class="text-sm sm:text-base font-extrabold text-white">فودافون كاش / انستاباي</div>
-          <div class="mt-1 text-xs font-medium text-slate-300">{$t('home.stats.safePayment')}</div>
+          <div class="mt-1 text-xs font-medium text-slate-300">بتدفع على رقم رسمي وبتستلم تأكيد</div>
         </div>
       </div>
     </div>
@@ -285,9 +275,9 @@
     <div class="mx-auto max-w-6xl">
       <div class="mb-16 text-center">
         <span class="mb-3 inline-block rounded-full bg-brand-navy/10 px-4 py-1 text-xs font-extrabold text-brand-navy">
-          {$t('home.steps.badge')}
+          {$t.home.steps.eyebrow}
         </span>
-        <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{$t('home.steps.title')}</h2>
+        <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{$t.home.steps.title}</h2>
       </div>
 
       <div class="grid gap-8 md:grid-cols-3 relative">
@@ -334,8 +324,10 @@
               <div>
                 <div class="mb-2 flex items-center justify-between gap-2">
                   <span class="rounded-full bg-brand-navy px-3 py-1 text-xs font-bold text-brand-cyan">درس تجريبي</span>
-                  {#if sample.durationMinutes}
-                    <span class="text-xs font-medium text-slate-500">{sample.durationMinutes} دقيقة</span>
+                  {#if sample.durationMinutes || sample.durationText}
+                    <span class="text-xs font-medium text-slate-500">
+                      {sample.durationText || `${sample.durationMinutes} دقيقة`}
+                    </span>
                   {/if}
                 </div>
                 <h3 class="mb-2 text-lg font-extrabold text-brand-navy">{sample.titleAr}</h3>
@@ -369,16 +361,16 @@
       <div class="mb-14 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-slate-100 pb-6">
         <div>
           <span class="mb-2 inline-block rounded-full bg-brand-cyan/15 px-3.5 py-1 text-xs font-extrabold text-brand-navy">
-            {$t('home.courses.badge')}
+            {$t.home.courses.eyebrow}
           </span>
-          <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{$t('home.courses.title')}</h2>
-          <p class="mt-1 text-base text-slate-600">{$t('home.courses.subtitle')}</p>
+          <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{$t.home.courses.title}</h2>
+          <p class="mt-1 text-base text-slate-600">مواد مترتبة حسب فرقتك وقسمك في كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر</p>
         </div>
         <a
           href="/courses"
           class="group inline-flex items-center gap-2 self-start sm:self-auto rounded-full border border-slate-200 bg-slate-50 px-5 py-2.5 text-sm font-bold text-brand-navy transition-all hover:border-brand-navy hover:bg-brand-navy hover:text-white"
         >
-          <span>{$t('home.courses.viewAll')}</span>
+          <span>{$t.home.courses.viewAll}</span>
           <svg class="h-4 w-4 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
@@ -392,11 +384,11 @@
           <div class="mt-1 flex items-baseline gap-1.5">
             {#if earlyBirdActive}
               <span class="text-2xl font-black text-brand-navy">{EARLY_BIRD_PRICE}</span>
-              <span class="text-sm font-bold text-slate-600">{$t('common.egp')}</span>
-              <span class="mr-2 text-sm text-slate-400 line-through">{COURSE_PRICE_EGP} {$t('common.egp')}</span>
+              <span class="text-sm font-bold text-slate-600">{$t.home.courses.currency}</span>
+              <span class="mr-2 text-sm text-slate-400 line-through">{COURSE_PRICE_EGP} {$t.home.courses.currency}</span>
             {:else}
               <span class="text-2xl font-black text-brand-navy">{COURSE_PRICE_EGP}</span>
-              <span class="text-sm font-bold text-slate-600">{$t('common.egp')}</span>
+              <span class="text-sm font-bold text-slate-600">{$t.home.courses.currency}</span>
             {/if}
           </div>
           {#if earlyBirdActive && earlyBirdDateLabel}
@@ -413,14 +405,14 @@
             <span class="text-xs font-bold text-brand-cyan">باقة {BUNDLE_COURSES_COUNT} مواد</span>
             {#if bundleSavingEgp > 0}
               <span class="rounded-full bg-brand-cyan px-2.5 py-0.5 text-xs font-extrabold text-brand-navy">
-                وفّر {bundleSavingEgp} {$t('common.egp')}
+                وفّر {bundleSavingEgp} {$t.home.courses.currency}
               </span>
             {/if}
           </div>
           <div class="mt-1 flex items-baseline gap-1.5">
             <span class="text-2xl font-black text-white">{BUNDLE_PRICE}</span>
-            <span class="text-sm font-bold text-slate-300">{$t('common.egp')}</span>
-            <span class="mr-2 text-xs text-slate-400 line-through">{COURSE_PRICE_EGP * BUNDLE_COURSES_COUNT} {$t('common.egp')}</span>
+            <span class="text-sm font-bold text-slate-300">{$t.home.courses.currency}</span>
+            <span class="mr-2 text-xs text-slate-400 line-through">{COURSE_PRICE_EGP * BUNDLE_COURSES_COUNT} {$t.home.courses.currency}</span>
           </div>
           <p class="mt-2 text-xs text-slate-300">
             اختار أي {BUNDLE_COURSES_COUNT} مواد في فرقتك ونسّق تفعيل الباقة مع الدعم بعد التحويل.
@@ -449,7 +441,7 @@
           <svg class="mx-auto mb-4 h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
-          <p class="text-base font-medium text-slate-500">{$t('home.courses.empty')}</p>
+          <p class="text-base font-medium text-slate-500">{$t.home.courses.emptyNotice}</p>
         </div>
       {:else}
         <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -459,19 +451,9 @@
               class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-brand-cyan/40 hover:shadow-xl hover:shadow-brand-navy/8"
             >
               <div class="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                {#if course.thumbnail_url}
-                  <img
-                    src={course.thumbnail_url}
-                    alt={`مقرر ${course.title_ar} - حاسبات الأزهر على منصة Codeera`}
-                    loading="lazy"
-                    decoding="async"
-                    class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                {:else}
-                  <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-navy to-brand-blue p-6 text-center">
-                    <span class="text-lg font-bold text-white/90 leading-snug">{course.title_ar}</span>
-                  </div>
-                {/if}
+                <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brand-navy to-brand-blue p-6 text-center">
+                  <span class="text-lg font-bold text-white/90 leading-snug">{course.title?.ar || course.slug}</span>
+                </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
               </div>
 
@@ -486,22 +468,22 @@
                 </div>
 
                 <h3 class="mb-2 text-lg font-extrabold text-brand-navy transition-colors group-hover:text-brand-blue line-clamp-1">
-                  {course.title_ar}
+                  {course.title?.ar || course.slug}
                 </h3>
                 <p class="mb-6 line-clamp-2 text-sm leading-relaxed text-slate-500 flex-1">
-                  {course.description_ar}
+                  {course.description?.ar || 'محتوى دراسي مبني على توصيف مقرر فرقتك مع كويزات دورية.'}
                 </p>
 
                 <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
                   <div>
-                    <span class="text-xs font-medium text-slate-400 block">{$t('home.courses.priceLabel')}</span>
+                    <span class="text-xs font-medium text-slate-400 block">{$t.home.courses.priceCaption}</span>
                     <span class="text-xl font-black text-brand-navy">
-                      {course.price_egp ?? COURSE_PRICE_EGP}
-                      <span class="text-xs font-bold text-slate-500">{$t('common.egp')}</span>
+                      {course.amount_due_cents > 0 ? Math.round(course.amount_due_cents / 100) : COURSE_PRICE_EGP}
+                      <span class="text-xs font-bold text-slate-500">{$t.home.courses.currency}</span>
                     </span>
                   </div>
                   <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-navy px-4 py-2 text-xs font-bold text-white transition-all group-hover:bg-brand-cyan group-hover:text-brand-navy">
-                    <span>تفاصيل المقرر</span>
+                    <span>{$t.home.courses.details}</span>
                     <svg class="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -516,7 +498,7 @@
   </section>
 
   <!-- ============================================ -->
-  <!-- WHY CODEERA - FEATURES                       -->
+  <!-- WHY Codeera - FEATURES                       -->
   <!-- ============================================ -->
   <section class="relative overflow-hidden bg-brand-navy py-24 px-4 text-white">
     <div class="pointer-events-none absolute top-0 left-1/3 h-96 w-96 rounded-full bg-brand-cyan/5 blur-[120px]"></div>
@@ -525,9 +507,9 @@
     <div class="relative z-10 mx-auto max-w-6xl">
       <div class="mb-16 text-center">
         <span class="mb-3 inline-block rounded-full border border-brand-cyan/30 bg-brand-cyan/10 px-4 py-1 text-xs font-extrabold text-brand-cyan">
-          {$t('home.features.badge')}
+          {$t.home.features.eyebrow}
         </span>
-        <h2 class="text-3xl font-extrabold text-white sm:text-4xl">{$t('home.features.title')}</h2>
+        <h2 class="text-3xl font-extrabold text-white sm:text-4xl">{$t.home.features.title}</h2>
       </div>
 
       <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -553,9 +535,9 @@
     <div class="mx-auto max-w-5xl">
       <div class="mb-12 text-center">
         <span class="mb-3 inline-block rounded-full bg-brand-navy/10 px-4 py-1 text-xs font-extrabold text-brand-navy">
-          {$t('home.trust.badge')}
+          {FOUNDER_TRUST_CONFIG.eyebrow}
         </span>
-        <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{$t('home.trust.title')}</h2>
+        <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{FOUNDER_TRUST_CONFIG.title}</h2>
       </div>
 
       <div class="grid gap-8 md:grid-cols-2">
@@ -584,7 +566,7 @@
               rel="noopener noreferrer"
               class="inline-flex items-center gap-1.5 font-extrabold text-emerald-700 hover:text-emerald-800"
             >
-              <span>{$t('home.trust.whatsappLink')}</span>
+              <span>اسألنا على واتساب قبل ما تشترك</span>
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
@@ -602,7 +584,7 @@
                 </svg>
               </div>
               <div>
-                <h3 class="text-lg font-extrabold text-brand-navy">{$t('home.trust.refundTitle')}</h3>
+                <h3 class="text-lg font-extrabold text-brand-navy">ضمان استرجاع واضح</h3>
                 <p class="text-xs font-semibold text-emerald-800">حقك محفوظ بشروط واضحة ومكتوبة</p>
               </div>
             </div>
@@ -632,7 +614,7 @@
               href="/refund"
               class="inline-flex items-center gap-1.5 rounded-xl bg-brand-navy px-4 py-2.5 text-xs font-bold text-white transition hover:bg-brand-blue"
             >
-              <span>{$t('home.trust.refundLink')}</span>
+              <span>اقرأ سياسة الاسترجاع كاملة</span>
             </a>
             <a
               href={WHATSAPP_SUPPORT_URL}
@@ -660,9 +642,9 @@
     <div class="mx-auto max-w-3xl">
       <div class="mb-14 text-center">
         <span class="mb-3 inline-block rounded-full bg-brand-navy/10 px-4 py-1 text-xs font-extrabold text-brand-navy">
-          {$t('home.faq.badge')}
+          {$t.home.faq.eyebrow}
         </span>
-        <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{$t('home.faq.title')}</h2>
+        <h2 class="text-3xl font-extrabold text-brand-navy sm:text-4xl">{$t.home.faq.title}</h2>
       </div>
 
       <div class="space-y-3">
@@ -713,10 +695,10 @@
 
       <div class="relative z-10 mx-auto max-w-2xl">
         <h2 class="mb-4 text-3xl font-extrabold sm:text-4xl">
-          {homeBottomCta.headline_ar || $t('home.cta.title')}
+          {homeBottomCta.headline_ar || $t.home.cta.title}
         </h2>
         <p class="mb-8 text-base text-slate-300 sm:text-lg">
-          {homeBottomCta.subtext_ar || $t('home.cta.subtitle')}
+          {homeBottomCta.subtext_ar || $t.home.cta.desc}
         </p>
         <a
           href={homeBottomCta.url}

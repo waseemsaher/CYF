@@ -42,7 +42,7 @@ export const BUNDLE_PRICE = 750; // Placeholder (e.g., 750 EGP for 3 courses ins
  * The offer automatically disappears once EARLY_BIRD_END_DATE is in the past.
  */
 export const EARLY_BIRD_PRICE = 250; // Placeholder offer price in EGP
-export const EARLY_BIRD_END_DATE = ''; // Placeholder ISO date, e.g. '2026-11-15' (empty = hidden)
+export const EARLY_BIRD_END_DATE: string = ''; // Placeholder ISO date, e.g. '2026-11-15' (empty = hidden)
 export const EARLY_BIRD_LABEL_SUFFIX = 'قبل الميد';
 
 /**
@@ -58,6 +58,8 @@ export const REFERRAL_DISCOUNT_EGP = 50;
 export const FOUNDER_TRUST_CONFIG = {
   eyebrow: 'ليه تثق في Codeera - كوديرا؟',
   title: 'منصة مبنية من مبرمج فاهم طبيعة دراستك في حاسبات الأزهر',
+  headlineAr: 'مبنية بواسطة مبرمج زميلك فاهم اللي محتاجه',
+  roleAr: 'مؤسس ومطور منصة Codeera - كوديرا',
   storyPlaceholder:
     '[مساحة مخصصة لقصة مؤسس المنصة: اكتب هنا نبذة قصيرة عنك كمطور وباني المنصة، تجربتك مع مواد الكلية، وهدفك إن زمايلك يلاقوا شرح منظم وواضح بدل التشتت بين المصادر.]',
   refundSummary:
@@ -94,10 +96,10 @@ export function isEarlyBirdActive(now: Date = new Date()): boolean {
 /**
  * Format the early-bird end date in readable Egyptian Arabic.
  */
-export function formatEarlyBirdEndDate(): string {
-  if (!EARLY_BIRD_END_DATE) return '';
-  const parsed = new Date(EARLY_BIRD_END_DATE);
-  if (Number.isNaN(parsed.getTime())) return EARLY_BIRD_END_DATE;
+export function formatEarlyBirdEndDate(dateStr: string = EARLY_BIRD_END_DATE): string {
+  if (!dateStr) return '';
+  const parsed = new Date(dateStr);
+  if (Number.isNaN(parsed.getTime())) return dateStr;
   return parsed.toLocaleDateString('ar-EG', {
     day: 'numeric',
     month: 'long',
@@ -108,8 +110,7 @@ export function formatEarlyBirdEndDate(): string {
 /**
  * Calculate honest per-lesson cost in EGP when lesson count is known (> 0).
  */
-export function getPerLessonCostEgp(priceCents: number, lessonsCount?: number | null): number | null {
-  if (!lessonsCount || lessonsCount <= 0 || priceCents <= 0) return null;
-  const priceEgp = priceCents / 100;
+export function getPerLessonCostEgp(priceEgp: number, lessonsCount?: number | null): number | null {
+  if (!lessonsCount || lessonsCount <= 0 || priceEgp <= 0) return null;
   return Math.ceil(priceEgp / lessonsCount);
 }

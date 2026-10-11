@@ -32,3 +32,4 @@ class CtaBlockSeeder extends Seeder
         app(CtaBlockService::class)->flushCache();
     }
 }
+

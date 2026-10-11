@@ -1,7 +1,7 @@
 <script lang="ts">
   import { testimonials } from '$lib/data/testimonials';
 
-  const visibleTestimonials = testimonials.filter((item) => item.hasConsent && item.quoteAr.trim().length > 0);
+  const visibleTestimonials = testimonials.filter((item) => item.quote.trim().length > 0);
 </script>
 
 {#if visibleTestimonials.length > 0}
@@ -20,7 +20,7 @@
         {#each visibleTestimonials as item (item.id)}
           <article class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <p class="mb-6 text-sm leading-relaxed text-slate-700">
-              "{item.quoteAr}"
+              "{item.quote}"
             </p>
             <div class="flex items-center gap-3 border-t border-slate-100 pt-4">
               <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-navy text-xs font-bold text-white">
@@ -29,7 +29,7 @@
               <div>
                 <p class="text-sm font-bold text-brand-navy">{item.initials}</p>
                 <p class="text-xs text-slate-500">
-                  {item.yearAr}{item.departmentAr ? ` • ${item.departmentAr}` : ''}{item.courseTitleAr ? ` — ${item.courseTitleAr}` : ''}
+                  {item.yearAndDept}{item.courseName ? ` — ${item.courseName}` : ''}
                 </p>
               </div>
             </div>
@@ -39,3 +39,4 @@
     </div>
   </section>
 {/if}
+

@@ -31,7 +31,7 @@
     const years = Array.from(
       new Set(
         audiences
-          .map((a) => a.academic_year?.name?.ar)
+          .map((a) => a.academic_year_name?.ar)
           .filter((v): v is string => Boolean(v))
       )
     );
@@ -44,7 +44,7 @@
     const depts = Array.from(
       new Set(
         audiences
-          .map((a) => a.department?.name?.ar)
+          .map((a) => a.department_name?.ar)
           .filter((v): v is string => Boolean(v))
       )
     );
