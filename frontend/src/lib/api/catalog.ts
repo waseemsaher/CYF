@@ -5,6 +5,14 @@ export type Translation = {
   en: string;
 };
 
+export type CourseAudienceInfo = {
+  academic_year_id: number;
+  department_id: number;
+  academic_year_name?: Translation | null;
+  department_name?: Translation | null;
+  department_code?: string | null;
+};
+
 export type Course = {
   id: number;
   slug: string;
@@ -16,6 +24,10 @@ export type Course = {
   amount_due_cents: number;
   discount_id: number | null;
   status?: string;
+  is_general?: boolean;
+  audiences?: CourseAudienceInfo[];
+  lessons_count?: number;
+  quizzes_count?: number;
   telegram_invite_link?: string | null;
   telegram_channel_id?: number | null;
   telegram_group_id?: number | null;
@@ -25,6 +37,7 @@ export type Course = {
 export type ReferenceOption = {
   id: number;
   name: Translation;
+  code?: string;
   sort_order: number;
 };
 
