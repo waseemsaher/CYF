@@ -1,9 +1,10 @@
 import { writable, derived } from 'svelte/store';
 import {
-  REVIEW_TIME_TEXT,
-  SUBSCRIPTION_VALIDITY_TEXT,
-  BRAND_DISCLAIMER_AR
+  BRAND_DISCLAIMER_AR,
+  getSafeConfig
 } from '$lib/pricing.config';
+
+const SAFE_CONFIG = getSafeConfig();
 
 export type Locale = 'ar' | 'en';
 
@@ -311,7 +312,7 @@ export const translations: Record<Locale, Translations> = {
       dashboardCta: 'لوحة الطالب',
       stats: [
         { value: 'فرقة أولى والباقي جاي', label: 'مواد متاحة حالياً على المنصة' },
-        { value: REVIEW_TIME_TEXT, label: 'وقت مراجعة الإيصال وتفعيل المقرر' },
+        { value: SAFE_CONFIG.reviewTimeText, label: 'وقت مراجعة الإيصال وتفعيل المقرر' },
         { value: 'مبني على توصيف مقرر فرقتك', label: 'محتوى مترتب حسب منهج الكلية' }
       ],
       langToggleAria: 'Switch to English',
@@ -373,7 +374,7 @@ export const translations: Record<Locale, Translations> = {
         step2Desc:
           'بتدفع على رقم رسمي عبر فودافون كاش أو إنستاباي، وبترفع صورة إيصال التحويل من موبايلك في ثواني.',
         step3Title: 'مراجعة يدوية للإيصال وتفعيل المقرر',
-        step3Desc: `فريق الإدارة بيراجع إيصال الدفع يدوياً للتأكد من التحويل (${REVIEW_TIME_TEXT})، وبعد الاعتماد بيفتحلك المحتوى بالكامل وبيوصلك تأكيد.`
+        step3Desc: `فريق الإدارة بيراجع إيصال الدفع يدوياً للتأكد من التحويل (${SAFE_CONFIG.reviewTimeText})، وبعد الاعتماد بيفتحلك المحتوى بالكامل وبيوصلك تأكيد.`
       },
       courses: {
         eyebrow: 'مواد الكلية',
@@ -421,15 +422,15 @@ export const translations: Record<Locale, Translations> = {
           },
           {
             q: 'إيصال الدفع بياخد وقت قد إيه عشان يتراجع ويتفعل الكورس؟',
-            a: `مراجعة الإيصالات بتتم بشكل يدوي من فريق الإدارة عشان نضمن دقة كل عملية دفع، وده بياخد ${REVIEW_TIME_TEXT}. أول ما الإيصال يتعتمد، المقرر بيفتح في حسابك وبتوصلك رسالة تأكيد.`
+            a: `مراجعة الإيصالات بتتم بشكل يدوي من فريق الإدارة عشان نضمن دقة كل عملية دفع (${SAFE_CONFIG.reviewTimeText}). أول ما الإيصال يتعتمد، المقرر بيفتح في حسابك وبتوصلك رسالة تأكيد.`
           },
           {
             q: 'اشتراك المادة بيفضل شغال معايا لحد إمتى؟',
-            a: `اشتراكك في أي مقرر بيفضل متاح معاك ${SUBSCRIPTION_VALIDITY_TEXT}، عشان تقدر تذاكر وتراجع براحتك ليلة الامتحان.`
+            a: `اشتراكك في أي مقرر بيفضل متاح معاك ${SAFE_CONFIG.subscriptionValidityText}، عشان تقدر تذاكر وتراجع براحتك ليلة الامتحان.`
           },
           {
             q: 'إيه هي سياسة استرداد الرسوم لو غيرت رأيي أو حصلت مشكلة؟',
-            a: 'لو إيصال الدفع اترفض أو حصل خطأ في التحويل، المبلغ بيرجعلك بالكامل. وكمان بعد التفعيل، تقدر تطلب استرداد كامل المبلغ خلال 7 أيام من تاريخ التفعيل طالما مشاهدتك متعدتش 20% من دروس المقرر، وراجعت صفحة سياسة الاسترداد للتفاصيل.'
+            a: `لو إيصال الدفع اترفض أو حصل خطأ في التحويل، المبلغ بيرجعلك بالكامل. وكمان بعد التفعيل، تقدر تطلب استرداد كامل المبلغ خلال ${SAFE_CONFIG.refundWindowDays} أيام من تاريخ التفعيل طالما مشاهدتك متعدتش ${SAFE_CONFIG.refundMaxWatchedPercent}% من دروس المقرر، وراجعت صفحة سياسة الاسترداد للتفاصيل.`
           },
           {
             q: 'إيه المتطلبات التقنية عشان أشوف فيديوهات الشرح؟',
@@ -648,7 +649,7 @@ export const translations: Record<Locale, Translations> = {
       dashboardCta: 'My Dashboard',
       stats: [
         { value: '1st Year & More Coming', label: 'Available Courses in Catalog' },
-        { value: REVIEW_TIME_TEXT, label: 'Manual Receipt Review Window' },
+        { value: SAFE_CONFIG.reviewTimeText, label: 'Manual Receipt Review Window' },
         { value: 'Built on Your Year Syllabus', label: 'Structured Around Faculty Modules' }
       ],
       langToggleAria: 'التبديل إلى العربية',
@@ -707,7 +708,7 @@ export const translations: Record<Locale, Translations> = {
         step2Title: 'Pay via Vodafone Cash or InstaPay & Upload Receipt',
         step2Desc: 'Transfer the course fee to our official wallet/account and upload a screenshot of your receipt.',
         step3Title: 'Manual Receipt Review & Access Activation',
-        step3Desc: `Our admin team manually reviews your receipt (${REVIEW_TIME_TEXT}). Once approved, your course content unlocks and you receive confirmation.`
+        step3Desc: `Our admin team manually reviews your receipt (${SAFE_CONFIG.reviewTimeText}). Once approved, your course content unlocks and you receive confirmation.`
       },
       courses: {
         eyebrow: 'Course Catalog',
@@ -753,15 +754,15 @@ export const translations: Record<Locale, Translations> = {
           },
           {
             q: 'How long does payment review and approval take?',
-            a: `Payment receipts are reviewed manually by an admin (${REVIEW_TIME_TEXT}). Access opens right after approval.`
+            a: `Payment receipts are reviewed manually by an admin (${SAFE_CONFIG.reviewTimeText}). Access opens right after approval.`
           },
           {
             q: 'How long is my subscription valid?',
-            a: `Your subscription remains valid for: ${SUBSCRIPTION_VALIDITY_TEXT}.`
+            a: `Your subscription remains valid for: ${SAFE_CONFIG.subscriptionValidityText}.`
           },
           {
             q: 'What is the refund policy?',
-            a: 'Full refund if your receipt is rejected, or within 7 days of activation if you have watched less than 20% of the course.'
+            a: `Full refund if your receipt is rejected, or within ${SAFE_CONFIG.refundWindowDays} days of activation if you have watched less than ${SAFE_CONFIG.refundMaxWatchedPercent}% of the course.`
           },
           {
             q: 'What is required to watch the video lessons?',

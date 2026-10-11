@@ -4,16 +4,7 @@
   import { updateAdminCourse } from '$lib/api/admin';
   import { currentLocale, formatPrice, getLocalizedText } from '$lib/i18n';
   import {
-    COURSE_PRICE_EGP,
-    BUNDLE_COURSES_COUNT,
-    BUNDLE_PRICE,
-    EARLY_BIRD_PRICE,
-    EARLY_BIRD_END_DATE,
-    REVIEW_TIME_TEXT,
-    REFUND_GUARANTEE_SHORT,
-    getBundleSavingEgp,
-    isEarlyBirdActive,
-    formatEarlyBirdEndDate,
+    getSafeConfig,
     getPerLessonCostEgp
   } from '$lib/pricing.config';
   import { resolveCtaSlot } from '$lib/api/ctas';
@@ -87,25 +78,23 @@
     );
   });
 
-  // Pricing & framing calculations from pricing.config
+  // Pricing & framing calculations from pricing.config via getSafeConfig()
+  let safeConfig = $derived(getSafeConfig());
   let baseCoursePriceEgp = $derived(
     data.course.amount_due_cents > 0
       ? Math.round(data.course.amount_due_cents / 100)
       : data.course.amount_due_cents === 0
         ? 0
-        : COURSE_PRICE_EGP
+        : safeConfig.coursePriceEgp
   );
-  let earlyBirdActive = $derived(isEarlyBirdActive());
-  let earlyBirdDateLabel = $derived(formatEarlyBirdEndDate(EARLY_BIRD_END_DATE));
   let effectivePriceEgp = $derived(
     baseCoursePriceEgp === 0
       ? 0
-      : earlyBirdActive && EARLY_BIRD_PRICE < baseCoursePriceEgp
-        ? EARLY_BIRD_PRICE
+      : safeConfig.isEarlyBirdValid && safeConfig.earlyBirdPrice < baseCoursePriceEgp
+        ? safeConfig.earlyBirdPrice
         : baseCoursePriceEgp
   );
   let perLessonCostEgp = $derived(getPerLessonCostEgp(effectivePriceEgp, lessonsCount));
-  let bundleSavingEgp = $derived(getBundleSavingEgp());
 
   // Admin-editable CTA slot for course page
   let courseCta = $derived(resolveCtaSlot(data.ctas, 'course_page_default'));
@@ -325,7 +314,7 @@
           💬 متابعة الأسئلة طوال الترم
         </span>
         <span class="rounded-lg bg-white/10 border border-white/15 px-3 py-1.5">
-          ⏱️ تفعيل الاشتراك: {REVIEW_TIME_TEXT}
+          ⏱️ تفعيل الاشتراك: {safeConfig.reviewTimeText}
         </span>
       </div>
     </div>
@@ -367,14 +356,14 @@
         <p>{$currentLocale === 'en' ? 'Current Price' : 'سعر الاشتراك في المقرر'}</p>
         {#if data.course.discount_cents > 0}
           <span class="old-price">{formatPrice(data.course.list_price_cents, $currentLocale)}</span>
-        {:else if earlyBirdActive && EARLY_BIRD_PRICE < baseCoursePriceEgp}
+        {:else if safeConfig.isEarlyBirdValid && safeConfig.earlyBirdPrice < baseCoursePriceEgp}
           <span class="old-price">{baseCoursePriceEgp} ج.م</span>
         {/if}
         <strong>{effectivePriceEgp} ج.م</strong>
 
-        {#if earlyBirdActive && earlyBirdDateLabel}
+        {#if safeConfig.isEarlyBirdValid && safeConfig.earlyBirdDateLabel}
           <span class="mt-1 inline-block rounded-md bg-amber-400/20 border border-amber-300/40 px-2.5 py-1 text-xs font-bold text-amber-200">
-            السعر ده لحد {earlyBirdDateLabel} قبل الميد
+            السعر ده لحد {safeConfig.earlyBirdDateLabel} قبل الميد
           </span>
         {/if}
 
@@ -401,24 +390,26 @@
           </a>
         {/if}
 
-        <!-- Bundle Option Card -->
-        <div class="mt-4 rounded-xl bg-white/10 border border-white/15 p-3 text-right text-xs text-slate-200">
-          <div class="flex items-center justify-between gap-2 font-extrabold text-white">
-            <span>باقة {BUNDLE_COURSES_COUNT} مواد: {BUNDLE_PRICE} ج.م</span>
-            {#if bundleSavingEgp > 0}
-              <span class="rounded-full bg-brand-cyan px-2 py-0.5 text-[11px] font-extrabold text-brand-navy">
-                وفّر {bundleSavingEgp} جنيه
-              </span>
-            {/if}
+        <!-- Bundle Option Card (shown only when bundle config is valid) -->
+        {#if safeConfig.isBundleValid}
+          <div class="mt-4 rounded-xl bg-white/10 border border-white/15 p-3 text-right text-xs text-slate-200">
+            <div class="flex items-center justify-between gap-2 font-extrabold text-white">
+              <span>باقة {safeConfig.bundleCoursesCount} مواد: {safeConfig.bundlePrice} ج.م</span>
+              {#if safeConfig.bundleSavingEgp > 0}
+                <span class="rounded-full bg-brand-cyan px-2 py-0.5 text-[11px] font-extrabold text-brand-navy">
+                  وفّر {safeConfig.bundleSavingEgp} جنيه
+                </span>
+              {/if}
+            </div>
+            <p class="mt-1 text-[11px] text-slate-300 leading-relaxed">
+              تقدر تشترك في باقة {safeConfig.bundleCoursesCount} مواد مع بعض بالتنسيق مع الدعم بعد رفع الإيصال.
+            </p>
           </div>
-          <p class="mt-1 text-[11px] text-slate-300 leading-relaxed">
-            تقدر تشترك في باقة {BUNDLE_COURSES_COUNT} مواد مع بعض بالتنسيق مع الدعم بعد رفع الإيصال.
-          </p>
-        </div>
+        {/if}
 
         <!-- Prominent Refund Guarantee Line -->
         <div class="mt-3 rounded-xl bg-emerald-500/15 border border-emerald-400/30 p-3 text-right text-xs text-emerald-100">
-          <p class="leading-relaxed">{REFUND_GUARANTEE_SHORT}</p>
+          <p class="leading-relaxed">{safeConfig.refundGuaranteeShort}</p>
           <a href="/refund" class="mt-1.5 inline-block font-extrabold text-white underline underline-offset-4">
             اقرأ سياسة الاسترجاع كاملة
           </a>

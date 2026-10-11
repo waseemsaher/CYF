@@ -3,20 +3,10 @@
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n';
   import {
-    COURSE_PRICE_EGP,
-    BUNDLE_COURSES_COUNT,
-    BUNDLE_PRICE,
-    EARLY_BIRD_PRICE,
-    EARLY_BIRD_END_DATE,
-    REVIEW_TIME_TEXT,
-    SUBSCRIPTION_VALIDITY_TEXT,
     FOUNDER_TRUST_CONFIG,
-    REFUND_GUARANTEE_SHORT,
-    getBundleSavingEgp,
-    isEarlyBirdActive,
-    formatEarlyBirdEndDate
+    getSafeConfig
   } from '$lib/pricing.config';
-  import { resolveCtaSlot } from '$lib/api/ctas';
+  import { resolveCtaSlot, resolveOptionalCtaSlot } from '$lib/api/ctas';
   import { HOME_SAMPLE_LESSON, getSampleLessonForCourse } from '$lib/data/sample-lessons';
   import { WHATSAPP_SUPPORT_URL } from '$lib/socials';
   import TestimonialsSection from '$lib/components/TestimonialsSection.svelte';
@@ -34,30 +24,32 @@
     }
   });
 
-  // Admin-editable CTAs with safe codebase fallbacks
-  $: heroPrimaryCta = resolveCtaSlot(data.ctas, 'home_hero_primary');
-  $: heroSecondaryCta = resolveCtaSlot(data.ctas, 'home_hero_secondary');
-  $: homeBottomCta = resolveCtaSlot(data.ctas, 'home_bottom');
+  // Validated, placeholder-safe pricing & review configuration
+  $: safeConfig = getSafeConfig();
+
+  // Sample lessons (computed server-side in loader, with safe fallback)
+  $: configuredSampleLessons =
+    data.configuredSampleLessons ?? [
+      ...(HOME_SAMPLE_LESSON ? [HOME_SAMPLE_LESSON] : []),
+      ...(data.courses ?? [])
+        .map((course: { slug: string }) => getSampleLessonForCourse(course.slug))
+        .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    ];
+  $: hasSampleLessons = data.hasSampleLessons ?? configuredSampleLessons.length > 0;
+
+  // Admin-editable CTAs: required slots fall back safely; optional heroSecondaryCta renders nothing if inactive or pointing to hidden #sample-lesson
+  $: heroPrimaryCta = data.heroPrimaryCta ?? resolveCtaSlot(data.ctas, 'home_hero_primary');
+  $: heroSecondaryCta =
+    data.heroSecondaryCta !== undefined
+      ? data.heroSecondaryCta
+      : resolveOptionalCtaSlot(data.ctas, 'home_hero_secondary', { hasSampleLessons });
+  $: homeBottomCta = data.homeBottomCta ?? resolveCtaSlot(data.ctas, 'home_bottom');
 
   // Dynamic courses count for stats bar
   $: coursesCountStat =
     data.totalCoursesCount && data.totalCoursesCount > 0
       ? `${data.totalCoursesCount} مقررات متاحة`
       : 'فرقة أولى والباقي جاي';
-
-  // Pricing calculations from config
-  $: bundleSavingEgp = getBundleSavingEgp();
-  $: earlyBirdActive = isEarlyBirdActive();
-  $: earlyBirdDateLabel = formatEarlyBirdEndDate(EARLY_BIRD_END_DATE);
-
-  // Sample lessons (data-driven, hidden if none configured)
-  $: configuredSampleLessons = [
-    ...(HOME_SAMPLE_LESSON ? [HOME_SAMPLE_LESSON] : []),
-    ...(data.courses ?? [])
-      .map((course: { slug: string }) => getSampleLessonForCourse(course.slug))
-      .filter((item): item is NonNullable<typeof item> => Boolean(item))
-  ];
-  $: hasSampleLessons = configuredSampleLessons.length > 0;
 
   // Steps data (honest manual receipt review on step 3, no Telegram icon)
   $: steps = [
@@ -227,18 +219,11 @@
           </svg>
         </a>
 
-        {#if hasSampleLessons || heroSecondaryCta.url !== '#sample-lesson'}
+        {#if heroSecondaryCta}
           <a
             href={heroSecondaryCta.url}
             target={heroSecondaryCta.open_in_new_tab ? '_blank' : undefined}
             rel={heroSecondaryCta.open_in_new_tab ? 'noopener noreferrer' : undefined}
-            class={getCtaButtonClass(heroSecondaryCta.style, 'hero')}
-          >
-            {heroSecondaryCta.label_ar}
-          </a>
-        {:else}
-          <a
-            href="#how-it-works"
             class={getCtaButtonClass(heroSecondaryCta.style, 'hero')}
           >
             {heroSecondaryCta.label_ar}
@@ -253,7 +238,7 @@
           <div class="mt-1 text-xs font-medium text-slate-300">حاسبات الأزهر</div>
         </div>
         <div class="text-center">
-          <div class="text-sm sm:text-base font-extrabold text-white">{REVIEW_TIME_TEXT}</div>
+          <div class="text-sm sm:text-base font-extrabold text-white">{safeConfig.reviewTimeText}</div>
           <div class="mt-1 text-xs font-medium text-slate-300">مراجعة يدوية للإيصال</div>
         </div>
         <div class="text-center">
@@ -377,53 +362,55 @@
         </a>
       </div>
 
-      <!-- Pricing & Bundle Summary Banner (all values from pricing.config) -->
-      <div class="mb-12 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-6 md:grid-cols-2 lg:grid-cols-3">
+      <!-- Pricing & Bundle Summary Banner (all values from pricing.config via getSafeConfig) -->
+      <div class="mb-12 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-6 md:grid-cols-2 {safeConfig.isBundleValid ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}">
         <div class="rounded-xl bg-white p-5 border border-slate-200/80 shadow-sm">
           <span class="text-xs font-bold text-slate-500">اشتراك المادة الواحدة</span>
           <div class="mt-1 flex items-baseline gap-1.5">
-            {#if earlyBirdActive}
-              <span class="text-2xl font-black text-brand-navy">{EARLY_BIRD_PRICE}</span>
+            {#if safeConfig.isEarlyBirdValid}
+              <span class="text-2xl font-black text-brand-navy">{safeConfig.earlyBirdPrice}</span>
               <span class="text-sm font-bold text-slate-600">{$t.home.courses.currency}</span>
-              <span class="mr-2 text-sm text-slate-400 line-through">{COURSE_PRICE_EGP} {$t.home.courses.currency}</span>
+              <span class="mr-2 text-sm text-slate-400 line-through">{safeConfig.coursePriceEgp} {$t.home.courses.currency}</span>
             {:else}
-              <span class="text-2xl font-black text-brand-navy">{COURSE_PRICE_EGP}</span>
+              <span class="text-2xl font-black text-brand-navy">{safeConfig.coursePriceEgp}</span>
               <span class="text-sm font-bold text-slate-600">{$t.home.courses.currency}</span>
             {/if}
           </div>
-          {#if earlyBirdActive && earlyBirdDateLabel}
+          {#if safeConfig.isEarlyBirdValid && safeConfig.earlyBirdDateLabel}
             <p class="mt-2 inline-block rounded-md bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 border border-amber-200">
-              السعر ده لحد {earlyBirdDateLabel} قبل الميد
+              السعر ده لحد {safeConfig.earlyBirdDateLabel} قبل الميد
             </p>
           {:else}
-            <p class="mt-2 text-xs text-slate-600">شامل الشرح، الكويزات، ومتابعة الأسئلة ({SUBSCRIPTION_VALIDITY_TEXT})</p>
+            <p class="mt-2 text-xs text-slate-600">شامل الشرح، الكويزات، ومتابعة الأسئلة ({safeConfig.subscriptionValidityText})</p>
           {/if}
         </div>
 
-        <div class="rounded-xl bg-brand-navy p-5 text-white shadow-md">
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-xs font-bold text-brand-cyan">باقة {BUNDLE_COURSES_COUNT} مواد</span>
-            {#if bundleSavingEgp > 0}
-              <span class="rounded-full bg-brand-cyan px-2.5 py-0.5 text-xs font-extrabold text-brand-navy">
-                وفّر {bundleSavingEgp} {$t.home.courses.currency}
-              </span>
-            {/if}
+        {#if safeConfig.isBundleValid}
+          <div class="rounded-xl bg-brand-navy p-5 text-white shadow-md">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-brand-cyan">باقة {safeConfig.bundleCoursesCount} مواد</span>
+              {#if safeConfig.bundleSavingEgp > 0}
+                <span class="rounded-full bg-brand-cyan px-2.5 py-0.5 text-xs font-extrabold text-brand-navy">
+                  وفّر {safeConfig.bundleSavingEgp} {$t.home.courses.currency}
+                </span>
+              {/if}
+            </div>
+            <div class="mt-1 flex items-baseline gap-1.5">
+              <span class="text-2xl font-black text-white">{safeConfig.bundlePrice}</span>
+              <span class="text-sm font-bold text-slate-300">{$t.home.courses.currency}</span>
+              <span class="mr-2 text-xs text-slate-400 line-through">{safeConfig.coursePriceEgp * safeConfig.bundleCoursesCount} {$t.home.courses.currency}</span>
+            </div>
+            <p class="mt-2 text-xs text-slate-300">
+              اختار أي {safeConfig.bundleCoursesCount} مواد في فرقتك ونسّق تفعيل الباقة مع الدعم بعد التحويل.
+            </p>
           </div>
-          <div class="mt-1 flex items-baseline gap-1.5">
-            <span class="text-2xl font-black text-white">{BUNDLE_PRICE}</span>
-            <span class="text-sm font-bold text-slate-300">{$t.home.courses.currency}</span>
-            <span class="mr-2 text-xs text-slate-400 line-through">{COURSE_PRICE_EGP * BUNDLE_COURSES_COUNT} {$t.home.courses.currency}</span>
-          </div>
-          <p class="mt-2 text-xs text-slate-300">
-            اختار أي {BUNDLE_COURSES_COUNT} مواد في فرقتك ونسّق تفعيل الباقة مع الدعم بعد التحويل.
-          </p>
-        </div>
+        {/if}
 
-        <div class="flex flex-col justify-between rounded-xl bg-white p-5 border border-slate-200/80 shadow-sm md:col-span-2 lg:col-span-1">
+        <div class="flex flex-col justify-between rounded-xl bg-white p-5 border border-slate-200/80 shadow-sm {safeConfig.isBundleValid ? 'md:col-span-2 lg:col-span-1' : ''}">
           <div>
             <span class="text-xs font-bold text-emerald-700">سياسة استرجاع واضحة</span>
             <p class="mt-1.5 text-xs leading-relaxed text-slate-600">
-              {REFUND_GUARANTEE_SHORT}
+              {safeConfig.refundGuaranteeShort}
             </p>
           </div>
           <a href="/refund" class="mt-3 inline-flex items-center gap-1 text-xs font-bold text-brand-navy hover:text-brand-blue underline underline-offset-4">
@@ -478,7 +465,7 @@
                   <div>
                     <span class="text-xs font-medium text-slate-400 block">{$t.home.courses.priceCaption}</span>
                     <span class="text-xl font-black text-brand-navy">
-                      {course.amount_due_cents > 0 ? Math.round(course.amount_due_cents / 100) : COURSE_PRICE_EGP}
+                      {course.amount_due_cents > 0 ? Math.round(course.amount_due_cents / 100) : safeConfig.coursePriceEgp}
                       <span class="text-xs font-bold text-slate-500">{$t.home.courses.currency}</span>
                     </span>
                   </div>
@@ -553,8 +540,13 @@
                 <p class="text-xs font-semibold text-slate-500">{FOUNDER_TRUST_CONFIG.roleAr}</p>
               </div>
             </div>
-            <p class="text-sm leading-relaxed text-slate-700">
-              {FOUNDER_TRUST_CONFIG.storyPlaceholder}
+            {#if safeConfig.founderStory}
+              <p class="text-sm leading-relaxed text-slate-700">
+                {safeConfig.founderStory}
+              </p>
+            {/if}
+            <p class="mt-3 text-xs font-semibold text-slate-600">
+              {FOUNDER_TRUST_CONFIG.paymentSafetyNote}
             </p>
           </div>
 
@@ -596,7 +588,7 @@
             <ul class="mt-4 space-y-2 text-xs text-slate-600">
               <li class="flex items-center gap-2">
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                <span>مراجعة يدوية لكل إيصال دفع ({REVIEW_TIME_TEXT}).</span>
+                <span>مراجعة يدوية لكل إيصال دفع ({safeConfig.reviewTimeText}).</span>
               </li>
               <li class="flex items-center gap-2">
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
@@ -604,7 +596,7 @@
               </li>
               <li class="flex items-center gap-2">
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                <span>استرجاع خلال 7 أيام من التفعيل لو المشاهدة أقل من 20%.</span>
+                <span>{safeConfig.refundWindowRuleAr}</span>
               </li>
             </ul>
           </div>

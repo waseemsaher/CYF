@@ -1,16 +1,11 @@
 import type { RequestHandler } from './$types';
 import { getCourses } from '$lib/api/catalog';
-import {
-  COURSE_PRICE_EGP,
-  BUNDLE_COURSES_COUNT,
-  BUNDLE_PRICE,
-  REVIEW_TIME_TEXT,
-  SUBSCRIPTION_VALIDITY_TEXT,
-  REFUND_GUARANTEE_SHORT
-} from '$lib/pricing.config';
+import { getSafeConfig } from '$lib/pricing.config';
 
 export const GET: RequestHandler = async ({ fetch }) => {
-  let coursesSection = '- برمجة 1، تفاضل وتكامل، إلكترونيات، ومواد الفرقة الأولى بكلية الحاسبات والذكاء الاصطناعي جامعة الأزهر.';
+  const safe = getSafeConfig();
+  let coursesSection =
+    '- برمجة 1، تفاضل وتكامل، إلكترونيات، ومواد الفرقة الأولى بكلية الحاسبات والذكاء الاصطناعي جامعة الأزهر.';
   try {
     const res = await getCourses(fetch, new URLSearchParams());
     const published = (res.data ?? []).filter((c) => !c.status || c.status === 'published');
@@ -20,13 +15,17 @@ export const GET: RequestHandler = async ({ fetch }) => {
           (c) =>
             `- [${c.title?.ar || c.slug}](https://codeera.tech/courses/${c.slug}): ${
               c.description?.ar || 'مقرر دراسي لطلاب حاسبات الأزهر'
-            } (${Math.round((c.amount_due_cents || c.price_cents || COURSE_PRICE_EGP * 100) / 100)} EGP)`
+            } (${Math.round((c.amount_due_cents || c.price_cents || safe.coursePriceEgp * 100) / 100)} EGP)`
         )
         .join('\n');
     }
   } catch {
     // Use fallback summary if API is unreachable during build
   }
+
+  const bundleLine = safe.isBundleValid
+    ? `\n- **باقة ${safe.bundleCoursesCount} مواد**: ${safe.bundlePrice} جنيه مصري (توفير ${safe.bundleSavingEgp} جنيه مقارنة بالاشتراك المنفرد).`
+    : '';
 
   const content = `# Codeera - كوديرا (https://codeera.tech)
 
@@ -39,12 +38,11 @@ export const GET: RequestHandler = async ({ fetch }) => {
 - **ما تقدمه المنصة**: شرح منظم للمحاضرات مبني على توصيف مقرر الفرقة، كويزات تفاعلية مع توضيح الإجابات، ومتابعة للأسئلة طوال الترم.
 
 ## الأسعار وطريقة الاشتراك (Pricing & Enrollment)
-- **سعر المادة الواحدة**: ${COURSE_PRICE_EGP} جنيه مصري (EGP).
-- **باقة ${BUNDLE_COURSES_COUNT} مواد**: ${BUNDLE_PRICE} جنيه مصري (توفير ${COURSE_PRICE_EGP * BUNDLE_COURSES_COUNT - BUNDLE_PRICE} جنيه مقارنة بالاشتراك المنفرد).
-- **فترة صلاحية الاشتراك**: ${SUBSCRIPTION_VALIDITY_TEXT}.
+- **سعر المادة الواحدة**: ${safe.coursePriceEgp} جنيه مصري (EGP).${bundleLine}
+- **فترة صلاحية الاشتراك**: ${safe.subscriptionValidityText}.
 - **وسائل الدفع**: فودافون كاش (Vodafone Cash) أو إنستاباي (InstaPay) على الأرقام الرسمية الموضحة في صفحة الدفع، يليها رفع صورة الإيصال (Screenshot).
-- **مراجعة وتفعيل الاشتراك**: تتم مراجعة الإيصالات يدوياً من إدارة المنصة (${REVIEW_TIME_TEXT}) ويُفتح المحتوى فور التأكيد.
-- **سياسة الاسترجاع**: ${REFUND_GUARANTEE_SHORT}
+- **مراجعة وتفعيل الاشتراك**: تتم مراجعة الإيصالات يدوياً من إدارة المنصة (${safe.reviewTimeText}) ويُفتح المحتوى فور التأكيد.
+- **سياسة الاسترجاع**: ${safe.refundGuaranteeShort}
 
 ## المقررات المتاحة (Course Catalog)
 ${coursesSection}
