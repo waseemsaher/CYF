@@ -37,3 +37,13 @@ cert.pem
 *.pem
 lighthouse-*.json
 frontend/C:*
+
+# Local databases, logs & editor temp files
+*.sqlite
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+task-*.log
+.DS_Store
+*.swp
+*~
