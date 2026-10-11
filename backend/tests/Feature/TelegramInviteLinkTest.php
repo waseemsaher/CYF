@@ -186,8 +186,8 @@ it('sends createChatInviteLink + sendMessage when no outstanding invite exists (
         && $req['user_id'] === 111222333
         && $req['only_if_banned'] === true);
     Http::assertSent(fn ($req) => str_contains($req->url(), 'createChatInviteLink')
-        && $req['member_limit'] === 1
-        && $req['creates_join_request'] === false);
+        && ! isset($req['member_limit'])
+        && $req['creates_join_request'] === true);
     Http::assertSent(fn ($req) => str_contains($req->url(), 'sendMessage')
         && str_contains($req['text'], 'https://t.me/+AbCdEfGhIjK'));
 });

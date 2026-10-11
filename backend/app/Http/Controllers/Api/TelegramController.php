@@ -187,9 +187,12 @@ class TelegramController extends Controller
                 $chatId = $joinRequest['chat']['id'] ?? null;
                 $fromId = $joinRequest['from']['id'] ?? null;
                 $username = $joinRequest['from']['username'] ?? null;
+                $inviteLink = isset($joinRequest['invite_link']['invite_link'])
+                    ? (string) $joinRequest['invite_link']['invite_link']
+                    : null;
 
                 if ($chatId !== null && $fromId !== null) {
-                    app(ProcessJoinRequest::class)->handle($chatId, (int) $fromId, $username);
+                    app(ProcessJoinRequest::class)->handle($chatId, (int) $fromId, $username, $inviteLink);
                 }
             } catch (\Throwable $e) {
                 Log::error('Error processing telegram chat_join_request update', [

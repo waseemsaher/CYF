@@ -152,9 +152,13 @@ class TelegramClient
     ): Response {
         $params = [
             'chat_id' => $chatId,
-            'member_limit' => $memberLimit,
             'creates_join_request' => $createsJoinRequest,
         ];
+
+        // Telegram Bot API forbids specifying member_limit when creates_join_request is true
+        if (! $createsJoinRequest) {
+            $params['member_limit'] = $memberLimit;
+        }
 
         if ($expireDate !== null) {
             $params['expire_date'] = $expireDate;

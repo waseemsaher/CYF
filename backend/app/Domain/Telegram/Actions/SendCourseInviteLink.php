@@ -82,7 +82,7 @@ class SendCourseInviteLink
                     chatId: $channelId,
                     memberLimit: 1,
                     expireDate: $expireDate,
-                    createsJoinRequest: false,
+                    createsJoinRequest: true,
                 );
 
                 if ($response->successful()) {
@@ -119,7 +119,7 @@ class SendCourseInviteLink
                     chatId: $groupId,
                     memberLimit: 1,
                     expireDate: $expireDate,
-                    createsJoinRequest: false,
+                    createsJoinRequest: true,
                 );
 
                 if ($response->successful()) {
