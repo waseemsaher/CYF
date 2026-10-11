@@ -3,12 +3,10 @@
   import { submitPayment } from '$lib/api/payments';
   import { currentLocale, formatPrice } from '$lib/i18n';
   import {
-    REVIEW_TIME_TEXT,
-    REFUND_GUARANTEE_SHORT,
-    REFERRAL_DISCOUNT_EGP,
-    BUNDLE_COURSES_COUNT,
-    BUNDLE_PRICE,
-    getBundleSavingEgp
+    REFERRAL_CODE_MAX_LENGTH,
+    REFERRAL_FIELD_HELPER_AR,
+    getSafeConfig,
+    sanitizeReferralCode
   } from '$lib/pricing.config';
 
   let { data }: { data: PageData } = $props();
@@ -22,7 +20,7 @@
   let submitted = $state(false);
   let errorMsg = $state('');
 
-  const bundleSavingEgp = $derived(getBundleSavingEgp());
+  const safeConfig = $derived(getSafeConfig());
 
   const methods = [
     { key: 'vodafone_cash', label: 'فودافون كاش', instructions: 'حوّل المبلغ المطلوب على رقم فودافون كاش الرسمي، وبعدها ارفع صورة الإيصال هنا.' },
@@ -57,12 +55,15 @@
       const termId = data.currentTerm?.id ? String(data.currentTerm.id) : '1';
       formData.append('term_id', termId);
       formData.append('method', method);
-      formData.append('sender_identifier', senderIdentifier);
+      formData.append('sender_identifier', senderIdentifier.trim());
       formData.append('proof', proof);
 
+      const cleanReferral = sanitizeReferralCode(referralCode);
+      const cleanStudentNote = studentNote.replace(/<[^>]*>/g, '').trim();
+
       const combinedNotes = [
-        referralCode.trim() ? `[كود ترشيح: ${referralCode.trim()}]` : '',
-        studentNote.trim()
+        cleanReferral ? `[كود ترشيح: ${cleanReferral}]` : '',
+        cleanStudentNote
       ]
         .filter(Boolean)
         .join(' — ');
@@ -102,7 +103,7 @@
       </div>
       <h1>تم استلام إيصال الدفع بنجاح</h1>
       <p>إيصالك بيتراجع يدوياً دلوقتي من فريق الإدارة، وهيتفتحلك المقرر بعد التأكيد.</p>
-      <p class="wait-note">وقت المراجعة المتوقع: <strong>{REVIEW_TIME_TEXT}</strong></p>
+      <p class="wait-note">حالة المراجعة: <strong>{safeConfig.reviewTimeText}</strong></p>
       <div class="success-actions">
         <a href="/payments">متابعة حالة طلباتي</a>
         <a href="/courses" class="secondary">تصفح المقررات</a>
@@ -113,7 +114,7 @@
       <div class="checkout-form">
         <h1>إتمام الاشتراك ورفع الإيصال</h1>
         <p class="mb-5 text-sm text-slate-600 leading-relaxed">
-          بتدفع على رقم رسمي وبتستلم تأكيد بعد مراجعة الإيصال يدوياً ({REVIEW_TIME_TEXT}).
+          بتدفع على رقم رسمي وبتستلم تأكيد بعد مراجعة الإيصال يدوياً ({safeConfig.reviewTimeText}).
         </p>
 
         {#if errorMsg}
@@ -158,27 +159,28 @@
         </label>
 
         <label class="field">
-          <span>كود ترشيح من زميل (اختياري)</span>
+          <span>عندك كود ترشيح من زميل؟ اكتبه هنا وهنراجعه مع الإيصال (اختياري)</span>
           <input
             type="text"
             dir="ltr"
+            maxlength={REFERRAL_CODE_MAX_LENGTH}
             bind:value={referralCode}
             placeholder="مثال: CODEERA-FRIEND"
           />
           <small class="text-xs text-slate-500">
-            لو معاك كود ترشيح من زميل مشترك، اكتبه هنا ونسّق قيمة الخصم ({REFERRAL_DISCOUNT_EGP} ج.م) مع الدعم قبل التحويل أو في الملاحظات.
+            {REFERRAL_FIELD_HELPER_AR}
           </small>
         </label>
 
         <label class="field">
           <span>ملاحظة للإدارة (اختياري)</span>
-          <textarea bind:value={studentNote} rows="3" placeholder="لو مشترك في باقة الـ {BUNDLE_COURSES_COUNT} مواد، اكتب أسماء المواد هنا"></textarea>
+          <textarea bind:value={studentNote} rows="3" maxlength="500" placeholder="لو مشترك في باقة الـ {safeConfig.bundleCoursesCount} مواد، اكتب أسماء المواد هنا"></textarea>
         </label>
 
         <!-- Prominent Refund Guarantee Box inside Checkout Form -->
         <div class="mb-5 rounded-lg border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs leading-relaxed text-emerald-950">
           <strong class="block mb-1 text-emerald-900">ضمان الاسترجاع وحفظ الحقوق:</strong>
-          <span>{REFUND_GUARANTEE_SHORT}</span>
+          <span>{safeConfig.refundGuaranteeShort}</span>
           <a href="/refund" class="mr-1 font-extrabold text-brand-navy underline underline-offset-4">
             اقرأ سياسة الاسترجاع كاملة
           </a>
@@ -212,13 +214,15 @@
 
         <div class="mt-4 border-t border-white/15 pt-4 text-xs text-slate-300 space-y-2 leading-relaxed">
           <p>
-            <strong class="text-white">وقت تفعيل الاشتراك:</strong> {REVIEW_TIME_TEXT} بعد مراجعة الإيصال يدوياً.
+            <strong class="text-white">مراجعة وتفعيل الاشتراك:</strong> {safeConfig.reviewTimeText}.
           </p>
+          {#if safeConfig.isBundleValid}
+            <p>
+              <strong class="text-cyan-300">باقة {safeConfig.bundleCoursesCount} مواد:</strong> متاحة بسعر {safeConfig.bundlePrice} ج.م {safeConfig.bundleSavingEgp > 0 ? `(توفير ${safeConfig.bundleSavingEgp} ج.م)` : ''} — اكتب أسماء المواد في خانة الملاحظات.
+            </p>
+          {/if}
           <p>
-            <strong class="text-cyan-300">باقة {BUNDLE_COURSES_COUNT} مواد:</strong> متاحة بسعر {BUNDLE_PRICE} ج.م {bundleSavingEgp > 0 ? `(توفير ${bundleSavingEgp} ج.م)` : ''} — اكتب أسماء المواد في خانة الملاحظات.
-          </p>
-          <p>
-            <strong class="text-emerald-300">سياسة الاسترجاع:</strong> استرداد كامل لو الإيصال اترفض، أو خلال 7 أيام من التفعيل لو المشاهدة أقل من 20%.
+            <strong class="text-emerald-300">سياسة الاسترجاع:</strong> استرداد كامل لو الإيصال اترفض، أو {safeConfig.refundWindowRuleAr}
           </p>
         </div>
       </aside>

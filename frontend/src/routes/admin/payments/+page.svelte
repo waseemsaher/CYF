@@ -8,6 +8,7 @@
   import { getAuthToken } from '$lib/api/client';
   import { getCurrentUser } from '$lib/api/auth';
   import { currentLocale, formatPrice } from '$lib/i18n';
+  import { parseReferralFromStudentNote } from '$lib/pricing.config';
   import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
 
   let payments: Payment[] = $state([]);
@@ -238,7 +239,16 @@
               <div class="info-row"><span>المرسل</span><span>{payment.sender_identifier}</span></div>
               <div class="info-row"><span>التاريخ</span><span>{formatDate(payment.created_at)}</span></div>
               {#if payment.student_note}
-                <div class="student-note"><strong>ملاحظة الطالب:</strong> {payment.student_note}</div>
+                {@const parsedNote = parseReferralFromStudentNote(payment.student_note)}
+                {#if parsedNote.referralCode}
+                  <div class="referral-badge">
+                    <span class="referral-label">كود الترشيح:</span>
+                    <code dir="ltr">{parsedNote.referralCode}</code>
+                  </div>
+                {/if}
+                {#if parsedNote.cleanNote}
+                  <div class="student-note"><strong>ملاحظة الطالب:</strong> {parsedNote.cleanNote}</div>
+                {/if}
               {/if}
               {#if payment.proof_url}
                 <div class="proof-preview">
@@ -331,6 +341,8 @@
   .info-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.35rem; }
   .info-row span { color: var(--muted); font-size: 0.88rem; }
   .info-row strong { color: var(--storm); }
+  .referral-badge { display: inline-flex; align-items: center; gap: 0.45rem; background: #ecfeff; border: 1.5px solid #67e8f9; border-radius: 0.4rem; color: #0e7490; font-size: 0.82rem; font-weight: 800; margin-top: 0.65rem; padding: 0.4rem 0.7rem; word-break: break-all; }
+  .referral-badge code { background: #ffffff; border: 1px solid #a5f3fc; border-radius: 0.25rem; color: #155e75; font-family: monospace; font-size: 0.85rem; font-weight: 900; padding: 0.1rem 0.4rem; }
   .student-note { background: var(--paper); border-radius: 0.35rem; font-size: 0.85rem; margin-top: 0.75rem; padding: 0.6rem 0.85rem; word-break: break-word; }
   .proof-preview { margin-top: 0.75rem; }
   .proof-label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.35rem; font-weight: 600; }
