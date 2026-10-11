@@ -15,10 +15,28 @@ class CtaBlockService
     private const CACHE_TTL_SECONDS = 60;
 
     /**
+     * Required CTA slot keys that fall back to safe defaults when inactive/expired.
+     * Optional slots ('home_hero_secondary', 'announcement_bar') render nothing when inactive/expired.
+     *
+     * @var list<string>
+     */
+    private const REQUIRED_SLOT_KEYS = [
+        'home_hero_primary',
+        'home_bottom',
+        'course_page_default',
+    ];
+
+    public static function isRequiredSlot(string $key): bool
+    {
+        return in_array($key, self::REQUIRED_SLOT_KEYS, true);
+    }
+
+    /**
      * Default seeded CTA definitions. Used by CtaBlockSeeder and as safe fallback.
      *
      * @return array<string, array{
      *   key: string,
+     *   required: bool,
      *   label_ar: string,
      *   headline_ar: string|null,
      *   subtext_ar: string|null,
@@ -35,6 +53,7 @@ class CtaBlockService
         return [
             'home_hero_primary' => [
                 'key' => 'home_hero_primary',
+                'required' => true,
                 'label_ar' => 'ابدأ بمادة واحدة',
                 'headline_ar' => null,
                 'subtext_ar' => null,
@@ -47,6 +66,7 @@ class CtaBlockService
             ],
             'home_hero_secondary' => [
                 'key' => 'home_hero_secondary',
+                'required' => false,
                 'label_ar' => 'شوف الدرس التجريبي',
                 'headline_ar' => null,
                 'subtext_ar' => null,
@@ -59,6 +79,7 @@ class CtaBlockService
             ],
             'home_bottom' => [
                 'key' => 'home_bottom',
+                'required' => true,
                 'label_ar' => 'شوف مواد فرقتك',
                 'headline_ar' => 'جاهز تبدأ مذاكرة بنظام واضح؟',
                 'subtext_ar' => 'اختار مادتك، ادفع بفودافون كاش أو إنستاباي على رقم رسمي، وهنراجع الإيصال ونفتحلك المحتوى.',
@@ -71,6 +92,7 @@ class CtaBlockService
             ],
             'course_page_default' => [
                 'key' => 'course_page_default',
+                'required' => true,
                 'label_ar' => 'اشترك في المقرر الآن',
                 'headline_ar' => null,
                 'subtext_ar' => null,
@@ -83,6 +105,7 @@ class CtaBlockService
             ],
             'announcement_bar' => [
                 'key' => 'announcement_bar',
+                'required' => false,
                 'label_ar' => 'تصفح المواد',
                 'headline_ar' => 'عرض بداية الترم متاح لفترة محدودة',
                 'subtext_ar' => 'سعر خاص لطلاب حاسبات الأزهر قبل امتحانات الميدتيرم',
@@ -262,6 +285,7 @@ class CtaBlockService
             'url' => (string) $block->url,
             'style' => (string) $block->style,
             'is_active' => (bool) $block->is_active,
+            'required' => self::isRequiredSlot((string) $block->key),
             'starts_at' => $block->starts_at?->toISOString(),
             'ends_at' => $block->ends_at?->toISOString(),
             'open_in_new_tab' => (bool) $block->open_in_new_tab,

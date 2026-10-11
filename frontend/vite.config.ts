@@ -2,14 +2,39 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
+import { getSafeConfig } from './src/lib/pricing.config';
 
 const certPath = path.resolve('cert.pem');
 const keyPath = path.resolve('../key.pem');
 const useHttps = process.env.USE_HTTPS === 'true' && fs.existsSync(certPath) && fs.existsSync(keyPath);
 
+let hasPrintedPlaceholderWarnings = false;
+
+function codeeraPlaceholderWarningPlugin(): Plugin {
+  return {
+    name: 'codeera-placeholder-warning',
+    apply: 'build',
+    buildStart() {
+      if (hasPrintedPlaceholderWarnings) return;
+      hasPrintedPlaceholderWarnings = true;
+      const safe = getSafeConfig();
+      if (safe.placeholderWarnings.length > 0) {
+        console.warn(
+          '\n[WARNING] Codeera pricing.config.ts still has placeholder/unset values (safe fallbacks active):'
+        );
+        for (const warning of safe.placeholderWarnings) {
+          console.warn(`  - ${warning}`);
+        }
+        console.warn('');
+      }
+    }
+  };
+}
+
 export default defineConfig({
   plugins: [
+    codeeraPlaceholderWarningPlugin(),
     sveltekit(),
     SvelteKitPWA({
       srcDir: 'src',

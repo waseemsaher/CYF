@@ -8,13 +8,7 @@
   import { currentLocale, t, formatPrice, getLocalizedText } from '$lib/i18n';
   import {
     COURSE_PRICE_EGP,
-    BUNDLE_COURSES_COUNT,
-    BUNDLE_PRICE,
-    EARLY_BIRD_PRICE,
-    EARLY_BIRD_END_DATE,
-    getBundleSavingEgp,
-    isEarlyBirdActive,
-    formatEarlyBirdEndDate
+    getSafeConfig
   } from '$lib/pricing.config';
 
   let { data }: { data: PageData } = $props();
@@ -35,9 +29,7 @@
     $currentUser?.role === 'admin' || $currentUser?.role === 'superadmin'
   );
 
-  let bundleSavingEgp = $derived(getBundleSavingEgp());
-  let earlyBirdActive = $derived(isEarlyBirdActive());
-  let earlyBirdDateLabel = $derived(formatEarlyBirdEndDate(EARLY_BIRD_END_DATE));
+  let safeConfig = $derived(getSafeConfig());
 
   let isModalOpen = $state(false);
   let isEditing = $state(false);
@@ -222,14 +214,16 @@
       <!-- Bundle & Early Bird Info Strip -->
       <div class="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm">
         <span class="rounded-full bg-white/10 border border-white/20 px-4 py-1.5 font-bold text-white">
-          سعر المادة: {earlyBirdActive ? EARLY_BIRD_PRICE : COURSE_PRICE_EGP} جنيه
+          سعر المادة: {safeConfig.isEarlyBirdValid ? safeConfig.earlyBirdPrice : safeConfig.coursePriceEgp} جنيه
         </span>
-        <span class="rounded-full bg-brand-cyan/20 border border-brand-cyan/40 px-4 py-1.5 font-extrabold text-brand-cyan">
-          باقة {BUNDLE_COURSES_COUNT} مواد بـ {BUNDLE_PRICE} جنيه {bundleSavingEgp > 0 ? `(وفّر ${bundleSavingEgp} جنيه)` : ''}
-        </span>
-        {#if earlyBirdActive && earlyBirdDateLabel}
+        {#if safeConfig.isBundleValid}
+          <span class="rounded-full bg-brand-cyan/20 border border-brand-cyan/40 px-4 py-1.5 font-extrabold text-brand-cyan">
+            باقة {safeConfig.bundleCoursesCount} مواد بـ {safeConfig.bundlePrice} جنيه {safeConfig.bundleSavingEgp > 0 ? `(وفّر ${safeConfig.bundleSavingEgp} جنيه)` : ''}
+          </span>
+        {/if}
+        {#if safeConfig.isEarlyBirdValid && safeConfig.earlyBirdDateLabel}
           <span class="rounded-full bg-amber-400/20 border border-amber-300/40 px-4 py-1.5 font-bold text-amber-200">
-            السعر ده لحد {earlyBirdDateLabel} قبل الميد
+            السعر ده لحد {safeConfig.earlyBirdDateLabel} قبل الميد
           </span>
         {/if}
       </div>

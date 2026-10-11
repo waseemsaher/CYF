@@ -1,6 +1,6 @@
 <script lang="ts">
   import { WHATSAPP_SUPPORT_URL } from '$lib/socials';
-  import { REVIEW_TIME_TEXT } from '$lib/pricing.config';
+  import { getSafeConfig } from '$lib/pricing.config';
 
   export let data: {
     block?: {
@@ -9,11 +9,13 @@
     } | null;
   };
 
+  const safeConfig = getSafeConfig();
+
   const defaultTitle = 'سياسة الاسترجاع والاستبدال';
   const defaultBody = `سياسة الاسترجاع على منصة Codeera - كوديرا واضحة عشان تحفظ حقك:
 1) لو إيصال الدفع اترفض لأي سبب أو حصل خطأ في التحويل، بنرجعلك المبلغ بالكامل أو بنساعدك تصحح الطلب.
-2) بعد تفعيل الاشتراك، تقدر تطلب استرجاع كامل للمبلغ خلال 7 أيام من تاريخ التفعيل بشرط ألا تتجاوز نسبة مشاهدتك لمحتوى المقرر 20%.
-3) لطلب الاسترجاع أو الاستفسار، تواصل معانا مباشرة على واتساب برقم تليفونك المسجل وصورة الإيصال، وبيتم رد المبلغ على نفس المحفظة خلال 2 إلى 3 أيام عمل.`;
+2) بعد تفعيل الاشتراك، تقدر تطلب استرجاع كامل للمبلغ خلال ${safeConfig.refundWindowDays} أيام من تاريخ التفعيل بشرط ألا تتجاوز نسبة مشاهدتك لمحتوى المقرر ${safeConfig.refundMaxWatchedPercent}%.
+3) لطلب الاسترجاع أو الاستفسار، تواصل معانا مباشرة على واتساب برقم تليفونك المسجل وصورة الإيصال، وبيتم رد المبلغ على نفس المحفظة خلال ${safeConfig.refundProcessingDaysText}.`;
 
   $: title = data?.block?.title?.ar || defaultTitle;
   $: body = data?.block?.body?.ar || defaultBody;
@@ -43,10 +45,10 @@
     <div class="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-6">
       <h2 class="text-lg font-extrabold text-brand-navy">ملخص سريع لشروط الاسترجاع</h2>
       <ul class="mt-3 space-y-2 text-sm text-slate-700">
-        <li>• مراجعة إيصالات الدفع بتتم يدوياً ({REVIEW_TIME_TEXT}).</li>
+        <li>• مراجعة إيصالات الدفع بتتم يدوياً ({safeConfig.reviewTimeText}).</li>
         <li>• استرجاع 100% لو الإيصال اترفض أو حصل تحويل بالخطأ.</li>
-        <li>• استرجاع خلال 7 أيام من تاريخ التفعيل طالما المشاهدة أقل من 20% من محتوى المقرر.</li>
-        <li>• رد المبلغ بيتم على نفس رقم المحفظة أو حساب انستاباي خلال 2 إلى 3 أيام عمل.</li>
+        <li>• {safeConfig.refundWindowRuleAr}</li>
+        <li>• {safeConfig.refundProcessingRuleAr}</li>
       </ul>
 
       <div class="mt-6 flex flex-wrap items-center gap-3">

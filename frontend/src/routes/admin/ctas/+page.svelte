@@ -8,6 +8,8 @@
     toggleAdminCta,
     CTA_SLOT_METADATA,
     DEFAULT_CTA_BLOCKS,
+    REQUIRED_CTA_BEHAVIOR_LABEL_AR,
+    OPTIONAL_CTA_BEHAVIOR_LABEL_AR,
     isValidCtaUrl,
     type CtaBlock,
     type CtaStyle
@@ -220,8 +222,8 @@
 
   <!-- Fallback Rule Notice -->
   <div class="mb-6 rounded-2xl border border-cyan-200 bg-cyan-50/70 p-4 text-xs leading-relaxed text-slate-700">
-    <strong class="text-brand-navy">قاعدة الأمان التلقائية (Safe Fallback):</strong>
-    لو أي زر أصلح غير نشط أو انتهى تاريخ عرضه (Expired)، الموقع بيعرض تلقائياً النص الافتراضي الآمن المدمج في الكود عشان مفيش أي زر يظهر فاضي للطلاب، ما عدا شريط الإعلان العلوي (`announcement_bar`) فبيختفي تماماً.
+    <strong class="text-brand-navy">قواعد العرض للأزرار المطلوبة والاختيارية:</strong>
+    الأزرار المصنفة <strong>({REQUIRED_CTA_BEHAVIOR_LABEL_AR})</strong> بترجع تلقائياً للنص الافتراضي الآمن لو اتقفلت أو انتهت مدتها، أما الأزرار المصنفة <strong>({OPTIONAL_CTA_BEHAVIOR_LABEL_AR})</strong> مثل الزر الثانوي وشريط الإعلانات العلوي فبتختفي تماماً عند الإيقاف.
   </div>
 
   {#if errorMsg}
@@ -248,6 +250,8 @@
         {@const meta = CTA_SLOT_METADATA[item.key]}
         {@const badge = statusBadgeInfo(item.status)}
         {@const fallback = DEFAULT_CTA_BLOCKS[item.key]}
+        {@const isRequired = item.required ?? meta?.required ?? fallback?.required ?? true}
+        {@const behaviorLabel = meta?.behaviorLabelAr ?? (isRequired ? REQUIRED_CTA_BEHAVIOR_LABEL_AR : OPTIONAL_CTA_BEHAVIOR_LABEL_AR)}
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300">
           <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
             <!-- Slot Info -->
@@ -258,6 +262,13 @@
                 </span>
                 <span class="rounded-full border px-3 py-0.5 text-xs font-extrabold {badge.classes}">
                   {badge.label}
+                </span>
+                <span
+                  class="rounded-full border px-3 py-0.5 text-xs font-extrabold {isRequired
+                    ? 'border-indigo-200 bg-indigo-50 text-indigo-900'
+                    : 'border-amber-200 bg-amber-50 text-amber-900'}"
+                >
+                  {behaviorLabel}
                 </span>
                 <span class="rounded-full bg-brand-navy/10 px-2.5 py-0.5 text-xs font-bold text-brand-navy">
                   النمط: {item.style}
@@ -325,9 +336,13 @@
                     </div>
                   {:else}
                     <p class="text-xs text-slate-400 italic">
-                      شريط الإعلان مخفي حالياً للزوار (لأنه غير نشط أو خارج فترة العرض).
+                      شريط الإعلان مخفي حالياً للزوار (لأنه اختياري وغير نشط أو خارج فترة العرض).
                     </p>
                   {/if}
+                {:else if !isRequired && item.status !== 'active'}
+                  <p class="text-xs text-slate-400 italic">
+                    الزر مخفي حالياً للزوار (لأنه اختياري وغير نشط أو خارج فترة العرض).
+                  </p>
                 {:else}
                   <div class="flex flex-col items-start gap-2">
                     <span
@@ -340,9 +355,14 @@
                       <span>{item.status === 'active' ? item.label_ar : fallback?.label_ar || item.label_ar}</span>
                       <span>←</span>
                     </span>
-                    {#if item.status !== 'active' && fallback}
+                    {#if item.status !== 'active' && isRequired && fallback}
                       <span class="text-[11px] text-amber-300">
-                        * يظهر حالياً بالنص الافتراضي الآمن ("{fallback.label_ar}") لأن هذا الزر {badge.label}.
+                        * يظهر حالياً بالنص الافتراضي الآمن ("{fallback.label_ar}") لأن هذا الزر مطلوب و{badge.label}.
+                      </span>
+                    {/if}
+                    {#if item.key === 'home_hero_secondary' && item.url.trim() === '#sample-lesson'}
+                      <span class="text-[11px] text-cyan-300">
+                        * ملاحظة: طالما الرابط هو #sample-lesson، الزر بيظهر فقط عند إضافة درس تجريبي في إعدادات الدروس التجريبية عشان ميوجهش لقسم مخفي.
                       </span>
                     {/if}
                   </div>

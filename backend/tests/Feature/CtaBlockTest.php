@@ -25,9 +25,14 @@ it('seeds default CTA slots and serves them via public endpoint', function (): v
     $response->assertOk()
         ->assertJsonPath('data.home_hero_primary.label_ar', 'ابدأ بمادة واحدة')
         ->assertJsonPath('data.home_hero_primary.is_visible', true)
+        ->assertJsonPath('data.home_hero_primary.required', true)
         ->assertJsonPath('data.home_hero_secondary.label_ar', 'شوف الدرس التجريبي')
+        ->assertJsonPath('data.home_hero_secondary.required', false)
+        ->assertJsonPath('data.home_bottom.required', true)
+        ->assertJsonPath('data.course_page_default.required', true)
         ->assertJsonPath('data.announcement_bar.is_active', false)
-        ->assertJsonPath('data.announcement_bar.is_visible', false);
+        ->assertJsonPath('data.announcement_bar.is_visible', false)
+        ->assertJsonPath('data.announcement_bar.required', false);
 });
 
 it('enforces admin role on CTA management endpoints', function (): void {
@@ -116,4 +121,3 @@ it('toggles CTA active status in one click and respects starts_at / ends_at sche
     expect($announcement['status'])->toBe('expired')
         ->and($announcement['is_visible'])->toBeFalse();
 });
-

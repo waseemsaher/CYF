@@ -9,9 +9,41 @@ use Illuminate\Database\Seeder;
 
 class ContentBlockSeeder extends Seeder
 {
-    public function run(): void
+    /**
+     * Seed default content blocks safely without overwriting existing admin edits.
+     *
+     * To intentionally overwrite specific keys in production, either pass `$forceUpdateKeys`
+     * (e.g. `['legal.refund']` or `['*']`) or set the `SEED_FORCE_UPDATE_KEYS` env var
+     * (comma-separated keys, e.g. `SEED_FORCE_UPDATE_KEYS=legal.refund,landing.hero`).
+     *
+     * @param  array<int, string>  $forceUpdateKeys
+     */
+    public function run(array $forceUpdateKeys = []): void
     {
-        $blocks = [
+        $blocks = self::defaultBlocks();
+        $resolvedForceKeys = self::resolveForceUpdateKeys($forceUpdateKeys);
+
+        foreach ($blocks as $b) {
+            $key = $b['key'];
+            $attributes = [
+                'group' => $b['group'],
+                'content' => $b['content'],
+            ];
+
+            if (in_array('*', $resolvedForceKeys, true) || in_array($key, $resolvedForceKeys, true)) {
+                ContentBlock::query()->updateOrCreate(['key' => $key], $attributes);
+            } else {
+                ContentBlock::query()->firstOrCreate(['key' => $key], $attributes);
+            }
+        }
+    }
+
+    /**
+     * @return array<int, array{key: string, group: string, content: array{ar: string, en: string}}>
+     */
+    public static function defaultBlocks(): array
+    {
+        return [
             [
                 'key' => 'landing.hero',
                 'group' => 'landing',
@@ -61,15 +93,19 @@ class ContentBlockSeeder extends Seeder
                 ],
             ],
         ];
+    }
 
-        foreach ($blocks as $b) {
-            ContentBlock::query()->updateOrCreate(
-                ['key' => $b['key']],
-                [
-                    'group' => $b['group'],
-                    'content' => $b['content'],
-                ]
-            );
-        }
+    /**
+     * @param  array<int, string>  $explicitKeys
+     * @return array<int, string>
+     */
+    private static function resolveForceUpdateKeys(array $explicitKeys): array
+    {
+        $envRaw = (string) env('SEED_FORCE_UPDATE_KEYS', '');
+        $envKeys = $envRaw !== ''
+            ? array_values(array_filter(array_map('trim', explode(',', $envRaw))))
+            : [];
+
+        return array_values(array_unique(array_merge($explicitKeys, $envKeys)));
     }
 }

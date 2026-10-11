@@ -75,4 +75,3 @@ class CtaBlock extends Model
         return $this->computedStatus($now) === 'active';
     }
 }
-
