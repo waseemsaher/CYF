@@ -6,6 +6,16 @@
   import { currentUser } from '$lib/api/auth';
   import { createAdminCourse, updateAdminCourse } from '$lib/api/admin';
   import { currentLocale, t, formatPrice, getLocalizedText } from '$lib/i18n';
+  import {
+    COURSE_PRICE_EGP,
+    BUNDLE_COURSES_COUNT,
+    BUNDLE_PRICE,
+    EARLY_BIRD_PRICE,
+    EARLY_BIRD_END_DATE,
+    getBundleSavingEgp,
+    isEarlyBirdActive,
+    formatEarlyBirdEndDate
+  } from '$lib/pricing.config';
 
   let { data }: { data: PageData } = $props();
 
@@ -25,6 +35,10 @@
     $currentUser?.role === 'admin' || $currentUser?.role === 'superadmin'
   );
 
+  let bundleSavingEgp = $derived(getBundleSavingEgp());
+  let earlyBirdActive = $derived(isEarlyBirdActive());
+  let earlyBirdDateLabel = $derived(formatEarlyBirdEndDate(EARLY_BIRD_END_DATE));
+
   let isModalOpen = $state(false);
   let isEditing = $state(false);
   let editingCourseId = $state<number | null>(null);
@@ -37,7 +51,7 @@
   let formSlug = $state('');
   let formDescAr = $state('');
   let formDescEn = $state('');
-  let formPricePounds = $state(150);
+  let formPricePounds = $state(COURSE_PRICE_EGP);
   let formStatus = $state<'published' | 'draft'>('published');
   let formTelegramLink = $state('');
   let formTelegramGroupId = $state('');
@@ -61,11 +75,11 @@
     })
   );
 
-  const pageHref = (page: number) => {
+  const pageHref = (pageNum: number) => {
     const params = new URLSearchParams();
     if (data.selectedAcademicYear) params.set('academic_year_id', data.selectedAcademicYear);
     if (data.selectedDepartment) params.set('department_id', data.selectedDepartment);
-    params.set('page', String(page));
+    params.set('page', String(pageNum));
     return `/courses?${params.toString()}`;
   };
 
@@ -77,7 +91,7 @@
     formSlug = '';
     formDescAr = '';
     formDescEn = '';
-    formPricePounds = 150;
+    formPricePounds = COURSE_PRICE_EGP;
     formStatus = 'published';
     formTelegramLink = '';
     formTelegramGroupId = '';
@@ -185,8 +199,10 @@
 </script>
 
 <svelte:head>
-  <title>{$t.courses.metaTitle}</title>
-  <meta name="description" content={$t.courses.metaDesc} />
+  <title>{$t('courses.metaTitle')}</title>
+  <meta name="description" content={$t('courses.metaDesc')} />
+  <meta property="og:title" content={$t('courses.metaTitle')} />
+  <meta property="og:description" content={$t('courses.metaDesc')} />
 </svelte:head>
 
 <div class="catalog-shell">
@@ -196,12 +212,27 @@
     <div class="catalog-hero-inner">
       <div class="header-top-pill">
         <span class="pill-dot"></span>
-        <span>{$t.courses.subtitle}</span>
+        <span>{$t('courses.subtitle')}</span>
       </div>
-      <h1 class="catalog-title">{$t.courses.title}</h1>
+      <h1 class="catalog-title">{$t('courses.title')}</h1>
       <p class="catalog-subtitle">
-        {$t.courses.desc}
+        {$t('courses.desc')}
       </p>
+
+      <!-- Bundle & Early Bird Info Strip -->
+      <div class="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm">
+        <span class="rounded-full bg-white/10 border border-white/20 px-4 py-1.5 font-bold text-white">
+          سعر المادة: {earlyBirdActive ? EARLY_BIRD_PRICE : COURSE_PRICE_EGP} جنيه
+        </span>
+        <span class="rounded-full bg-brand-cyan/20 border border-brand-cyan/40 px-4 py-1.5 font-extrabold text-brand-cyan">
+          باقة {BUNDLE_COURSES_COUNT} مواد بـ {BUNDLE_PRICE} جنيه {bundleSavingEgp > 0 ? `(وفّر ${bundleSavingEgp} جنيه)` : ''}
+        </span>
+        {#if earlyBirdActive && earlyBirdDateLabel}
+          <span class="rounded-full bg-amber-400/20 border border-amber-300/40 px-4 py-1.5 font-bold text-amber-200">
+            السعر ده لحد {earlyBirdDateLabel} قبل الميد
+          </span>
+        {/if}
+      </div>
 
       <!-- Admin Quick Action Toolbar -->
       {#if isAdmin}
@@ -213,12 +244,12 @@
               </svg>
             </span>
             <div>
-              <strong>{$t.courses.adminTitle}</strong>
-              <p>{$t.courses.adminDesc}</p>
+              <strong>{$t('courses.adminTitle')}</strong>
+              <p>{$t('courses.adminDesc')}</p>
             </div>
           </div>
           <button type="button" class="btn-create-course" onclick={openCreateModal}>
-            <span>{$t.courses.addCourse}</span>
+            <span>{$t('courses.addCourse')}</span>
           </button>
         </div>
       {/if}
@@ -226,7 +257,7 @@
   </header>
 
   <!-- Filter and Search Bar -->
-  <section class="controls-section" aria-label={$t.courses.filterSectionAria}>
+  <section class="controls-section" aria-label={$t('courses.filterSectionAria')}>
     <div class="search-box-wrap">
       <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8"></circle>
@@ -235,17 +266,17 @@
       <input
         type="search"
         class="search-input"
-        placeholder={$t.courses.searchPlaceholder}
+        placeholder={$t('courses.searchPlaceholder')}
         bind:value={searchQuery}
-        aria-label={$t.courses.searchAria}
+        aria-label={$t('courses.searchAria')}
       />
     </div>
 
-    <form class="filters-form" method="GET" aria-label={$t.courses.filterFormAria}>
+    <form class="filters-form" method="GET" aria-label={$t('courses.filterFormAria')}>
       <div class="select-group">
-        <label for="filter-year" class="filter-label">{$t.courses.yearLabel}</label>
+        <label for="filter-year" class="filter-label">{$t('courses.yearLabel')}</label>
         <select id="filter-year" name="academic_year_id" class="filter-select">
-          <option value="">{$t.courses.allYears}</option>
+          <option value="">{$t('courses.allYears')}</option>
           {#each data.academicYears as year}
             <option value={year.id} selected={String(year.id) === data.selectedAcademicYear}>{getLocalizedText(year.name, $currentLocale)}</option>
           {/each}
@@ -253,9 +284,9 @@
       </div>
 
       <div class="select-group">
-        <label for="filter-dept" class="filter-label">{$t.courses.deptLabel}</label>
+        <label for="filter-dept" class="filter-label">{$t('courses.deptLabel')}</label>
         <select id="filter-dept" name="department_id" class="filter-select">
-          <option value="">{$t.courses.allDepts}</option>
+          <option value="">{$t('courses.allDepts')}</option>
           {#each data.departments as department}
             <option value={department.id} selected={String(department.id) === data.selectedDepartment}>{getLocalizedText(department.name, $currentLocale)}</option>
           {/each}
@@ -263,12 +294,12 @@
       </div>
 
       <button type="submit" class="btn-apply-filters">
-        <span>{$t.courses.applyFilter}</span>
+        <span>{$t('courses.applyFilter')}</span>
       </button>
 
       {#if data.selectedAcademicYear || data.selectedDepartment}
         <a href="/courses" class="btn-reset-filters">
-          <span>{$t.courses.resetFilter}</span>
+          <span>{$t('courses.resetFilter')}</span>
         </a>
       {/if}
     </form>
@@ -292,15 +323,15 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
       </div>
-      <h3>{$t.courses.emptyTitle}</h3>
-      <p>{$t.courses.emptyDesc}</p>
+      <h3>{$t('courses.emptyTitle')}</h3>
+      <p>{$t('courses.emptyDesc')}</p>
       {#if searchQuery || data.selectedAcademicYear || data.selectedDepartment}
         <button
           type="button"
           class="btn-clear-search"
           onclick={() => { searchQuery = ''; window.location.href = '/courses'; }}
         >
-          {$t.courses.clearFilters}
+          {$t('courses.clearFilters')}
         </button>
       {/if}
     </div>
@@ -310,7 +341,7 @@
         {#if $currentLocale === 'en'}
           Found <strong>{filteredCourses.length}</strong> {filteredCourses.length === 1 ? 'course' : 'courses'}
         {:else}
-          تم العثور على <strong>{filteredCourses.length}</strong> مقرر دراسي
+          متاح حالياً <strong>{filteredCourses.length}</strong> مقرر دراسي
         {/if}
       </span>
     </div>
@@ -322,7 +353,7 @@
             <div class="stripe-badge-left">
               <span class="course-code-pill">{course.slug}</span>
               {#if course.discount_cents > 0}
-                <span class="pill-discount">{$t.courses.onSale}</span>
+                <span class="pill-discount">{$t('courses.onSale')}</span>
               {/if}
             </div>
 
@@ -344,7 +375,7 @@
             </div>
 
             <p class="course-description">
-              {getLocalizedText(course.description, $currentLocale) || ($currentLocale === 'en' ? 'Structured curriculum with detailed lectures and interactive quizzes.' : 'محتوى دراسي منظم يتضمن شرحاً تفصيلياً لأهم محاور المقرر واختبارات تفاعلية دورية.')}
+              {getLocalizedText(course.description, $currentLocale) || ($currentLocale === 'en' ? 'Structured curriculum with detailed lectures and interactive quizzes.' : 'محتوى دراسي مترتب حسب توصيف مقرر فرقتك مع كويزات دورية ومتابعة للأسئلة.')}
             </p>
           </div>
 
@@ -352,7 +383,7 @@
           {#if isAdmin}
             <div class="admin-controls-footer">
               <div class="admin-price-line">
-                <span class="price-lbl">{$t.courses.priceCaption}:</span>
+                <span class="price-lbl">{$t('courses.priceCaption')}:</span>
                 <strong>{formatPrice(course.amount_due_cents || course.price_cents || 0, $currentLocale)}</strong>
               </div>
               <div class="admin-action-buttons">
@@ -375,7 +406,7 @@
           {:else}
             <div class="student-pricing-footer">
               <div class="price-container">
-                <span class="price-sub">{$t.courses.priceCaption}</span>
+                <span class="price-sub">{$t('courses.priceCaption')}</span>
                 <div class="price-figures">
                   {#if course.discount_cents > 0}
                     <span class="price-old">{formatPrice(course.list_price_cents, $currentLocale)}</span>
@@ -385,7 +416,7 @@
               </div>
 
               <a href={`/courses/${course.slug}`} class="btn-explore-course">
-                <span>{$t.courses.exploreDetails}</span>
+                <span>{$t('courses.exploreDetails')}</span>
                 <span class="btn-arrow" aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
               </a>
             </div>
@@ -575,7 +606,7 @@
                   }
                 }}
               >
-                <option value="all">{$t.courses.generalForAll}</option>
+                <option value="all">{$t('courses.generalForAll')}</option>
                 {#each data.academicYears as y}
                   <option value={y.id}>{getLocalizedText(y.name, $currentLocale) || y.name.ar}</option>
                 {/each}
@@ -589,7 +620,7 @@
                 bind:value={formDepartmentId}
                 disabled={formAcademicYearId === 'all'}
               >
-                <option value="all">{$t.courses.allDepts}</option>
+                <option value="all">{$t('courses.allDepts')}</option>
                 {#each data.departments as d}
                   <option value={d.id}>{getLocalizedText(d.name, $currentLocale) || d.name.ar}</option>
                 {/each}
