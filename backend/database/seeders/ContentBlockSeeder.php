@@ -56,24 +56,24 @@ class ContentBlockSeeder extends Seeder
                 'key' => 'landing.why_us',
                 'group' => 'landing',
                 'content' => [
-                    'ar' => 'محتوى مبني على توصيف مقرر فرقتك، كويزات بإجابات مشروحة بعد كل جزء، ومتابعة مستمرة للأسئلة طول الترم.',
-                    'en' => 'Content built around your year syllabus, quizzes with explained answers, and continuous support throughout the semester.',
+                    'ar' => 'محتوى مبني على توصيف مقرر فرقتك، كويزات تقيس مستواك مع مراجعة الإجابات الصحيحة، وتقدر تسأل الفريق على واتساب أو في جروب المادة.',
+                    'en' => 'Content built around your year syllabus, quizzes with answer reviews, and direct support via WhatsApp or the course group.',
                 ],
             ],
             [
                 'key' => 'landing.faq',
                 'group' => 'landing',
                 'content' => [
-                    'ar' => "س: إزاي بيتم الاشتراك وتفعيل المقرر؟\nج: بتختار المقرر وبتحول الرسوم على فودافون كاش أو إنستاباي وترفع صورة الإيصال، وفريق الإدارة بيراجع الإيصال وبيفتحلك المحتوى بعد الاعتماد.",
-                    'en' => "Q: How does enrollment and course activation work?\nA: Choose your course, transfer fees via Vodafone Cash or InstaPay, upload your receipt screenshot, and our admin team reviews it manually to unlock your access.",
+                    'ar' => "س: إزاي بيتم الاشتراك وتفعيل المقرر؟\nج: بتختار المقرر وبتحول الرسوم على فودافون كاش أو إنستاباي وترفع صورة الإيصال، وفريق الإدارة بيراجع الإيصال يدوياً (غالباً خلال ساعات) وبيفتحلك المحتوى بعد الاعتماد.\n\nس: اشتراك المادة بيفضل شغال معايا لحد إمتى؟\nج: اشتراكك في المقرر بيفضل متاح معاك لحد نهاية الفصل الدراسي الحالي.",
+                    'en' => "Q: How does enrollment and course activation work?\nA: Choose your course, transfer fees via Vodafone Cash or InstaPay, upload your receipt screenshot, and our admin team reviews it manually (usually within hours) to unlock your access.\n\nQ: How long is my subscription valid?\nA: Your subscription remains valid until the end of the current academic semester.",
                 ],
             ],
             [
                 'key' => 'legal.terms',
                 'group' => 'legal',
                 'content' => [
-                    'ar' => "1. طبيعة المنصة:\nCodeera (كوديرا) منصة تعليمية مستقلة غير تابعة رسمياً لجامعة الأزهر، بتقدم شروحات وتدريبات ومراجعات مساندة لطلاب كلية الحاسبات والذكاء الاصطناعي.\n\n2. استخدام الحساب:\nالحساب شخصي لطالب واحد فقط، وممنوع مشاركة بيانات الدخول أو إعادة نشر الفيديوهات أو الملخصات خارج المنصة.\n\n3. الاشتراك والتفعيل:\nالاشتراك بيكون لكل مقرر خلال الفصل الدراسي المحدد. التفعيل بيتم بعد المراجعة اليدوية لإيصال الدفع المرفوع من الطالب.\n\n4. الدعم والتواصل:\nلأي استفسار بخصوص حسابك أو اشتراكك، تقدر تتواصل معانا مباشرة على واتساب الدعم الفني الموضح في المنصة.",
-                    'en' => "1. Platform Nature:\nCodeera is an independent educational platform not officially affiliated with Al-Azhar University, providing supplementary explanations and quizzes for FCAI students.\n\n2. Account Usage:\nAccounts are personal to a single student. Sharing credentials or redistributing materials is prohibited.\n\n3. Enrollment & Activation:\nAccess is per course for the active academic term and activates after manual review of your payment receipt.",
+                    'ar' => "1. طبيعة المنصة:\nCodeera - كوديرا منصة تعليمية مستقلة غير تابعة رسمياً لجامعة الأزهر، بتقدم شروحات وتدريبات ومراجعات مساندة لطلاب كلية الحاسبات والذكاء الاصطناعي.\n\n2. استخدام الحساب:\nالحساب شخصي لطالب واحد فقط، وممنوع مشاركة بيانات الدخول أو تحميل أو إعادة نشر الفيديوهات أو الملخصات خارج المنصة.\n\n3. الاشتراك والتفعيل والصلاحية:\nالاشتراك في المقرر بيستمر لحد نهاية الفصل الدراسي الحالي وفق نظام الاشتراك الحالي. التفعيل بيتم بعد المراجعة اليدوية لإيصال الدفع المرفوع من الطالب (غالباً خلال ساعات).\n\n4. الدعم والتواصل:\nلأي استفسار بخصوص حسابك أو اشتراكك، تقدر تتواصل معانا مباشرة على واتساب الدعم الفني الموضح في المنصة.",
+                    'en' => "1. Platform Nature:\nCodeera is an independent educational platform not officially affiliated with Al-Azhar University, providing supplementary explanations and quizzes for FCAI students.\n\n2. Account Usage:\nAccounts are personal to a single student. Sharing credentials or downloading/redistributing materials is prohibited.\n\n3. Enrollment, Activation & Validity:\nCourse access remains valid until the end of the current academic semester under the current subscription plan and activates after manual review of your payment receipt.",
                 ],
             ],
             [
@@ -88,8 +88,8 @@ class ContentBlockSeeder extends Seeder
                 'key' => 'legal.refund',
                 'group' => 'legal',
                 'content' => [
-                    'ar' => "سياسة الاسترداد في Codeera (كوديرا) واضحة ومباشرة عشان تكون مطمن قبل ما تشترك:\n\n1. في حالة رفض الإيصال أو وجود خطأ في التحويل:\nلو حصل تحويل بالخطأ أو تم رفض الطلب لأي سبب متعلق بالمراجعة ومتمش تفعيل المقرر، بنرجعلك المبلغ بالكامل على نفس رقم المحفظة أو حساب إنستاباي اللي حولت منه.\n\n2. طلب الاسترداد بعد التفعيل:\nتقدر تطلب استرداد كامل رسوم المقرر خلال 7 أيام من تاريخ تفعيل الاشتراك طالما لم تتجاوز مشاهدتك 20% من محتوى المقرر.\n\n3. طريقة تقديم طلب الاسترداد:\nابعتلنا رسالة على واتساب الدعم الفني برقم الموبايل المسجل وصورة الإيصال، وبيتم مراجعة الطلب ورد المبلغ خلال 2 إلى 3 أيام عمل.",
-                    'en' => "Codeera Refund Policy:\n\n1. Rejected Receipt or Transfer Error:\nIf a transfer was made in error or a payment request is rejected without activating the course, the full amount is refunded to your original Vodafone Cash or InstaPay account.\n\n2. Refund After Activation:\nYou may request a full refund within 7 days of enrollment activation provided you have accessed less than 20% of the course content.\n\n3. How to Request a Refund:\nContact our support team via WhatsApp with your registered phone number and receipt screenshot. Refunds are processed within 2 to 3 business days.",
+                    'ar' => "سياسة الاسترداد في Codeera - كوديرا واضحة ومباشرة عشان تكون مطمن قبل ما تشترك:\n\n1. في حالة رفض الإيصال أو وجود خطأ في التحويل:\nلو إيصال الدفع اترفض لأي سبب أو حصل خطأ في التحويل ومتمش تفعيل المقرر، المبلغ بيرجعلك بالكامل على نفس رقم المحفظة أو حساب إنستاباي اللي حولت منه.\n\n2. طلب الاسترداد بعد التفعيل:\nخلال 7 أيام من تاريخ تفعيل المقرر، تقدر تطلب استرداد رسوم الاشتراك من غير أي شرط على نسبة المشاهدة.\n\n3. طريقة تقديم طلب الاسترداد:\nلطلب الاسترداد، تواصل معانا على واتساب الدعم الفني برقم تليفونك المسجل وصورة الإيصال، وبيتم مراجعة الطلب ورد المبلغ خلال 2 إلى 3 أيام عمل.\n\n4. مراجعة حالات سوء الاستخدام:\nبيحتفظ فريق المنصة بحق مراجعة الحالات اللي يثبت فيها سوء استخدام واضح للمحتوى (زي تحميل الدروس أو مشاركتها خارج المنصة).",
+                    'en' => "Codeera Refund Policy:\n\n1. Rejected Receipt or Transfer Error:\nIf a payment receipt is rejected or there was a transfer error without activating the course, the full amount is returned to your original Vodafone Cash or InstaPay account.\n\n2. Refund After Activation:\nWithin 7 days from the activation date of the course, you can request a full refund of the course fee with no condition on course progress.\n\n3. How to Request a Refund:\nContact our support team via WhatsApp with your registered phone number and receipt screenshot. Refunds are processed within 2 to 3 business days.\n\n4. Misuse Review:\nThe platform team reserves the right to review cases of clear misuse (such as downloading or sharing content outside the platform).",
                 ],
             ],
         ];
