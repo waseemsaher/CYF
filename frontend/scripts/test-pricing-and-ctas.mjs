@@ -3,15 +3,11 @@ import assert from 'node:assert/strict';
 import {
   isPlaceholder,
   getSafeConfig,
-  REVIEW_TIME_TEXT,
   NEUTRAL_REVIEW_FALLBACK_AR,
   REFUND_WINDOW_DAYS,
+  REFUND_MAX_WATCHED_PERCENT,
   REFUND_PROCESSING_DAYS_TEXT,
-  REFUND_MISUSE_CLAUSE_AR,
   REFUND_GUARANTEE_SHORT,
-  SUBSCRIPTION_PLANS,
-  DEFAULT_SUBSCRIPTION_PLAN_ID,
-  getValidityText,
   FOUNDER_TRUST_CONFIG,
   sanitizeReferralCode,
   parseReferralFromStudentNote
@@ -29,56 +25,27 @@ import {
 test('isPlaceholder detects square-bracket placeholders and ignores clean strings', () => {
   assert.equal(isPlaceholder('غالباً خلال [X] ساعات'), true);
   assert.equal(isPlaceholder('[مساحة مخصصة لقصة المؤسس]'), true);
-  assert.equal(isPlaceholder('غالباً خلال ساعات'), false);
-  assert.equal(isPlaceholder('لحد نهاية الفصل الدراسي الحالي'), false);
+  assert.equal(isPlaceholder('غالباً خلال 2 إلى 4 ساعات'), false);
+  assert.equal(isPlaceholder('طول الفصل الدراسي الحالي'), false);
   assert.equal(isPlaceholder(300), false);
 });
 
-test('getSafeConfig uses owner-confirmed REVIEW_TIME_TEXT and hides empty founderStory safely', () => {
+test('getSafeConfig falls back when REVIEW_TIME_TEXT or founder story contain placeholders', () => {
   const defaultSafe = getSafeConfig();
-  assert.equal(REVIEW_TIME_TEXT, 'غالباً خلال ساعات');
-  assert.equal(defaultSafe.reviewTimeText, 'غالباً خلال ساعات');
-  assert.equal(defaultSafe.hasSpecificReviewTime, true);
+  assert.equal(defaultSafe.reviewTimeText, NEUTRAL_REVIEW_FALLBACK_AR);
+  assert.equal(defaultSafe.hasSpecificReviewTime, false);
   assert.equal(defaultSafe.founderStory, null);
-  assert.equal(defaultSafe.placeholderWarnings.length, 2);
-  assert.ok(
-    defaultSafe.placeholderWarnings.some((w) => w.includes('FOUNDER_TRUST_CONFIG.storyAr'))
-  );
-  assert.ok(defaultSafe.placeholderWarnings.some((w) => w.includes('EARLY_BIRD_END_DATE')));
-
-  // Fallback still works if a bracketed placeholder is ever passed
-  const fallbackSafe = getSafeConfig({
-    reviewTimeText: 'غالباً خلال [X] ساعات'
-  });
-  assert.equal(fallbackSafe.reviewTimeText, NEUTRAL_REVIEW_FALLBACK_AR);
-  assert.equal(fallbackSafe.hasSpecificReviewTime, false);
+  assert.ok(defaultSafe.placeholderWarnings.length >= 2);
 
   const customizedSafe = getSafeConfig({
+    reviewTimeText: 'غالباً خلال 2 إلى 4 ساعات',
     founderStory: 'مطور خريج حاسبات الأزهر قرر يجمع شروحات المواد في مكان واحد منظم.'
   });
+  assert.equal(customizedSafe.reviewTimeText, 'غالباً خلال 2 إلى 4 ساعات');
+  assert.equal(customizedSafe.hasSpecificReviewTime, true);
   assert.equal(
     customizedSafe.founderStory,
     'مطور خريج حاسبات الأزهر قرر يجمع شروحات المواد في مكان واحد منظم.'
-  );
-});
-
-test('getValidityText resolves default plan and falls back safely for unknown plan IDs', () => {
-  assert.equal(DEFAULT_SUBSCRIPTION_PLAN_ID, 'semester');
-  assert.equal(
-    SUBSCRIPTION_PLANS.semester.validityTextAr,
-    'لحد نهاية الفصل الدراسي الحالي'
-  );
-  assert.equal(getValidityText(), 'لحد نهاية الفصل الدراسي الحالي');
-  assert.equal(getValidityText('semester', 'ar'), 'لحد نهاية الفصل الدراسي الحالي');
-  assert.equal(
-    getValidityText('semester', 'en'),
-    'until the end of the current academic semester'
-  );
-  // Unknown plan ID falls back to default plan
-  assert.equal(getValidityText('unknown_future_plan'), 'لحد نهاية الفصل الدراسي الحالي');
-  assert.equal(
-    getValidityText('unknown_future_plan', 'en'),
-    'until the end of the current academic semester'
   );
 });
 
@@ -136,16 +103,14 @@ test('getSafeConfig validates BUNDLE_PRICE and EARLY_BIRD_PRICE / EARLY_BIRD_END
   assert.equal(placeholderEarlyBird.isEarlyBirdValid, false);
 });
 
-test('refund policy constants act as single source of truth without watched percentage condition', () => {
-  const defaultSafe = getSafeConfig();
+test('refund policy constants act as single source of truth across derived strings', () => {
   assert.equal(REFUND_WINDOW_DAYS, 7);
+  assert.equal(REFUND_MAX_WATCHED_PERCENT, 20);
   assert.equal(REFUND_PROCESSING_DAYS_TEXT, '2 إلى 3 أيام عمل');
   assert.ok(REFUND_GUARANTEE_SHORT.includes(String(REFUND_WINDOW_DAYS)));
-  assert.ok(!REFUND_GUARANTEE_SHORT.includes('20%'));
+  assert.ok(REFUND_GUARANTEE_SHORT.includes(`${REFUND_MAX_WATCHED_PERCENT}%`));
   assert.ok(FOUNDER_TRUST_CONFIG.refundSummary.includes(String(REFUND_WINDOW_DAYS)));
-  assert.ok(!FOUNDER_TRUST_CONFIG.refundSummary.includes('20%'));
-  assert.ok(!defaultSafe.refundPolicyBodyAr.includes('20%'));
-  assert.ok(defaultSafe.refundPolicyBodyAr.includes(REFUND_MISUSE_CLAUSE_AR));
+  assert.ok(FOUNDER_TRUST_CONFIG.refundSummary.includes(`${REFUND_MAX_WATCHED_PERCENT}%`));
 });
 
 test('sanitizeReferralCode and parseReferralFromStudentNote sanitize and extract referral codes safely', () => {
@@ -241,4 +206,3 @@ test('CTA slots distinguish required vs optional behavior and prevent broken #sa
   // Announcement bar is hidden by default and when expired
   assert.equal(resolveAnnouncementBar(DEFAULT_CTA_BLOCKS), null);
 });
-

@@ -369,7 +369,7 @@
             </div>
 
             <p class="course-description">
-              {getLocalizedText(course.description, $currentLocale) || ($currentLocale === 'en' ? 'Structured curriculum with detailed lectures and quizzes.' : 'محتوى دراسي مترتب حسب توصيف مقرر فرقتك مع كويزات تقيس مستواك وتقدر تسأل الفريق على واتساب أو في جروب المادة.')}
+              {getLocalizedText(course.description, $currentLocale) || ($currentLocale === 'en' ? 'Structured curriculum with detailed lectures and interactive quizzes.' : 'محتوى دراسي مترتب حسب توصيف مقرر فرقتك مع كويزات دورية ومتابعة للأسئلة.')}
             </p>
           </div>
 

@@ -12,7 +12,10 @@
   const safeConfig = getSafeConfig();
 
   const defaultTitle = 'سياسة الاسترجاع والاستبدال';
-  const defaultBody = safeConfig.refundPolicyBodyAr;
+  const defaultBody = `سياسة الاسترجاع على منصة Codeera - كوديرا واضحة عشان تحفظ حقك:
+1) لو إيصال الدفع اترفض لأي سبب أو حصل خطأ في التحويل، بنرجعلك المبلغ بالكامل أو بنساعدك تصحح الطلب.
+2) بعد تفعيل الاشتراك، تقدر تطلب استرجاع كامل للمبلغ خلال ${safeConfig.refundWindowDays} أيام من تاريخ التفعيل بشرط ألا تتجاوز نسبة مشاهدتك لمحتوى المقرر ${safeConfig.refundMaxWatchedPercent}%.
+3) لطلب الاسترجاع أو الاستفسار، تواصل معانا مباشرة على واتساب برقم تليفونك المسجل وصورة الإيصال، وبيتم رد المبلغ على نفس المحفظة خلال ${safeConfig.refundProcessingDaysText}.`;
 
   $: title = data?.block?.title?.ar || defaultTitle;
   $: body = data?.block?.body?.ar || defaultBody;
@@ -46,7 +49,6 @@
         <li>• استرجاع 100% لو الإيصال اترفض أو حصل تحويل بالخطأ.</li>
         <li>• {safeConfig.refundWindowRuleAr}</li>
         <li>• {safeConfig.refundProcessingRuleAr}</li>
-        <li>• {safeConfig.refundMisuseClauseAr}</li>
       </ul>
 
       <div class="mt-6 flex flex-wrap items-center gap-3">

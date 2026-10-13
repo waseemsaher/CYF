@@ -381,7 +381,7 @@
               السعر ده لحد {safeConfig.earlyBirdDateLabel} قبل الميد
             </p>
           {:else}
-            <p class="mt-2 text-xs text-slate-600">شامل الشرح والكويزات وجروب المادة ({safeConfig.subscriptionValidityText})</p>
+            <p class="mt-2 text-xs text-slate-600">شامل الشرح، الكويزات، ومتابعة الأسئلة ({safeConfig.subscriptionValidityText})</p>
           {/if}
         </div>
 
@@ -532,36 +532,25 @@
         <div class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-7 shadow-sm">
           <div>
             <div class="mb-4 inline-flex items-center gap-3">
-              {#if safeConfig.founderPhotoUrl}
-                <img
-                  src={safeConfig.founderPhotoUrl}
-                  alt={safeConfig.founderName || FOUNDER_TRUST_CONFIG.headlineAr}
-                  class="h-12 w-12 shrink-0 rounded-xl object-cover border border-slate-200"
-                  loading="lazy"
-                />
-              {:else}
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-navy text-brand-cyan font-extrabold text-lg">
-                  &lt;/&gt;
-                </div>
-              {/if}
+              <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-navy text-brand-cyan font-extrabold text-lg">
+                &lt;/&gt;
+              </div>
               <div>
-                <h3 class="text-lg font-extrabold text-brand-navy">
-                  {safeConfig.founderName || FOUNDER_TRUST_CONFIG.headlineAr}
-                </h3>
-                <p class="text-xs font-semibold text-slate-500">{safeConfig.founderRoleAr}</p>
+                <h3 class="text-lg font-extrabold text-brand-navy">{FOUNDER_TRUST_CONFIG.headlineAr}</h3>
+                <p class="text-xs font-semibold text-slate-500">{FOUNDER_TRUST_CONFIG.roleAr}</p>
               </div>
             </div>
             {#if safeConfig.founderStory}
-              <p class="text-sm leading-relaxed text-slate-700 whitespace-pre-line">
+              <p class="text-sm leading-relaxed text-slate-700">
                 {safeConfig.founderStory}
               </p>
             {/if}
-            <p class="mt-3 text-xs font-semibold text-slate-600 leading-relaxed">
+            <p class="mt-3 text-xs font-semibold text-slate-600">
               {FOUNDER_TRUST_CONFIG.paymentSafetyNote}
             </p>
           </div>
 
-          <div class="mt-6 pt-4 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+          <div class="mt-6 pt-4 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500">
             <span>عندك سؤال قبل ما تشترك؟</span>
             <a
               href={WHATSAPP_SUPPORT_URL}
@@ -598,20 +587,16 @@
 
             <ul class="mt-4 space-y-2 text-xs text-slate-600">
               <li class="flex items-center gap-2">
-                <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600"></span>
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
                 <span>مراجعة يدوية لكل إيصال دفع ({safeConfig.reviewTimeText}).</span>
               </li>
               <li class="flex items-center gap-2">
-                <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600"></span>
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
                 <span>استرجاع كامل لو الإيصال اترفض أو حصل خطأ في التحويل.</span>
               </li>
               <li class="flex items-center gap-2">
-                <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600"></span>
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
                 <span>{safeConfig.refundWindowRuleAr}</span>
-              </li>
-              <li class="flex items-center gap-2">
-                <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600"></span>
-                <span>{safeConfig.refundMisuseClauseAr}</span>
               </li>
             </ul>
           </div>

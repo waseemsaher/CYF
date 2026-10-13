@@ -311,13 +311,10 @@
           </span>
         {/if}
         <span class="rounded-lg bg-white/10 border border-white/15 px-3 py-1.5">
-          💬 تقدر تسأل الفريق على واتساب أو في جروب المادة
+          💬 متابعة الأسئلة طوال الترم
         </span>
         <span class="rounded-lg bg-white/10 border border-white/15 px-3 py-1.5">
           ⏱️ تفعيل الاشتراك: {safeConfig.reviewTimeText}
-        </span>
-        <span class="rounded-lg bg-white/10 border border-white/15 px-3 py-1.5">
-          📅 متاح {safeConfig.subscriptionValidityText}
         </span>
       </div>
     </div>

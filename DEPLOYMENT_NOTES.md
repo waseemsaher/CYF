@@ -4,22 +4,26 @@ This runbook covers deploying the marketing copy, SEO/GEO, admin-editable CTA sy
 
 ---
 
-## 1. Pre-Deploy Checklist (Optional Owner Content)
+## 1. Pre-Deploy Checklist (Before Building / Deploying Frontend)
 
-All core business rules are already confirmed and configured in [`frontend/src/lib/pricing.config.ts`](./frontend/src/lib/pricing.config.ts):
-- `REVIEW_TIME_TEXT = 'غالباً خلال ساعات'`
-- `REFUND_WINDOW_DAYS = 7` (no watched-percentage condition) and `REFUND_PROCESSING_DAYS_TEXT = '2 إلى 3 أيام عمل'`
-- `SUBSCRIPTION_PLANS.semester` (`'لحد نهاية الفصل الدراسي الحالي'`)
-- `COURSE_PRICE_EGP = 300`, `BUNDLE_COURSES_COUNT = 3`, `BUNDLE_PRICE = 750`
+Open [`frontend/src/lib/pricing.config.ts`](./frontend/src/lib/pricing.config.ts) and review/confirm the following owner values:
 
-Only two optional items remain in [`frontend/src/lib/pricing.config.ts`](./frontend/src/lib/pricing.config.ts) when you are ready to fill them:
-
-1. **Write Founder Story (`FOUNDER_TRUST_CONFIG.storyAr`)** *(optional)*
-   - Fill `storyAr` (2–4 honest sentences following the 3-line guide comment above `FOUNDER_TRUST_CONFIG`), plus `founderName` and `photoUrl` if desired.
-   - *Safety net*: While `storyAr` is empty (`''`), the story paragraph is hidden automatically on the homepage while keeping the rest of the trust card visible.
-2. **Set Early-Bird Date/Price Before Exams (`EARLY_BIRD_PRICE` / `EARLY_BIRD_END_DATE`)** *(optional)*
-   - Currently `EARLY_BIRD_PRICE = 0` and `EARLY_BIRD_END_DATE = ''` (offer hidden).
-   - If you run a pre-midterm offer later, set `EARLY_BIRD_PRICE < COURSE_PRICE_EGP` and `EARLY_BIRD_END_DATE` to a future ISO date (`'YYYY-MM-DD'`).
+1. **Manual Receipt Review Window (`REVIEW_TIME_TEXT`)**
+   - Current placeholder: `'غالباً خلال [X] ساعات'`
+   - Replace `[X]` with your real manual review window (e.g., `'غالباً خلال ساعتين إلى 4 ساعات'`).
+   - *Safety net*: If left as `[X]`, `getSafeConfig()` automatically falls back to `'بنراجع الإيصال يدوياً وبنفتحلك المحتوى بعد الاعتماد'` so `[X]` never reaches students, and `npm run build` prints a console warning.
+2. **Founder Story (`FOUNDER_TRUST_CONFIG.storyPlaceholder`)**
+   - Replace the bracketed `[مساحة مخصصة لقصة مؤسس المنصة: ...]` text with your real 2–3 sentence story as a developer/founder.
+   - *Safety net*: While square brackets `[...]` remain in `storyPlaceholder`, the founder story paragraph is automatically hidden on the homepage while keeping the rest of the trust card visible.
+3. **Pricing, Bundle & Seasonal Offer (`COURSE_PRICE_EGP`, `BUNDLE_PRICE`, `EARLY_BIRD_PRICE`, `EARLY_BIRD_END_DATE`)**
+   - Confirm `COURSE_PRICE_EGP` (default `300`), `BUNDLE_COURSES_COUNT` (default `3`), and `BUNDLE_PRICE` (default `750`).
+   - Bundle UI only renders if `BUNDLE_PRICE > 0` and `BUNDLE_PRICE < COURSE_PRICE_EGP * BUNDLE_COURSES_COUNT`.
+   - Early-bird UI only renders if `EARLY_BIRD_PRICE > 0`, `EARLY_BIRD_PRICE < COURSE_PRICE_EGP`, and `EARLY_BIRD_END_DATE` is a valid ISO date in the future (leave `''` to keep it hidden).
+4. **Refund Policy Constants (`// TODO(OWNER): confirm refund policy values`)**
+   - Confirm `REFUND_WINDOW_DAYS = 7`, `REFUND_MAX_WATCHED_PERCENT = 20`, and `REFUND_PROCESSING_DAYS_TEXT = '2 إلى 3 أيام عمل'` in `frontend/src/lib/pricing.config.ts`.
+   - These constants act as the single source of truth across the homepage, course page, checkout, FAQ, `/refund`, and `/llms.txt`.
+5. **WhatsApp Support Number**
+   - Verify `WHATSAPP_SUPPORT_URL` in [`frontend/src/lib/socials.ts`](./frontend/src/lib/socials.ts) points to the active official support WhatsApp number.
 
 ---
 
@@ -45,19 +49,16 @@ php artisan route:clear
 php artisan cache:clear
 ```
 
-### Refreshing old content blocks on production
+### Optional: Force-Updating Specific Seeded Keys on Production
+Both `ContentBlockSeeder` and `CtaBlockSeeder` use `firstOrCreate` by default so admin edits are **never** overwritten on re-seed. If you intentionally want to reset specific keys to the latest codebase defaults (for example, `legal.refund` and `landing.hero`), pass `SEED_FORCE_UPDATE_KEYS`:
 
-> **Warning:** Before overwriting any existing `content_blocks` rows in production, **back up your production database** and copy any manually edited content blocks from the admin panel (or inspect them using the command below). By default, `ContentBlockSeeder` uses `firstOrCreate` so existing rows are untouched unless you pass `SEED_FORCE_UPDATE_KEYS`.
+```bash
+# Overwrite ONLY specific content_blocks keys with codebase defaults:
+SEED_FORCE_UPDATE_KEYS="legal.refund,landing.hero" php artisan db:seed --class=Database\\Seeders\\ContentBlockSeeder --force
 
-1. **Inspect current `content_blocks` values in production before overwriting (one-liner):**
-   ```bash
-   php artisan tinker --execute="App\Models\ContentBlock::all(['key','content'])->each(fn(\$b) => dump(\$b->key, \$b->getTranslations('content')));"
-   ```
-
-2. **Force-update ONLY the 6 changed content block keys with the new owner-approved copy:**
-   ```bash
-   SEED_FORCE_UPDATE_KEYS="landing.hero,landing.why_us,landing.faq,legal.terms,legal.privacy,legal.refund" php artisan db:seed --class=Database\\Seeders\\ContentBlockSeeder --force
-   ```
+# Overwrite ALL 6 content_blocks keys with codebase defaults (use only if you have not customized them in admin):
+SEED_FORCE_UPDATE_KEYS="*" php artisan db:seed --class=Database\\Seeders\\ContentBlockSeeder --force
+```
 
 ---
 
@@ -106,4 +107,3 @@ The `cta_blocks` table (`2026_10_11_100000_create_cta_blocks_table.php`) is addi
   php artisan migrate:rollback --path=database/migrations/2026_10_11_100000_create_cta_blocks_table.php --force
   php artisan cache:clear
   ```
-
