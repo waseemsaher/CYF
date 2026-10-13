@@ -84,6 +84,9 @@ it('allows an admin to view the payment review queue', function (): void {
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.status', 'pending')
         ->assertJsonStructure(['counts']);
+
+    expect($response->json('data.0.proof_url'))->not()->toBeNull()
+        ->and($response->json('data.0.proof_url'))->toContain('proofs/test.jpg');
 });
 
 it('allows an admin to approve a payment and creates enrollment', function (): void {

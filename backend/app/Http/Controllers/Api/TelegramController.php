@@ -214,6 +214,7 @@ class TelegramController extends Controller
                 $chatType = $message['chat']['type'] ?? 'private';
 
                 if ($fromId !== null && $chatType === 'private') {
+                    $hasMedia = isset($message['photo']) || isset($message['document']);
                     $normalized = mb_strtolower($text);
                     $isStart = str_starts_with($normalized, '/start')
                         || str_starts_with($normalized, 'start')
@@ -225,6 +226,12 @@ class TelegramController extends Controller
 
                     if ($token !== '') {
                         app(LinkTelegramUser::class)->handle((int) $fromId, $username, $token);
+                    } elseif ($hasMedia && $text === '') {
+                        $appUrl = rtrim((string) config('app.url', 'https://codeera.tech'), '/');
+                        app(TelegramClient::class)->sendMessage(
+                            (int) $fromId,
+                            "وصلتنا رسالتك!\nيرجى ملاحظة أن <b>تأكيد الدفع ورفع صورة الإيصال يتم عبر الموقع مباشرة</b> وليس هنا في المحادثة.\n\nيرجى الدخول إلى صفحة الدورة في الموقع وإتمام عملية الدفع ورفع صورة الإيصال ليتم تفعيل اشتراكك ومراجعة طلبك في لوحة التحكم:\n{$appUrl}/courses\n\nTo confirm your payment, please upload your receipt directly on the website course checkout page."
+                        );
                     } else {
                         $existingUser = User::query()->where('telegram_user_id', (int) $fromId)->first();
                         if ($existingUser) {
