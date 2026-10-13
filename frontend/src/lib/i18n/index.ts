@@ -297,9 +297,9 @@ export const translations: Record<Locale, Translations> = {
       titlePrefix: 'مواد حاسبات الأزهر مترتبة حسب فرقتك وقسمك،',
       titleHighlight: 'من الفيديو للكويز في مكان واحد.',
       subheading:
-        'اختار مادتك، حول الاشتراك بفودافون كاش أو إنستاباي وارفع لقطة شاشة للإيصال، وهنراجعه يدوي ونفتحلك الشرح والكويزات ومتابعة الأسئلة.',
+        'اختار مادتك، حول الاشتراك بفودافون كاش أو إنستاباي وارفع لقطة شاشة للإيصال، وهنراجعه يدوي ونفتحلك الشرح والكويزات وجروب المادة.',
       description:
-        'منصة Codeera - كوديرا بتجمعلك مواد كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر بنظام واضح: محاضرات مترتبة، كويزات بإجابات مشروحة، ودعم للأسئلة طول الترم.',
+        'منصة Codeera - كوديرا بتجمعلك مواد كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر بنظام واضح: محاضرات مترتبة، كويزات تقيس مستواك مع مراجعة الإجابات الصحيحة، وتقدر تسأل الفريق على واتساب أو في جروب المادة.',
       typewriterPrefix: 'أقسام ومواد الكلية:',
       typewriterPhrases: [
         'مواد الفرقة الأولى الأساسية',
@@ -361,7 +361,7 @@ export const translations: Record<Locale, Translations> = {
     home: {
       metaTitle: 'كورسات حاسبات وذكاء اصطناعي الأزهر | فرقة أولى | Codeera - كوديرا',
       metaDesc:
-        'منصة Codeera - كوديرا لطلاب كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر (فرقة أولى وجميع الأقسام). شروحات مترتبة، كويزات بحلول مشروحة، ودفع بفودافون كاش أو إنستاباي.',
+        'منصة Codeera - كوديرا لطلاب كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر (فرقة أولى وجميع الأقسام). شروحات مترتبة، كويزات تفاعلية، ودفع بفودافون كاش أو إنستاباي.',
       steps: {
         eyebrow: 'طريقة الاشتراك',
         title: 'إزاي تبدأ تذاكر على Codeera - كوديرا؟',
@@ -397,12 +397,12 @@ export const translations: Record<Locale, Translations> = {
             desc: 'المحتوى مبني على توصيف مقرر فرقتك في حاسبات الأزهر، ومتقسم فصول وموضوعات بنفس تسلسل الدراسة.'
           },
           {
-            title: 'كويزات بإجابات مشروحة',
-            desc: 'بعد كل جزء بتحل كويزات تفاعلية بتوريك درجتك، والأهم إنها بتشرحلك ليه الإجابة صح أو غلط.'
+            title: 'كويزات تقيس مستواك بعد كل جزء',
+            desc: 'بتحل كويزات تفاعلية على الفصول بتوريك درجتك والإجابات الصحيحة مع توضيح الحل.'
           },
           {
-            title: 'متابعة ودعم خلال الترم',
-            desc: 'لو وقفت قدامك نقطة في الشرح أو المسائل، تقدر تسأل وتتابع مع فريق المادة خلال فترة الدراسة.'
+            title: 'تقدر تسأل الفريق على واتساب أو في جروب المادة',
+            desc: 'لو وقفت قدامك نقطة في الشرح أو المسائل، تقدر تسأل الفريق على واتساب أو في جروب المادة خلال فترة الدراسة.'
           },
           {
             title: 'بتدفع على رقم رسمي وبتستلم تأكيد',
@@ -430,7 +430,7 @@ export const translations: Record<Locale, Translations> = {
           },
           {
             q: 'إيه هي سياسة استرداد الرسوم لو غيرت رأيي أو حصلت مشكلة؟',
-            a: `لو إيصال الدفع اترفض أو حصل خطأ في التحويل، المبلغ بيرجعلك بالكامل. وكمان بعد التفعيل، تقدر تطلب استرداد كامل المبلغ خلال ${SAFE_CONFIG.refundWindowDays} أيام من تاريخ التفعيل طالما مشاهدتك متعدتش ${SAFE_CONFIG.refundMaxWatchedPercent}% من دروس المقرر، وراجعت صفحة سياسة الاسترداد للتفاصيل.`
+            a: `لو إيصال الدفع اترفض أو حصل خطأ في التحويل، المبلغ بيرجعلك بالكامل. وكمان خلال ${SAFE_CONFIG.refundWindowDays} أيام من تاريخ تفعيل المقرر، تقدر تطلب استرداد رسوم الاشتراك من غير أي شرط على نسبة المشاهدة عن طريق التواصل معانا على واتساب، وبيتم رد المبلغ خلال ${SAFE_CONFIG.refundProcessingDaysText}. ${SAFE_CONFIG.refundMisuseClauseAr}`
           },
           {
             q: 'إيه المتطلبات التقنية عشان أشوف فيديوهات الشرح؟',
@@ -460,7 +460,7 @@ export const translations: Record<Locale, Translations> = {
         'تصفح كورسات ومواد كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر (فرقة أولى والأقسام المتاحة) على منصة Codeera - كوديرا. محتوى مبني على توصيف مقرر فرقتك مع كويزات ودعم.',
       title: 'مواد حاسبات وذكاء اصطناعي الأزهر',
       subtitle: 'اختار فرقتك وقسمك وشوف المقررات المتاحة للشرح والتدريب على Codeera - كوديرا.',
-      desc: 'محتوى مبني على توصيف مقرر فرقتك، متقسم محاضرات وملفات وكويزات بإجابات مشروحة، مع مراجعة واضحة للإيصالات وضمان استرداد.',
+      desc: 'محتوى مبني على توصيف مقرر فرقتك، متقسم محاضرات وملفات وكويزات تقيس مستواك، مع مراجعة واضحة للإيصالات وضمان استرداد.',
       adminTitle: 'صلاحيات إدارة المقررات',
       adminDesc: 'يمكنك إنشاء مقررات جديدة أو تعديل المحتوى والأسعار مباشرة من هنا.',
       addCourse: 'إضافة مقرر دراسي جديد',
@@ -634,9 +634,9 @@ export const translations: Record<Locale, Translations> = {
       titlePrefix: 'Al-Azhar Computing & AI courses organized by your year and department,',
       titleHighlight: 'from video lessons to quizzes in one place.',
       subheading:
-        'Pick your course, pay via Vodafone Cash or InstaPay to our official number and upload the receipt screenshot — we review it manually and unlock your lessons, quizzes, and Q&A support.',
+        'Pick your course, pay via Vodafone Cash or InstaPay to our official number and upload the receipt screenshot — we review it manually and unlock your lessons, quizzes, and course group access.',
       description:
-        'Codeera organizes coursework for Faculty of Computers & AI students at Al-Azhar University with structured video lectures, explained quizzes, and continuous support.',
+        'Codeera organizes coursework for Faculty of Computers & AI students at Al-Azhar University with structured video lectures, quizzes with answer reviews, and direct support via WhatsApp or the course group.',
       typewriterPrefix: 'Academic Tracks:',
       typewriterPhrases: [
         'First Year Core Courses',
@@ -730,12 +730,12 @@ export const translations: Record<Locale, Translations> = {
             desc: 'Built on your academic year syllabus and organized into logical chapters and lessons.'
           },
           {
-            title: 'Quizzes With Explanations',
-            desc: 'Practice after each topic with quizzes that show your score and explain the correct answers.'
+            title: 'Quizzes With Answer Reviews',
+            desc: 'Practice with quizzes that show your score, the correct answers, and solution notes.'
           },
           {
-            title: 'Support During the Course',
-            desc: 'Get answers to your academic questions throughout the semester.'
+            title: 'Ask via WhatsApp or Course Group',
+            desc: 'Reach the team on WhatsApp or inside the course group whenever you have questions.'
           },
           {
             title: 'Pay to an Official Number With Refund Guarantee',
@@ -758,11 +758,11 @@ export const translations: Record<Locale, Translations> = {
           },
           {
             q: 'How long is my subscription valid?',
-            a: `Your subscription remains valid for: ${SAFE_CONFIG.subscriptionValidityText}.`
+            a: `Your subscription remains valid ${SAFE_CONFIG.subscriptionValidityTextEn}.`
           },
           {
             q: 'What is the refund policy?',
-            a: `Full refund if your receipt is rejected, or within ${SAFE_CONFIG.refundWindowDays} days of activation if you have watched less than ${SAFE_CONFIG.refundMaxWatchedPercent}% of the course.`
+            a: `If your payment receipt is rejected or there was a transfer error, the full amount is returned. Within ${SAFE_CONFIG.refundWindowDays} days from the course activation date, you can also request a full refund with no condition on how much of the course was accessed by contacting us via WhatsApp, processed within 2 to 3 business days. The team reserves the right to review clear misuse cases (such as downloading or sharing content outside the platform).`
           },
           {
             q: 'What is required to watch the video lessons?',
@@ -792,7 +792,7 @@ export const translations: Record<Locale, Translations> = {
         'تصفح كورسات ومواد كلية الحاسبات والذكاء الاصطناعي جامعة الأزهر فرقة أولى على منصة Codeera - كوديرا.',
       title: 'Academic Course Catalog',
       subtitle: 'Explore coursework for the Faculty of Computers & AI, Al-Azhar University.',
-      desc: 'Built on your year syllabus with structured lessons, explained quizzes, and discussion support.',
+      desc: 'Built on your year syllabus with structured lessons, quizzes with answer reviews, and direct support via WhatsApp or the course group.',
       adminTitle: 'Course Management Privileges',
       adminDesc: 'You can create new courses or update content and pricing directly from here.',
       addCourse: 'Add New Course',
