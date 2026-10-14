@@ -170,4 +170,13 @@ export function recordTeacherPayout(
   return apiPost<{ data: unknown }>(fetcher, `/admin/teachers/${teacherId}/payouts`, data);
 }
 
+export function deleteAdminUser(fetcher: typeof fetch = fetch, userId: number) {
+  return apiDelete<{ message: string }>(fetcher, `/admin/users/${userId}`);
+}
+
+export function resetAdminStudents(fetcher: typeof fetch = fetch) {
+  return apiPost<{ message: string; count: number }>(fetcher, '/admin/users/reset-students', {});
+}
+
+
 

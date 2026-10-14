@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\AdminPaymentController;
 use App\Http\Controllers\Api\AdminSettingsController;
 use App\Http\Controllers\Api\AdminStudentController;
 use App\Http\Controllers\Api\AdminTeacherController;
+use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\ContentBlockController;
@@ -101,6 +102,10 @@ Route::prefix('v1')->group(function (): void {
 
             // Student management
             Route::get('/students', [AdminStudentController::class, 'index']);
+
+            // User management & data reset
+            Route::delete('/users/{user}', [AdminUserController::class, 'destroy']);
+            Route::post('/users/reset-students', [AdminUserController::class, 'resetStudents']);
 
             // Teacher management & payouts
             Route::get('/teachers', [AdminTeacherController::class, 'index']);

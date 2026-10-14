@@ -9,6 +9,8 @@
     createAdminCourse,
     updateAdminCourse,
     deleteAdminCourse,
+    deleteAdminUser,
+    resetAdminStudents,
     type AdminOverviewData,
     type AdminCourse,
     type AdminStudent,
@@ -266,6 +268,86 @@
       await loadData();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'تعذر حذف المقرر.');
+    }
+  }
+
+  // User deletion state
+  let isDeleteUserModalOpen = $state(false);
+  let userToDelete = $state<any | null>(null);
+  let deleteUserLoading = $state(false);
+  let deleteUserError = $state('');
+
+  function openDeleteUserModal(user: any) {
+    userToDelete = user;
+    deleteUserError = '';
+    isDeleteUserModalOpen = true;
+  }
+
+  function closeDeleteUserModal() {
+    isDeleteUserModalOpen = false;
+    userToDelete = null;
+    deleteUserError = '';
+  }
+
+  async function confirmDeleteUser() {
+    if (!userToDelete) return;
+    deleteUserLoading = true;
+    deleteUserError = '';
+    try {
+      await deleteAdminUser(fetch, userToDelete.id);
+      students = students.filter((s) => s.id !== userToDelete.id);
+      closeDeleteUserModal();
+      await loadData();
+    } catch (err: unknown) {
+      deleteUserError = err instanceof Error ? err.message : 'تعذر حذف المستخدم.';
+    } finally {
+      deleteUserLoading = false;
+    }
+  }
+
+  // Reset students state
+  let isResetStudentsModalOpen = $state(false);
+  let resetConfirmationInput = $state('');
+  let resetStudentsLoading = $state(false);
+  let resetStudentsError = $state('');
+  let resetStudentsSuccess = $state('');
+
+  function openResetStudentsModal() {
+    resetConfirmationInput = '';
+    resetStudentsError = '';
+    resetStudentsSuccess = '';
+    isResetStudentsModalOpen = true;
+  }
+
+  function closeResetStudentsModal() {
+    isResetStudentsModalOpen = false;
+    resetConfirmationInput = '';
+    resetStudentsError = '';
+    resetStudentsSuccess = '';
+  }
+
+  async function confirmResetStudents() {
+    if (resetConfirmationInput.trim() !== 'تأكيد' && resetConfirmationInput.trim().toUpperCase() !== 'CONFIRM') {
+      resetStudentsError = 'يرجى كتابة كلمة "تأكيد" للتحقق وتنفيذ عملية الحذف.';
+      return;
+    }
+
+    resetStudentsLoading = true;
+    resetStudentsError = '';
+    resetStudentsSuccess = '';
+
+    try {
+      const res = await resetAdminStudents(fetch);
+      students = [];
+      resetStudentsSuccess = res.message || 'تم حذف كافة حسابات الطلاب بنجاح.';
+      setTimeout(() => {
+        closeResetStudentsModal();
+      }, 1500);
+      await loadData();
+    } catch (err: unknown) {
+      resetStudentsError = err instanceof Error ? err.message : 'تعذر تصفير بيانات الطلاب.';
+    } finally {
+      resetStudentsLoading = false;
     }
   }
 
@@ -569,8 +651,24 @@
           <div class="panel-top-bar">
             <div>
               <h2>دليل الطلاب المسجلين ({students.length})</h2>
-              <p>استعراض بيانات الطلاب، الفرق الدراسية، والأقسام الأكاديمية.</p>
+              <p>استعراض بيانات الطلاب، الفرق الدراسية، وإدارة الحسابات.</p>
             </div>
+            {#if students.length > 0}
+              <button
+                type="button"
+                class="btn-reset-students"
+                onclick={openResetStudentsModal}
+                title="حذف جميع الطلاب وتصفير البيانات"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                حذف جميع الطلاب وتصفير البيانات
+              </button>
+            {/if}
           </div>
 
           {#if students.length === 0}
@@ -589,6 +687,7 @@
                     <th>القسم</th>
                     <th>معرّف تليجرام</th>
                     <th>تاريخ التسجيل</th>
+                    <th>الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -607,6 +706,16 @@
                         {/if}
                       </td>
                       <td>{new Date(st.created_at).toLocaleDateString('ar-EG')}</td>
+                      <td>
+                        <button
+                          type="button"
+                          class="btn-sm btn-delete"
+                          onclick={() => openDeleteUserModal(st)}
+                          title="حذف هذا الطالب"
+                        >
+                          حذف
+                        </button>
+                      </td>
                     </tr>
                   {/each}
                 </tbody>
@@ -962,6 +1071,123 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+{/if}
+
+<!-- Modal: Delete Single User Confirmation -->
+{#if isDeleteUserModalOpen && userToDelete}
+  <div class="modal-backdrop" onclick={closeDeleteUserModal} role="presentation">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="modal-card modal-card-danger" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl" tabindex="-1">
+      <div class="modal-header">
+        <h2 style="color: #991b1b;">تأكيد حذف حساب المستخدم</h2>
+        <button type="button" class="btn-close-modal" onclick={closeDeleteUserModal} aria-label="إغلاق">&times;</button>
+      </div>
+
+      {#if deleteUserError}
+        <div class="modal-error-banner" role="alert">
+          <span>{deleteUserError}</span>
+        </div>
+      {/if}
+
+      <div class="delete-user-body">
+        <p>هل أنت متأكد من رغبتك في حذف هذا الحساب نهائياً؟</p>
+        <div class="target-user-summary">
+          <div><strong>الاسم:</strong> {userToDelete.name}</div>
+          <div><strong>البريد الإلكتروني:</strong> <span dir="ltr">{userToDelete.email}</span></div>
+          {#if userToDelete.role}
+            <div><strong>الدور:</strong> {userToDelete.role}</div>
+          {/if}
+        </div>
+        <p class="danger-warning-note">
+          ⚠️ <strong>تنبيه:</strong> سيؤدي حذف الحساب إلى مسح كافة التسجيلات، إيصالات الدفع، نتائج الاختبارات، وبيانات التليجرام المرتبطة بهذا المستخدم نهائياً. لا يمكن التراجع عن هذا الإجراء.
+        </p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick={closeDeleteUserModal} disabled={deleteUserLoading}>
+          إلغاء
+        </button>
+        <button
+          type="button"
+          class="btn-danger-confirm"
+          onclick={confirmDeleteUser}
+          disabled={deleteUserLoading}
+        >
+          {#if deleteUserLoading}
+            <span>جاري الحذف...</span>
+          {:else}
+            <span>تأكيد الحذف نهائياً</span>
+          {/if}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Modal: Reset All Students Confirmation -->
+{#if isResetStudentsModalOpen}
+  <div class="modal-backdrop" onclick={closeResetStudentsModal} role="presentation">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="modal-card modal-card-danger" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl" tabindex="-1">
+      <div class="modal-header">
+        <h2 style="color: #991b1b;">⚠️ تصفير وحذف جميع حسابات الطلاب</h2>
+        <button type="button" class="btn-close-modal" onclick={closeResetStudentsModal} aria-label="إغلاق">&times;</button>
+      </div>
+
+      {#if resetStudentsError}
+        <div class="modal-error-banner" role="alert">
+          <span>{resetStudentsError}</span>
+        </div>
+      {/if}
+
+      {#if resetStudentsSuccess}
+        <div class="modal-success-banner" role="status">
+          <span>{resetStudentsSuccess}</span>
+        </div>
+      {/if}
+
+      <div class="delete-user-body">
+        <p>أنت على وشك القيام بعملية تصفير شاملة لحسابات الطلاب ({students.length} طالب):</p>
+        <ul class="danger-checklist">
+          <li>سيتم حذف جميع حسابات الطلاب نهائياً.</li>
+          <li>سيتم حذف كافة التسجيلات في المقررات، إيصالات الدفع، والروابط.</li>
+          <li>سيتم مسح سجلات محاولات وإجابات الاختبارات.</li>
+          <li><strong>سيبقى الكتالوج الإداري (المقررات، الدروس، الأسئلة، الإعدادات، وحسابات المحاضرين والإدارة) آمناً بالكامل.</strong></li>
+        </ul>
+
+        <div class="confirm-prompt-box">
+          <label for="reset-confirm-text">
+            لتأكيد الحذف، اكتب كلمة <strong style="color: #b91c1c;">تأكيد</strong> في المربع التالي:
+          </label>
+          <input
+            id="reset-confirm-text"
+            type="text"
+            bind:value={resetConfirmationInput}
+            placeholder="اكتب كلمة: تأكيد"
+            disabled={resetStudentsLoading}
+          />
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick={closeResetStudentsModal} disabled={resetStudentsLoading}>
+          إلغاء وتراجع
+        </button>
+        <button
+          type="button"
+          class="btn-danger-confirm"
+          onclick={confirmResetStudents}
+          disabled={resetStudentsLoading || (resetConfirmationInput.trim() !== 'تأكيد' && resetConfirmationInput.trim().toUpperCase() !== 'CONFIRM')}
+        >
+          {#if resetStudentsLoading}
+            <span>جاري مسح البيانات...</span>
+          {:else}
+            <span>حذف جميع الطلاب نهائياً</span>
+          {/if}
+        </button>
+      </div>
     </div>
   </div>
 {/if}
@@ -1722,6 +1948,137 @@
 
   @keyframes spin {
     to { transform: rotate(360deg); }
+  }
+
+  .btn-reset-students {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.95rem;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1.5px solid #fca5a5;
+    border-radius: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 120ms ease;
+  }
+
+  .btn-reset-students:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+    transform: translateY(-1px);
+  }
+
+  .btn-danger-confirm {
+    background: #dc2626;
+    color: #ffffff;
+    border: 2px solid #dc2626;
+    padding: 0.6rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 120ms ease;
+  }
+
+  .btn-danger-confirm:hover:not(:disabled) {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    transform: translateY(-1px);
+  }
+
+  .btn-danger-confirm:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .modal-card-danger {
+    border-color: #fca5a5 !important;
+  }
+
+  .delete-user-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.92rem;
+    color: var(--storm);
+    line-height: 1.6;
+  }
+
+  .target-user-summary {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.88rem;
+  }
+
+  .danger-warning-note {
+    background: #fff1f2;
+    border-right: 4px solid #e11d48;
+    padding: 0.75rem 1rem;
+    border-radius: 0.35rem;
+    color: #9f1239;
+    font-size: 0.85rem;
+    margin: 0;
+  }
+
+  .danger-checklist {
+    margin: 0;
+    padding-right: 1.25rem;
+    color: #4b5563;
+    font-size: 0.86rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .confirm-prompt-box {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .confirm-prompt-box label {
+    font-weight: 700;
+    font-size: 0.86rem;
+    color: var(--storm);
+  }
+
+  .confirm-prompt-box input {
+    padding: 0.6rem 0.85rem;
+    border: 2px solid #f87171;
+    border-radius: 0.5rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+  }
+
+  .confirm-prompt-box input:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+  }
+
+  .modal-success-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f0fdf4;
+    border: 2px solid #86efac;
+    color: #166534;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
   }
 
   @media (max-width: 768px) {
