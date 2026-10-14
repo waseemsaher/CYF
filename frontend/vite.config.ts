@@ -146,7 +146,7 @@ export default defineConfig({
         ]
       },
       devOptions: {
-        enabled: true,
+        enabled: process.env.SW_DEV === 'true',
         type: 'module'
       }
     })
@@ -154,7 +154,10 @@ export default defineConfig({
   server: {
     cors: false,
     host: '0.0.0.0',
-    port: 5173
+    port: 5173,
+    watch: {
+      ignored: ['**/dev-dist/**', '**/.svelte-kit/**']
+    }
   },
   preview: {
     cors: false,
