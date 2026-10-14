@@ -105,6 +105,10 @@ class CatalogSeeder extends Seeder
                 'slug' => 'english',
                 'title' => ['ar' => 'اللغة الإنجليزية', 'en' => 'English'],
                 'description' => ['ar' => 'مهارات اللغة الإنجليزية لطلاب الكلية.', 'en' => 'English skills for FCAI students.'],
+                'telegram_channel_id' => -1004331858990,
+                'telegram_group_id' => -1005589255780,
+                'telegram_invite_link' => 'https://t.me/+D07NyjD8W3E0ZmFk',
+                'teacher_share_percent' => 70,
                 'sort_order' => 5,
             ],
         ] as $course) {
