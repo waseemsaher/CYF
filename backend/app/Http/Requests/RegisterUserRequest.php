@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\AcademicYear;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -65,6 +66,21 @@ class RegisterUserRequest extends FormRequest
             $data['academic_year'] = trim(strip_tags((string) $this->academic_year));
         }
 
+        if ($this->filled('academic_year_id') && ! $this->filled('academic_year')) {
+            $year = AcademicYear::find($this->academic_year_id);
+            if ($year) {
+                $data['academic_year'] = $year->getTranslation('name', 'ar');
+            }
+        } elseif ($this->filled('academic_year') && ! $this->filled('academic_year_id')) {
+            $yearStr = trim(strip_tags((string) $this->academic_year));
+            $year = AcademicYear::where('name->ar', $yearStr)
+                ->orWhere('name->en', $yearStr)
+                ->first();
+            if ($year) {
+                $data['academic_year_id'] = $year->getKey();
+            }
+        }
+
         if ($this->has('department')) {
             $data['department'] = trim(strip_tags((string) $this->department));
         }
@@ -110,6 +126,12 @@ class RegisterUserRequest extends FormRequest
             'password.required' => __('كلمة المرور مطلوبة.'),
             'password.min' => __('يجب ألا تقل كلمة المرور عن 8 أحرف.'),
             'password.confirmed' => __('كلمة المرور وتأكيدها غير متطابقين.'),
+            'branch.required' => __('يرجى اختيار الفرع (بنين / بنات).'),
+            'branch.in' => __('الفرع المختار غير صالح.'),
+            'academic_year_id.required' => __('يرجى اختيار السنة الدراسية.'),
+            'academic_year_id.exists' => __('السنة الدراسية المختارة غير صالحة.'),
+            'academic_year.required' => __('يرجى اختيار السنة الدراسية.'),
+            'department.required' => __('يرجى اختيار القسم الدراسي.'),
             'telegram_username.regex' => __('اسم مستخدم تليجرام يجب أن يتكون من 5 إلى 32 حرفاً أو رقماً بالإنجليزية (بدون مسافات).'),
             'phone.required' => __('رقم محفظتك الإلكترونية مطلوب لاسترداد أي مبلغ عند الحاجة.'),
             'phone.regex' => __('رقم المحفظة يجب أن يكون رقم موبايل مصري صحيح مكوّن من 11 رقمًا (مثال: 01012345678).'),

@@ -32,8 +32,8 @@
 
   // Default dropdown selections when loaded
   $effect(() => {
-    if (academicYearId === null && data.academicYears.length > 0) {
-      academicYearId = data.academicYears[0].id;
+    if (academicYearId === null) {
+      academicYearId = data.academicYears.length > 0 ? data.academicYears[0].id : 1;
     }
     if (!department) {
       department = data.departments.length > 0 ? data.departments[0].name.ar : 'علوم الحاسب';
@@ -117,6 +117,11 @@
       return;
     }
 
+    const selectedYear = data.academicYears.find((y) => y.id === Number(academicYearId));
+    const academicYearName = selectedYear
+      ? selectedYear.name.ar
+      : (Number(academicYearId) === 2 ? 'السنة الثانية' : 'السنة الأولى');
+
     loading = true;
 
     try {
@@ -126,6 +131,7 @@
         password,
         password_confirmation: passwordConfirmation,
         branch,
+        academic_year: academicYearName,
         academic_year_id: Number(academicYearId),
         department,
         telegram_username: telegramUsername || undefined,
@@ -270,7 +276,8 @@
           <label for="academic_year">{$t.auth.register.academicYearLabel}</label>
           <select id="academic_year" bind:value={academicYearId} required>
             {#if data.academicYears.length === 0}
-              <option value={null}>{$t.auth.register.years.first}</option>
+              <option value={1}>{$t.auth.register.years.first}</option>
+              <option value={2}>{$t.auth.register.years.second}</option>
             {:else}
               {#each data.academicYears as year}
                 <option value={year.id}>
