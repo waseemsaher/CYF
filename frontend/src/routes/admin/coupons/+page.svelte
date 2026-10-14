@@ -767,3 +767,4 @@
   .badge-pending { background: #fef3c7; color: #92400e; }
   .badge-free { background: #e0e7ff; color: #3730a3; }
 </style>
+

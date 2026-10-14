@@ -109,3 +109,4 @@ export function deleteAdminCoupon(fetcher: typeof fetch = fetch, id: number) {
 export function toggleAdminCouponActive(fetcher: typeof fetch = fetch, id: number) {
   return apiPost<{ data: AdminCoupon }>(fetcher, `/admin/coupons/${id}/toggle-active`, {});
 }
+
