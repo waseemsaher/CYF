@@ -291,7 +291,7 @@
           <span class="sep">/</span>
           <span class="current">كوبونات الخصم</span>
         </nav>
-        <h1 class="page-title">كوبونات الخصم ({totalCoupons})</h1>
+        <h1 class="page-title">كوبونات الخصم {#if !loading && !errorMsg}({totalCoupons}){/if}</h1>
       </div>
       <button type="button" class="btn-primary" onclick={openCreateModal}>
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -302,14 +302,29 @@
       </button>
     </header>
 
-    {#if errorMsg}
-      <div class="notice error" role="alert">{errorMsg}</div>
-    {/if}
-
     {#if loading}
       <div class="loading-state">
         <div class="spinner" aria-hidden="true"></div>
         <p>جاري تحميل الكوبونات...</p>
+      </div>
+    {:else if errorMsg}
+      <div class="empty-state error-state">
+        <div class="empty-icon" style="color: #dc2626;">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.75">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h2>تعذر تحميل الكوبونات من الخادم</h2>
+        <p dir="ltr" style="font-family: monospace; font-size: 0.95rem; color: #991b1b; background: #fef2f2; padding: 0.5rem 1rem; border-radius: 0.35rem; display: inline-block;">
+          {errorMsg}
+        </p>
+        <div style="margin-top: 1.25rem;">
+          <button type="button" class="btn-primary" onclick={() => loadCoupons(currentPage)}>
+            إعادة المحاولة
+          </button>
+        </div>
       </div>
     {:else if coupons.length === 0}
       <div class="empty-state">
