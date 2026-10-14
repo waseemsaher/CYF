@@ -29,7 +29,7 @@ export const socialLinks: SocialLink[] = [
     id: 'whatsapp',
     name: 'WhatsApp',
     nameAr: 'واتساب',
-    url: 'https://wa.me/201555444726',
+    url: 'https://wa.me/@codeera_academy',
     ariaLabel: 'تواصل معنا عبر واتساب'
   },
   {
