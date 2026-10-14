@@ -60,6 +60,15 @@
   let errorMsg = $state('');
   let copied = $state(false);
   let copyTimeout: ReturnType<typeof setTimeout> | null = null;
+  let showNumber = $state(false);
+
+  function maskNumber(num?: string): string {
+    if (!num) return '•••••••••••';
+    if (num.length >= 7) {
+      return num.slice(0, 3) + ' •••• ••' + num.slice(-2);
+    }
+    return '•••••••••••';
+  }
 
   // Coupon state
   let couponInput = $state('');
@@ -284,12 +293,7 @@
             {#each methods as m}
               <label class="method-option" class:active={method === m.key}>
                 <input type="radio" name="method" value={m.key} bind:group={method} />
-                <div class="method-meta">
-                  <span class="method-name">{getLocalized(m.label, $currentLocale)}</span>
-                  {#if m.number}
-                    <span class="method-subnumber" dir="ltr">{m.number}</span>
-                  {/if}
-                </div>
+                <span class="method-name">{getLocalized(m.label, $currentLocale)}</span>
               </label>
             {/each}
           </div>
@@ -317,24 +321,59 @@
                     <span class="number-label">
                       {selectedMethod.type === 'instapay' ? 'رقم إنستاباي المعتمد للتحويل' : 'رقم فودافون كاش / المحفظة للتحويل'}
                     </span>
-                    <strong class="number-value" dir="ltr">{selectedMethod.number}</strong>
+                    <div class="number-reveal-row">
+                      {#if showNumber}
+                        <strong class="number-value revealed" dir="ltr">{selectedMethod.number}</strong>
+                      {:else}
+                        <span class="number-value masked" dir="ltr" aria-label="رقم التحويل مخفي">
+                          {maskNumber(selectedMethod.number)}
+                        </span>
+                      {/if}
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    class="btn-copy-number"
-                    onclick={() => handleCopyNumber(selectedMethod?.number || '')}
-                    aria-label="نسخ رقم التحويل"
-                  >
-                    {#if copied}
-                      <span class="copy-success-text">تم النسخ ✓</span>
-                    {:else}
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                      </svg>
-                      <span>نسخ الرقم</span>
-                    {/if}
-                  </button>
+
+                  <div class="number-actions">
+                    <button
+                      type="button"
+                      class="btn-toggle-number"
+                      onclick={() => { showNumber = !showNumber; }}
+                      aria-label={showNumber ? 'إخفاء الرقم' : 'إظهار الرقم'}
+                    >
+                      {#if showNumber}
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                        <span>إخفاء</span>
+                      {:else}
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <span>إظهار الرقم</span>
+                      {/if}
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn-copy-number"
+                      onclick={() => {
+                        showNumber = true;
+                        handleCopyNumber(selectedMethod?.number || '');
+                      }}
+                      aria-label="نسخ رقم التحويل"
+                    >
+                      {#if copied}
+                        <span class="copy-success-text">تم النسخ ✓</span>
+                      {:else}
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span>نسخ الرقم</span>
+                      {/if}
+                    </button>
+                  </div>
                 </div>
               {/if}
 
@@ -443,13 +482,11 @@
 
   fieldset { border: 0; margin: 0 0 1.5rem; padding: 0; min-width: 0; width: 100%; box-sizing: border-box; }
   legend { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--storm); }
-  .method-options { display: grid; gap: 0.65rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); width: 100%; box-sizing: border-box; }
-  .method-option { align-items: flex-start; background: var(--paper); border: 2px solid var(--line); border-radius: 0.5rem; cursor: pointer; display: flex; font-weight: 700; gap: 0.65rem; padding: 0.85rem 1rem; transition: border-color 150ms; color: var(--storm); min-width: 0; box-sizing: border-box; word-break: break-word; overflow-wrap: break-word; }
+  .method-options { display: grid; gap: 0.65rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); width: 100%; box-sizing: border-box; }
+  .method-option { align-items: center; background: var(--paper); border: 2px solid var(--line); border-radius: 0.5rem; cursor: pointer; display: flex; font-weight: 700; gap: 0.65rem; padding: 0.85rem 1.1rem; transition: border-color 150ms; color: var(--storm); min-width: 0; box-sizing: border-box; word-break: break-word; overflow-wrap: break-word; }
   .method-option.active { background: rgba(var(--brand-navy-rgb), 0.08); border-color: var(--deep-cyan); }
-  .method-option input { accent-color: var(--deep-cyan); flex-shrink: 0; margin-top: 0.25rem; }
-  .method-meta { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+  .method-option input { accent-color: var(--deep-cyan); flex-shrink: 0; margin: 0; }
   .method-name { font-weight: 800; font-size: 0.95rem; color: var(--storm); }
-  .method-subnumber { font-size: 0.8rem; color: var(--muted); font-family: monospace; letter-spacing: 0.02em; }
 
   .payment-details-card {
     background: var(--paper);
@@ -497,16 +534,50 @@
     padding: 0.85rem 1.1rem;
     flex-wrap: wrap;
   }
-  .number-info { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+  .number-info { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
   .number-label { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+  .number-reveal-row { display: flex; align-items: center; gap: 0.5rem; min-height: 2rem; }
   .number-value {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     font-family: monospace;
     font-weight: 800;
     letter-spacing: 0.05em;
     color: var(--storm);
     word-break: break-all;
     user-select: all;
+  }
+  .number-value.masked {
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    font-size: 1.25rem;
+    user-select: none;
+    opacity: 0.85;
+  }
+  .number-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .btn-toggle-number {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 0.4rem;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--storm);
+    cursor: pointer;
+    transition: all 150ms ease;
+    white-space: nowrap;
+  }
+  .btn-toggle-number:hover {
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    border-color: var(--deep-cyan);
+    color: var(--deep-cyan);
   }
   .btn-copy-number {
     display: inline-flex;
