@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\AdminCouponController;
 use App\Http\Controllers\Api\AdminCourseController;
 use App\Http\Controllers\Api\AdminEnrollmentController;
 use App\Http\Controllers\Api\AdminLearningController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\ContentBlockController;
+use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\CourseContentController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
@@ -90,13 +92,14 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/lessons/{item}/watch', [TelegramController::class, 'watchLesson']);
 
         // Student payments (rate-limited)
+        Route::post('/coupons/validate', [CouponController::class, 'validateCoupon']);
         Route::post('/payments', [PaymentController::class, 'store'])
             ->middleware('throttle:payment-submit');
         Route::get('/payments', [PaymentController::class, 'index']);
         Route::get('/payments/{id}', [PaymentController::class, 'show']);
         Route::post('/payments/{id}/cancel', [PaymentController::class, 'cancel']);
 
-        Route::prefix('admin')->middleware('role_or_permission:superadmin|admin|payments.review|courses.manage|students.manage|content.manage')->group(function (): void {
+        Route::prefix('admin')->middleware('role_or_permission:superadmin|admin|payments.review|courses.manage|students.manage|content.manage|coupons.manage')->group(function (): void {
             // Overview dashboard
             Route::get('/overview', [AdminOverviewController::class, '__invoke']);
 
@@ -144,6 +147,14 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/payments/{id}', [AdminPaymentController::class, 'show']);
             Route::post('/payments/{id}/approve', [AdminPaymentController::class, 'approve']);
             Route::post('/payments/{id}/reject', [AdminPaymentController::class, 'reject']);
+
+            // Coupon management
+            Route::get('/coupons', [AdminCouponController::class, 'index']);
+            Route::post('/coupons', [AdminCouponController::class, 'store']);
+            Route::get('/coupons/{coupon}', [AdminCouponController::class, 'show']);
+            Route::put('/coupons/{coupon}', [AdminCouponController::class, 'update']);
+            Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy']);
+            Route::post('/coupons/{coupon}/toggle-active', [AdminCouponController::class, 'toggleActive']);
 
             // Enrollment management
             Route::post('/enrollments/grant', [AdminEnrollmentController::class, 'grant']);

@@ -6,6 +6,7 @@ namespace App\Domain\Payments\Actions;
 
 use App\Jobs\SendTelegramNotificationJob;
 use App\Mail\PaymentRejectedMail;
+use App\Models\CouponRedemption;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +36,10 @@ class RejectPayment
                 'reviewed_by' => $reviewer->getKey(),
                 'reviewed_at' => now(),
             ]);
+
+            if ($payment->getAttribute('coupon_id') !== null) {
+                CouponRedemption::where('payment_id', $payment->getKey())->delete();
+            }
 
             activity('payment')
                 ->performedOn($payment)

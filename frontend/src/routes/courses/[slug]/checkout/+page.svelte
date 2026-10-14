@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { submitPayment } from '$lib/api/payments';
+  import { validateCoupon } from '$lib/api/coupons';
   import { currentLocale, formatPrice } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
@@ -13,6 +14,18 @@
   let submitted = $state(false);
   let errorMsg = $state('');
 
+  // Coupon state
+  let couponInput = $state('');
+  let couponLoading = $state(false);
+  let couponError = $state('');
+  let couponSuccess = $state('');
+  let appliedCoupon = $state<{ id: number; code: string; type: 'percent' | 'fixed'; value: number } | null>(null);
+  let appliedPricing = $state<{ list_price_cents: number; discount_cents: number; amount_due_cents: number } | null>(null);
+
+  const effectiveListPrice = $derived(appliedPricing ? appliedPricing.list_price_cents : data.course.list_price_cents);
+  const effectiveDiscount = $derived(appliedPricing ? appliedPricing.discount_cents : (data.course.discount_cents || 0));
+  const effectiveAmountDue = $derived(appliedPricing ? appliedPricing.amount_due_cents : data.course.amount_due_cents);
+
   const methods = [
     { key: 'vodafone_cash', label: 'فودافون كاش', instructions: 'حوّل المبلغ المطلوب على رقم فودافون كاش، ثم ارفع صورة الإيصال.' },
     { key: 'instapay', label: 'إنستاباي', instructions: 'حوّل المبلغ عبر إنستاباي إلى الحساب الموضح، ثم ارفع صورة الإيصال.' },
@@ -24,6 +37,46 @@
     if (input.files && input.files[0]) {
       proof = input.files[0];
     }
+  }
+
+  async function handleApplyCoupon() {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) {
+      couponError = 'يرجى إدخال رمز الكوبون أولاً.';
+      return;
+    }
+
+    if (!data.course?.id) {
+      couponError = 'تعذر العثور على بيانات الدورة.';
+      return;
+    }
+
+    couponLoading = true;
+    couponError = '';
+    couponSuccess = '';
+
+    try {
+      const res = await validateCoupon(fetch, data.course.id, code);
+      appliedCoupon = res.coupon;
+      appliedPricing = res.pricing;
+      couponSuccess = res.coupon.type === 'percent'
+        ? `تم تطبيق كوبون الخصم (${res.coupon.code}) بنسبة ${res.coupon.value}% بنجاح!`
+        : `تم تطبيق كوبون الخصم (${res.coupon.code}) بقيمة ${formatPrice(res.coupon.value, $currentLocale)} بنجاح!`;
+    } catch (err: any) {
+      appliedCoupon = null;
+      appliedPricing = null;
+      couponError = err instanceof Error ? err.message : 'كوبون الخصم غير صالح.';
+    } finally {
+      couponLoading = false;
+    }
+  }
+
+  function handleRemoveCoupon() {
+    appliedCoupon = null;
+    appliedPricing = null;
+    couponInput = '';
+    couponError = '';
+    couponSuccess = '';
   }
 
   async function handleSubmit() {
@@ -60,6 +113,9 @@
       formData.append('proof', proof);
       if (studentNote.trim()) {
         formData.append('student_note', studentNote);
+      }
+      if (appliedCoupon) {
+        formData.append('coupon_code', appliedCoupon.code);
       }
 
       await submitPayment(fetch, formData);
@@ -107,6 +163,56 @@
         {#if errorMsg}
           <div class="error-banner" role="alert">{errorMsg}</div>
         {/if}
+
+        <!-- Coupon Code Section -->
+        <div class="coupon-box">
+          <div class="coupon-header">
+            <span class="coupon-title">كود الخصم (كوبون)</span>
+            <span class="coupon-hint">اختياري</span>
+          </div>
+
+          {#if appliedCoupon}
+            <div class="coupon-applied-pill">
+              <div class="pill-info">
+                <span class="pill-tag">مُطبّق</span>
+                <strong class="pill-code" dir="ltr">{appliedCoupon.code}</strong>
+                <span class="pill-val">
+                  {appliedCoupon.type === 'percent'
+                    ? `(خصم ${appliedCoupon.value}%)`
+                    : `(خصم ${formatPrice(appliedCoupon.value, $currentLocale)})`}
+                </span>
+              </div>
+              <button type="button" class="btn-remove-coupon" onclick={handleRemoveCoupon} aria-label="إزالة الكوبون">
+                إلغاء
+              </button>
+            </div>
+            {#if couponSuccess}
+              <p class="coupon-success-text">{couponSuccess}</p>
+            {/if}
+          {:else}
+            <div class="coupon-input-row">
+              <input
+                type="text"
+                class="coupon-input"
+                placeholder="أدخل كود الكوبون..."
+                bind:value={couponInput}
+                onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleApplyCoupon(); } }}
+                dir="ltr"
+              />
+              <button
+                type="button"
+                class="btn-apply-coupon"
+                disabled={couponLoading || !couponInput.trim()}
+                onclick={handleApplyCoupon}
+              >
+                {couponLoading ? 'التحقق...' : 'تطبيق'}
+              </button>
+            </div>
+            {#if couponError}
+              <p class="coupon-error-text" role="alert">{couponError}</p>
+            {/if}
+          {/if}
+        </div>
 
         <fieldset>
           <legend>طريقة الدفع</legend>
@@ -166,17 +272,19 @@
         </div>
         <div class="summary-row">
           <span>السعر الأصلي</span>
-          <span>{formatPrice(data.course.list_price_cents, $currentLocale)}</span>
+          <span>{formatPrice(effectiveListPrice, $currentLocale)}</span>
         </div>
-        {#if data.course.discount_cents > 0}
+        {#if effectiveDiscount > 0}
           <div class="summary-row discount">
-            <span>الخصم</span>
-            <span>-{formatPrice(data.course.discount_cents, $currentLocale)}</span>
+            <span>
+              {appliedCoupon ? `الخصم (كوبون ${appliedCoupon.code})` : 'الخصم'}
+            </span>
+            <span>-{formatPrice(effectiveDiscount, $currentLocale)}</span>
           </div>
         {/if}
         <div class="summary-total">
           <span>المطلوب</span>
-          <strong>{formatPrice(data.course.amount_due_cents, $currentLocale)}</strong>
+          <strong>{formatPrice(effectiveAmountDue, $currentLocale)}</strong>
         </div>
       </aside>
     </section>
@@ -192,6 +300,27 @@
   .checkout-form { background: var(--card); border: 2px solid var(--line); border-radius: 0.75rem; padding: 2rem; color: var(--ink); min-width: 0; width: 100%; box-sizing: border-box; overflow: hidden; }
   h1 { font-size: 2rem; margin: 0 0 1.5rem; color: var(--storm); word-break: break-word; }
   .error-banner { background: #fef2f2; border: 2px solid #e8b5b2; border-radius: 0.5rem; color: #8a302b; margin-bottom: 1.5rem; padding: 0.85rem 1rem; word-break: break-word; }
+  
+  /* Coupon section styles */
+  .coupon-box { background: var(--paper); border: 1.5px solid var(--line); border-radius: 0.6rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .coupon-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; }
+  .coupon-title { font-size: 0.92rem; font-weight: 800; color: var(--storm); }
+  .coupon-hint { font-size: 0.78rem; color: var(--muted); background: rgba(0,0,0,0.05); padding: 0.15rem 0.5rem; border-radius: 0.25rem; }
+  .coupon-input-row { display: flex; gap: 0.5rem; }
+  .coupon-input { flex: 1; text-transform: uppercase; font-family: monospace; letter-spacing: 0.05em; font-weight: 700; }
+  .btn-apply-coupon { background: var(--storm); border: 2px solid var(--storm); border-radius: 0.4rem; color: #fff; cursor: pointer; font-weight: 800; padding: 0.6rem 1.25rem; white-space: nowrap; transition: opacity 150ms; }
+  .btn-apply-coupon:hover:not(:disabled) { opacity: 0.9; }
+  .btn-apply-coupon:disabled { opacity: 0.5; cursor: not-allowed; }
+  .coupon-applied-pill { display: flex; align-items: center; justify-content: space-between; background: rgba(16, 185, 129, 0.1); border: 1.5px solid #10b981; border-radius: 0.45rem; padding: 0.6rem 0.85rem; }
+  .pill-info { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .pill-tag { background: #10b981; color: white; font-size: 0.72rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 0.25rem; }
+  .pill-code { font-family: monospace; color: var(--storm); font-size: 1.05rem; letter-spacing: 0.04em; }
+  .pill-val { font-size: 0.88rem; color: #047857; font-weight: 700; }
+  .btn-remove-coupon { background: transparent; border: 1px solid #ef4444; color: #dc2626; border-radius: 0.35rem; font-size: 0.82rem; font-weight: 700; padding: 0.3rem 0.65rem; cursor: pointer; }
+  .btn-remove-coupon:hover { background: #fef2f2; }
+  .coupon-success-text { color: #047857; font-size: 0.85rem; font-weight: 700; margin: 0.5rem 0 0; }
+  .coupon-error-text { color: #b91c1c; font-size: 0.85rem; font-weight: 700; margin: 0.5rem 0 0; }
+
   fieldset { border: 0; margin: 0 0 1.5rem; padding: 0; min-width: 0; width: 100%; box-sizing: border-box; }
   legend { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--storm); }
   .method-options { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); width: 100%; box-sizing: border-box; }

@@ -30,7 +30,7 @@ class AdminPaymentController extends Controller
         }
 
         $payments = Payment::query()
-            ->with(['user', 'course'])
+            ->with(['user', 'course', 'coupon'])
             ->where('status', $status)
             ->orderBy('created_at')
             ->paginate(20);
@@ -56,7 +56,7 @@ class AdminPaymentController extends Controller
 
         /** @var Payment $payment */
         $payment = Payment::query()
-            ->with(['user', 'course', 'term'])
+            ->with(['user', 'course', 'term', 'coupon'])
             ->findOrFail($id);
 
         $data = (new PaymentResource($payment))->resolve();

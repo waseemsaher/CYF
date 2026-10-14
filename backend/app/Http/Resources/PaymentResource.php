@@ -27,6 +27,8 @@ class PaymentResource extends JsonResource
             'user_id' => $payment->getAttribute('user_id'),
             'course_id' => $payment->getAttribute('course_id'),
             'term_id' => $payment->getAttribute('term_id'),
+            'coupon_id' => $payment->getAttribute('coupon_id'),
+            'coupon_code' => $payment->relationLoaded('coupon') ? $payment->coupon?->getAttribute('code') : ($payment->coupon_id ? $payment->coupon?->getAttribute('code') : null),
             'method' => $payment->getAttribute('method'),
             'list_price_cents' => (int) $payment->getAttribute('list_price_cents'),
             'discount_cents' => (int) $payment->getAttribute('discount_cents'),
@@ -60,6 +62,19 @@ class PaymentResource extends JsonResource
                     'branch' => $user->getAttribute('branch'),
                     'academic_year' => $user->getAttribute('academic_year'),
                     'department' => $user->getAttribute('department'),
+                ];
+            }),
+            'coupon' => $this->whenLoaded('coupon', function () use ($payment): ?array {
+                $coupon = $payment->coupon;
+                if (! $coupon) {
+                    return null;
+                }
+
+                return [
+                    'id' => $coupon->getKey(),
+                    'code' => $coupon->getAttribute('code'),
+                    'type' => $coupon->getAttribute('type'),
+                    'value' => (int) $coupon->getAttribute('value'),
                 ];
             }),
             'created_at' => $payment->getAttribute('created_at')?->toISOString(),

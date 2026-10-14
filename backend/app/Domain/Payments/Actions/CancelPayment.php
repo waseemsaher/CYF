@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Payments\Actions;
 
+use App\Models\CouponRedemption;
 use App\Models\Payment;
 use App\Models\User;
 use DomainException;
@@ -26,6 +27,10 @@ class CancelPayment
             $locked->update([
                 'status' => 'cancelled',
             ]);
+
+            if ($locked->getAttribute('coupon_id') !== null) {
+                CouponRedemption::where('payment_id', $locked->getKey())->delete();
+            }
 
             activity('payment')
                 ->performedOn($locked)

@@ -15,6 +15,7 @@ class Payment extends Model
         'user_id',
         'course_id',
         'term_id',
+        'coupon_id',
         'method',
         'list_price_cents',
         'discount_cents',
@@ -38,6 +39,7 @@ class Payment extends Model
     protected function casts(): array
     {
         return [
+            'coupon_id' => 'integer',
             'list_price_cents' => 'integer',
             'discount_cents' => 'integer',
             'amount_due_cents' => 'integer',
@@ -46,6 +48,14 @@ class Payment extends Model
             'platform_share_cents' => 'integer',
             'reviewed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Coupon, $this>
+     */
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     /**

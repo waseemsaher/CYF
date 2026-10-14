@@ -6,6 +6,8 @@ namespace App\Domain\Payments\Actions;
 
 use App\Domain\Catalog\Actions\CalculateCoursePrice;
 use App\Domain\Enrollment\Actions\ActivateEnrollment;
+use App\Models\Coupon;
+use App\Models\CouponRedemption;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
@@ -22,10 +24,11 @@ class SubmitPayment
     public function __construct(
         private readonly CalculateCoursePrice $calculateCoursePrice,
         private readonly ActivateEnrollment $activateEnrollment,
+        private readonly ValidateCoupon $validateCoupon,
     ) {}
 
     /**
-     * @param  array{method: string, sender_identifier: string, student_note?: string|null}  $data
+     * @param  array{method: string, sender_identifier: string, student_note?: string|null, coupon_code?: string|null}  $data
      */
     public function handle(User $user, Course $course, Term $term, UploadedFile $proof, array $data): Payment|Enrollment
     {
@@ -81,11 +84,31 @@ class SubmitPayment
                     ]);
                 }
 
+                // Validate coupon if provided
+                $coupon = null;
+                $couponCode = $data['coupon_code'] ?? null;
+                if (is_string($couponCode) && trim($couponCode) !== '') {
+                    $coupon = $this->validateCoupon->handle(
+                        $couponCode,
+                        $course,
+                        $user,
+                        lockForUpdate: true,
+                    );
+                }
+
                 // Calculate pricing
-                $pricing = $this->calculateCoursePrice->handle($course);
+                $pricing = $this->calculateCoursePrice->handle($course, at: null, coupon: $coupon);
 
                 // If free → instant enrollment
                 if ($pricing['amount_due_cents'] === 0) {
+                    if ($coupon !== null) {
+                        CouponRedemption::create([
+                            'coupon_id' => $coupon->getKey(),
+                            'user_id' => $user->getKey(),
+                            'payment_id' => null,
+                        ]);
+                    }
+
                     return $this->activateEnrollment->handle(
                         user: $user,
                         course: $course,
@@ -98,10 +121,12 @@ class SubmitPayment
                 $proofHash = hash_file('sha256', $proof->getRealPath());
                 $proofPath = $this->storeProof($proof);
 
-                return Payment::create([
+                /** @var Payment $payment */
+                $payment = Payment::create([
                     'user_id' => $user->getKey(),
                     'course_id' => $course->getKey(),
                     'term_id' => $term->getKey(),
+                    'coupon_id' => $coupon?->getKey(),
                     'method' => $data['method'],
                     'list_price_cents' => $pricing['list_price_cents'],
                     'discount_cents' => $pricing['discount_cents'],
@@ -112,6 +137,16 @@ class SubmitPayment
                     'student_note' => $data['student_note'] ?? null,
                     'status' => 'pending',
                 ]);
+
+                if ($coupon !== null) {
+                    CouponRedemption::create([
+                        'coupon_id' => $coupon->getKey(),
+                        'user_id' => $user->getKey(),
+                        'payment_id' => $payment->getKey(),
+                    ]);
+                }
+
+                return $payment;
             });
         } catch (\Throwable $e) {
             if ($proofPath !== null) {

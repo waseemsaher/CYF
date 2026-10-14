@@ -781,6 +781,18 @@
               <p>مراجعة صور إيصالات فودافون كاش وإنستاباي والتحقق من التكرارات.</p>
             </a>
 
+            <a href="/admin/coupons" class="sys-module-card">
+              <span class="sys-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path>
+                  <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path>
+                  <circle cx="14" cy="12" r="1.5"></circle>
+                </svg>
+              </span>
+              <h3>كوبونات الخصم</h3>
+              <p>إدارة أكواد الخصم الترويجية، حدود الاستخدام، ونسب التخفيض للطلاب.</p>
+            </a>
+
             <a href="/courses" class="sys-module-card">
               <span class="sys-icon">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

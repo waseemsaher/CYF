@@ -114,6 +114,14 @@ class Course extends Model
     }
 
     /**
+     * @return BelongsToMany<Coupon, $this>
+     */
+    public function coupons(): BelongsToMany
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_course');
+    }
+
+    /**
      * @return HasMany<CourseSection, $this>
      */
     public function sections(): HasMany

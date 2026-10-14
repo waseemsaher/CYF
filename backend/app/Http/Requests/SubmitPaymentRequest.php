@@ -61,6 +61,7 @@ class SubmitPaymentRequest extends FormRequest
             'sender_identifier' => ['required', 'string', 'regex:/^[0-9]{11}$/'],
             'proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', "max:{$maxSizeKb}"],
             'student_note' => ['nullable', 'string', 'max:1000'],
+            'coupon_code' => ['nullable', 'string', 'max:50'],
         ];
     }
 

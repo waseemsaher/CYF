@@ -156,6 +156,7 @@
     if (role === 'superadmin' || role === 'admin') {
       links.push({ href: '/admin', label: tr.admin });
       links.push({ href: '/admin/payments', label: tr.reviewQueue });
+      links.push({ href: '/admin/coupons', label: 'الكوبونات' });
     } else if (role === 'teacher') {
       links.push({ href: '/teacher', label: tr.teacher });
     } else {

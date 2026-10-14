@@ -42,6 +42,7 @@ class PaymentController extends Controller
                 'method' => $request->validated('method'),
                 'sender_identifier' => $request->validated('sender_identifier'),
                 'student_note' => $request->validated('student_note'),
+                'coupon_code' => $request->validated('coupon_code'),
             ]);
         } catch (\DomainException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
