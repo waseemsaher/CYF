@@ -1,7 +1,11 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import type { PageData } from './$types';
   import { currentUser } from '$lib/api/auth';
   import { updateAdminCourse } from '$lib/api/admin';
+  import { getCourseContent, type CourseContentResponse } from '$lib/api/learning';
+  import { getMyPayments } from '$lib/api/payments';
+  import { getAuthToken } from '$lib/api/client';
   import { currentLocale, formatPrice, getLocalizedText } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
@@ -9,6 +13,49 @@
   let isAdmin = $derived(
     $currentUser?.role === 'admin' || $currentUser?.role === 'superadmin'
   );
+
+  let clientContent = $state<CourseContentResponse | null>(null);
+  let currentContent = $derived(clientContent ?? data.content);
+  let hasPendingPayment = $state(false);
+
+  async function refreshEnrollmentStatus() {
+    if (!getAuthToken()) return;
+
+    try {
+      const contentRes = await getCourseContent(fetch, data.course.slug);
+      if (contentRes?.data) {
+        clientContent = contentRes.data;
+      }
+    } catch {
+      // ignore
+    }
+
+    // If not unlocked, check if student has a pending payment for this course
+    if (!currentContent?.is_unlocked) {
+      try {
+        const payRes = await getMyPayments(fetch);
+        if (payRes?.data) {
+          hasPendingPayment = payRes.data.some(
+            p => (p.course_id === data.course.id || p.course?.slug === data.course.slug) && p.status === 'pending'
+          );
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  onMount(() => {
+    refreshEnrollmentStatus();
+  });
+
+  $effect(() => {
+    if ($currentUser && !currentContent?.is_unlocked) {
+      refreshEnrollmentStatus();
+    }
+  });
+
+  let isEnrolled = $derived(Boolean(currentContent?.is_unlocked));
 
   // Free Preview Modal State
   let isPreviewModalOpen = $state(false);
@@ -176,6 +223,43 @@
           </a>
         </div>
       </aside>
+    {:else if isEnrolled}
+      <aside class="enrollment-panel enrolled" aria-label={$currentLocale === 'en' ? 'Enrolled Status & Course Access' : 'حالة الاشتراك والوصول للمحتوى'}>
+        <div class="enrolled-badge-row">
+          <span class="enrolled-badge">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            {$currentLocale === 'en' ? 'Enrolled' : 'مشترك في المادة'}
+          </span>
+        </div>
+        <p class="enrolled-desc">
+          {$currentLocale === 'en' ? 'You have active access to this course. You can now browse all lessons and learning materials.' : 'أنت مشترك بالفعل في هذا المقرر الدراسي. يمكنك متابعة كافة المحاضرات والمواد التعليمية الآن.'}
+        </p>
+        <a class="enroll-btn enrolled-btn" href={`/my-courses/${data.course.slug}`}>
+          <span>{$currentLocale === 'en' ? 'Go to Course Content' : 'انتقل إلى محتوى المادة'}</span>
+          <span aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
+        </a>
+      </aside>
+    {:else if hasPendingPayment}
+      <aside class="enrollment-panel pending" aria-label={$currentLocale === 'en' ? 'Payment Under Review' : 'الدفعة قيد المراجعة'}>
+        <div class="enrolled-badge-row">
+          <span class="pending-badge">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            {$currentLocale === 'en' ? 'Payment Pending Review' : 'طلب الدفع قيد المراجعة'}
+          </span>
+        </div>
+        <p class="enrolled-desc">
+          {$currentLocale === 'en' ? 'Your payment has been received and is being reviewed by administration.' : 'تم استلام إثبات الدفع وهو قيد المراجعة حاليًا من قبل الإدارة وسيتم تفعيل اشتراكك فور الموافقة.'}
+        </p>
+        <a class="enroll-btn pending-btn" href="/payments">
+          <span>{$currentLocale === 'en' ? 'View My Payments' : 'متابعة حالة الدفعة'}</span>
+          <span aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
+        </a>
+      </aside>
     {:else}
       <aside class="enrollment-panel" aria-label={$currentLocale === 'en' ? 'Price & Enrollment Details' : 'تفاصيل السعر والتسجيل'}>
         <p>{$currentLocale === 'en' ? 'Current Price' : 'السعر الحالي'}</p>
@@ -203,9 +287,9 @@
     <h2>{$currentLocale === 'en' ? 'Curriculum & Course Structure' : 'محتوى وتفاصيل المنهج'}</h2>
     <p>{$currentLocale === 'en' ? 'Inside this course you will find structured lessons, video lecture links, and interactive quizzes for regular review and final exam preparation.' : 'ستجد داخل الدورة محتوى مرتبًا وروابط المحاضرات والاختبارات الخاصة بالمقرر للمساعدة في المذاكرة والمراجعة النهائية.'}</p>
     
-    {#if data.content?.sections && data.content.sections.length > 0}
+    {#if currentContent?.sections && currentContent.sections.length > 0}
       <div class="curriculum-list">
-        {#each data.content.sections as section, sIdx}
+        {#each currentContent.sections as section, sIdx}
           <div class="curriculum-section">
             <button
               type="button"
@@ -324,10 +408,22 @@
       </div>
 
       <div class="preview-modal-footer">
-        <p>أعجبك الشرح؟ يمكنك الاشتراك في المنهج الكامل الآن والوصول لجميع المحاضرات والملفات والاختبارات.</p>
-        <a href={`/courses/${data.course.slug}/checkout`} class="btn-enroll-from-preview">
-          الاشتراك في المقرر الكامل
-        </a>
+        {#if isEnrolled}
+          <p>{$currentLocale === 'en' ? 'You are enrolled in this course. You have full access to all lectures, files, and quizzes.' : 'أنت مشترك بالفعل في هذا المقرر الدراسي. يمكنك الوصول لكافة المحاضرات والملفات الآن.'}</p>
+          <a href={`/my-courses/${data.course.slug}`} class="btn-enroll-from-preview">
+            {$currentLocale === 'en' ? 'Go to Course Content' : 'انتقل إلى محتوى المادة'}
+          </a>
+        {:else if hasPendingPayment}
+          <p>{$currentLocale === 'en' ? 'Your payment is under review. You will get full access once approved.' : 'طلب الدفع قيد المراجعة حاليًا. سيتم فتح المقرر بالكامل فور اعتماد الدفعة.'}</p>
+          <a href="/payments" class="btn-enroll-from-preview">
+            {$currentLocale === 'en' ? 'View My Payments' : 'متابعة حالة الدفعة'}
+          </a>
+        {:else}
+          <p>أعجبك الشرح؟ يمكنك الاشتراك في المنهج الكامل الآن والوصول لجميع المحاضرات والملفات والاختبارات.</p>
+          <a href={`/courses/${data.course.slug}/checkout`} class="btn-enroll-from-preview">
+            الاشتراك في المقرر الكامل
+          </a>
+        {/if}
       </div>
     </div>
   </div>
@@ -702,6 +798,74 @@
     background: var(--brand-navy);
     color: #FAF8F5;
     border-color: var(--brand-navy);
+  }
+
+  .enrollment-panel.enrolled {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.06);
+  }
+
+  .enrollment-panel.pending {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.06);
+  }
+
+  .enrolled-badge-row {
+    margin-bottom: 0.75rem;
+  }
+
+  .enrolled-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #10b981;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.88rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+  }
+
+  .pending-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f59e0b;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.88rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+  }
+
+  .enrolled-desc {
+    color: var(--storm);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin: 0.5rem 0 1.25rem;
+    font-weight: 600;
+  }
+
+  .enroll-btn.enrolled-btn {
+    background: #10b981;
+    border-color: #10b981;
+    color: #ffffff;
+  }
+
+  .enroll-btn.enrolled-btn:hover {
+    background: #059669;
+    border-color: #059669;
+  }
+
+  .enroll-btn.pending-btn {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: #ffffff;
+  }
+
+  .enroll-btn.pending-btn:hover {
+    background: #d97706;
+    border-color: #d97706;
   }
 
   .outline {
