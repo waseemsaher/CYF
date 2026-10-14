@@ -62,14 +62,6 @@
   let copyTimeout: ReturnType<typeof setTimeout> | null = null;
   let showNumber = $state(false);
 
-  function maskNumber(num?: string): string {
-    if (!num) return '•••••••••••';
-    if (num.length >= 7) {
-      return num.slice(0, 3) + ' •••• ••' + num.slice(-2);
-    }
-    return '•••••••••••';
-  }
-
   // Coupon state
   let couponInput = $state('');
   let couponLoading = $state(false);
@@ -325,9 +317,7 @@
                       {#if showNumber}
                         <strong class="number-value revealed" dir="ltr">{selectedMethod.number}</strong>
                       {:else}
-                        <span class="number-value masked" dir="ltr" aria-label="رقم التحويل مخفي">
-                          {maskNumber(selectedMethod.number)}
-                        </span>
+                        <span class="number-hidden-dots" dir="ltr" aria-label="رقم التحويل مخفي">•••••••••••</span>
                       {/if}
                     </div>
                   </div>
@@ -527,47 +517,48 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.75rem;
     background: var(--card);
     border: 1.5px solid var(--line);
     border-radius: 0.5rem;
-    padding: 0.85rem 1.1rem;
+    padding: 0.65rem 0.95rem;
     flex-wrap: wrap;
   }
-  .number-info { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
-  .number-label { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
-  .number-reveal-row { display: flex; align-items: center; gap: 0.5rem; min-height: 2rem; }
+  .number-info { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+  .number-label { font-size: 0.75rem; font-weight: 700; color: var(--muted); }
+  .number-reveal-row { display: flex; align-items: center; gap: 0.5rem; min-height: 1.6rem; }
   .number-value {
-    font-size: 1.35rem;
-    font-family: monospace;
-    font-weight: 800;
-    letter-spacing: 0.05em;
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    letter-spacing: 0.03em;
     color: var(--storm);
     word-break: break-all;
     user-select: all;
   }
-  .number-value.masked {
+  .number-hidden-dots {
     color: var(--muted);
-    letter-spacing: 0.08em;
-    font-size: 1.25rem;
+    letter-spacing: 0.16em;
+    font-size: 0.95rem;
     user-select: none;
-    opacity: 0.85;
+    line-height: 1.5rem;
+    opacity: 0.75;
   }
   .number-actions {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     flex-wrap: wrap;
   }
   .btn-toggle-number {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     background: var(--paper);
     border: 1.5px solid var(--line);
-    border-radius: 0.4rem;
-    padding: 0.55rem 0.9rem;
-    font-size: 0.85rem;
+    border-radius: 0.375rem;
+    padding: 0.42rem 0.75rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: var(--storm);
     cursor: pointer;
@@ -582,13 +573,13 @@
   .btn-copy-number {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     background: var(--paper);
     border: 1.5px solid var(--line);
-    border-radius: 0.4rem;
-    padding: 0.55rem 1rem;
-    font-size: 0.85rem;
-    font-weight: 800;
+    border-radius: 0.375rem;
+    padding: 0.42rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
     color: var(--storm);
     cursor: pointer;
     transition: all 150ms ease;
