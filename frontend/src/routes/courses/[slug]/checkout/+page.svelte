@@ -21,10 +21,10 @@
       key: 'instapay',
       label: { ar: 'إنستاباي', en: 'InstaPay' },
       type: 'instapay',
-      number: 'wasimsaher@instapay',
+      number: '01009971545',
       instructions: {
-        ar: 'حوّل المبلغ عبر إنستاباي إلى الحساب الموضح، ثم ارفع صورة الإيصال.',
-        en: 'Transfer the required amount via InstaPay to the account shown, then upload the receipt screenshot.'
+        ar: 'حوّل المبلغ عبر إنستاباي إلى الرقم الموضح، ثم ارفع صورة الإيصال.',
+        en: 'Transfer the required amount via InstaPay to the number shown, then upload the receipt screenshot.'
       }
     },
     {
@@ -315,7 +315,7 @@
                 <div class="number-display-box">
                   <div class="number-info">
                     <span class="number-label">
-                      {selectedMethod.type === 'instapay' ? 'معرّف إنستاباي للتحويل (InstaPay Handle / IPA)' : 'رقم فودافون كاش / المحفظة للتحويل'}
+                      {selectedMethod.type === 'instapay' ? 'رقم إنستاباي المعتمد للتحويل' : 'رقم فودافون كاش / المحفظة للتحويل'}
                     </span>
                     <strong class="number-value" dir="ltr">{selectedMethod.number}</strong>
                   </div>
@@ -426,9 +426,11 @@
   .coupon-hint { font-size: 0.78rem; color: var(--muted); background: rgba(0,0,0,0.05); padding: 0.15rem 0.5rem; border-radius: 0.25rem; }
   .coupon-input-row { display: flex; gap: 0.5rem; }
   .coupon-input { flex: 1; text-transform: uppercase; font-family: monospace; letter-spacing: 0.05em; font-weight: 700; }
-  .btn-apply-coupon { background: var(--storm); border: 2px solid var(--storm); border-radius: 0.4rem; color: #fff; cursor: pointer; font-weight: 800; padding: 0.6rem 1.25rem; white-space: nowrap; transition: opacity 150ms; }
-  .btn-apply-coupon:hover:not(:disabled) { opacity: 0.9; }
+  .btn-apply-coupon { background: var(--brand-navy); border: 2px solid var(--brand-navy); border-radius: 0.4rem; color: #ffffff; cursor: pointer; font-weight: 800; padding: 0.6rem 1.25rem; white-space: nowrap; transition: background-color 150ms ease, border-color 150ms ease, opacity 150ms ease; }
+  .btn-apply-coupon:hover:not(:disabled) { background: var(--brand-accent); border-color: var(--brand-accent); color: #0a0f1a; }
   .btn-apply-coupon:disabled { opacity: 0.5; cursor: not-allowed; }
+  :global([data-theme='dark']) .btn-apply-coupon { background: var(--brand-accent) !important; border-color: var(--brand-accent) !important; color: #0a0f1a !important; }
+  :global([data-theme='dark']) .btn-apply-coupon:hover:not(:disabled) { background: #ffffff !important; border-color: #ffffff !important; color: #0a0f1a !important; }
   .coupon-applied-pill { display: flex; align-items: center; justify-content: space-between; background: rgba(16, 185, 129, 0.1); border: 1.5px solid #10b981; border-radius: 0.45rem; padding: 0.6rem 0.85rem; }
   .pill-info { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
   .pill-tag { background: #10b981; color: white; font-size: 0.72rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 0.25rem; }

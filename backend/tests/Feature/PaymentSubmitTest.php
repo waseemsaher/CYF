@@ -561,10 +561,10 @@ it('returns active payment methods and recipient numbers publicly', function ():
             'key' => 'instapay',
             'label' => ['ar' => 'إنستاباي', 'en' => 'InstaPay'],
             'type' => 'instapay',
-            'number' => 'wasimsaher@instapay',
+            'number' => '01009971545',
             'instructions' => [
-                'ar' => 'حوّل عبر إنستاباي إلى الحساب الموضح.',
-                'en' => 'Transfer via InstaPay to the account shown.',
+                'ar' => 'حوّل عبر إنستاباي إلى الرقم الموضح.',
+                'en' => 'Transfer via InstaPay to the number shown.',
             ],
             'is_active' => false,
         ],

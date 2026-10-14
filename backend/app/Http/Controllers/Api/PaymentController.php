@@ -45,10 +45,10 @@ class PaymentController extends Controller
                     'key' => 'instapay',
                     'label' => ['ar' => 'إنستاباي', 'en' => 'InstaPay'],
                     'type' => 'instapay',
-                    'number' => 'wasimsaher@instapay',
+                    'number' => '01009971545',
                     'instructions' => [
-                        'ar' => 'حوّل المبلغ المطلوب عبر إنستاباي إلى الحساب الموضح، ثم ارفع صورة الإيصال.',
-                        'en' => 'Transfer the required amount via InstaPay to the account shown, then upload the receipt screenshot.',
+                        'ar' => 'حوّل المبلغ المطلوب عبر إنستاباي إلى الرقم الموضح، ثم ارفع صورة الإيصال.',
+                        'en' => 'Transfer the required amount via InstaPay to the number shown, then upload the receipt screenshot.',
                     ],
                     'is_active' => true,
                 ],

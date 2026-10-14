@@ -610,6 +610,7 @@
   /* Prevent buttons that use dark backgrounds from becoming white in dark mode */
   :global([data-theme='dark']) .btn-primary,
   :global([data-theme='dark']) .btn-submit,
+  :global([data-theme='dark']) .btn-apply-coupon,
   :global([data-theme='dark']) .btn-submit-quiz,
   :global([data-theme='dark']) .btn-auth-register,
   :global([data-theme='dark']) .btn-card-explore,
@@ -633,6 +634,7 @@
 
   :global([data-theme='dark']) .btn-primary:hover,
   :global([data-theme='dark']) .btn-submit:hover,
+  :global([data-theme='dark']) .btn-apply-coupon:hover,
   :global([data-theme='dark']) .btn-submit-quiz:hover,
   :global([data-theme='dark']) .btn-auth-register:hover,
   :global([data-theme='dark']) .btn-card-explore:hover,
