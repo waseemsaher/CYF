@@ -103,9 +103,9 @@
         },
         price_cents: Math.max(0, Math.round(editPricePounds * 100)),
         status: editStatus,
-        telegram_invite_link: editTelegramLink.trim() || null,
-        telegram_group_id: editTelegramGroupId.trim() ? Number(editTelegramGroupId.trim()) : null,
-        telegram_channel_id: editTelegramChannelId.trim() ? Number(editTelegramChannelId.trim()) : null,
+        telegram_invite_link: null,
+        telegram_group_id: editTelegramGroupId.trim() || null,
+        telegram_channel_id: editTelegramChannelId.trim() || null,
       };
 
       await updateAdminCourse(fetch, data.course.id, payload);
@@ -406,45 +406,34 @@
               <option value="draft">مسودة (مخفي عن الطلاب)</option>
             </select>
           </div>
-
-          <div class="form-group">
-            <label for="edit-telegram">رابط دعوة تليجرام</label>
-            <input
-              id="edit-telegram"
-              type="url"
-              dir="ltr"
-              bind:value={editTelegramLink}
-              placeholder="https://t.me/+joinchat..."
-            />
-          </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="edit-telegram-group">معرّف مجموعة تليجرام (Group ID)</label>
-            <input
-              id="edit-telegram-group"
-              type="text"
-              dir="ltr"
-              bind:value={editTelegramGroupId}
-              placeholder="-1001234567890"
-            />
-            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
-              معرّف المجموعة (يبدأ بـ 100- للمجموعات الخارقة).
-            </small>
-          </div>
-
-          <div class="form-group">
-            <label for="edit-telegram-channel">معرّف قناة تليجرام (Channel ID)</label>
+            <label for="edit-telegram-channel">رابط قناة المادة</label>
             <input
               id="edit-telegram-channel"
               type="text"
               dir="ltr"
               bind:value={editTelegramChannelId}
-              placeholder="-1001987654321"
+              placeholder="https://t.me/... أو -1001987654321"
             />
             <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
-              معرّف القناة لبث الدروس (اختياري).
+              رابط مخصص للقناة (لبث المحاضرات والملفات والشروحات).
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-telegram-group">رابط شات/جروب المادة</label>
+            <input
+              id="edit-telegram-group"
+              type="text"
+              dir="ltr"
+              bind:value={editTelegramGroupId}
+              placeholder="https://t.me/... أو -1001234567890"
+            />
+            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
+              رابط مخصص لنقاشات المقرر والتواصل بين الطلاب.
             </small>
           </div>
         </div>

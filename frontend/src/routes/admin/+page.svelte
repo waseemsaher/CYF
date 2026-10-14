@@ -227,9 +227,9 @@
         is_general: formIsGeneral,
         audiences: formIsGeneral ? [] : formSelectedAudiences,
         teacher_share_percent: Number(formTeacherShare),
-        telegram_invite_link: formTelegramLink.trim() || null,
-        telegram_group_id: formTelegramGroupId.trim() ? Number(formTelegramGroupId.trim()) : null,
-        telegram_channel_id: formTelegramChannelId.trim() ? Number(formTelegramChannelId.trim()) : null,
+        telegram_invite_link: null,
+        telegram_group_id: formTelegramGroupId.trim() || null,
+        telegram_channel_id: formTelegramChannelId.trim() || null,
       };
 
       let savedCourseId = editingCourseId;
@@ -1019,43 +1019,32 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label for="admin-tel-group">معرّف مجموعة تليجرام (Group ID)</label>
-            <input
-              id="admin-tel-group"
-              type="text"
-              dir="ltr"
-              bind:value={formTelegramGroupId}
-              placeholder="-1001234567890"
-            />
-            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
-              معرّف مجموعة النقاش (يبدأ عادة بـ 100- للمجموعات الخارقة).
-            </small>
-          </div>
-
-          <div class="form-group">
-            <label for="admin-tel-channel">معرّف قناة تليجرام (Channel ID)</label>
+            <label for="admin-tel-channel">رابط قناة المادة</label>
             <input
               id="admin-tel-channel"
               type="text"
               dir="ltr"
               bind:value={formTelegramChannelId}
-              placeholder="-1001987654321"
+              placeholder="https://t.me/... أو -1001987654321"
             />
             <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
-              معرّف القناة لبث الدروس (اختياري).
+              رابط مخصص للقناة (لبث الدروس والمحاضرات والملفات).
             </small>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="admin-tel">رابط دعوة تليجرام (Invite Link)</label>
-          <input
-            id="admin-tel"
-            type="url"
-            dir="ltr"
-            bind:value={formTelegramLink}
-            placeholder="https://t.me/+joinchat..."
-          />
+          <div class="form-group">
+            <label for="admin-tel-group">رابط شات/جروب المادة</label>
+            <input
+              id="admin-tel-group"
+              type="text"
+              dir="ltr"
+              bind:value={formTelegramGroupId}
+              placeholder="https://t.me/... أو -1001234567890"
+            />
+            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
+              رابط مخصص لنقاشات المقرر والتواصل بين الطلاب.
+            </small>
+          </div>
         </div>
 
         <div class="modal-actions">

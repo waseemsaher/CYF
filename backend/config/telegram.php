@@ -8,4 +8,5 @@ return [
     'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET', ''),
     'api_url' => env('TELEGRAM_API_URL', 'https://api.telegram.org'),
     'token_lifetime_minutes' => (int) env('TELEGRAM_TOKEN_LIFETIME_MINUTES', 15),
+    'general_group_link' => env('TELEGRAM_GENERAL_GROUP_LINK', 'https://t.me/code_eraa'),
 ];

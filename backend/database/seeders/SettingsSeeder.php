@@ -24,7 +24,7 @@ class SettingsSeeder extends Seeder
                 'key' => 'vodafone_cash',
                 'label' => ['ar' => 'فودافون كاش', 'en' => 'Vodafone Cash'],
                 'type' => 'ewallet',
-                'number' => '01XXXXXXXXX',
+                'number' => '01009971545',
                 'instructions' => [
                     'ar' => 'حوّل المبلغ المطلوب على رقم فودافون كاش الموضح، ثم ارفع صورة الإيصال.',
                     'en' => 'Transfer the required amount to the Vodafone Cash number shown, then upload the receipt screenshot.',

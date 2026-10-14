@@ -110,18 +110,16 @@ class ApprovePayment
                 $course = $payment->course;
                 $courseTitle = htmlspecialchars((string) ($course->getTranslation('title', 'ar') ?: $course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-                if ($course->getAttribute('telegram_group_id') || $course->getAttribute('telegram_channel_id')) {
+                if ($course->getAttribute('telegram_group_id') || $course->getAttribute('telegram_channel_id') || $course->getAttribute('telegram_invite_link')) {
                     // Primary path: push invite links directly to the student
                     SendCourseInviteLinkJob::dispatch($student, $course)->afterCommit();
                 } else {
-                    // Fallback: plain approval message with optional static invite link
-                    $msg = "تم قبول عملية الدفع وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\nيمكنك الآن الانضمام إلى مجموعة التليجرام الخاصة بالمادة.\n\nYour payment has been approved and your course access is now active!";
+                    // Fallback: plain approval message with general community link
+                    $msg = "تم قبول عملية الدفع وتفعيل اشتراكك في مادة: <b>{$courseTitle}</b>!\n\nYour payment has been approved and your course access is now active!";
 
-                    $inviteLink = $course->telegram_invite_link;
-                    if ($inviteLink) {
-                        $escapedInviteLink = htmlspecialchars((string) $inviteLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                        $msg .= "\n\n<a href=\"{$escapedInviteLink}\">انضم إلى القناة / Join Channel</a>";
-                    }
+                    $generalGroupLink = config('telegram.general_group_link', 'https://t.me/code_eraa');
+                    $escapedGeneral = htmlspecialchars((string) $generalGroupLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                    $msg .= "\n\n🌐 <b>الرابط العام للمنصة:</b>\n{$escapedGeneral}";
 
                     SendTelegramNotificationJob::dispatch((int) $student->telegram_user_id, $msg)->afterCommit();
                 }
