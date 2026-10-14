@@ -20,7 +20,7 @@ class StoreCourseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'slug' => ['required', 'string', 'max:255', Rule::unique('courses', 'slug')],
+            'slug' => ['required', 'string', 'max:255', Rule::unique('courses', 'slug')->whereNull('deleted_at')],
             'title' => ['required', 'array', 'required_array_keys:ar,en'],
             'title.ar' => ['required', 'string', 'max:255'],
             'title.en' => ['required', 'string', 'max:255'],

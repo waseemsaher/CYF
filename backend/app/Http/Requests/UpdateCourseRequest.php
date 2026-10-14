@@ -24,7 +24,7 @@ class UpdateCourseRequest extends FormRequest
         $course = $this->route('course');
 
         return [
-            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('courses', 'slug')->ignore($course)],
+            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('courses', 'slug')->ignore($course)->whereNull('deleted_at')],
             'title' => ['sometimes', 'array', 'required_array_keys:ar,en'],
             'title.ar' => ['required_with:title', 'string', 'max:255'],
             'title.en' => ['required_with:title', 'string', 'max:255'],

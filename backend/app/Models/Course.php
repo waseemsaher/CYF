@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -18,6 +19,18 @@ class Course extends Model
 {
     use HasTranslations;
     use SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Course $course): void {
+            if (! $course->isForceDeleting() && ! str_contains((string) $course->slug, '-deleted-')) {
+                $suffix = '-deleted-' . time() . '-' . Str::lower(Str::random(6));
+                $baseSlug = Str::limit((string) $course->slug, 255 - strlen($suffix), '');
+                $course->slug = $baseSlug . $suffix;
+                $course->saveQuietly();
+            }
+        });
+    }
 
     protected $table = 'courses';
 

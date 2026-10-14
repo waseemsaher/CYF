@@ -66,6 +66,19 @@ it('allows a permitted admin to create, update, and delete a course', function (
         ->assertNoContent();
 
     $this->assertSoftDeleted('courses', ['id' => $courseId]);
+
+    $deletedCourse = Course::onlyTrashed()->find($courseId);
+    expect($deletedCourse->slug)->toContain('-deleted-');
+
+    // Create a new course with the same original slug
+    $this->actingAs($admin, 'sanctum')->postJson('/api/v1/admin/courses', [
+        'slug' => 'new-course',
+        'title' => ['ar' => 'دورة جديدة مكررة', 'en' => 'Recreated Course'],
+        'description' => ['ar' => 'وصف', 'en' => 'Description'],
+        'price_cents' => 20000,
+        'status' => 'draft',
+    ])->assertCreated()
+        ->assertJsonPath('data.slug', 'new-course');
 });
 
 it('denies course management to a student', function (): void {
