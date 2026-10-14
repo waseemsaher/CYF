@@ -35,7 +35,7 @@ class SettingsSeeder extends Seeder
                 'key' => 'instapay',
                 'label' => ['ar' => 'إنستاباي', 'en' => 'InstaPay'],
                 'type' => 'instapay',
-                'number' => 'username@instapay',
+                'number' => 'wasimsaher@instapay',
                 'instructions' => [
                     'ar' => 'حوّل المبلغ المطلوب عبر إنستاباي إلى الحساب الموضح، ثم ارفع صورة الإيصال.',
                     'en' => 'Transfer the required amount via InstaPay to the account shown, then upload the receipt screenshot.',
@@ -46,7 +46,7 @@ class SettingsSeeder extends Seeder
                 'key' => 'other_ewallet',
                 'label' => ['ar' => 'محفظة إلكترونية أخرى', 'en' => 'Other e-wallet'],
                 'type' => 'ewallet',
-                'number' => '',
+                'number' => '01009971545',
                 'instructions' => [
                     'ar' => 'حوّل المبلغ المطلوب بأي محفظة إلكترونية، ثم ارفع صورة الإيصال مع رقم المحفظة المرسل منها.',
                     'en' => 'Transfer the required amount using any e-wallet, then upload the receipt screenshot with the sender wallet number.',
