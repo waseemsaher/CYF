@@ -549,7 +549,7 @@ export const translations: Record<Locale, Translations> = {
         departmentLabel: 'القسم الأكاديمي',
         telegramLabel: 'اسم مستخدم تليجرام (اختياري)',
         telegramPlaceholder: '@username',
-        phoneLabel: 'رقم المحفظة الإلكترونية (فودافون كاش / إنستاباي)',
+        phoneLabel: ' لاسترداد الأموال عند الحاجه الي ذلك، رقم المحفظة الإلكترونية (فودافون كاش / إنستاباي)',
         phonePlaceholder: '01012345678',
         submit: 'إنشاء الحساب وبدء التعلم',
         submitting: 'جاري إنشاء الحساب...',
