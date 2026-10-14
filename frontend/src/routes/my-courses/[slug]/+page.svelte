@@ -109,14 +109,9 @@
         </div>
 
         <div class="header-actions">
-          {#if content.is_unlocked && content.course.telegram_invite_link}
-            <a
-              href={content.course.telegram_invite_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn-telegram"
-            >
-              انضم لمجموعة التليجرام للمادة
+          {#if content.is_unlocked && telegramStatus && !telegramStatus.is_linked}
+            <a href="/link-telegram" class="btn-link-telegram">
+              ربط حساب تليجرام لاستلام الروابط
             </a>
           {/if}
 
@@ -371,7 +366,7 @@
     flex-wrap: wrap;
   }
 
-  .btn-telegram {
+  .btn-link-telegram {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -386,7 +381,7 @@
     transition: opacity 150ms ease;
   }
 
-  .btn-telegram:hover { opacity: 0.9; }
+  .btn-link-telegram:hover { opacity: 0.9; }
 
   .btn-resend-telegram {
     display: inline-flex;

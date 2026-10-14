@@ -6,6 +6,8 @@ namespace App\Domain\Payments\Actions;
 
 use App\Domain\Catalog\Actions\CalculateCoursePrice;
 use App\Domain\Enrollment\Actions\ActivateEnrollment;
+use App\Jobs\SendCourseInviteLinkJob;
+use App\Jobs\SendTelegramNotificationJob;
 use App\Models\Coupon;
 use App\Models\CouponRedemption;
 use App\Models\Course;
@@ -109,12 +111,31 @@ class SubmitPayment
                         ]);
                     }
 
-                    return $this->activateEnrollment->handle(
+                    $enrollment = $this->activateEnrollment->handle(
                         user: $user,
                         course: $course,
                         term: $term,
                         source: 'free',
                     );
+
+                    // Notify via Telegram if linked (queued, non-blocking)
+                    if ($user->telegram_user_id) {
+                        $courseTitle = htmlspecialchars((string) ($course->getTranslation('title', 'ar') ?: $course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+                        if ($course->getAttribute('telegram_group_id') || $course->getAttribute('telegram_channel_id') || $course->getAttribute('telegram_invite_link')) {
+                            SendCourseInviteLinkJob::dispatch($user, $course)->afterCommit();
+                        } else {
+                            $msg = "تم تفعيل اشتراكك في مادة: <b>{$courseTitle}</b> بنجاح!\n\nYour course access is now active!";
+
+                            $generalGroupLink = config('telegram.general_group_link', 'https://t.me/code_eraa');
+                            $escapedGeneral = htmlspecialchars((string) $generalGroupLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                            $msg .= "\n\n🌐 <b>الرابط العام للمنصة:</b>\n{$escapedGeneral}";
+
+                            SendTelegramNotificationJob::dispatch((int) $user->telegram_user_id, $msg)->afterCommit();
+                        }
+                    }
+
+                    return $enrollment;
                 }
 
                 // Process proof image

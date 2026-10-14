@@ -10,8 +10,10 @@ use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;
+use App\Jobs\SendCourseInviteLinkJob;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Permission;
@@ -178,6 +180,36 @@ it('creates instant enrollment for free courses', function (): void {
         'course_id' => $data['course']->getKey(),
         'source' => 'free',
     ]);
+});
+
+it('dispatches Telegram invite link job when enrolling in a free course with linked telegram', function (): void {
+    Queue::fake();
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $data['student']->update(['telegram_user_id' => 777888999]);
+    $data['course']->update([
+        'price_cents' => 0,
+        'telegram_invite_link' => 'https://t.me/+freecourseinvite',
+    ]);
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+            'method' => 'vodafone_cash',
+            'sender_identifier' => '01012345678',
+            'proof' => $proof,
+        ]);
+
+    $response->assertCreated();
+
+    Queue::assertPushed(SendCourseInviteLinkJob::class, function (SendCourseInviteLinkJob $job) use ($data): bool {
+        return $job->user->getKey() === $data['student']->getKey()
+            && $job->course->getKey() === $data['course']->getKey();
+    });
 });
 
 it('lists only the students own payments', function (): void {

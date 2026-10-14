@@ -126,7 +126,7 @@ class TelegramController extends Controller
             }
         }
 
-        if (! $course->telegram_group_id) {
+        if (! $course->telegram_group_id && ! $course->telegram_channel_id && ! $course->telegram_invite_link) {
             return response()->json([
                 'message' => 'لا توجد مجموعة تليجرام مخصصة لهذا المقرر حالياً.',
             ], 422);
@@ -140,10 +140,12 @@ class TelegramController extends Controller
             ->where('expires_at', '>', now())
             ->get();
 
+        $chatIdToRevoke = $course->telegram_group_id ?: $course->telegram_channel_id;
+
         foreach ($outstandingInvites as $invite) {
-            if ($invite->invite_link) {
+            if ($invite->invite_link && $chatIdToRevoke) {
                 try {
-                    $client->revokeChatInviteLink($course->telegram_group_id, $invite->invite_link);
+                    $client->revokeChatInviteLink($chatIdToRevoke, $invite->invite_link);
                 } catch (\Throwable $e) {
                     Log::warning('Failed to revoke outstanding chat invite link on resend', [
                         'course_id' => $course->getKey(),
