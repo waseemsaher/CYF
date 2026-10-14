@@ -68,6 +68,35 @@ class Course extends Model
         ];
     }
 
+    public function setTelegramChannelIdAttribute(mixed $value): void
+    {
+        $this->attributes['telegram_channel_id'] = self::normalizeTelegramChatId($value);
+    }
+
+    public function setTelegramGroupIdAttribute(mixed $value): void
+    {
+        $this->attributes['telegram_group_id'] = self::normalizeTelegramChatId($value);
+    }
+
+    public static function normalizeTelegramChatId(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $str = trim((string) $value);
+        if ($str === '') {
+            return null;
+        }
+
+        // Handle raw channel/group IDs (e.g. -4331858990 from Telegram Web URLs or 4331858990)
+        if (preg_match('/^-?(\d{10,})$/', $str, $matches) && ! str_starts_with($str, '-100')) {
+            return '-100'.$matches[1];
+        }
+
+        return $str;
+    }
+
     /**
      * @return HasMany<CourseAudience, $this>
      */
