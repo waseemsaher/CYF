@@ -5,6 +5,15 @@ export type Translation = {
   en: string;
 };
 
+export type PaymentMethod = {
+  key: string;
+  label: Translation | string;
+  type?: string;
+  number?: string;
+  instructions?: Translation | string;
+  is_active?: boolean;
+};
+
 export type Payment = {
   id: number;
   user_id: number;
@@ -74,5 +83,9 @@ export function rejectAdminPayment(fetcher: typeof fetch, id: number, reason: st
   return apiPost<{ data: Payment }>(fetcher, `/admin/payments/${id}/reject`, {
     rejection_reason: reason,
   });
+}
+
+export function getPaymentMethods(fetcher: typeof fetch) {
+  return apiGet<{ data: PaymentMethod[] }>(fetcher, '/reference/payment-methods');
 }
 

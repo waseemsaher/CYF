@@ -543,3 +543,42 @@ it('normalizes Arabic-Indic digits in sender_identifier to 11 western digits', f
         'sender_identifier' => '01012345678',
     ]);
 });
+
+it('returns active payment methods and recipient numbers publicly', function (): void {
+    Setting::setValue('payments', 'methods', [
+        [
+            'key' => 'vodafone_cash',
+            'label' => ['ar' => 'فودافون كاش', 'en' => 'Vodafone Cash'],
+            'type' => 'ewallet',
+            'number' => '01009971545',
+            'instructions' => [
+                'ar' => 'حوّل المبلغ على رقم فودافون كاش الموضح.',
+                'en' => 'Transfer the amount to the Vodafone Cash number shown.',
+            ],
+            'is_active' => true,
+        ],
+        [
+            'key' => 'instapay',
+            'label' => ['ar' => 'إنستاباي', 'en' => 'InstaPay'],
+            'type' => 'instapay',
+            'number' => 'wasimsaher@instapay',
+            'instructions' => [
+                'ar' => 'حوّل عبر إنستاباي إلى الحساب الموضح.',
+                'en' => 'Transfer via InstaPay to the account shown.',
+            ],
+            'is_active' => false,
+        ],
+    ]);
+
+    $response = $this->getJson('/api/v1/reference/payment-methods');
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.key', 'vodafone_cash')
+        ->assertJsonPath('data.0.number', '01009971545');
+
+    $aliasResponse = $this->getJson('/api/v1/payment-methods');
+    $aliasResponse->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.number', '01009971545');
+});

@@ -32,6 +32,8 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/reference/academic-years', [CatalogController::class, 'academicYears']);
     Route::get('/reference/departments', [CatalogController::class, 'departments']);
     Route::get('/reference/terms', [CatalogController::class, 'terms']);
+    Route::get('/reference/payment-methods', [PaymentController::class, 'paymentMethods']);
+    Route::get('/payment-methods', [PaymentController::class, 'paymentMethods']);
     Route::get('/content-blocks/{key}', [ContentBlockController::class, 'show']);
 
     Route::post('/register', [AuthController::class, 'register'])

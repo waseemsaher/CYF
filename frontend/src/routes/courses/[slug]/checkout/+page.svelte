@@ -1,10 +1,55 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { submitPayment } from '$lib/api/payments';
+  import { submitPayment, type PaymentMethod, type Translation } from '$lib/api/payments';
   import { validateCoupon } from '$lib/api/coupons';
   import { currentLocale, formatPrice } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
+
+  const DEFAULT_METHODS: PaymentMethod[] = [
+    {
+      key: 'vodafone_cash',
+      label: { ar: 'فودافون كاش', en: 'Vodafone Cash' },
+      type: 'ewallet',
+      number: '01009971545',
+      instructions: {
+        ar: 'حوّل المبلغ المطلوب على رقم فودافون كاش الموضح، ثم ارفع صورة الإيصال.',
+        en: 'Transfer the required amount to the Vodafone Cash number shown, then upload the receipt screenshot.'
+      }
+    },
+    {
+      key: 'instapay',
+      label: { ar: 'إنستاباي', en: 'InstaPay' },
+      type: 'instapay',
+      number: 'wasimsaher@instapay',
+      instructions: {
+        ar: 'حوّل المبلغ عبر إنستاباي إلى الحساب الموضح، ثم ارفع صورة الإيصال.',
+        en: 'Transfer the required amount via InstaPay to the account shown, then upload the receipt screenshot.'
+      }
+    },
+    {
+      key: 'other_ewallet',
+      label: { ar: 'محفظة إلكترونية أخرى', en: 'Other e-wallet' },
+      type: 'ewallet',
+      number: '01009971545',
+      instructions: {
+        ar: 'حوّل المبلغ المطلوب بأي محفظة إلكترونية، ثم ارفع صورة الإيصال مع رقم المحفظة المرسل منها.',
+        en: 'Transfer the required amount using any e-wallet, then upload the receipt screenshot with the sender wallet number.'
+      }
+    }
+  ];
+
+  const methods = $derived<PaymentMethod[]>(
+    data.paymentMethods && data.paymentMethods.length > 0
+      ? data.paymentMethods
+      : DEFAULT_METHODS
+  );
+
+  function getLocalized(val: Translation | string | undefined | null, locale: 'ar' | 'en'): string {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    return val[locale] || val.ar || val.en || '';
+  }
 
   let method = $state('vodafone_cash');
   let senderIdentifier = $state('');
@@ -13,6 +58,8 @@
   let submitting = $state(false);
   let submitted = $state(false);
   let errorMsg = $state('');
+  let copied = $state(false);
+  let copyTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Coupon state
   let couponInput = $state('');
@@ -26,11 +73,28 @@
   const effectiveDiscount = $derived(appliedPricing ? appliedPricing.discount_cents : (data.course.discount_cents || 0));
   const effectiveAmountDue = $derived(appliedPricing ? appliedPricing.amount_due_cents : data.course.amount_due_cents);
 
-  const methods = [
-    { key: 'vodafone_cash', label: 'فودافون كاش', instructions: 'حوّل المبلغ المطلوب على رقم فودافون كاش، ثم ارفع صورة الإيصال.' },
-    { key: 'instapay', label: 'إنستاباي', instructions: 'حوّل المبلغ عبر إنستاباي إلى الحساب الموضح، ثم ارفع صورة الإيصال.' },
-    { key: 'other_ewallet', label: 'محفظة إلكترونية أخرى', instructions: 'حوّل المبلغ بأي محفظة إلكترونية وارفع صورة الإيصال مع رقم المحفظة.' }
-  ];
+  async function handleCopyNumber(num: string) {
+    if (!num) return;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(num);
+      } else if (typeof document !== 'undefined') {
+        const input = document.createElement('input');
+        input.value = num;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      }
+      copied = true;
+      if (copyTimeout) clearTimeout(copyTimeout);
+      copyTimeout = setTimeout(() => {
+        copied = false;
+      }, 2500);
+    } catch {
+      // Fallback
+    }
+  }
 
   function handleFileChange(e: Event) {
     const input = e.target as HTMLInputElement;
@@ -127,7 +191,7 @@
     }
   }
 
-  const selectedMethod = $derived(methods.find(m => m.key === method));
+  const selectedMethod = $derived(methods.find(m => m.key === method) || methods[0]);
 </script>
 
 <svelte:head>
@@ -220,24 +284,78 @@
             {#each methods as m}
               <label class="method-option" class:active={method === m.key}>
                 <input type="radio" name="method" value={m.key} bind:group={method} />
-                <span>{m.label}</span>
+                <div class="method-meta">
+                  <span class="method-name">{getLocalized(m.label, $currentLocale)}</span>
+                  {#if m.number}
+                    <span class="method-subnumber" dir="ltr">{m.number}</span>
+                  {/if}
+                </div>
               </label>
             {/each}
           </div>
+
           {#if selectedMethod}
-            <p class="method-instructions">{selectedMethod.instructions}</p>
+            <div class="payment-details-card">
+              <div class="details-header">
+                <div class="details-label-group">
+                  <span class="details-badge">
+                    {selectedMethod.type === 'instapay' ? 'بيانات التحويل عبر إنستاباي' : 'رقم التحويل المعتمد'}
+                  </span>
+                  <span class="details-method-name">
+                    {getLocalized(selectedMethod.label, $currentLocale)}
+                  </span>
+                </div>
+                <div class="amount-to-pay">
+                  <span class="amount-label">المبلغ المطلوب تحويله:</span>
+                  <strong class="amount-val">{formatPrice(effectiveAmountDue, $currentLocale)}</strong>
+                </div>
+              </div>
+
+              {#if selectedMethod.number}
+                <div class="number-display-box">
+                  <div class="number-info">
+                    <span class="number-label">
+                      {selectedMethod.type === 'instapay' ? 'معرّف إنستاباي للتحويل (InstaPay Handle / IPA)' : 'رقم فودافون كاش / المحفظة للتحويل'}
+                    </span>
+                    <strong class="number-value" dir="ltr">{selectedMethod.number}</strong>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn-copy-number"
+                    onclick={() => handleCopyNumber(selectedMethod?.number || '')}
+                    aria-label="نسخ رقم التحويل"
+                  >
+                    {#if copied}
+                      <span class="copy-success-text">تم النسخ ✓</span>
+                    {:else}
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                      <span>نسخ الرقم</span>
+                    {/if}
+                  </button>
+                </div>
+              {/if}
+
+              {#if selectedMethod.instructions}
+                <p class="method-instructions">
+                  {getLocalized(selectedMethod.instructions, $currentLocale)}
+                </p>
+              {/if}
+            </div>
           {/if}
         </fieldset>
 
         <label class="field">
-          <span>رقم المرسل <span class="required">*</span></span>
+          <span>رقم المحفظة / الهاتف المرسل منه <span class="required">*</span></span>
           <input
             type="tel"
             inputmode="numeric"
             pattern="[0-9]{11}"
             maxlength="11"
             bind:value={senderIdentifier}
-            placeholder="أدخل رقم المرسل (11 رقمًا، مثال: 01012345678)"
+            placeholder="أدخل رقمك الذي قمت بالتحويل منه (11 رقمًا، مثال: 01012345678)"
             required
           />
         </label>
@@ -323,11 +441,107 @@
 
   fieldset { border: 0; margin: 0 0 1.5rem; padding: 0; min-width: 0; width: 100%; box-sizing: border-box; }
   legend { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--storm); }
-  .method-options { display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); width: 100%; box-sizing: border-box; }
-  .method-option { align-items: center; background: var(--paper); border: 2px solid var(--line); border-radius: 0.5rem; cursor: pointer; display: flex; font-weight: 700; gap: 0.5rem; padding: 0.75rem 1rem; transition: border-color 150ms; color: var(--storm); min-width: 0; box-sizing: border-box; word-break: break-word; overflow-wrap: break-word; }
+  .method-options { display: grid; gap: 0.65rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); width: 100%; box-sizing: border-box; }
+  .method-option { align-items: flex-start; background: var(--paper); border: 2px solid var(--line); border-radius: 0.5rem; cursor: pointer; display: flex; font-weight: 700; gap: 0.65rem; padding: 0.85rem 1rem; transition: border-color 150ms; color: var(--storm); min-width: 0; box-sizing: border-box; word-break: break-word; overflow-wrap: break-word; }
   .method-option.active { background: rgba(var(--brand-navy-rgb), 0.08); border-color: var(--deep-cyan); }
-  .method-option input { accent-color: var(--deep-cyan); flex-shrink: 0; }
-  .method-instructions { background: var(--paper); border-radius: 0.35rem; color: var(--storm); font-size: 0.88rem; line-height: 1.7; margin-top: 0.75rem; padding: 0.75rem 1rem; border: 1.5px solid var(--line); word-break: break-word; overflow-wrap: break-word; }
+  .method-option input { accent-color: var(--deep-cyan); flex-shrink: 0; margin-top: 0.25rem; }
+  .method-meta { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+  .method-name { font-weight: 800; font-size: 0.95rem; color: var(--storm); }
+  .method-subnumber { font-size: 0.8rem; color: var(--muted); font-family: monospace; letter-spacing: 0.02em; }
+
+  .payment-details-card {
+    background: var(--paper);
+    border: 2px solid var(--deep-cyan);
+    border-radius: 0.65rem;
+    padding: 1.25rem;
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  .details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    border-bottom: 1px dashed var(--line);
+    padding-bottom: 0.75rem;
+  }
+  .details-label-group { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .details-badge {
+    background: rgba(var(--brand-navy-rgb), 0.12);
+    color: var(--deep-cyan);
+    font-size: 0.76rem;
+    font-weight: 800;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.3rem;
+  }
+  .details-method-name { font-weight: 800; font-size: 0.95rem; color: var(--storm); }
+  .amount-to-pay { font-size: 0.88rem; color: var(--storm); display: flex; align-items: baseline; gap: 0.35rem; }
+  .amount-label { color: var(--muted); }
+  .amount-val { color: var(--brand-accent); font-size: 1.2rem; font-weight: 900; }
+
+  .number-display-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.85rem 1.1rem;
+    flex-wrap: wrap;
+  }
+  .number-info { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+  .number-label { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+  .number-value {
+    font-size: 1.4rem;
+    font-family: monospace;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: var(--storm);
+    word-break: break-all;
+    user-select: all;
+  }
+  .btn-copy-number {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 0.4rem;
+    padding: 0.55rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--storm);
+    cursor: pointer;
+    transition: all 150ms ease;
+    white-space: nowrap;
+  }
+  .btn-copy-number:hover {
+    background: rgba(var(--brand-navy-rgb), 0.08);
+    border-color: var(--deep-cyan);
+    color: var(--deep-cyan);
+  }
+  .copy-success-text {
+    color: #059669;
+    font-weight: 800;
+  }
+  .method-instructions {
+    background: rgba(0,0,0,0.03);
+    border-radius: 0.35rem;
+    color: var(--storm);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--line);
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
   .field { display: grid; gap: 0.4rem; margin-bottom: 1.25rem; min-width: 0; width: 100%; box-sizing: border-box; }
   .field > span { font-size: 0.88rem; font-weight: 700; color: var(--storm); }
   .required { color: #c2453e; }
