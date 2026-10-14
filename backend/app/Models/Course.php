@@ -24,9 +24,9 @@ class Course extends Model
     {
         static::deleting(function (Course $course): void {
             if (! $course->isForceDeleting() && ! str_contains((string) $course->slug, '-deleted-')) {
-                $suffix = '-deleted-' . time() . '-' . Str::lower(Str::random(6));
+                $suffix = '-deleted-'.time().'-'.Str::lower(Str::random(6));
                 $baseSlug = Str::limit((string) $course->slug, 255 - strlen($suffix), '');
-                $course->slug = $baseSlug . $suffix;
+                $course->slug = $baseSlug.$suffix;
                 $course->saveQuietly();
             }
         });

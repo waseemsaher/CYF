@@ -13,9 +13,9 @@ return new class extends Migration
         Course::onlyTrashed()
             ->where('slug', 'not like', '%-deleted-%')
             ->each(function (Course $course): void {
-                $suffix = '-deleted-' . time() . '-' . Str::lower(Str::random(6));
+                $suffix = '-deleted-'.time().'-'.Str::lower(Str::random(6));
                 $baseSlug = Str::limit((string) $course->slug, 255 - strlen($suffix), '');
-                $course->slug = $baseSlug . $suffix;
+                $course->slug = $baseSlug.$suffix;
                 $course->saveQuietly();
             });
     }
@@ -25,4 +25,3 @@ return new class extends Migration
         // No-op: previously deleted courses retain their modified slugs
     }
 };
-

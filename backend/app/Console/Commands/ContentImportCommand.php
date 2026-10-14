@@ -129,8 +129,8 @@ class ContentImportCommand extends Command
                     $course->setTranslations('description', $description);
                     $course->price_cents = $priceCents;
                     $course->status = $status;
-                    $course->telegram_group_id = $telegramChatId;
-                    $course->telegram_channel_id = $telegramChatId;
+                    $course->telegram_group_id = $telegramChatId !== null ? (string) $telegramChatId : null;
+                    $course->telegram_channel_id = $telegramChatId !== null ? (string) $telegramChatId : null;
                     $course->telegram_invite_link = $telegramInviteLink;
                     $course->save();
                 } else {

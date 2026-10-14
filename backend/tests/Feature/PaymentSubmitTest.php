@@ -495,3 +495,51 @@ it('rejects payment submission with an invalid payment method', function (): voi
         ->assertJsonValidationErrors(['method'])
         ->assertJsonPath('errors.method.0', 'طريقة الدفع المختارة غير صالحة.');
 });
+
+it('rejects payment submission when sender_identifier is not exactly 11 digits', function (string $invalidSender): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+            'method' => 'vodafone_cash',
+            'sender_identifier' => $invalidSender,
+            'proof' => $proof,
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['sender_identifier'])
+        ->assertJsonPath('errors.sender_identifier.0', 'رقم المرسل يجب أن يتكون من 11 رقمًا فقط.');
+})->with([
+    'too short' => '010123456',
+    'too long' => '010123456789',
+    'non-digits' => 'user@instapay',
+    'alphanumeric' => '0101234567a',
+]);
+
+it('normalizes Arabic-Indic digits in sender_identifier to 11 western digits', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+            'method' => 'vodafone_cash',
+            'sender_identifier' => '٠١٠١٢٣٤٥٦٧٨',
+            'proof' => $proof,
+        ]);
+
+    $response->assertCreated();
+    $this->assertDatabaseHas('payments', [
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'sender_identifier' => '01012345678',
+    ]);
+});

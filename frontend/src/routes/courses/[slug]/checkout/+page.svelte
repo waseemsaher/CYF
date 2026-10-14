@@ -27,8 +27,18 @@
   }
 
   async function handleSubmit() {
-    if (!proof || !senderIdentifier.trim()) {
+    const cleanedSender = senderIdentifier
+      .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString())
+      .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
+      .trim();
+
+    if (!proof || !cleanedSender) {
       errorMsg = 'يرجى ملء جميع الحقول المطلوبة وإرفاق صورة الإيصال.';
+      return;
+    }
+
+    if (!/^[0-9]{11}$/.test(cleanedSender)) {
+      errorMsg = 'رقم المرسل يجب أن يتكون من 11 رقمًا فقط.';
       return;
     }
 
@@ -46,7 +56,7 @@
       const termId = data.currentTerm?.id ? String(data.currentTerm.id) : '1';
       formData.append('term_id', termId);
       formData.append('method', method);
-      formData.append('sender_identifier', senderIdentifier);
+      formData.append('sender_identifier', cleanedSender);
       formData.append('proof', proof);
       if (studentNote.trim()) {
         formData.append('student_note', studentNote);
@@ -114,11 +124,14 @@
         </fieldset>
 
         <label class="field">
-          <span>رقم / حساب المرسل <span class="required">*</span></span>
+          <span>رقم المرسل <span class="required">*</span></span>
           <input
-            type="text"
+            type="tel"
+            inputmode="numeric"
+            pattern="[0-9]{11}"
+            maxlength="11"
             bind:value={senderIdentifier}
-            placeholder="أدخل رقم المحفظة أو حساب إنستاباي"
+            placeholder="أدخل رقم المرسل (11 رقمًا، مثال: 01012345678)"
             required
           />
         </label>
@@ -189,8 +202,8 @@
   .field { display: grid; gap: 0.4rem; margin-bottom: 1.25rem; min-width: 0; width: 100%; box-sizing: border-box; }
   .field > span { font-size: 0.88rem; font-weight: 700; color: var(--storm); }
   .required { color: #c2453e; }
-  input[type="text"], textarea { background: var(--paper); border: 2px solid var(--line); border-radius: 0.4rem; font: inherit; min-height: 2.8rem; padding: 0.6rem 0.85rem; color: var(--storm); width: 100%; max-width: 100%; box-sizing: border-box; min-width: 0; }
-  input[type="text"]:focus, textarea:focus { border-color: var(--deep-cyan); outline: 3px solid rgba(var(--brand-navy-rgb), 0.25); outline-offset: 1px; }
+  input[type="text"], input[type="tel"], textarea { background: var(--paper); border: 2px solid var(--line); border-radius: 0.4rem; font: inherit; min-height: 2.8rem; padding: 0.6rem 0.85rem; color: var(--storm); width: 100%; max-width: 100%; box-sizing: border-box; min-width: 0; }
+  input[type="text"]:focus, input[type="tel"]:focus, textarea:focus { border-color: var(--deep-cyan); outline: 3px solid rgba(var(--brand-navy-rgb), 0.25); outline-offset: 1px; }
   .upload-area { background: var(--paper); border: 2px dashed var(--line); border-radius: 0.5rem; padding: 1.5rem; position: relative; text-align: center; width: 100%; max-width: 100%; box-sizing: border-box; overflow: hidden; }
   .upload-area input[type="file"] { cursor: pointer; height: 100%; left: 0; opacity: 0; position: absolute; top: 0; width: 100%; max-width: 100%; }
   .upload-hint { color: var(--muted); font-size: 0.85rem; margin: 0; word-break: break-word; }

@@ -34,6 +34,18 @@ class ProcessJoinRequest
             })
             ->first();
 
+        if (! $course && $inviteLink !== null && $inviteLink !== '') {
+            /** @var TelegramCourseInvite|null $matchedInvite */
+            $matchedInvite = TelegramCourseInvite::query()
+                ->where('invite_link', $inviteLink)
+                ->first();
+
+            if ($matchedInvite) {
+                /** @var Course|null $course */
+                $course = Course::query()->find($matchedInvite->course_id);
+            }
+        }
+
         if (! $course) {
             Log::info('Telegram join request declined: no course matching chat ID', [
                 'chat_id' => $chatId,
