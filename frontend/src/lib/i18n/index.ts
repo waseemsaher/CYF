@@ -292,18 +292,18 @@ export const translations: Record<Locale, Translations> = {
       description: 'منصة Codeera توفر محتوى دراسي متخصص يغطي مناهج كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر، مع دعم أكاديمي مباشر ومتابعة مستمرة لحد ما توصل للنتيجة اللي تستحقها.',
       typewriterPrefix: 'المسارات الأكاديمية:',
       typewriterPhrases: [
-        'تراك الذكاء الاصطناعي وتعلم الآلة',
-        'علوم الحاسب والخوارزميات المتقدمة',
-        'نظم المعلومات وقواعد البيانات الحديثة',
-        'بيئة تفاعلية لاجتياز الامتحانات بتفوق'
-      ],
+        ' الذكاء الاصطناعي',
+        ' علوم الحاسب  ',
+        ' علوم البيانات',
+        'الأمن السيبراني'     
+       ],
       primaryCta: 'تصفح الكورسات',
       secondaryCta: 'إنشاء حساب',
       dashboardCta: 'لوحة التحكم',
       stats: [
-        { value: '+10', label: 'مقررات تخصصية متكاملة' },
-        { value: '100%', label: 'تطابق مع توصيف المقرر الأكاديمي' },
-        { value: 'فوري', label: 'تفعيل المحتوى بعد اعتماد الدفع' }
+        { value: '+5', label: 'مقررات تخصصية متكاملة' },
+        { value: '', label: 'تطابق مع توصيف المقرر الأكاديمي' },
+        { value: '', label: 'تفعيل المحتوى بعد اعتماد الدفع' }
       ],
       langToggleAria: 'Switch to English',
       langToggleLabel: 'English'
@@ -384,7 +384,7 @@ export const translations: Record<Locale, Translations> = {
             desc: 'محتوى المقرر بيفتح أمامك مباشرة فور اعتماد الدفع، بدون أي انتظار أو خطوات إضافية.'
           },
           {
-            title: 'اختبارات تقييم ذاتي ذكية',
+            title: '"قريبا" اختبارات تقييم ذاتي ذكية',
             desc: 'اختبر معلوماتك بعد كل باب دراسي عبر نظام كويزات تفاعلي يعرض نتيجتك وحلول الأسئلة.'
           },
           {
@@ -408,7 +408,7 @@ export const translations: Record<Locale, Translations> = {
           },
           {
             q: 'كم يستغرق وقت مراجعة وتأكيد الاشتراك؟',
-            a: 'تتم مراجعة إيصالات الدفع بواسطة فريق الإدارة بانتظام وفي أسرع وقت ممكن (عادة خلال دقائق إلى ساعات معدودة). ستصلك رسالة تأكيد عبر البريد الإلكتروني فور الاعتماد مع فتح صلاحيات المادة فوراً.'
+            a: 'تتم مراجعة إيصالات الدفع بواسطة فريق الإدارة بانتظام وفي أسرع وقت ممكن (عادة خلال دقائق إلى ساعات معدودة). ستصلك رسالة تأكيد عبر تيليجرام فور الاعتماد مع فتح صلاحيات المادة فوراً.'
           },
           {
             q: 'ما مدة صلاحية اشتراكي في المادة؟',
@@ -604,18 +604,18 @@ export const translations: Record<Locale, Translations> = {
       description: 'Codeera provides specialized coursework tailored for Faculty of Computers & Artificial Intelligence Al-Azhar students, with direct academic support and continuous follow-up to achieve the results you deserve.',
       typewriterPrefix: 'Academic Tracks:',
       typewriterPhrases: [
-        'Artificial Intelligence & Machine Learning',
-        'Advanced Computer Science & Algorithms',
-        'Information Systems & Modern Databases',
-        'Interactive Platform for Exam Readiness'
+        'Artificial Intelligence ',
+        ' Computer Science ',
+        'Data Science',
+        'Cyber Security'
       ],
       primaryCta: 'Browse Courses',
       secondaryCta: 'Create Account',
       dashboardCta: 'My Dashboard',
       stats: [
-        { value: '+10', label: 'Comprehensive Tech Courses' },
-        { value: '100%', label: 'Match with Academic Course Specifications' },
-        { value: 'Instant', label: 'Content Access Upon Payment Approval' }
+        { value: '+5', label: 'Comprehensive Tech Courses' },
+        { value: '', label: 'Match with Academic Course Specifications' },
+        { value: '', label: 'Content Access Upon Payment Approval' }
       ],
       langToggleAria: 'التبديل إلى العربية',
       langToggleLabel: 'عربي'
