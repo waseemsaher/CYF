@@ -77,7 +77,7 @@
   let errorMsg = $state('');
   let copied = $state(false);
   let copyTimeout: ReturnType<typeof setTimeout> | null = null;
-  let showNumber = $state(true);
+  let showNumber = $state(false);
 
   // Coupon state
   let couponInput = $state('');
@@ -301,7 +301,13 @@
           <div class="method-options">
             {#each methods as m}
               <label class="method-option" class:active={method === m.key}>
-                <input type="radio" name="method" value={m.key} bind:group={method} />
+                <input
+                  type="radio"
+                  name="method"
+                  value={m.key}
+                  bind:group={method}
+                  onchange={() => { showNumber = false; }}
+                />
                 <span class="method-name">{getLocalized(m.label, $currentLocale)}</span>
               </label>
             {/each}
