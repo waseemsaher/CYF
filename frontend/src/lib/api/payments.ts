@@ -5,6 +5,15 @@ export type Translation = {
   en: string;
 };
 
+export type PaymentMethod = {
+  key: string;
+  label: Translation | string;
+  type?: string;
+  number?: string;
+  instructions?: Translation | string;
+  is_active?: boolean;
+};
+
 export type Payment = {
   id: number;
   user_id: number;
@@ -16,7 +25,7 @@ export type Payment = {
   amount_due_cents: number;
   sender_identifier: string;
   student_note: string | null;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'refunded';
   rejection_reason: string | null;
   teacher_share_percent: number | null;
   teacher_share_cents: number | null;
@@ -74,5 +83,9 @@ export function rejectAdminPayment(fetcher: typeof fetch, id: number, reason: st
   return apiPost<{ data: Payment }>(fetcher, `/admin/payments/${id}/reject`, {
     rejection_reason: reason,
   });
+}
+
+export function getPaymentMethods(fetcher: typeof fetch) {
+  return apiGet<{ data: PaymentMethod[] }>(fetcher, '/reference/payment-methods');
 }
 

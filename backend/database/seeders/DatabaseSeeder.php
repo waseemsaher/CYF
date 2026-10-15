@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             'students.manage',
             'courses.manage',
             'content.manage',
+            'coupons.manage',
         ];
 
         foreach ($permissions as $permission) {

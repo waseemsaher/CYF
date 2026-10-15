@@ -101,3 +101,4 @@ class AdminDiscountController extends Controller
         ];
     }
 }
+

@@ -42,3 +42,4 @@ class UpdateDiscountRequest extends FormRequest
         ];
     }
 }
+

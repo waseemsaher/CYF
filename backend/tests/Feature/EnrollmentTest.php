@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Course;
 use App\Models\Enrollment;
+use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;
@@ -147,27 +148,28 @@ it('denies a student from revoking enrollments', function (): void {
         ->assertForbidden();
 });
 
-it('returns 422 when granting an enrollment twice for the same student and course/term', function (): void {
+it('fails with 422 when granting enrollment twice to the same student in the same course/term', function (): void {
     $data = setupEnrollmentTestData();
 
-    // First grant
-    $response1 = $this->actingAs($data['admin'], 'sanctum')
+    // First grant succeeds
+    $this->actingAs($data['admin'], 'sanctum')
         ->postJson('/api/v1/admin/enrollments/grant', [
             'user_id' => $data['student']->getKey(),
             'course_id' => $data['course']->getKey(),
             'term_id' => $data['term']->getKey(),
-        ]);
-    $response1->assertCreated();
+        ])
+        ->assertCreated();
 
-    // Second grant -> 422
-    $response2 = $this->actingAs($data['admin'], 'sanctum')
+    // Second grant fails with 422
+    $response = $this->actingAs($data['admin'], 'sanctum')
         ->postJson('/api/v1/admin/enrollments/grant', [
             'user_id' => $data['student']->getKey(),
             'course_id' => $data['course']->getKey(),
             'term_id' => $data['term']->getKey(),
         ]);
-    $response2->assertStatus(422)
-        ->assertJsonPath('message', 'Student already has an active enrollment for this course in this term.');
+
+    $response->assertStatus(422)
+        ->assertJsonPath('message', 'The user already has an active enrollment for this course in this term.');
 });
 
 it('reactivates a revoked enrollment when granting again', function (): void {
@@ -195,4 +197,109 @@ it('reactivates a revoked enrollment when granting again', function (): void {
     expect($enrollment->status)->toBe('active')
         ->and($enrollment->source)->toBe('admin_grant')
         ->and($enrollment->granted_by)->toBe($data['admin']->getKey());
+});
+
+it('allows admin to revoke an enrollment without refunding payment', function (): void {
+    $data = setupEnrollmentTestData();
+
+    $payment = Payment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'method' => 'vodafone_cash',
+        'list_price_cents' => 20000,
+        'discount_cents' => 0,
+        'amount_due_cents' => 20000,
+        'sender_identifier' => '01011112222',
+        'proof_path' => 'proofs/test.jpg',
+        'proof_hash' => 'hash_test',
+        'status' => 'approved',
+    ]);
+
+    $enrollment = Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'payment_id' => $payment->getKey(),
+        'source' => 'payment',
+        'status' => 'active',
+        'starts_at' => now(),
+        'expires_at' => now()->addMonths(3),
+    ]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/enrollments/'.$enrollment->getKey().'/revoke', [
+            'refund' => false,
+        ]);
+
+    $response->assertOk()
+        ->assertJsonPath('data.status', 'revoked');
+
+    expect($payment->fresh()->status)->toBe('approved');
+});
+
+it('allows admin to revoke an enrollment with refund which marks payment as refunded and logs activity', function (): void {
+    $data = setupEnrollmentTestData();
+
+    $payment = Payment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'method' => 'vodafone_cash',
+        'list_price_cents' => 20000,
+        'discount_cents' => 0,
+        'amount_due_cents' => 20000,
+        'sender_identifier' => '01011112222',
+        'proof_path' => 'proofs/test.jpg',
+        'proof_hash' => 'hash_test',
+        'status' => 'approved',
+    ]);
+
+    $enrollment = Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'payment_id' => $payment->getKey(),
+        'source' => 'payment',
+        'status' => 'active',
+        'starts_at' => now(),
+        'expires_at' => now()->addMonths(3),
+    ]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/enrollments/'.$enrollment->getKey().'/revoke', [
+            'refund' => true,
+        ]);
+
+    $response->assertOk()
+        ->assertJsonPath('data.status', 'revoked');
+
+    expect($payment->fresh()->status)->toBe('refunded');
+
+    $this->assertDatabaseHas('activity_log', [
+        'log_name' => 'payment',
+        'description' => 'payment_refunded',
+        'subject_id' => $payment->getKey(),
+        'causer_id' => $data['admin']->getKey(),
+    ]);
+});
+
+it('handles revoking an already revoked enrollment idempotently', function (): void {
+    $data = setupEnrollmentTestData();
+
+    $enrollment = Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'source' => 'admin_grant',
+        'status' => 'revoked',
+        'starts_at' => now(),
+        'expires_at' => now()->addMonths(3),
+    ]);
+
+    $response = $this->actingAs($data['admin'], 'sanctum')
+        ->postJson('/api/v1/admin/enrollments/'.$enrollment->getKey().'/revoke');
+
+    $response->assertOk()
+        ->assertJsonPath('data.status', 'revoked');
 });

@@ -1,12 +1,37 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page } from '$app/state';
-  import { getCourseContent, type CourseContentResponse } from '$lib/api/learning';
-  import TelegramLinkCard from '$lib/components/TelegramLinkCard.svelte';
+  import { getCourseContent, downloadCourseItemFile, type CourseContentResponse, type CourseItem } from '$lib/api/learning';
+  import { getTelegramStatus, resendCourseInvite, type TelegramStatus } from '$lib/api/telegram';
 
   let content: CourseContentResponse | null = $state(null);
+  let telegramStatus: TelegramStatus | null = $state(null);
+  let resendingInvite = $state(false);
+  let resendMsg = $state<{ type: 'success' | 'error'; text: string } | null>(null);
   let loading = $state(true);
   let errorMsg = $state('');
+  let downloadingItemId = $state<number | null>(null);
+  let fileError = $state<string | null>(null);
+  let collapsedSections = $state<Record<number, boolean>>({});
+
+  function toggleSection(sectionId: number) {
+    collapsedSections[sectionId] = !collapsedSections[sectionId];
+  }
+
+  async function handleDownloadFile(item: CourseItem) {
+    if (downloadingItemId) return;
+    fileError = null;
+    downloadingItemId = item.id;
+    try {
+      const fileName = item.title?.ar || item.title?.en || 'file';
+      await downloadCourseItemFile(fetch, slug, item.id, fileName);
+    } catch (e: any) {
+      fileError = e?.message || 'تعذر تحميل الملف. يرجى المحاولة مرة أخرى.';
+      alert(fileError);
+    } finally {
+      downloadingItemId = null;
+    }
+  }
 
   const slug = page.params.slug || '';
 
@@ -14,12 +39,37 @@
     try {
       loading = true;
       errorMsg = '';
-      const res = await getCourseContent(fetch, slug);
+      const [res, tg] = await Promise.all([
+        getCourseContent(fetch, slug),
+        getTelegramStatus(fetch).catch(() => null)
+      ]);
       content = res.data;
+      telegramStatus = tg;
     } catch (e: any) {
       errorMsg = e?.message || 'تعذر تحميل محتوى المادة. تأكد من تفعيل اشتراكك في المادة.';
     } finally {
       loading = false;
+    }
+  }
+
+  async function handleResendInvite() {
+    if (!content?.course?.id || resendingInvite) return;
+    resendingInvite = true;
+    resendMsg = null;
+
+    try {
+      const res = await resendCourseInvite(content.course.id, fetch);
+      resendMsg = {
+        type: 'success',
+        text: res.message || 'تم إرسال رابط الانضمام الجديد إلى حسابك على تليجرام بنجاح.'
+      };
+    } catch (e: any) {
+      resendMsg = {
+        type: 'error',
+        text: e?.message || 'تعذر إعادة إرسال الرابط. يرجى المحاولة مرة أخرى لاحقاً.'
+      };
+    } finally {
+      resendingInvite = false;
     }
   }
 
@@ -58,20 +108,36 @@
           <h1>{content.course.title.ar}</h1>
         </div>
 
-        {#if content.is_unlocked && content.course.telegram_invite_link}
-          <a
-            href={content.course.telegram_invite_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn-telegram"
-          >
-            انضم لمجموعة التليجرام للمادة
-          </a>
-        {/if}
+        <div class="header-actions">
+          {#if content.is_unlocked && telegramStatus && !telegramStatus.is_linked}
+            <a href="/link-telegram" class="btn-link-telegram">
+              ربط حساب تليجرام لاستلام الروابط
+            </a>
+          {/if}
+
+          {#if content.is_unlocked && telegramStatus?.is_linked}
+            <button
+              type="button"
+              class="btn-resend-telegram"
+              onclick={handleResendInvite}
+              disabled={resendingInvite}
+            >
+              {#if resendingInvite}
+                جاري الإرسال...
+              {:else}
+                إعادة إرسال رابط التليجرام
+              {/if}
+            </button>
+          {/if}
+        </div>
       </div>
 
-      <!-- Telegram Linking Reminder -->
-      <TelegramLinkCard />
+      {#if resendMsg}
+        <div class="resend-banner resend-banner-{resendMsg.type}" role="status">
+          {resendMsg.text}
+        </div>
+      {/if}
+
 
       <!-- Course Content Sections -->
       <section class="sections-container">
@@ -84,14 +150,27 @@
         {:else}
           {#each content.sections as section}
             <div class="section-card">
-              <div class="section-header">
-                <h3>{section.title.ar}</h3>
+              <button
+                type="button"
+                class="section-header"
+                onclick={() => toggleSection(section.id)}
+                aria-expanded={!collapsedSections[section.id]}
+              >
+                <div class="section-title-wrap">
+                  <span class="chevron-wrapper" aria-hidden="true">
+                    <svg class="chevron-icon" class:is-rotated={collapsedSections[section.id]} viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </span>
+                  <h3>{section.title.ar}</h3>
+                </div>
                 <span class="item-count">{section.items.length} عنصر</span>
-              </div>
+              </button>
 
-              {#if section.items.length === 0}
-                <div class="empty-section">لا توجد عناصر في هذا القسم حالياً.</div>
-              {:else}
+              {#if !collapsedSections[section.id]}
+                {#if section.items.length === 0}
+                  <div class="empty-section">لا توجد عناصر في هذا القسم حالياً.</div>
+                {:else}
                 <div class="items-list">
                   {#each section.items as item}
                     <div class="item-row">
@@ -143,9 +222,29 @@
                               </a>
                             {/if}
                           {:else if item.type === 'file'}
-                            <a href="/api/v1/courses/{slug}/items/{item.id}/file" class="btn-item btn-file">
-                              تحميل الملف ↓
-                            </a>
+                            {#if item.has_file}
+                              <button
+                                type="button"
+                                class="btn-item btn-file"
+                                onclick={() => handleDownloadFile(item)}
+                                disabled={downloadingItemId === item.id}
+                              >
+                                {downloadingItemId === item.id ? 'جاري التحميل...' : 'تحميل الملف ↓'}
+                              </button>
+                            {:else if item.url}
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn-item btn-file"
+                              >
+                                تحميل الملف ↗
+                              </a>
+                            {:else}
+                              <button type="button" class="btn-item btn-file" disabled>
+                                غير متوفر حالياً
+                              </button>
+                            {/if}
                           {:else if (item.type === 'quiz' || item.type === 'exam') && item.quiz}
                             <a href="/quizzes/{item.quiz.id}" class="btn-item btn-quiz">
                               ابدأ {item.quiz.kind === 'exam' ? 'الامتحان' : 'الاختبار'}
@@ -157,8 +256,9 @@
                   {/each}
                 </div>
               {/if}
-            </div>
-          {/each}
+            {/if}
+          </div>
+        {/each}
         {/if}
       </section>
     {/if}
@@ -259,7 +359,14 @@
     margin: 0;
   }
 
-  .btn-telegram {
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-link-telegram {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -274,7 +381,53 @@
     transition: opacity 150ms ease;
   }
 
-  .btn-telegram:hover { opacity: 0.9; }
+  .btn-link-telegram:hover { opacity: 0.9; }
+
+  .btn-resend-telegram {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--paper);
+    color: var(--storm);
+    padding: 0.65rem 1.15rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    font-size: 0.84rem;
+    border: 2px solid var(--line);
+    cursor: pointer;
+    transition: background 150ms ease, border-color 150ms ease;
+  }
+
+  .btn-resend-telegram:hover:not(:disabled) {
+    background: var(--card);
+    border-color: #0088cc;
+    color: #0088cc;
+  }
+
+  .btn-resend-telegram:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .resend-banner {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .resend-banner-success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+
+  .resend-banner-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
 
   /* Sections */
   .sections-container {
@@ -301,10 +454,40 @@
   .section-header {
     background: var(--paper);
     padding: 1rem 1.25rem;
+    border: none;
     border-bottom: 2px solid var(--line);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: inherit;
+    transition: background 150ms ease;
+  }
+
+  .section-header:hover {
+    background: var(--card-hover);
+  }
+
+  .section-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .chevron-wrapper {
+    display: inline-flex;
+    align-items: center;
+    color: var(--muted);
+  }
+
+  .chevron-icon {
+    transition: transform 200ms ease;
+  }
+
+  .chevron-icon.is-rotated {
+    transform: rotate(90deg);
   }
 
   .section-header h3 {
@@ -351,7 +534,7 @@
   }
 
   .item-row:last-child { border-bottom: none; }
-  .item-row:hover { background: #f8faf9; }
+  .item-row:hover { background: var(--card-hover); }
 
   .item-info {
     display: flex;

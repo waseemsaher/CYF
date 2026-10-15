@@ -27,7 +27,8 @@
     { key: 'pending', label: 'قيد المراجعة' },
     { key: 'approved', label: 'تمت الموافقة' },
     { key: 'rejected', label: 'مرفوض' },
-    { key: 'cancelled', label: 'ملغى' }
+    { key: 'cancelled', label: 'ملغى' },
+    { key: 'refunded', label: 'مسترد' }
   ];
 
   async function loadPayments() {
@@ -73,7 +74,8 @@
         pending: 'قيد المراجعة',
         approved: 'تمت الموافقة',
         rejected: 'مرفوض',
-        cancelled: 'ملغى'
+        cancelled: 'ملغى',
+        refunded: 'مسترد'
       };
       const localized = statusMap[rawStatus] ?? rawStatus;
       return `هذه الدفعة سبق التعامل معها (الحالة الحالية: ${localized}).`;

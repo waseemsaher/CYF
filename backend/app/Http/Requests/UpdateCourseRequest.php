@@ -24,7 +24,7 @@ class UpdateCourseRequest extends FormRequest
         $course = $this->route('course');
 
         return [
-            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('courses', 'slug')->ignore($course)],
+            'slug' => ['sometimes', 'string', 'max:255', Rule::unique('courses', 'slug')->ignore($course)->whereNull('deleted_at')],
             'title' => ['sometimes', 'array', 'required_array_keys:ar,en'],
             'title.ar' => ['required_with:title', 'string', 'max:255'],
             'title.en' => ['required_with:title', 'string', 'max:255'],
@@ -33,11 +33,13 @@ class UpdateCourseRequest extends FormRequest
             'description.en' => ['required_with:description', 'string'],
             'cover_image_path' => ['sometimes', 'nullable', 'string', 'max:255'],
             'price_cents' => ['sometimes', 'integer', 'min:0'],
-            'telegram_channel_id' => ['sometimes', 'nullable', 'integer'],
-            'telegram_group_id' => ['sometimes', 'nullable', 'integer'],
-            'telegram_invite_link' => ['sometimes', 'nullable', 'url', 'max:255'],
+            'telegram_channel_id' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'telegram_group_id' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'telegram_invite_link' => ['sometimes', 'nullable', 'string', 'max:255'],
             'teacher_share_percent' => ['sometimes', 'nullable', 'integer', 'between:0,100'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
+            'status' => ['sometimes', 'string', Rule::in(['draft', 'published', 'archived'])],
+            'is_general' => ['sometimes', 'boolean'],
             'audiences' => ['sometimes', 'array'],
             'audiences.*.academic_year_id' => ['required', 'integer', 'exists:academic_years,id'],
             'audiences.*.department_id' => ['required', 'integer', 'exists:departments,id'],

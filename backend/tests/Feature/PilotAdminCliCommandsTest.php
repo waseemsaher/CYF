@@ -186,6 +186,15 @@ test('settings:set validates group.key format', function (): void {
         ->assertFailed();
 });
 
+test('settings:set validates revenue.default_teacher_share_percent range 0 to 100', function (): void {
+    $this->artisan('settings:set', [
+        'setting' => 'revenue.default_teacher_share_percent',
+        'value' => '150',
+    ])
+        ->expectsOutputToContain('between 0 and 100')
+        ->assertFailed();
+});
+
 /* -------------------------------------------------------------------------- */
 /* 3. teacher:create and teacher:assign */
 /* -------------------------------------------------------------------------- */

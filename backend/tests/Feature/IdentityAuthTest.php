@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\AcademicYear;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
@@ -10,6 +11,7 @@ uses(RefreshDatabase::class);
 
 it('registers a new student and returns a token', function (): void {
     Role::create(['name' => 'student']);
+    $year = AcademicYear::create(['name' => ['ar' => 'السنة الأولى', 'en' => '1st Year'], 'sort_order' => 1]);
 
     $response = $this->postJson('/api/v1/register', [
         'name' => 'Test Student',
@@ -17,17 +19,129 @@ it('registers a new student and returns a token', function (): void {
         'password' => 'Password123!',
         'password_confirmation' => 'Password123!',
         'branch' => 'azhar_boys',
-        'academic_year' => '1st',
+        'academic_year_id' => $year->id,
         'department' => 'CS',
+        'phone' => '01012345678',
     ]);
 
     $response->assertStatus(201)
         ->assertJsonPath('data.user.email', 'student@example.com')
-        ->assertJsonPath('data.user.role', 'student');
+        ->assertJsonPath('data.user.role', 'student')
+        ->assertJsonPath('data.user.academic_year_id', $year->id)
+        ->assertJsonPath('data.user.telegram_is_linked', false);
 
     $this->assertDatabaseHas('users', [
         'email' => 'student@example.com',
+        'phone' => '01012345678',
+        'academic_year_id' => $year->id,
     ]);
+});
+
+it('registers a student when both academic_year and academic_year_id are provided', function (): void {
+    Role::create(['name' => 'student']);
+    $year = AcademicYear::create(['name' => ['ar' => 'السنة الأولى', 'en' => '1st Year'], 'sort_order' => 1]);
+
+    $response = $this->postJson('/api/v1/register', [
+        'name' => 'Dual Year Student',
+        'email' => 'dual@example.com',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
+        'branch' => 'azhar_boys',
+        'academic_year' => 'السنة الأولى',
+        'academic_year_id' => $year->id,
+        'department' => 'CS',
+        'phone' => '01012345678',
+    ]);
+
+    $response->assertStatus(201)
+        ->assertJsonPath('data.user.email', 'dual@example.com')
+        ->assertJsonPath('data.user.academic_year_id', $year->id)
+        ->assertJsonPath('data.user.academic_year', 'السنة الأولى');
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'dual@example.com',
+        'academic_year_id' => $year->id,
+        'academic_year' => 'السنة الأولى',
+    ]);
+});
+
+it('registers a student when only academic_year text is provided and resolves academic_year_id', function (): void {
+    Role::create(['name' => 'student']);
+    $year = AcademicYear::create(['name' => ['ar' => 'السنة الثانية', 'en' => '2nd Year'], 'sort_order' => 2]);
+
+    $response = $this->postJson('/api/v1/register', [
+        'name' => 'Legacy Year Student',
+        'email' => 'legacy@example.com',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
+        'branch' => 'azhar_boys',
+        'academic_year' => 'السنة الثانية',
+        'department' => 'CS',
+        'phone' => '01012345678',
+    ]);
+
+    $response->assertStatus(201)
+        ->assertJsonPath('data.user.email', 'legacy@example.com')
+        ->assertJsonPath('data.user.academic_year_id', $year->id)
+        ->assertJsonPath('data.user.academic_year', 'السنة الثانية');
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'legacy@example.com',
+        'academic_year_id' => $year->id,
+        'academic_year' => 'السنة الثانية',
+    ]);
+});
+
+it('validates mandatory academic year on registration', function (): void {
+    Role::create(['name' => 'student']);
+
+    $response = $this->postJson('/api/v1/register', [
+        'name' => 'No Year Student',
+        'email' => 'noyear@example.com',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
+        'branch' => 'azhar_boys',
+        'department' => 'CS',
+        'phone' => '01012345678',
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['academic_year_id'])
+        ->assertJsonPath('errors.academic_year_id.0', 'يرجى اختيار السنة الدراسية.');
+});
+
+it('validates mandatory phone number and format on registration', function (): void {
+    Role::create(['name' => 'student']);
+    $year = AcademicYear::create(['name' => ['ar' => 'السنة الأولى', 'en' => '1st Year'], 'sort_order' => 1]);
+
+    $missingPhone = $this->postJson('/api/v1/register', [
+        'name' => 'No Phone',
+        'email' => 'nophone@example.com',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
+        'branch' => 'azhar_boys',
+        'academic_year_id' => $year->id,
+        'department' => 'CS',
+    ]);
+
+    $missingPhone->assertStatus(422)
+        ->assertJsonValidationErrors(['phone'])
+        ->assertJsonPath('errors.phone.0', 'رقم محفظتك الإلكترونية مطلوب لاسترداد أي مبلغ عند الحاجة.');
+
+    $invalidPhone = $this->postJson('/api/v1/register', [
+        'name' => 'Invalid Phone',
+        'email' => 'invalidphone@example.com',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
+        'branch' => 'azhar_boys',
+        'academic_year_id' => $year->id,
+        'department' => 'CS',
+        'phone' => '01312345678',
+    ]);
+
+    $invalidPhone->assertStatus(422)
+        ->assertJsonValidationErrors(['phone'])
+        ->assertJsonPath('errors.phone.0', 'رقم المحفظة يجب أن يكون رقم موبايل مصري صحيح مكوّن من 11 رقمًا (مثال: 01012345678).');
 });
 
 it('logs in an existing user with valid credentials', function (): void {

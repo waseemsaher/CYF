@@ -38,6 +38,12 @@
   let courseTitle = $state({ ar: '', en: '' });
   let courseSlug = $state('');
   let sections = $state<CourseSection[]>([]);
+  let collapsedSections = $state<Record<number, boolean>>({});
+
+  function toggleSection(sectionId: number) {
+    collapsedSections[sectionId] = !collapsedSections[sectionId];
+  }
+
   let createdQuizzes = $state<CourseQuiz[]>([]);
 
   // Section Modal State
@@ -62,6 +68,7 @@
   let itemDescEn = $state('');
   let itemUrl = $state('');
   let itemTelegramMessageId = $state<string>('');
+  let itemIsFree = $state<boolean>(false);
   let itemQuizId = $state<number | null>(null);
   let itemPosition = $state<number>(1);
   let itemIsPublished = $state<boolean>(true);
@@ -258,6 +265,7 @@
     itemDescEn = '';
     itemUrl = '';
     itemTelegramMessageId = '';
+    itemIsFree = false;
     itemQuizId = createdQuizzes.length > 0 ? createdQuizzes[0].id : null;
     const sec = sections.find((s) => s.id === secId);
     itemPosition = (sec?.items?.length || 0) + 1;
@@ -278,6 +286,7 @@
     itemDescEn = item.description?.en || '';
     itemUrl = item.url || '';
     itemTelegramMessageId = item.telegram_message_id ? String(item.telegram_message_id) : '';
+    itemIsFree = Boolean(item.is_free);
     itemQuizId = item.quiz?.id || null;
     itemPosition = item.position;
     itemIsPublished = item.is_published !== false;
@@ -314,6 +323,7 @@
           } : undefined,
           url: itemUrl.trim() || null,
           telegram_message_id: telId,
+          is_free: itemIsFree,
           position: Number(itemPosition),
           is_published: itemIsPublished,
         });
@@ -331,6 +341,8 @@
           url: itemUrl.trim() || null,
           file: itemFile,
           quiz_id: (itemType === 'quiz' || itemType === 'exam') ? itemQuizId : null,
+          is_free: itemIsFree,
+          telegram_message_id: telId,
           position: Number(itemPosition),
           is_published: itemIsPublished,
         });
@@ -646,6 +658,17 @@
               <div class="section-card" data-testid={`section-card-${section.id}`}>
                 <div class="section-card-header">
                   <div class="section-title-group">
+                    <button
+                      type="button"
+                      class="btn-toggle-collapse"
+                      onclick={() => toggleSection(section.id)}
+                      aria-label={collapsedSections[section.id] ? 'توسيع الفصل' : 'طي الفصل'}
+                      title={collapsedSections[section.id] ? 'توسيع عرض محتوى الفصل' : 'طي محتوى الفصل'}
+                    >
+                      <svg class="chevron-icon" class:is-rotated={collapsedSections[section.id]} viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
                     <span class="section-index-badge">الفصل {sIndex + 1}</span>
                     <h2 class="section-title">{section.title.ar}</h2>
                     {#if section.title.en}
@@ -700,8 +723,9 @@
                   </div>
                 </div>
 
-                <!-- Items inside Section -->
-                <div class="section-items-list">
+                {#if !collapsedSections[section.id]}
+                  <!-- Items inside Section -->
+                  <div class="section-items-list">
                   {#if section.items.length === 0}
                     <div class="empty-items-row">
                       <p>لا توجد دروس أو عناصر في هذا الفصل بعد.</p>
@@ -733,6 +757,11 @@
                             <strong class="item-title">{item.title.ar}</strong>
                             {#if item.title.en}
                               <small class="item-title-en" dir="ltr">{item.title.en}</small>
+                            {/if}
+                            {#if item.is_free}
+                              <span class="free-preview-pill" title="متاح كمعاينة مجانية لجميع الطلاب">
+                                ★ معاينة مجانية
+                              </span>
                             {/if}
                             <span class="item-status-pill {item.is_published !== false ? 'pill-pub' : 'pill-draft'}">
                               {item.is_published !== false ? 'منشور' : 'مسودة'}
@@ -795,6 +824,7 @@
                     {/each}
                   {/if}
                 </div>
+                {/if}
               </div>
             {/each}
           </div>
@@ -918,9 +948,11 @@
           />
         </div>
 
-        {#if itemType === 'lecture_link' || itemType === 'external_link'}
+        {#if itemType === 'lecture_link' || itemType === 'external_link' || itemType === 'file'}
           <div class="form-group">
-            <label for="item-url">رابط المحاضرة / الفيديو (URL)</label>
+            <label for="item-url">
+              {itemType === 'file' ? 'رابط الملف الخارجي (تليجرام / سحابي - اختياري إذا رفعت ملفاً)' : 'رابط المحاضرة / الفيديو (URL)'}
+            </label>
             <input
               id="item-url"
               type="url"
@@ -985,6 +1017,18 @@
             placeholder="ملاحظات توضيحية حول الدرس..."
             data-testid="input-item-desc-ar"
           ></textarea>
+        </div>
+
+        <div class="form-group checkbox-highlight-box">
+          <label class="checkbox-label">
+            <input type="checkbox" bind:checked={itemIsFree} data-testid="input-item-is-free" />
+            <div>
+              <strong>معاينة مجانية للجميع (Free Preview)</strong>
+              <p class="checkbox-subtext">
+                عند تفعيل هذا الخيار، سيتمكن أي طالب أو زائر من مشاهدة هذا الفيديو أو فتح الرابط حتى لو لم يكن مسجلاً في المقرر.
+              </p>
+            </div>
+          </label>
         </div>
 
         <div class="form-row-compact">
@@ -1494,6 +1538,32 @@
     flex-wrap: wrap;
   }
 
+  .btn-toggle-collapse {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem;
+    border-radius: 6px;
+    transition: color 150ms ease, background 150ms ease;
+  }
+
+  .btn-toggle-collapse:hover {
+    color: #00f0ff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .chevron-icon {
+    transition: transform 200ms ease;
+  }
+
+  .chevron-icon.is-rotated {
+    transform: rotate(90deg);
+  }
+
   .section-title-group {
     display: flex;
     align-items: center;
@@ -1652,6 +1722,16 @@
     font-weight: 700;
     padding: 0.1rem 0.4rem;
     border-radius: 4px;
+  }
+
+  .free-preview-pill {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
   }
 
   .pill-pub {
@@ -1824,6 +1904,11 @@
     color: #fff;
     font-size: 0.875rem;
     outline: none;
+  }
+
+  .form-group select option {
+    background: #0f282f;
+    color: #fff;
   }
 
   .form-group input:focus,

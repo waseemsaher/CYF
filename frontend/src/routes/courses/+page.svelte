@@ -1,10 +1,25 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/state';
   import { currentUser } from '$lib/api/auth';
   import { createAdminCourse, updateAdminCourse } from '$lib/api/admin';
   import { currentLocale, t, formatPrice, getLocalizedText } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
+
+  let hasAutoFiltered = $state(false);
+
+  $effect(() => {
+    // If student has registered academic_year_id and URL doesn't have an academic_year_id filter, apply it
+    if (!hasAutoFiltered && $currentUser?.academic_year_id && !page.url.searchParams.has('academic_year_id')) {
+      hasAutoFiltered = true;
+      const params = new URLSearchParams(page.url.searchParams);
+      params.set('academic_year_id', String($currentUser.academic_year_id));
+      goto(`/courses?${params.toString()}`, { replaceState: true, keepFocus: true });
+    }
+  });
 
   let isAdmin = $derived(
     $currentUser?.role === 'admin' || $currentUser?.role === 'superadmin'
@@ -27,8 +42,8 @@
   let formTelegramLink = $state('');
   let formTelegramGroupId = $state('');
   let formTelegramChannelId = $state('');
-  let formAcademicYearId = $state<number | ''>('');
-  let formDepartmentId = $state<number | ''>('');
+  let formAcademicYearId = $state<number | 'all' | ''>('');
+  let formDepartmentId = $state<number | 'all' | ''>('all');
 
   // Client search filter
   let searchQuery = $state('');
@@ -68,7 +83,7 @@
     formTelegramGroupId = '';
     formTelegramChannelId = '';
     formAcademicYearId = data.academicYears[0]?.id || '';
-    formDepartmentId = data.departments[0]?.id || '';
+    formDepartmentId = 'all';
     modalError = '';
     isModalOpen = true;
   }
@@ -87,7 +102,7 @@
     formTelegramGroupId = course.telegram_group_id ? String(course.telegram_group_id) : '';
     formTelegramChannelId = course.telegram_channel_id ? String(course.telegram_channel_id) : '';
     formAcademicYearId = data.academicYears[0]?.id || '';
-    formDepartmentId = data.departments[0]?.id || '';
+    formDepartmentId = 'all';
     modalError = '';
     isModalOpen = true;
   }
@@ -125,18 +140,32 @@
         slug: formSlug,
         price_cents: Math.max(0, Math.round(formPricePounds * 100)),
         status: formStatus,
-        telegram_invite_link: formTelegramLink.trim() || null,
-        telegram_group_id: formTelegramGroupId.trim() ? Number(formTelegramGroupId.trim()) : null,
-        telegram_channel_id: formTelegramChannelId.trim() ? Number(formTelegramChannelId.trim()) : null,
+        is_general: formAcademicYearId === 'all',
+        telegram_invite_link: null,
+        telegram_group_id: formTelegramGroupId.trim() || null,
+        telegram_channel_id: formTelegramChannelId.trim() || null,
       };
 
-      if (formAcademicYearId && formDepartmentId) {
-        payload.audiences = [
-          {
-            academic_year_id: Number(formAcademicYearId),
-            department_id: Number(formDepartmentId),
-          },
-        ];
+      if (!isEditing) {
+        if (formAcademicYearId === 'all') {
+          payload.is_general = true;
+          payload.audiences = [];
+        } else if (formAcademicYearId) {
+          payload.is_general = false;
+          if (formDepartmentId === 'all') {
+            payload.audiences = data.departments.map((d) => ({
+              academic_year_id: Number(formAcademicYearId),
+              department_id: Number(d.id),
+            }));
+          } else if (formDepartmentId) {
+            payload.audiences = [
+              {
+                academic_year_id: Number(formAcademicYearId),
+                department_id: Number(formDepartmentId),
+              },
+            ];
+          }
+        }
       }
 
       if (isEditing && editingCourseId) {
@@ -490,45 +519,34 @@
               <option value="draft">مسودة (مخفي عن الطلاب)</option>
             </select>
           </div>
-
-          <div class="form-group">
-            <label for="course-telegram">رابط دعوة تليجرام</label>
-            <input
-              id="course-telegram"
-              type="url"
-              dir="ltr"
-              bind:value={formTelegramLink}
-              placeholder="https://t.me/+joinchat..."
-            />
-          </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="course-telegram-group">معرّف مجموعة تليجرام (Group ID)</label>
-            <input
-              id="course-telegram-group"
-              type="text"
-              dir="ltr"
-              bind:value={formTelegramGroupId}
-              placeholder="-1001234567890"
-            />
-            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
-              معرّف المجموعة (يبدأ بـ 100- للمجموعات الخارقة).
-            </small>
-          </div>
-
-          <div class="form-group">
-            <label for="course-telegram-channel">معرّف قناة تليجرام (Channel ID)</label>
+            <label for="course-telegram-channel">رابط قناة المادة</label>
             <input
               id="course-telegram-channel"
               type="text"
               dir="ltr"
               bind:value={formTelegramChannelId}
-              placeholder="-1001987654321"
+              placeholder="https://t.me/... أو -1001987654321"
             />
             <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
-              معرّف القناة لبث الدروس (اختياري).
+              رابط مخصص للقناة (لبث المحاضرات والملفات والشروحات).
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="course-telegram-group">رابط شات/جروب المادة</label>
+            <input
+              id="course-telegram-group"
+              type="text"
+              dir="ltr"
+              bind:value={formTelegramGroupId}
+              placeholder="https://t.me/... أو -1001234567890"
+            />
+            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
+              رابط مخصص لنقاشات المقرر والتواصل بين الطلاب.
             </small>
           </div>
         </div>
@@ -537,18 +555,32 @@
           <div class="form-row">
             <div class="form-group">
               <label for="course-year">الفرقة الدراسية المستهدفة</label>
-              <select id="course-year" bind:value={formAcademicYearId}>
+              <select
+                id="course-year"
+                bind:value={formAcademicYearId}
+                onchange={() => {
+                  if (formAcademicYearId === 'all') {
+                    formDepartmentId = 'all';
+                  }
+                }}
+              >
+                <option value="all">{$t.courses.generalForAll}</option>
                 {#each data.academicYears as y}
-                  <option value={y.id}>{y.name.ar}</option>
+                  <option value={y.id}>{getLocalizedText(y.name, $currentLocale) || y.name.ar}</option>
                 {/each}
               </select>
             </div>
 
             <div class="form-group">
               <label for="course-dept">القسم الأكاديمي المستهدف</label>
-              <select id="course-dept" bind:value={formDepartmentId}>
+              <select
+                id="course-dept"
+                bind:value={formDepartmentId}
+                disabled={formAcademicYearId === 'all'}
+              >
+                <option value="all">{$t.courses.allDepts}</option>
                 {#each data.departments as d}
-                  <option value={d.id}>{d.name.ar}</option>
+                  <option value={d.id}>{getLocalizedText(d.name, $currentLocale) || d.name.ar}</option>
                 {/each}
               </select>
             </div>

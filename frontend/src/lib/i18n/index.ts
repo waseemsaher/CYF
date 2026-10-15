@@ -117,6 +117,7 @@ export interface CoursesTranslations {
   filterFormAria: string;
   yearLabel: string;
   allYears: string;
+  generalForAll: string;
   deptLabel: string;
   allDepts: string;
   applyFilter: string;
@@ -291,18 +292,18 @@ export const translations: Record<Locale, Translations> = {
       description: 'منصة Codeera توفر محتوى دراسي متخصص يغطي مناهج كلية الحاسبات والذكاء الاصطناعي بجامعة الأزهر، مع دعم أكاديمي مباشر ومتابعة مستمرة لحد ما توصل للنتيجة اللي تستحقها.',
       typewriterPrefix: 'المسارات الأكاديمية:',
       typewriterPhrases: [
-        'تراك الذكاء الاصطناعي وتعلم الآلة',
-        'علوم الحاسب والخوارزميات المتقدمة',
-        'نظم المعلومات وقواعد البيانات الحديثة',
-        'بيئة تفاعلية لاجتياز الامتحانات بتفوق'
-      ],
+        ' الذكاء الاصطناعي',
+        ' علوم الحاسب  ',
+        ' علوم البيانات',
+        'الأمن السيبراني'     
+       ],
       primaryCta: 'تصفح الكورسات',
       secondaryCta: 'إنشاء حساب',
       dashboardCta: 'لوحة التحكم',
       stats: [
-        { value: '+10', label: 'مقررات تخصصية متكاملة' },
-        { value: '100%', label: 'تطابق مع توصيف المقرر الأكاديمي' },
-        { value: 'فوري', label: 'تفعيل المحتوى بعد اعتماد الدفع' }
+        { value: '', label: 'مقررات تخصصية متكاملة' },
+        { value: '', label: 'تطابق مع توصيف المقرر الأكاديمي' },
+        { value: '', label: 'تفعيل المحتوى بعد اعتماد الدفع' }
       ],
       langToggleAria: 'Switch to English',
       langToggleLabel: 'English'
@@ -376,14 +377,14 @@ export const translations: Record<Locale, Translations> = {
         items: [
           {
             title: 'تغطية شاملة لمقررات الكلية',
-            desc: 'محتوى مصور ومكتوب متوافق 100% مع توصيف المقررات الأكاديمية والمناهج المعتمدة.'
+            desc: 'محتوى مصور ومكتوب  مع توصيف المقررات الأكاديمية والمناهج المعتمدة.'
           },
           {
             title: 'تفعيل فوري للمحتوى',
             desc: 'محتوى المقرر بيفتح أمامك مباشرة فور اعتماد الدفع، بدون أي انتظار أو خطوات إضافية.'
           },
           {
-            title: 'اختبارات تقييم ذاتي ذكية',
+            title: '"قريبا" اختبارات تقييم ذاتي ذكية',
             desc: 'اختبر معلوماتك بعد كل باب دراسي عبر نظام كويزات تفاعلي يعرض نتيجتك وحلول الأسئلة.'
           },
           {
@@ -407,7 +408,7 @@ export const translations: Record<Locale, Translations> = {
           },
           {
             q: 'كم يستغرق وقت مراجعة وتأكيد الاشتراك؟',
-            a: 'تتم مراجعة إيصالات الدفع بواسطة فريق الإدارة بانتظام وفي أسرع وقت ممكن (عادة خلال دقائق إلى ساعات معدودة). ستصلك رسالة تأكيد عبر البريد الإلكتروني فور الاعتماد مع فتح صلاحيات المادة فوراً.'
+            a: 'تتم مراجعة إيصالات الدفع بواسطة فريق الإدارة بانتظام وفي أسرع وقت ممكن (عادة خلال دقائق إلى ساعات معدودة). ستصلك رسالة تأكيد عبر تيليجرام فور الاعتماد مع فتح صلاحيات المادة فوراً.'
           },
           {
             q: 'ما مدة صلاحية اشتراكي في المادة؟',
@@ -438,6 +439,7 @@ export const translations: Record<Locale, Translations> = {
       filterFormAria: 'تصفية الدورات حسب الفرقة والقسم',
       yearLabel: 'الفرقة الدراسية:',
       allYears: 'كل الفرق الدراسية',
+      generalForAll: 'عام للجميع (كافة الفرق الدراسية)',
       deptLabel: 'القسم الأكاديمي:',
       allDepts: 'جميع الأقسام',
       applyFilter: 'تطبيق الفلتر',
@@ -454,7 +456,7 @@ export const translations: Record<Locale, Translations> = {
       login: {
         metaTitle: 'تسجيل الدخول | منصة Codeera',
         metaDesc: 'تسجيل الدخول إلى حسابك في منصة Codeera التعليمية.',
-        badge: 'بوابة الطلاب والمعلمين والإدارة',
+        badge: 'بوابة الطلاب',
         title: 'تسجيل الدخول',
         subtitle: 'أدخل بريدك الإلكتروني وكلمة المرور لمتابعة حسابك ومقرراتك.',
         emailLabel: 'البريد الإلكتروني',
@@ -547,8 +549,8 @@ export const translations: Record<Locale, Translations> = {
         departmentLabel: 'القسم الأكاديمي',
         telegramLabel: 'اسم مستخدم تليجرام (اختياري)',
         telegramPlaceholder: '@username',
-        phoneLabel: 'رقم الهاتف / واتساب (اختياري)',
-        phonePlaceholder: '01XXXXXXXXX',
+        phoneLabel: ' لاسترداد الأموال عند الحاجه الي ذلك، رقم المحفظة الإلكترونية (فودافون كاش / إنستاباي)',
+        phonePlaceholder: '01012345678',
         submit: 'إنشاء الحساب وبدء التعلم',
         submitting: 'جاري إنشاء الحساب...',
         hasAccount: 'لديك حساب بالفعل؟',
@@ -602,18 +604,18 @@ export const translations: Record<Locale, Translations> = {
       description: 'Codeera provides specialized coursework tailored for Faculty of Computers & Artificial Intelligence Al-Azhar students, with direct academic support and continuous follow-up to achieve the results you deserve.',
       typewriterPrefix: 'Academic Tracks:',
       typewriterPhrases: [
-        'Artificial Intelligence & Machine Learning',
-        'Advanced Computer Science & Algorithms',
-        'Information Systems & Modern Databases',
-        'Interactive Platform for Exam Readiness'
+        'Artificial Intelligence ',
+        ' Computer Science ',
+        'Data Science',
+        'Cyber Security'
       ],
       primaryCta: 'Browse Courses',
       secondaryCta: 'Create Account',
       dashboardCta: 'My Dashboard',
       stats: [
-        { value: '+10', label: 'Comprehensive Tech Courses' },
-        { value: '100%', label: 'Match with Academic Course Specifications' },
-        { value: 'Instant', label: 'Content Access Upon Payment Approval' }
+        { value: '', label: 'Comprehensive Tech Courses' },
+        { value: '', label: 'Match with Academic Course Specifications' },
+        { value: '', label: 'Content Access Upon Payment Approval' }
       ],
       langToggleAria: 'التبديل إلى العربية',
       langToggleLabel: 'عربي'
@@ -687,14 +689,14 @@ export const translations: Record<Locale, Translations> = {
         items: [
           {
             title: 'Full Curriculum Coverage',
-            desc: 'Video lectures and notes 100% aligned with verified academic course specifications.'
+            desc: 'Video lectures and notes aligned with verified academic course specifications.'
           },
           {
             title: 'Instant Content Activation',
             desc: 'Course content opens directly upon payment approval, without any waiting or extra steps.'
           },
           {
-            title: 'Smart Self-Assessment Quizzes',
+            title: '"Coming Soon" Smart Self-Assessment Quizzes',
             desc: 'Test your understanding after each module with interactive quizzes, instant scores, and answer keys.'
           },
           {
@@ -718,7 +720,7 @@ export const translations: Record<Locale, Translations> = {
           },
           {
             q: 'How long does subscription verification take?',
-            a: 'Payment receipts are reviewed regularly by administrators as quickly as possible (usually within minutes to a few hours). You will receive an email confirmation and immediate access upon approval.'
+            a: 'Payment receipts are reviewed regularly by administrators as quickly as possible (usually within minutes to a few hours). You will receive a Telegram confirmation and immediate access upon approval.'
           },
           {
             q: 'How long does my course subscription remain valid?',
@@ -749,6 +751,7 @@ export const translations: Record<Locale, Translations> = {
       filterFormAria: 'Filter courses by academic year and department',
       yearLabel: 'Academic Year:',
       allYears: 'All Academic Years',
+      generalForAll: 'General for all (All Academic Years)',
       deptLabel: 'Department:',
       allDepts: 'All Departments',
       applyFilter: 'Apply Filters',
@@ -858,8 +861,8 @@ export const translations: Record<Locale, Translations> = {
         departmentLabel: 'Academic Department',
         telegramLabel: 'Telegram Username (optional)',
         telegramPlaceholder: '@username',
-        phoneLabel: 'Phone / WhatsApp (optional)',
-        phonePlaceholder: '01XXXXXXXXX',
+        phoneLabel: 'For refunds if needed, E-Wallet Number (Vodafone Cash / InstaPay)',
+        phonePlaceholder: '01012345678',
         submit: 'Create Account & Start Learning',
         submitting: 'Creating account...',
         hasAccount: 'Already have an account?',
@@ -912,13 +915,11 @@ function getInitialLocale(): Locale {
     if (saved === 'en' || saved === 'ar') {
       return saved;
     }
-    const htmlLang = document.documentElement.getAttribute('lang');
-    if (htmlLang === 'en') return 'en';
   }
   return 'ar';
 }
 
-export const currentLocale = writable<Locale>('ar');
+export const currentLocale = writable<Locale>(typeof document !== 'undefined' ? getInitialLocale() : 'ar');
 
 export function initLocale(): void {
   if (typeof document !== 'undefined') {

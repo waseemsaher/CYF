@@ -9,6 +9,8 @@
     createAdminCourse,
     updateAdminCourse,
     deleteAdminCourse,
+    deleteAdminUser,
+    resetAdminStudents,
     type AdminOverviewData,
     type AdminCourse,
     type AdminStudent,
@@ -16,6 +18,7 @@
   } from '$lib/api/admin';
   import { getAuthToken } from '$lib/api/client';
   import { getCurrentUser } from '$lib/api/auth';
+  import { getAcademicYears, getDepartments, type ReferenceOption } from '$lib/api/catalog';
   import { currentLocale, formatPrice } from '$lib/i18n';
   import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
   import TeacherManagement from '$lib/components/admin/TeacherManagement.svelte';
@@ -25,6 +28,8 @@
   let courses: AdminCourse[] = $state([]);
   let students: any[] = $state([]);
   let teachersList: AdminTeacher[] = $state([]);
+  let academicYearsList: ReferenceOption[] = $state([]);
+  let departmentsList: ReferenceOption[] = $state([]);
   let loading = $state(true);
   let errorMsg = $state('');
   let isUnauthenticated = $state(false);
@@ -53,6 +58,23 @@
   let formTelegramChannelId = $state('');
   let formTeacherId = $state<number | null>(null);
   let formTeacherShare = $state(70);
+  let formIsGeneral = $state(false);
+  let formSelectedAudiences = $state<{ academic_year_id: number; department_id: number }[]>([]);
+
+  function isAudienceChecked(yearId: number, deptId: number): boolean {
+    return formSelectedAudiences.some((a) => a.academic_year_id === yearId && a.department_id === deptId);
+  }
+
+  function toggleAudience(yearId: number, deptId: number) {
+    const exists = isAudienceChecked(yearId, deptId);
+    if (exists) {
+      formSelectedAudiences = formSelectedAudiences.filter(
+        (a) => !(a.academic_year_id === yearId && a.department_id === deptId)
+      );
+    } else {
+      formSelectedAudiences = [...formSelectedAudiences, { academic_year_id: yearId, department_id: deptId }];
+    }
+  }
 
   async function loadData() {
     loading = true;
@@ -72,17 +94,21 @@
         currentRole = userRes.data.user.role || '';
       }
 
-      const [overviewRes, coursesRes, studentsRes, teachersRes] = await Promise.all([
+      const [overviewRes, coursesRes, studentsRes, teachersRes, yearsRes, deptsRes] = await Promise.all([
         getAdminOverview(fetch),
         getAdminCourses(fetch, 1).catch(() => ({ data: [] })),
         getAdminStudents(fetch, 1).catch(() => ({ data: [] })),
         getAdminTeachers(fetch).catch(() => ({ data: [] })),
+        getAcademicYears(fetch).catch(() => ({ data: [] })),
+        getDepartments(fetch).catch(() => ({ data: [] })),
       ]);
 
       overview = overviewRes.data;
       courses = coursesRes.data || [];
       students = (studentsRes as any).data || [];
       teachersList = teachersRes.data || [];
+      academicYearsList = yearsRes.data || [];
+      departmentsList = deptsRes.data || [];
     } catch (e: any) {
       const msg = e?.message || '';
       if (msg.includes('401') || msg.includes('Unauthenticated')) {
@@ -97,15 +123,21 @@
     }
   }
 
-  async function refreshTeachersList() {
+  async function refreshReferenceData() {
     try {
-      const res = await getAdminTeachers(fetch);
-      teachersList = res.data || [];
+      const [teachersRes, yearsRes, deptsRes] = await Promise.all([
+        getAdminTeachers(fetch).catch(() => ({ data: [] })),
+        getAcademicYears(fetch).catch(() => ({ data: [] })),
+        getDepartments(fetch).catch(() => ({ data: [] })),
+      ]);
+      teachersList = teachersRes.data || [];
+      academicYearsList = yearsRes.data || [];
+      departmentsList = deptsRes.data || [];
     } catch (_) {}
   }
 
   async function openCreateCourseModal() {
-    await refreshTeachersList();
+    await refreshReferenceData();
     isEditingCourse = false;
     editingCourseId = null;
     formTitleAr = '';
@@ -120,12 +152,14 @@
     formTelegramChannelId = '';
     formTeacherId = null;
     formTeacherShare = 70;
+    formIsGeneral = false;
+    formSelectedAudiences = [];
     modalError = '';
     isCourseModalOpen = true;
   }
 
   async function openEditCourseModal(course: AdminCourse) {
-    await refreshTeachersList();
+    await refreshReferenceData();
     isEditingCourse = true;
     editingCourseId = course.id;
     formTitleAr = course.title?.ar || '';
@@ -141,6 +175,13 @@
     const assignedTeacher = teachersList.find((t) => t.courses?.some((c) => c.id === course.id));
     formTeacherId = assignedTeacher ? assignedTeacher.id : null;
     formTeacherShare = course.teacher_share_percent || 70;
+    formIsGeneral = Boolean(course.is_general);
+    formSelectedAudiences = Array.isArray(course.audiences)
+      ? course.audiences.map((a) => ({
+          academic_year_id: Number(a.academic_year_id),
+          department_id: Number(a.department_id),
+        }))
+      : [];
     modalError = '';
     isCourseModalOpen = true;
   }
@@ -165,6 +206,12 @@
     modalLoading = true;
     modalError = '';
 
+    if (!formIsGeneral && formSelectedAudiences.length === 0) {
+      modalError = 'يرجى تحديد السنة والقسم المستهدفين، أو تحديد المقرر كـ "كورس عام".';
+      modalLoading = false;
+      return;
+    }
+
     try {
       const payload: Record<string, unknown> = {
         title: {
@@ -178,10 +225,12 @@
         slug: formSlug,
         price_cents: Math.max(0, Math.round(formPricePounds * 100)),
         status: formStatus,
+        is_general: formIsGeneral,
+        audiences: formIsGeneral ? [] : formSelectedAudiences,
         teacher_share_percent: Number(formTeacherShare),
-        telegram_invite_link: formTelegramLink.trim() || null,
-        telegram_group_id: formTelegramGroupId.trim() ? Number(formTelegramGroupId.trim()) : null,
-        telegram_channel_id: formTelegramChannelId.trim() ? Number(formTelegramChannelId.trim()) : null,
+        telegram_invite_link: null,
+        telegram_group_id: formTelegramGroupId.trim() || null,
+        telegram_channel_id: formTelegramChannelId.trim() || null,
       };
 
       let savedCourseId = editingCourseId;
@@ -220,6 +269,86 @@
       await loadData();
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'تعذر حذف المقرر.');
+    }
+  }
+
+  // User deletion state
+  let isDeleteUserModalOpen = $state(false);
+  let userToDelete = $state<any | null>(null);
+  let deleteUserLoading = $state(false);
+  let deleteUserError = $state('');
+
+  function openDeleteUserModal(user: any) {
+    userToDelete = user;
+    deleteUserError = '';
+    isDeleteUserModalOpen = true;
+  }
+
+  function closeDeleteUserModal() {
+    isDeleteUserModalOpen = false;
+    userToDelete = null;
+    deleteUserError = '';
+  }
+
+  async function confirmDeleteUser() {
+    if (!userToDelete) return;
+    deleteUserLoading = true;
+    deleteUserError = '';
+    try {
+      await deleteAdminUser(fetch, userToDelete.id);
+      students = students.filter((s) => s.id !== userToDelete.id);
+      closeDeleteUserModal();
+      await loadData();
+    } catch (err: unknown) {
+      deleteUserError = err instanceof Error ? err.message : 'تعذر حذف المستخدم.';
+    } finally {
+      deleteUserLoading = false;
+    }
+  }
+
+  // Reset students state
+  let isResetStudentsModalOpen = $state(false);
+  let resetConfirmationInput = $state('');
+  let resetStudentsLoading = $state(false);
+  let resetStudentsError = $state('');
+  let resetStudentsSuccess = $state('');
+
+  function openResetStudentsModal() {
+    resetConfirmationInput = '';
+    resetStudentsError = '';
+    resetStudentsSuccess = '';
+    isResetStudentsModalOpen = true;
+  }
+
+  function closeResetStudentsModal() {
+    isResetStudentsModalOpen = false;
+    resetConfirmationInput = '';
+    resetStudentsError = '';
+    resetStudentsSuccess = '';
+  }
+
+  async function confirmResetStudents() {
+    if (resetConfirmationInput.trim() !== 'تأكيد' && resetConfirmationInput.trim().toUpperCase() !== 'CONFIRM') {
+      resetStudentsError = 'يرجى كتابة كلمة "تأكيد" للتحقق وتنفيذ عملية الحذف.';
+      return;
+    }
+
+    resetStudentsLoading = true;
+    resetStudentsError = '';
+    resetStudentsSuccess = '';
+
+    try {
+      const res = await resetAdminStudents(fetch);
+      students = [];
+      resetStudentsSuccess = res.message || 'تم حذف كافة حسابات الطلاب بنجاح.';
+      setTimeout(() => {
+        closeResetStudentsModal();
+      }, 1500);
+      await loadData();
+    } catch (err: unknown) {
+      resetStudentsError = err instanceof Error ? err.message : 'تعذر تصفير بيانات الطلاب.';
+    } finally {
+      resetStudentsLoading = false;
     }
   }
 
@@ -540,8 +669,24 @@
           <div class="panel-top-bar">
             <div>
               <h2>دليل الطلاب المسجلين ({students.length})</h2>
-              <p>استعراض بيانات الطلاب، الفرق الدراسية، والأقسام الأكاديمية.</p>
+              <p>استعراض بيانات الطلاب، الفرق الدراسية، وإدارة الحسابات.</p>
             </div>
+            {#if students.length > 0}
+              <button
+                type="button"
+                class="btn-reset-students"
+                onclick={openResetStudentsModal}
+                title="حذف جميع الطلاب وتصفير البيانات"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                حذف جميع الطلاب وتصفير البيانات
+              </button>
+            {/if}
           </div>
 
           {#if students.length === 0}
@@ -560,6 +705,7 @@
                     <th>القسم</th>
                     <th>معرّف تليجرام</th>
                     <th>تاريخ التسجيل</th>
+                    <th>الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -578,6 +724,16 @@
                         {/if}
                       </td>
                       <td>{new Date(st.created_at).toLocaleDateString('ar-EG')}</td>
+                      <td>
+                        <button
+                          type="button"
+                          class="btn-sm btn-delete"
+                          onclick={() => openDeleteUserModal(st)}
+                          title="حذف هذا الطالب"
+                        >
+                          حذف
+                        </button>
+                      </td>
                     </tr>
                   {/each}
                 </tbody>
@@ -641,6 +797,18 @@
               </span>
               <h3>طابور مراجعة الإيصالات</h3>
               <p>مراجعة صور إيصالات فودافون كاش وإنستاباي والتحقق من التكرارات.</p>
+            </a>
+
+            <a href="/admin/coupons" class="sys-module-card">
+              <span class="sys-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path>
+                  <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path>
+                  <circle cx="14" cy="12" r="1.5"></circle>
+                </svg>
+              </span>
+              <h3>كوبونات الخصم</h3>
+              <p>إدارة أكواد الخصم الترويجية، حدود الاستخدام، ونسب التخفيض للطلاب.</p>
             </a>
 
             <a href="/courses" class="sys-module-card">
@@ -789,6 +957,56 @@
           ></textarea>
         </div>
 
+        <div class="audience-section">
+          <label class="checkbox-row is-general-toggle">
+            <input
+              type="checkbox"
+              bind:checked={formIsGeneral}
+              onchange={() => {
+                if (formIsGeneral) {
+                  formSelectedAudiences = [];
+                }
+              }}
+            />
+            <span class="checkbox-title">كورس عام (متاح لكل الطلاب بغض النظر عن السنة أو القسم)</span>
+          </label>
+          <small class="audience-hint">
+            عند تفعيل هذا الخيار، سيظهر هذا المقرر لجميع الفرق الدراسية والأقسام دون استثناء.
+          </small>
+
+          {#if !formIsGeneral}
+            <div class="audiences-picker-block">
+              <span class="picker-label">تحديد السنة والقسم المتاح لهما هذا المقرر: *</span>
+              <div class="audiences-matrix">
+                {#each academicYearsList as year}
+                  <div class="year-audience-group">
+                    <div class="year-group-title">
+                      {$currentLocale === 'en' ? (year.name.en || year.name.ar) : year.name.ar}
+                    </div>
+                    <div class="dept-checkboxes">
+                      {#each departmentsList as dept}
+                        <label class="dept-checkbox-item">
+                          <input
+                            type="checkbox"
+                            checked={isAudienceChecked(year.id, dept.id)}
+                            onchange={() => toggleAudience(year.id, dept.id)}
+                          />
+                          <span>{$currentLocale === 'en' ? (dept.name.en || dept.name.ar) : dept.name.ar}</span>
+                        </label>
+                      {/each}
+                    </div>
+                  </div>
+                {/each}
+              </div>
+              {#if formSelectedAudiences.length === 0}
+                <div class="audience-warning">
+                  ⚠️ يجب اختيار سنة وقسم على الأقل، أو تفعيل خيار "كورس عام".
+                </div>
+              {/if}
+            </div>
+          {/if}
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label for="admin-status">حالة المقرر</label>
@@ -831,43 +1049,32 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label for="admin-tel-group">معرّف مجموعة تليجرام (Group ID)</label>
-            <input
-              id="admin-tel-group"
-              type="text"
-              dir="ltr"
-              bind:value={formTelegramGroupId}
-              placeholder="-1001234567890"
-            />
-            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
-              معرّف مجموعة النقاش (يبدأ عادة بـ 100- للمجموعات الخارقة).
-            </small>
-          </div>
-
-          <div class="form-group">
-            <label for="admin-tel-channel">معرّف قناة تليجرام (Channel ID)</label>
+            <label for="admin-tel-channel">رابط قناة المادة</label>
             <input
               id="admin-tel-channel"
               type="text"
               dir="ltr"
               bind:value={formTelegramChannelId}
-              placeholder="-1001987654321"
+              placeholder="https://t.me/... أو -1001987654321"
             />
             <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
-              معرّف القناة لبث الدروس (اختياري).
+              رابط مخصص للقناة (لبث الدروس والمحاضرات والملفات).
             </small>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label for="admin-tel">رابط دعوة تليجرام (Invite Link)</label>
-          <input
-            id="admin-tel"
-            type="url"
-            dir="ltr"
-            bind:value={formTelegramLink}
-            placeholder="https://t.me/+joinchat..."
-          />
+          <div class="form-group">
+            <label for="admin-tel-group">رابط شات/جروب المادة</label>
+            <input
+              id="admin-tel-group"
+              type="text"
+              dir="ltr"
+              bind:value={formTelegramGroupId}
+              placeholder="https://t.me/... أو -1001234567890"
+            />
+            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
+              رابط مخصص لنقاشات المقرر والتواصل بين الطلاب.
+            </small>
+          </div>
         </div>
 
         <div class="modal-actions">
@@ -883,6 +1090,123 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+{/if}
+
+<!-- Modal: Delete Single User Confirmation -->
+{#if isDeleteUserModalOpen && userToDelete}
+  <div class="modal-backdrop" onclick={closeDeleteUserModal} role="presentation">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="modal-card modal-card-danger" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl" tabindex="-1">
+      <div class="modal-header">
+        <h2 style="color: #991b1b;">تأكيد حذف حساب المستخدم</h2>
+        <button type="button" class="btn-close-modal" onclick={closeDeleteUserModal} aria-label="إغلاق">&times;</button>
+      </div>
+
+      {#if deleteUserError}
+        <div class="modal-error-banner" role="alert">
+          <span>{deleteUserError}</span>
+        </div>
+      {/if}
+
+      <div class="delete-user-body">
+        <p>هل أنت متأكد من رغبتك في حذف هذا الحساب نهائياً؟</p>
+        <div class="target-user-summary">
+          <div><strong>الاسم:</strong> {userToDelete.name}</div>
+          <div><strong>البريد الإلكتروني:</strong> <span dir="ltr">{userToDelete.email}</span></div>
+          {#if userToDelete.role}
+            <div><strong>الدور:</strong> {userToDelete.role}</div>
+          {/if}
+        </div>
+        <p class="danger-warning-note">
+          ⚠️ <strong>تنبيه:</strong> سيؤدي حذف الحساب إلى مسح كافة التسجيلات، إيصالات الدفع، نتائج الاختبارات، وبيانات التليجرام المرتبطة بهذا المستخدم نهائياً. لا يمكن التراجع عن هذا الإجراء.
+        </p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick={closeDeleteUserModal} disabled={deleteUserLoading}>
+          إلغاء
+        </button>
+        <button
+          type="button"
+          class="btn-danger-confirm"
+          onclick={confirmDeleteUser}
+          disabled={deleteUserLoading}
+        >
+          {#if deleteUserLoading}
+            <span>جاري الحذف...</span>
+          {:else}
+            <span>تأكيد الحذف نهائياً</span>
+          {/if}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Modal: Reset All Students Confirmation -->
+{#if isResetStudentsModalOpen}
+  <div class="modal-backdrop" onclick={closeResetStudentsModal} role="presentation">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="modal-card modal-card-danger" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" dir="rtl" tabindex="-1">
+      <div class="modal-header">
+        <h2 style="color: #991b1b;">⚠️ تصفير وحذف جميع حسابات الطلاب</h2>
+        <button type="button" class="btn-close-modal" onclick={closeResetStudentsModal} aria-label="إغلاق">&times;</button>
+      </div>
+
+      {#if resetStudentsError}
+        <div class="modal-error-banner" role="alert">
+          <span>{resetStudentsError}</span>
+        </div>
+      {/if}
+
+      {#if resetStudentsSuccess}
+        <div class="modal-success-banner" role="status">
+          <span>{resetStudentsSuccess}</span>
+        </div>
+      {/if}
+
+      <div class="delete-user-body">
+        <p>أنت على وشك القيام بعملية تصفير شاملة لحسابات الطلاب ({students.length} طالب):</p>
+        <ul class="danger-checklist">
+          <li>سيتم حذف جميع حسابات الطلاب نهائياً.</li>
+          <li>سيتم حذف كافة التسجيلات في المقررات، إيصالات الدفع، والروابط.</li>
+          <li>سيتم مسح سجلات محاولات وإجابات الاختبارات.</li>
+          <li><strong>سيبقى الكتالوج الإداري (المقررات، الدروس، الأسئلة، الإعدادات، وحسابات المحاضرين والإدارة) آمناً بالكامل.</strong></li>
+        </ul>
+
+        <div class="confirm-prompt-box">
+          <label for="reset-confirm-text">
+            لتأكيد الحذف، اكتب كلمة <strong style="color: #b91c1c;">تأكيد</strong> في المربع التالي:
+          </label>
+          <input
+            id="reset-confirm-text"
+            type="text"
+            bind:value={resetConfirmationInput}
+            placeholder="اكتب كلمة: تأكيد"
+            disabled={resetStudentsLoading}
+          />
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick={closeResetStudentsModal} disabled={resetStudentsLoading}>
+          إلغاء وتراجع
+        </button>
+        <button
+          type="button"
+          class="btn-danger-confirm"
+          onclick={confirmResetStudents}
+          disabled={resetStudentsLoading || (resetConfirmationInput.trim() !== 'تأكيد' && resetConfirmationInput.trim().toUpperCase() !== 'CONFIRM')}
+        >
+          {#if resetStudentsLoading}
+            <span>جاري مسح البيانات...</span>
+          {:else}
+            <span>حذف جميع الطلاب نهائياً</span>
+          {/if}
+        </button>
+      </div>
     </div>
   </div>
 {/if}
@@ -1531,6 +1855,96 @@
     cursor: pointer;
   }
 
+  .audience-section {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+  }
+
+  .checkbox-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--storm);
+  }
+
+  .audience-hint {
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .audiences-picker-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--line);
+  }
+
+  .picker-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--storm);
+  }
+
+  .audiences-matrix {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .year-audience-group {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .year-group-title {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--deep-cyan);
+    margin-bottom: 0.5rem;
+  }
+
+  .dept-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .dept-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: var(--storm);
+    cursor: pointer;
+  }
+
+  .dept-checkbox-item input,
+  .is-general-toggle input {
+    width: auto !important;
+    cursor: pointer;
+  }
+
+  .audience-warning {
+    font-size: 0.8rem;
+    color: #b91c1c;
+    font-weight: 700;
+  }
+
   .admin-loading-shell, .admin-error-shell {
     display: flex;
     flex-direction: column;
@@ -1553,6 +1967,137 @@
 
   @keyframes spin {
     to { transform: rotate(360deg); }
+  }
+
+  .btn-reset-students {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.95rem;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1.5px solid #fca5a5;
+    border-radius: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 120ms ease;
+  }
+
+  .btn-reset-students:hover {
+    background: #fee2e2;
+    border-color: #f87171;
+    transform: translateY(-1px);
+  }
+
+  .btn-danger-confirm {
+    background: #dc2626;
+    color: #ffffff;
+    border: 2px solid #dc2626;
+    padding: 0.6rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 120ms ease;
+  }
+
+  .btn-danger-confirm:hover:not(:disabled) {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    transform: translateY(-1px);
+  }
+
+  .btn-danger-confirm:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .modal-card-danger {
+    border-color: #fca5a5 !important;
+  }
+
+  .delete-user-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.92rem;
+    color: var(--storm);
+    line-height: 1.6;
+  }
+
+  .target-user-summary {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 0.5rem;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.88rem;
+  }
+
+  .danger-warning-note {
+    background: #fff1f2;
+    border-right: 4px solid #e11d48;
+    padding: 0.75rem 1rem;
+    border-radius: 0.35rem;
+    color: #9f1239;
+    font-size: 0.85rem;
+    margin: 0;
+  }
+
+  .danger-checklist {
+    margin: 0;
+    padding-right: 1.25rem;
+    color: #4b5563;
+    font-size: 0.86rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .confirm-prompt-box {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .confirm-prompt-box label {
+    font-weight: 700;
+    font-size: 0.86rem;
+    color: var(--storm);
+  }
+
+  .confirm-prompt-box input {
+    padding: 0.6rem 0.85rem;
+    border: 2px solid #f87171;
+    border-radius: 0.5rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+  }
+
+  .confirm-prompt-box input:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+  }
+
+  .modal-success-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f0fdf4;
+    border: 2px solid #86efac;
+    color: #166534;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
   }
 
   @media (max-width: 768px) {

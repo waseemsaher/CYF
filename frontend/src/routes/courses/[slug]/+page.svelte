@@ -1,7 +1,11 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import type { PageData } from './$types';
   import { currentUser } from '$lib/api/auth';
   import { updateAdminCourse } from '$lib/api/admin';
+  import { getCourseContent, type CourseContentResponse } from '$lib/api/learning';
+  import { getMyPayments } from '$lib/api/payments';
+  import { getAuthToken } from '$lib/api/client';
   import { currentLocale, formatPrice, getLocalizedText } from '$lib/i18n';
 
   let { data }: { data: PageData } = $props();
@@ -9,6 +13,92 @@
   let isAdmin = $derived(
     $currentUser?.role === 'admin' || $currentUser?.role === 'superadmin'
   );
+
+  let clientContent = $state<CourseContentResponse | null>(null);
+  let currentContent = $derived(clientContent ?? data.content);
+  let hasPendingPayment = $state(false);
+
+  async function refreshEnrollmentStatus() {
+    if (!getAuthToken()) return;
+
+    try {
+      const contentRes = await getCourseContent(fetch, data.course.slug);
+      if (contentRes?.data) {
+        clientContent = contentRes.data;
+      }
+    } catch {
+      // ignore
+    }
+
+    // If not unlocked, check if student has a pending payment for this course
+    if (!currentContent?.is_unlocked) {
+      try {
+        const payRes = await getMyPayments(fetch);
+        if (payRes?.data) {
+          hasPendingPayment = payRes.data.some(
+            p => (p.course_id === data.course.id || p.course?.slug === data.course.slug) && p.status === 'pending'
+          );
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  onMount(() => {
+    refreshEnrollmentStatus();
+  });
+
+  $effect(() => {
+    if ($currentUser && !currentContent?.is_unlocked) {
+      refreshEnrollmentStatus();
+    }
+  });
+
+  let isEnrolled = $derived(Boolean(currentContent?.is_unlocked));
+
+  // Free Preview Modal State
+  let isPreviewModalOpen = $state(false);
+  let previewItemTitle = $state('');
+  let previewVideoUrl = $state('');
+  let previewEmbedUrl = $derived.by(() => {
+    if (!previewVideoUrl) return '';
+    try {
+      // Check for youtube.com/watch?v= or youtu.be/
+      if (previewVideoUrl.includes('youtube.com/watch')) {
+        const url = new URL(previewVideoUrl);
+        const v = url.searchParams.get('v');
+        if (v) return `https://www.youtube.com/embed/${v}?autoplay=1`;
+      } else if (previewVideoUrl.includes('youtu.be/')) {
+        const parts = previewVideoUrl.split('youtu.be/');
+        const id = parts[1]?.split(/[?#]/)[0];
+        if (id) return `https://www.youtube.com/embed/${id}?autoplay=1`;
+      } else if (previewVideoUrl.includes('youtube.com/embed/')) {
+        return previewVideoUrl;
+      }
+    } catch {
+      // ignore
+    }
+    return '';
+  });
+
+  function openPreviewModal(title: string, url: string) {
+    previewItemTitle = title;
+    previewVideoUrl = url;
+    isPreviewModalOpen = true;
+  }
+
+  function closePreviewModal() {
+    isPreviewModalOpen = false;
+    previewVideoUrl = '';
+    previewItemTitle = '';
+  }
+
+  let collapsedSections = $state<Record<number, boolean>>({});
+
+  function toggleSection(sIdx: number) {
+    collapsedSections[sIdx] = !collapsedSections[sIdx];
+  }
 
   // Edit Modal State
   let isEditModalOpen = $state(false);
@@ -60,9 +150,9 @@
         },
         price_cents: Math.max(0, Math.round(editPricePounds * 100)),
         status: editStatus,
-        telegram_invite_link: editTelegramLink.trim() || null,
-        telegram_group_id: editTelegramGroupId.trim() ? Number(editTelegramGroupId.trim()) : null,
-        telegram_channel_id: editTelegramChannelId.trim() ? Number(editTelegramChannelId.trim()) : null,
+        telegram_invite_link: null,
+        telegram_group_id: editTelegramGroupId.trim() || null,
+        telegram_channel_id: editTelegramChannelId.trim() || null,
       };
 
       await updateAdminCourse(fetch, data.course.id, payload);
@@ -133,6 +223,43 @@
           </a>
         </div>
       </aside>
+    {:else if isEnrolled}
+      <aside class="enrollment-panel enrolled" aria-label={$currentLocale === 'en' ? 'Enrolled Status & Course Access' : 'حالة الاشتراك والوصول للمحتوى'}>
+        <div class="enrolled-badge-row">
+          <span class="enrolled-badge">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            {$currentLocale === 'en' ? 'Enrolled' : 'مشترك في المادة'}
+          </span>
+        </div>
+        <p class="enrolled-desc">
+          {$currentLocale === 'en' ? 'You have active access to this course. You can now browse all lessons and learning materials.' : 'أنت مشترك بالفعل في هذا المقرر الدراسي. يمكنك متابعة كافة المحاضرات والمواد التعليمية الآن.'}
+        </p>
+        <a class="enroll-btn enrolled-btn" href={`/my-courses/${data.course.slug}`}>
+          <span>{$currentLocale === 'en' ? 'Go to Course Content' : 'انتقل إلى محتوى المادة'}</span>
+          <span aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
+        </a>
+      </aside>
+    {:else if hasPendingPayment}
+      <aside class="enrollment-panel pending" aria-label={$currentLocale === 'en' ? 'Payment Under Review' : 'الدفعة قيد المراجعة'}>
+        <div class="enrolled-badge-row">
+          <span class="pending-badge">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            {$currentLocale === 'en' ? 'Payment Pending Review' : 'طلب الدفع قيد المراجعة'}
+          </span>
+        </div>
+        <p class="enrolled-desc">
+          {$currentLocale === 'en' ? 'Your payment has been received and is being reviewed by administration.' : 'تم استلام إثبات الدفع وهو قيد المراجعة حاليًا من قبل الإدارة وسيتم تفعيل اشتراكك فور الموافقة.'}
+        </p>
+        <a class="enroll-btn pending-btn" href="/payments">
+          <span>{$currentLocale === 'en' ? 'View My Payments' : 'متابعة حالة الدفعة'}</span>
+          <span aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
+        </a>
+      </aside>
     {:else}
       <aside class="enrollment-panel" aria-label={$currentLocale === 'en' ? 'Price & Enrollment Details' : 'تفاصيل السعر والتسجيل'}>
         <p>{$currentLocale === 'en' ? 'Current Price' : 'السعر الحالي'}</p>
@@ -160,6 +287,81 @@
     <h2>{$currentLocale === 'en' ? 'Curriculum & Course Structure' : 'محتوى وتفاصيل المنهج'}</h2>
     <p>{$currentLocale === 'en' ? 'Inside this course you will find structured lessons, video lecture links, and interactive quizzes for regular review and final exam preparation.' : 'ستجد داخل الدورة محتوى مرتبًا وروابط المحاضرات والاختبارات الخاصة بالمقرر للمساعدة في المذاكرة والمراجعة النهائية.'}</p>
     
+    {#if currentContent?.sections && currentContent.sections.length > 0}
+      <div class="curriculum-list">
+        {#each currentContent.sections as section, sIdx}
+          <div class="curriculum-section">
+            <button
+              type="button"
+              class="curriculum-section-header"
+              onclick={() => toggleSection(sIdx)}
+              aria-expanded={!collapsedSections[sIdx]}
+            >
+              <div class="section-header-content">
+                <span class="section-idx">{$currentLocale === 'en' ? `Section ${sIdx + 1}` : `الفصل ${sIdx + 1}`}</span>
+                <h3>{getLocalizedText(section.title, $currentLocale)}</h3>
+                <span class="section-badge">{section.items.length} {$currentLocale === 'en' ? 'items' : 'عنصر'}</span>
+              </div>
+              <span class="chevron-wrapper" aria-hidden="true">
+                <svg class="chevron-icon" class:is-rotated={collapsedSections[sIdx]} viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+            </button>
+
+            {#if !collapsedSections[sIdx]}
+              <div class="curriculum-items">
+                {#each section.items as item}
+                  <div class="curriculum-item" class:is-preview={item.is_free}>
+                    <div class="item-title-wrap">
+                      <span class="item-icon-tag" aria-hidden="true">
+                        {#if item.type === 'lecture_link'}
+                          🎬
+                        {:else if item.type === 'file'}
+                          📄
+                        {:else if item.type === 'quiz' || item.type === 'exam'}
+                          📝
+                        {:else}
+                          🔗
+                        {/if}
+                      </span>
+                      <span class="item-title">{getLocalizedText(item.title, $currentLocale)}</span>
+
+                      {#if item.is_free}
+                        <span class="preview-tag">
+                          {$currentLocale === 'en' ? 'Free Preview' : 'معاينة مجانية'}
+                        </span>
+                      {/if}
+                    </div>
+
+                    <div class="item-status-wrap">
+                      {#if item.is_free && item.url}
+                        <button
+                          type="button"
+                          class="btn-watch-preview"
+                          onclick={() => openPreviewModal(getLocalizedText(item.title, $currentLocale), item.url!)}
+                        >
+                          {$currentLocale === 'en' ? 'Watch Preview ▶' : 'مشاهدة المعاينة ▶'}
+                        </button>
+                      {:else if item.is_locked}
+                        <span class="lock-indicator" title={$currentLocale === 'en' ? 'Requires enrollment' : 'يتطلب الاشتراك في المادة'}>
+                          🔒 {$currentLocale === 'en' ? 'Locked' : 'مغلق'}
+                        </span>
+                      {:else}
+                        <a href={`/my-courses/${data.course.slug}`} class="btn-item-open">
+                          {$currentLocale === 'en' ? 'Open Lesson' : 'فتح الدرس'}
+                        </a>
+                      {/if}
+                    </div>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    {/if}
+
     {#if isAdmin}
       <div class="admin-inline-notice">
         <p>{$currentLocale === 'en' ? 'As an administrator, you can manage lectures, quizzes, and materials by clicking "Manage Lectures & Content" above.' : 'بصفتك مسؤولاً، يمكنك الوصول للمحتوى وإضافة المحاضرات والاختبارات بالضغط على زر "إدارة المحتوى والمحاضرات" بالأعلى.'}</p>
@@ -170,6 +372,62 @@
     {/if}
   </section>
 </div>
+
+<!-- Modal: Free Preview Video Player -->
+{#if isPreviewModalOpen}
+  <div class="modal-backdrop" onclick={closePreviewModal} role="presentation">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="modal-card preview-player-modal" onclick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" tabindex="-1" dir="rtl">
+      <div class="modal-header">
+        <div class="preview-modal-titles">
+          <span class="preview-tag-modal">معاينة مجانية</span>
+          <h3>{previewItemTitle}</h3>
+        </div>
+        <button type="button" class="btn-close-modal" onclick={closePreviewModal} aria-label="إغلاق">&times;</button>
+      </div>
+
+      <div class="preview-player-body">
+        {#if previewEmbedUrl}
+          <div class="video-responsive-wrapper">
+            <iframe
+              src={previewEmbedUrl}
+              title={previewItemTitle}
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          </div>
+        {:else if previewVideoUrl}
+          <div class="external-preview-card">
+            <p>هذا المحتوى متاح للمشاهدة الخارجية عبر الرابط المباشر:</p>
+            <a href={previewVideoUrl} target="_blank" rel="noopener noreferrer" class="btn-open-external">
+              فتح الرابط في نافذة جديدة ↗
+            </a>
+          </div>
+        {/if}
+      </div>
+
+      <div class="preview-modal-footer">
+        {#if isEnrolled}
+          <p>{$currentLocale === 'en' ? 'You are enrolled in this course. You have full access to all lectures, files, and quizzes.' : 'أنت مشترك بالفعل في هذا المقرر الدراسي. يمكنك الوصول لكافة المحاضرات والملفات الآن.'}</p>
+          <a href={`/my-courses/${data.course.slug}`} class="btn-enroll-from-preview">
+            {$currentLocale === 'en' ? 'Go to Course Content' : 'انتقل إلى محتوى المادة'}
+          </a>
+        {:else if hasPendingPayment}
+          <p>{$currentLocale === 'en' ? 'Your payment is under review. You will get full access once approved.' : 'طلب الدفع قيد المراجعة حاليًا. سيتم فتح المقرر بالكامل فور اعتماد الدفعة.'}</p>
+          <a href="/payments" class="btn-enroll-from-preview">
+            {$currentLocale === 'en' ? 'View My Payments' : 'متابعة حالة الدفعة'}
+          </a>
+        {:else}
+          <p>أعجبك الشرح؟ يمكنك الاشتراك في المنهج الكامل الآن والوصول لجميع المحاضرات والملفات والاختبارات.</p>
+          <a href={`/courses/${data.course.slug}/checkout`} class="btn-enroll-from-preview">
+            الاشتراك في المقرر الكامل
+          </a>
+        {/if}
+      </div>
+    </div>
+  </div>
+{/if}
 
 <!-- Edit Course Modal for Admin -->
 {#if isEditModalOpen}
@@ -244,45 +502,34 @@
               <option value="draft">مسودة (مخفي عن الطلاب)</option>
             </select>
           </div>
-
-          <div class="form-group">
-            <label for="edit-telegram">رابط دعوة تليجرام</label>
-            <input
-              id="edit-telegram"
-              type="url"
-              dir="ltr"
-              bind:value={editTelegramLink}
-              placeholder="https://t.me/+joinchat..."
-            />
-          </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="edit-telegram-group">معرّف مجموعة تليجرام (Group ID)</label>
-            <input
-              id="edit-telegram-group"
-              type="text"
-              dir="ltr"
-              bind:value={editTelegramGroupId}
-              placeholder="-1001234567890"
-            />
-            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
-              معرّف المجموعة (يبدأ بـ 100- للمجموعات الخارقة).
-            </small>
-          </div>
-
-          <div class="form-group">
-            <label for="edit-telegram-channel">معرّف قناة تليجرام (Channel ID)</label>
+            <label for="edit-telegram-channel">رابط قناة المادة</label>
             <input
               id="edit-telegram-channel"
               type="text"
               dir="ltr"
               bind:value={editTelegramChannelId}
-              placeholder="-1001987654321"
+              placeholder="https://t.me/... أو -1001987654321"
             />
             <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
-              معرّف القناة لبث الدروس (اختياري).
+              رابط مخصص للقناة (لبث المحاضرات والملفات والشروحات).
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-telegram-group">رابط شات/جروب المادة</label>
+            <input
+              id="edit-telegram-group"
+              type="text"
+              dir="ltr"
+              bind:value={editTelegramGroupId}
+              placeholder="https://t.me/... أو -1001234567890"
+            />
+            <small style="color: var(--storm); opacity: 0.7; font-size: 0.75rem;">
+              رابط مخصص لنقاشات المقرر والتواصل بين الطلاب.
             </small>
           </div>
         </div>
@@ -553,6 +800,74 @@
     border-color: var(--brand-navy);
   }
 
+  .enrollment-panel.enrolled {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.06);
+  }
+
+  .enrollment-panel.pending {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.06);
+  }
+
+  .enrolled-badge-row {
+    margin-bottom: 0.75rem;
+  }
+
+  .enrolled-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #10b981;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.88rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+  }
+
+  .pending-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f59e0b;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.88rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+  }
+
+  .enrolled-desc {
+    color: var(--storm);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin: 0.5rem 0 1.25rem;
+    font-weight: 600;
+  }
+
+  .enroll-btn.enrolled-btn {
+    background: #10b981;
+    border-color: #10b981;
+    color: #ffffff;
+  }
+
+  .enroll-btn.enrolled-btn:hover {
+    background: #059669;
+    border-color: #059669;
+  }
+
+  .enroll-btn.pending-btn {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: #ffffff;
+  }
+
+  .enroll-btn.pending-btn:hover {
+    background: #d97706;
+    border-color: #d97706;
+  }
+
   .outline {
     background: var(--card);
     border: 2px solid var(--line);
@@ -731,9 +1046,280 @@
     cursor: pointer;
   }
 
+  /* Curriculum Syllabus */
+  .curriculum-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+  }
+
+  .curriculum-section {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .curriculum-section-header {
+    background: var(--card);
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid var(--line);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: inherit;
+    transition: background 150ms ease;
+  }
+
+  .curriculum-section-header:hover {
+    background: var(--card-hover);
+  }
+
+  .section-header-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .chevron-wrapper {
+    display: inline-flex;
+    align-items: center;
+    color: var(--muted);
+    padding: 0.25rem;
+  }
+
+  .chevron-icon {
+    transition: transform 200ms ease;
+  }
+
+  .chevron-icon.is-rotated {
+    transform: rotate(90deg);
+  }
+
+  .section-idx {
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: var(--deep-cyan);
+    color: #ffffff;
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.35rem;
+  }
+
+  .curriculum-section-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--storm);
+    flex: 1;
+  }
+
+  .section-badge {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .curriculum-items {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .curriculum-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    gap: 1rem;
+    transition: background 150ms ease;
+  }
+
+  .curriculum-item:last-child {
+    border-bottom: none;
+  }
+
+  .curriculum-item.is-preview {
+    background: rgba(245, 158, 11, 0.06);
+  }
+
+  :global([data-theme='dark']) .curriculum-item.is-preview {
+    background: rgba(245, 158, 11, 0.12);
+  }
+
+  .item-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+
+  .item-icon-tag {
+    font-size: 1.1rem;
+  }
+
+  .item-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--storm);
+  }
+
+  .preview-tag {
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    border: 1px solid #fde68a;
+  }
+
+  :global([data-theme='dark']) .preview-tag {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.35);
+  }
+
+  .item-status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-watch-preview {
+    background: #059669;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 0.45rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+    transition: opacity 150ms ease;
+  }
+
+  .btn-watch-preview:hover {
+    opacity: 0.9;
+  }
+
+  .lock-indicator {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .btn-item-open {
+    font-size: 0.8rem;
+    color: var(--deep-cyan);
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  /* Preview Player Modal */
+  .preview-player-modal {
+    max-width: 760px;
+  }
+
+  .preview-modal-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .preview-modal-titles h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--storm);
+  }
+
+  .preview-tag-modal {
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    width: fit-content;
+  }
+
+  .preview-player-body {
+    margin: 1.25rem 0;
+  }
+
+  .video-responsive-wrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 ratio */
+    height: 0;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    background: #000;
+  }
+
+  .video-responsive-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .external-preview-card {
+    background: var(--paper);
+    border: 2px dashed var(--line);
+    border-radius: 0.75rem;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--storm);
+  }
+
+  .btn-open-external {
+    display: inline-block;
+    margin-top: 1rem;
+    background: var(--deep-cyan);
+    color: #ffffff;
+    font-weight: 700;
+    padding: 0.6rem 1.25rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+  }
+
+  .preview-modal-footer {
+    border-top: 1.5px solid var(--line);
+    padding-top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+    text-align: center;
+  }
+
+  .preview-modal-footer p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+
+  .btn-enroll-from-preview {
+    background: var(--storm);
+    color: var(--cyan);
+    padding: 0.65rem 1.75rem;
+    border-radius: 0.5rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
   @media (max-width: 760px) {
     .detail-shell { padding-inline: 1rem; }
     .course-hero { grid-template-columns: 1fr; }
     .form-row { grid-template-columns: 1fr; }
+    .curriculum-item { flex-direction: column; align-items: flex-start; }
   }
 </style>

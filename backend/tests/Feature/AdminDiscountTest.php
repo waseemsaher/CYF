@@ -185,3 +185,4 @@ it('validates discount input parameters', function (): void {
     ])->assertUnprocessable()
         ->assertJsonValidationErrors(['course_ids']);
 });
+

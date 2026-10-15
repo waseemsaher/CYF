@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\AdminCouponController;
 use App\Http\Controllers\Api\AdminCourseController;
 use App\Http\Controllers\Api\AdminDiscountController;
 use App\Http\Controllers\Api\AdminEnrollmentController;
@@ -11,13 +12,16 @@ use App\Http\Controllers\Api\AdminPaymentController;
 use App\Http\Controllers\Api\AdminSettingsController;
 use App\Http\Controllers\Api\AdminStudentController;
 use App\Http\Controllers\Api\AdminTeacherController;
+use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\ContentBlockController;
+use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\CourseContentController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\QuizController;
+use App\Http\Controllers\Api\TeacherCourseContentController;
 use App\Http\Controllers\Api\TeacherDashboardController;
 use App\Http\Controllers\Api\TelegramController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +33,8 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/reference/academic-years', [CatalogController::class, 'academicYears']);
     Route::get('/reference/departments', [CatalogController::class, 'departments']);
     Route::get('/reference/terms', [CatalogController::class, 'terms']);
+    Route::get('/reference/payment-methods', [PaymentController::class, 'paymentMethods']);
+    Route::get('/payment-methods', [PaymentController::class, 'paymentMethods']);
     Route::get('/content-blocks/{key}', [ContentBlockController::class, 'show']);
 
     Route::post('/register', [AuthController::class, 'register'])
@@ -66,6 +72,16 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/dashboard', [TeacherDashboardController::class, 'dashboard']);
             Route::get('/courses/{course}/students', [TeacherDashboardController::class, 'courseStudents']);
             Route::get('/quizzes/{quiz}/analytics', [TeacherDashboardController::class, 'quizAnalytics']);
+
+            // Teacher course content management
+            Route::get('/courses/{course}/content', [TeacherCourseContentController::class, 'show']);
+            Route::post('/courses/{course}/sections', [TeacherCourseContentController::class, 'storeSection']);
+            Route::put('/courses/{course}/sections/{section}', [TeacherCourseContentController::class, 'updateSection']);
+            Route::delete('/courses/{course}/sections/{section}', [TeacherCourseContentController::class, 'destroySection']);
+
+            Route::post('/courses/{course}/sections/{section}/items', [TeacherCourseContentController::class, 'storeItem']);
+            Route::put('/courses/{course}/items/{item}', [TeacherCourseContentController::class, 'updateItem']);
+            Route::delete('/courses/{course}/items/{item}', [TeacherCourseContentController::class, 'destroyItem']);
         });
 
         // Telegram student endpoints
@@ -73,22 +89,29 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/status', [TelegramController::class, 'status']);
             Route::post('/link-token', [TelegramController::class, 'generateLinkToken']);
             Route::post('/unlink', [TelegramController::class, 'unlink']);
+            Route::post('/courses/{course}/resend-invite', [TelegramController::class, 'resendInvite'])
+                ->middleware('throttle:6,1');
         });
         Route::get('/lessons/{item}/watch', [TelegramController::class, 'watchLesson']);
 
         // Student payments (rate-limited)
+        Route::post('/coupons/validate', [CouponController::class, 'validateCoupon']);
         Route::post('/payments', [PaymentController::class, 'store'])
             ->middleware('throttle:payment-submit');
         Route::get('/payments', [PaymentController::class, 'index']);
         Route::get('/payments/{id}', [PaymentController::class, 'show']);
         Route::post('/payments/{id}/cancel', [PaymentController::class, 'cancel']);
 
-        Route::prefix('admin')->middleware('role_or_permission:superadmin|admin|payments.review|courses.manage|students.manage|content.manage')->group(function (): void {
+        Route::prefix('admin')->middleware('role_or_permission:superadmin|admin|payments.review|courses.manage|students.manage|content.manage|coupons.manage')->group(function (): void {
             // Overview dashboard
             Route::get('/overview', [AdminOverviewController::class, '__invoke']);
 
             // Student management
             Route::get('/students', [AdminStudentController::class, 'index']);
+
+            // User management & data reset
+            Route::delete('/users/{user}', [AdminUserController::class, 'destroy']);
+            Route::post('/users/reset-students', [AdminUserController::class, 'resetStudents']);
 
             // Teacher management & payouts
             Route::get('/teachers', [AdminTeacherController::class, 'index']);
@@ -133,6 +156,14 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/payments/{id}', [AdminPaymentController::class, 'show']);
             Route::post('/payments/{id}/approve', [AdminPaymentController::class, 'approve']);
             Route::post('/payments/{id}/reject', [AdminPaymentController::class, 'reject']);
+
+            // Coupon management
+            Route::get('/coupons', [AdminCouponController::class, 'index']);
+            Route::post('/coupons', [AdminCouponController::class, 'store']);
+            Route::get('/coupons/{coupon}', [AdminCouponController::class, 'show']);
+            Route::put('/coupons/{coupon}', [AdminCouponController::class, 'update']);
+            Route::delete('/coupons/{coupon}', [AdminCouponController::class, 'destroy']);
+            Route::post('/coupons/{coupon}/toggle-active', [AdminCouponController::class, 'toggleActive']);
 
             // Enrollment management
             Route::post('/enrollments/grant', [AdminEnrollmentController::class, 'grant']);

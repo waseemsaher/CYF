@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Http\Auth\PrioritizedRequestGuard;
+use App\Http\Auth\PrioritizedSanctumGuard;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -33,6 +36,18 @@ class AppServiceProvider extends ServiceProvider
             $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:5173'), '/');
 
             return "{$frontendUrl}/reset-password?token={$token}&email=".urlencode($notifiable->getEmailForPasswordReset());
+        });
+
+        Auth::extend('sanctum', function ($app, $name, array $config) {
+            $guard = new PrioritizedRequestGuard(
+                new PrioritizedSanctumGuard($app->make('auth'), config('sanctum.expiration'), $config['provider'] ?? null),
+                $app->make('request'),
+                $app->make('auth')->createUserProvider($config['provider'] ?? null)
+            );
+
+            $app->refresh('request', $guard, 'setRequest');
+
+            return $guard;
         });
 
         $this->configureRateLimiting();

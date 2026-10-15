@@ -8,6 +8,7 @@ use App\Domain\Identity\Actions\GetCurrentUserProfileAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginUserRequest;
 use App\Http\Requests\RegisterUserRequest;
+use App\Models\AcademicYear;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -22,7 +24,23 @@ class AuthController extends Controller
 
     public function register(RegisterUserRequest $request): JsonResponse
     {
+        if (Auth::guard('web')->check()) {
+            Auth::guard('web')->logout();
+        }
+        Auth::forgetGuards();
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
         $validated = $request->validated();
+
+        $academicYearId = (int) $validated['academic_year_id'];
+        $academicYearName = $validated['academic_year'] ?? null;
+        if (! $academicYearName) {
+            $yearModel = AcademicYear::find($academicYearId);
+            $academicYearName = $yearModel?->getTranslation('name', 'ar') ?? (string) $academicYearId;
+        }
 
         $user = new User;
         $user->fill([
@@ -30,7 +48,8 @@ class AuthController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'branch' => $validated['branch'],
-            'academic_year' => $validated['academic_year'],
+            'academic_year' => $academicYearName,
+            'academic_year_id' => $academicYearId,
             'department' => $validated['department'],
             'telegram_username' => $validated['telegram_username'] ?? null,
             'phone' => $validated['phone'] ?? null,
@@ -42,6 +61,12 @@ class AuthController extends Controller
         $user->save();
 
         $user->assignRole('student');
+
+        Auth::guard('web')->login($user);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
         $token = $user->createToken('auth-token')->plainTextToken;
 
         $payload = $this->profileAction->handle($user);
@@ -79,10 +104,19 @@ class AuthController extends Controller
         if (! $user->is_active) {
             $user->tokens()->delete();
             Auth::guard('web')->logout();
+            Auth::forgetGuards();
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
 
             return response()->json([
                 'message' => 'This account has been deactivated.',
             ], 403);
+        }
+
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;
@@ -98,7 +132,21 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        if ($user instanceof User) {
+            $currentToken = $user->currentAccessToken();
+            if ($currentToken instanceof PersonalAccessToken) {
+                $currentToken->delete();
+            }
+        }
+
+        Auth::guard('web')->logout();
+        Auth::forgetGuards();
+
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return response()->json([
             'message' => 'تم تسجيل الخروج بنجاح.',

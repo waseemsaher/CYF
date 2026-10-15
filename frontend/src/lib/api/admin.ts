@@ -18,6 +18,7 @@ export type TeacherEarnings = {
   earned_cents: number;
   paid_out_cents: number;
   balance_cents: number;
+  owed_back_cents?: number;
 };
 
 export type TeacherDashboardData = {
@@ -45,6 +46,7 @@ export type AdminCourse = {
   cover_image_path?: string | null;
   price_cents: number;
   status: 'draft' | 'published' | 'archived';
+  is_general?: boolean;
   telegram_channel_id?: number | null;
   telegram_group_id?: number | null;
   telegram_chat_id?: number | null;
@@ -166,6 +168,14 @@ export function recordTeacherPayout(
   data: RecordPayoutPayload
 ) {
   return apiPost<{ data: unknown }>(fetcher, `/admin/teachers/${teacherId}/payouts`, data);
+}
+
+export function deleteAdminUser(fetcher: typeof fetch = fetch, userId: number) {
+  return apiDelete<{ message: string }>(fetcher, `/admin/users/${userId}`);
+}
+
+export function resetAdminStudents(fetcher: typeof fetch = fetch) {
+  return apiPost<{ message: string; count: number }>(fetcher, '/admin/users/reset-students', {});
 }
 
 export type AdminDiscount = {

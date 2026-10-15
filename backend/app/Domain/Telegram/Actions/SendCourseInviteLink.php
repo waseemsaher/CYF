@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\TelegramCourseInvite;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Generates a single-use Telegram invite link for a course group and delivers it
@@ -24,13 +25,16 @@ class SendCourseInviteLink
     ) {}
 
     /**
-     * @return bool true if a message was sent, false if skipped (already outstanding) or no group configured
+     * @return bool true if a message was sent, false if skipped (already outstanding) or no group/channel configured
      */
     public function handle(User $user, Course $course): bool
     {
-        // Nothing to do if the course has no Telegram group
-        $chatId = $course->getAttribute('telegram_group_id');
-        if (! $chatId) {
+        $groupId = $course->getAttribute('telegram_group_id');
+        $channelId = $course->getAttribute('telegram_channel_id');
+        $staticInvite = $course->getAttribute('telegram_invite_link');
+
+        // Nothing to do if the course has no Telegram group, channel, or invite link
+        if (! $groupId && ! $channelId && ! $staticInvite) {
             return false;
         }
 
@@ -61,49 +65,154 @@ class SendCourseInviteLink
         // 48-hour expiry window
         $expireDate = now()->addHours(48)->timestamp;
 
-        // Call Telegram to create the invite
-        $response = $this->client->createChatInviteLink(
-            chatId: $chatId,
-            memberLimit: 1,
-            expireDate: $expireDate,
-            createsJoinRequest: false,
-        );
+        $channelInviteLink = null;
+        if ($channelId) {
+            if (filter_var((string) $channelId, FILTER_VALIDATE_URL)) {
+                $channelInviteLink = (string) $channelId;
+            } else {
+                try {
+                    $this->client->unbanChatMember($channelId, (int) $telegramUserId, true);
+                } catch (Throwable $e) {
+                    Log::warning('Failed to unban student from channel before generating invite link', [
+                        'channel_id' => $channelId,
+                        'user_id' => $user->getKey(),
+                        'error' => $e->getMessage(),
+                    ]);
+                }
 
-        if (! $response->successful()) {
-            Log::error('Failed to create Telegram chat invite link', [
-                'chat_id' => $chatId,
+                try {
+                    $response = $this->client->createChatInviteLink(
+                        chatId: $channelId,
+                        memberLimit: 1,
+                        expireDate: $expireDate,
+                        createsJoinRequest: true,
+                    );
+
+                    if ($response->successful()) {
+                        $channelInviteLink = $response->json('result.invite_link');
+                    } else {
+                        Log::error('Failed to create Telegram channel invite link', [
+                            'channel_id' => $channelId,
+                            'user_id' => $user->getKey(),
+                            'response' => $response->body(),
+                        ]);
+                    }
+                } catch (Throwable $e) {
+                    Log::error('Exception creating Telegram channel invite link', [
+                        'channel_id' => $channelId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        $groupInviteLink = null;
+        if ($groupId) {
+            if (filter_var((string) $groupId, FILTER_VALIDATE_URL)) {
+                $groupInviteLink = (string) $groupId;
+            } else {
+                try {
+                    $this->client->unbanChatMember($groupId, (int) $telegramUserId, true);
+                } catch (Throwable $e) {
+                    Log::warning('Failed to unban student from group before generating invite link', [
+                        'group_id' => $groupId,
+                        'user_id' => $user->getKey(),
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+
+                try {
+                    $response = $this->client->createChatInviteLink(
+                        chatId: $groupId,
+                        memberLimit: 1,
+                        expireDate: $expireDate,
+                        createsJoinRequest: true,
+                    );
+
+                    if ($response->successful()) {
+                        $groupInviteLink = $response->json('result.invite_link');
+                    } else {
+                        Log::error('Failed to create Telegram group invite link', [
+                            'group_id' => $groupId,
+                            'user_id' => $user->getKey(),
+                            'response' => $response->body(),
+                        ]);
+                    }
+                } catch (Throwable $e) {
+                    Log::error('Exception creating Telegram group invite link', [
+                        'group_id' => $groupId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        if (! $channelInviteLink && ! $groupInviteLink && ! $staticInvite) {
+            Log::error('No Telegram invite links could be generated for course', [
+                'course_id' => $course->getKey(),
+                'user_id' => $user->getKey(),
+            ]);
+
+            return false;
+        }
+
+        $courseTitle = htmlspecialchars((string) ($course->getTranslation('title', 'ar') ?: $course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $message = "🎉 مرحباً! تم تفعيل اشتراكك في مادة: <b>{$courseTitle}</b>\n\n";
+
+        $index = 1;
+
+        if ($channelInviteLink) {
+            $escapedChannel = htmlspecialchars((string) $channelInviteLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $message .= "📢 <b>{$index}. قناة المادة (المحاضرات والملفات والشروحات):</b>\n{$escapedChannel}\n\n";
+            $index++;
+        }
+
+        if ($groupInviteLink) {
+            $escapedGroup = htmlspecialchars((string) $groupInviteLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $message .= "💬 <b>{$index}. شات المادة (للنقاش والتواصل):</b>\n{$escapedGroup}\n\n";
+            $index++;
+        } elseif ($staticInvite) {
+            $escapedStatic = htmlspecialchars((string) $staticInvite, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $message .= "🔗 <b>{$index}. رابط الانضمام إلى المقرر:</b>\n{$escapedStatic}\n\n";
+            $index++;
+        }
+
+        $generalGroupLink = config('telegram.general_group_link', 'https://t.me/code_eraa');
+        $escapedGeneral = htmlspecialchars((string) $generalGroupLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $message .= "🌐 <b>{$index}. الرابط العام للمنصة:</b>\n{$escapedGeneral}\n\n";
+
+        $message .= '⚠️ تنبيه: روابط المادة مخصصة لك وصالحة لمدة 48 ساعة فقط. يرجى الانضمام الآن وعدم مشاركتها مع أحد.';
+
+        $sendResponse = $this->client->sendMessage((int) $telegramUserId, $message);
+
+        if (! $sendResponse->successful() || $sendResponse->json('ok') === false) {
+            Log::error('Telegram invite message delivery failed', [
+                'user_id' => $user->getKey(),
+                'telegram_user_id' => $telegramUserId,
+                'response' => $sendResponse->body(),
+            ]);
+
+            return false;
+        }
+
+        // Persist the issued invites only AFTER message was delivered successfully
+        if ($channelInviteLink) {
+            TelegramCourseInvite::create([
                 'user_id' => $user->getKey(),
                 'course_id' => $course->getKey(),
-                'response' => $response->body(),
+                'invite_link' => $channelInviteLink,
+                'expires_at' => now()->addHours(48),
             ]);
-
-            return false;
         }
 
-        $inviteLink = $response->json('result.invite_link');
-        if (! $inviteLink) {
-            Log::error('Telegram createChatInviteLink returned no invite_link', [
-                'response' => $response->json(),
+        if ($groupInviteLink) {
+            TelegramCourseInvite::create([
+                'user_id' => $user->getKey(),
+                'course_id' => $course->getKey(),
+                'invite_link' => $groupInviteLink,
+                'expires_at' => now()->addHours(48),
             ]);
-
-            return false;
         }
-
-        // Persist the issued invite so we can guard against duplicates
-        TelegramCourseInvite::create([
-            'user_id' => $user->getKey(),
-            'course_id' => $course->getKey(),
-            'invite_link' => $inviteLink,
-            'expires_at' => now()->addHours(48),
-        ]);
-
-        $courseTitle = $course->getTranslation('title', 'ar') ?: $course->slug;
-        $message = "🎉 مرحباً! تم تفعيل اشتراكك في مادة: <b>{$courseTitle}</b>\n\n"
-            ."انقر على الرابط التالي للانضمام إلى مجموعة التليجرام الخاصة بالمادة مباشرةً (رابط شخصي ولمرة واحدة فقط):\n"
-            ."{$inviteLink}\n\n"
-            .'⚠️ هذا الرابط صالح لمدة 48 ساعة ولشخص واحد فقط. لا تشاركه مع أحد.';
-
-        $this->client->sendMessage((int) $telegramUserId, $message);
 
         return true;
     }

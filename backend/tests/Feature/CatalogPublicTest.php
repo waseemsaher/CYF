@@ -167,6 +167,59 @@ it('filters the public catalog by academic year and department audience', functi
     $otherResponse->assertOk()->assertJsonCount(0, 'data');
 });
 
+it('includes is_general courses regardless of academic_year_id and department_id filters', function (): void {
+    $firstYear = AcademicYear::create([
+        'name' => ['ar' => 'السنة الأولى', 'en' => '1st Year'],
+        'sort_order' => 1,
+    ]);
+
+    $secondYear = AcademicYear::create([
+        'name' => ['ar' => 'السنة الثانية', 'en' => '2nd Year'],
+        'sort_order' => 2,
+    ]);
+
+    $cs = Department::create([
+        'code' => 'CS',
+        'name' => ['ar' => 'علوم الحاسب', 'en' => 'Computer Science'],
+        'sort_order' => 1,
+    ]);
+
+    $firstYearCourse = Course::create([
+        'slug' => 'first-year-course',
+        'title' => ['ar' => 'مادة الفرقة الأولى', 'en' => 'First Year Course'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'price_cents' => 10000,
+        'status' => 'published',
+        'is_general' => false,
+        'sort_order' => 1,
+    ]);
+    $firstYearCourse->audiences()->create([
+        'academic_year_id' => $firstYear->getKey(),
+        'department_id' => $cs->getKey(),
+    ]);
+
+    $generalCourse = Course::create([
+        'slug' => 'general-course',
+        'title' => ['ar' => 'كورس عام', 'en' => 'General Course'],
+        'description' => ['ar' => 'وصف عام', 'en' => 'General Desc'],
+        'price_cents' => 12000,
+        'status' => 'published',
+        'is_general' => true,
+        'sort_order' => 2,
+    ]);
+
+    // Student in First Year sees both first-year course and general course
+    $firstYearRes = $this->getJson('/api/v1/courses?academic_year_id='.$firstYear->getKey());
+    $firstYearRes->assertOk()->assertJsonCount(2, 'data');
+    $firstYearSlugs = collect($firstYearRes->json('data'))->pluck('slug')->all();
+    expect($firstYearSlugs)->toContain('first-year-course', 'general-course');
+
+    // Student in Second Year sees ONLY general course, not first-year course
+    $secondYearRes = $this->getJson('/api/v1/courses?academic_year_id='.$secondYear->getKey());
+    $secondYearRes->assertOk()->assertJsonCount(1, 'data');
+    expect($secondYearRes->json('data.0.slug'))->toBe('general-course');
+});
+
 it('returns calculated pricing for public course responses', function (): void {
     CarbonImmutable::setTestNow('2026-09-22 12:00:00');
 

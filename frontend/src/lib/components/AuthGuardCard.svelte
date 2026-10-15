@@ -28,8 +28,8 @@
     return role;
   }
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout(fetch);
     window.location.href = '/login';
   }
 </script>

@@ -29,6 +29,8 @@ class CreateCourseItem
         ?int $quizId = null,
         ?int $position = null,
         bool $isPublished = true,
+        ?int $telegramMessageId = null,
+        bool $isFree = false,
     ): CourseItem {
         $filePath = null;
 
@@ -115,6 +117,8 @@ class CreateCourseItem
             'quiz_id' => $quizId,
             'position' => $position,
             'is_published' => $isPublished,
+            'telegram_message_id' => $telegramMessageId,
+            'is_free' => $isFree,
         ]);
     }
 }

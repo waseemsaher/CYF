@@ -20,7 +20,7 @@ class StoreCourseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'slug' => ['required', 'string', 'max:255', Rule::unique('courses', 'slug')],
+            'slug' => ['required', 'string', 'max:255', Rule::unique('courses', 'slug')->whereNull('deleted_at')],
             'title' => ['required', 'array', 'required_array_keys:ar,en'],
             'title.ar' => ['required', 'string', 'max:255'],
             'title.en' => ['required', 'string', 'max:255'],
@@ -29,11 +29,13 @@ class StoreCourseRequest extends FormRequest
             'description.en' => ['required', 'string'],
             'cover_image_path' => ['nullable', 'string', 'max:255'],
             'price_cents' => ['required', 'integer', 'min:0'],
-            'telegram_channel_id' => ['nullable', 'integer'],
-            'telegram_group_id' => ['nullable', 'integer'],
-            'telegram_invite_link' => ['nullable', 'url', 'max:255'],
+            'telegram_channel_id' => ['nullable', 'string', 'max:255'],
+            'telegram_group_id' => ['nullable', 'string', 'max:255'],
+            'telegram_invite_link' => ['nullable', 'string', 'max:255'],
             'teacher_share_percent' => ['nullable', 'integer', 'between:0,100'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'status' => ['sometimes', 'string', Rule::in(['draft', 'published', 'archived'])],
+            'is_general' => ['sometimes', 'boolean'],
             'audiences' => ['sometimes', 'array'],
             'audiences.*.academic_year_id' => ['required', 'integer', 'exists:academic_years,id'],
             'audiences.*.department_id' => ['required', 'integer', 'exists:departments,id'],

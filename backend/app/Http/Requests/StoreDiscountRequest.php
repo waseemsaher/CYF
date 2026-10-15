@@ -39,3 +39,4 @@ class StoreDiscountRequest extends FormRequest
         ];
     }
 }
+

@@ -26,6 +26,10 @@ export async function unlinkTelegram(fetcher: typeof fetch = fetch): Promise<{ m
   return apiPost<{ message: string }>(fetcher, '/telegram/unlink', {});
 }
 
+export async function resendCourseInvite(courseId: number | string, fetcher: typeof fetch = fetch): Promise<{ message: string }> {
+  return apiPost<{ message: string }>(fetcher, `/telegram/courses/${courseId}/resend-invite`, {});
+}
+
 export async function watchLesson(itemId: number, fetcher: typeof fetch = fetch): Promise<{ url: string }> {
   const res = await apiGet<{ data: { url: string } }>(fetcher, `/lessons/${itemId}/watch`);
   return res.data;

@@ -5,6 +5,7 @@
     createAdminTeacher,
     assignTeacherToCourse,
     recordTeacherPayout,
+    deleteAdminUser,
     getAdminCourses,
     type AdminTeacher,
     type AdminCourse,
@@ -40,6 +41,39 @@
   let payoutNote = $state('');
   let payoutLoading = $state(false);
   let payoutError = $state('');
+
+  // Delete Teacher Modal
+  let isDeleteModalOpen = $state(false);
+  let selectedTeacherForDelete = $state<AdminTeacher | null>(null);
+  let deleteLoading = $state(false);
+  let deleteError = $state('');
+
+  function openDeleteModal(teacher: AdminTeacher) {
+    selectedTeacherForDelete = teacher;
+    deleteError = '';
+    isDeleteModalOpen = true;
+  }
+
+  function closeDeleteModal() {
+    isDeleteModalOpen = false;
+    selectedTeacherForDelete = null;
+    deleteError = '';
+  }
+
+  async function handleConfirmDelete() {
+    if (!selectedTeacherForDelete) return;
+    deleteLoading = true;
+    deleteError = '';
+    try {
+      await deleteAdminUser(fetch, selectedTeacherForDelete.id);
+      teachers = teachers.filter((t) => t.id !== selectedTeacherForDelete!.id);
+      closeDeleteModal();
+    } catch (err: any) {
+      deleteError = err?.message || 'تعذر حذف المحاضر.';
+    } finally {
+      deleteLoading = false;
+    }
+  }
 
   export async function loadTeachers() {
     loading = true;
@@ -303,6 +337,15 @@
                   >
                     تسجيل دفعة
                   </button>
+                  <button
+                    type="button"
+                    class="btn-action btn-delete-teacher"
+                    onclick={() => openDeleteModal(teacher)}
+                    title="حذف هذا المحاضر"
+                    data-testid={`btn-delete-${teacher.id}`}
+                  >
+                    حذف
+                  </button>
                 </div>
               </td>
             </tr>
@@ -525,6 +568,56 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+{/if}
+
+<!-- Modal: Delete Teacher Confirmation -->
+{#if isDeleteModalOpen && selectedTeacherForDelete}
+  <div class="modal-backdrop" onclick={closeDeleteModal} role="presentation">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div
+      class="modal-card modal-card-danger"
+      onclick={(e) => e.stopPropagation()}
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      dir="rtl"
+    >
+      <div class="modal-header">
+        <h3 style="color: #ef4444;">تأكيد حذف حساب المحاضر</h3>
+        <button type="button" class="btn-close" onclick={closeDeleteModal} aria-label="إغلاق">&times;</button>
+      </div>
+
+      {#if deleteError}
+        <div class="modal-error-banner" role="alert">
+          <p>{deleteError}</p>
+        </div>
+      {/if}
+
+      <div class="delete-teacher-body">
+        <p>هل أنت متأكد من رغبتك في حذف حساب هذا المحاضر نهائياً؟</p>
+        <div class="danger-box">
+          <div><strong>الاسم:</strong> {selectedTeacherForDelete.name}</div>
+          <div><strong>البريد الإلكتروني:</strong> <span dir="ltr">{selectedTeacherForDelete.email}</span></div>
+          <div><strong>المقررات المعينة:</strong> {selectedTeacherForDelete.courses?.length || 0} مقرر</div>
+        </div>
+        <p class="warning-text">
+          ⚠️ سيتم فك تعيين المحاضر من المقررات المرتبطة به ومسح حسابه، ولن يتم حذف المقررات نفسها.
+        </p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick={closeDeleteModal} disabled={deleteLoading}>إلغاء</button>
+        <button
+          type="button"
+          class="btn-danger-confirm"
+          onclick={handleConfirmDelete}
+          disabled={deleteLoading}
+        >
+          {deleteLoading ? 'جاري الحذف...' : 'تأكيد الحذف نهائياً'}
+        </button>
+      </div>
     </div>
   </div>
 {/if}
@@ -976,5 +1069,71 @@
 
   .btn-submit:not(:disabled):hover {
     background: #4ef4ff;
+  }
+
+  .btn-delete-teacher {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.35);
+  }
+
+  .btn-delete-teacher:hover {
+    background: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.6);
+  }
+
+  .modal-card-danger {
+    border-color: rgba(239, 68, 68, 0.5) !important;
+  }
+
+  .delete-teacher-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+  }
+
+  .danger-box {
+    background: rgba(20, 56, 64, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.825rem;
+  }
+
+  .warning-text {
+    background: rgba(239, 68, 68, 0.12);
+    border-right: 3px solid #ef4444;
+    padding: 0.625rem 0.875rem;
+    border-radius: 4px;
+    color: #fca5a5;
+    font-size: 0.8125rem;
+    margin: 0;
+  }
+
+  .btn-danger-confirm {
+    background: #dc2626;
+    border: none;
+    color: #fff;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-danger-confirm:hover:not(:disabled) {
+    background: #b91c1c;
+  }
+
+  .btn-danger-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 </style>

@@ -98,8 +98,10 @@ class AdminLearningController extends Controller
             'url' => ['nullable', 'url', 'max:2048'],
             'file' => ['nullable', 'file', "max:{$maxSizeKb}"],
             'quiz_id' => ['nullable', 'exists:quizzes,id'],
+            'telegram_message_id' => ['nullable', 'integer', 'min:1'],
             'position' => ['nullable', 'integer'],
             'is_published' => ['nullable', 'boolean'],
+            'is_free' => ['nullable', 'boolean'],
         ]);
 
         /** @var Course $course */
@@ -120,7 +122,9 @@ class AdminLearningController extends Controller
             $request->file('file'),
             $request->input('quiz_id') ? (int) $request->input('quiz_id') : null,
             $request->input('position') ? (int) $request->input('position') : null,
-            $request->boolean('is_published', true)
+            $request->boolean('is_published', true),
+            $request->input('telegram_message_id') ? (int) $request->input('telegram_message_id') : null,
+            $request->boolean('is_free', false),
         );
 
         return response()->json(['data' => $item], 201);
@@ -140,6 +144,7 @@ class AdminLearningController extends Controller
             'telegram_message_id' => ['nullable', 'integer', 'min:1'],
             'position' => ['nullable', 'integer'],
             'is_published' => ['nullable', 'boolean'],
+            'is_free' => ['nullable', 'boolean'],
         ]);
 
         if ($request->has('title')) {
@@ -159,6 +164,9 @@ class AdminLearningController extends Controller
         }
         if ($request->has('is_published')) {
             $item->is_published = $request->boolean('is_published');
+        }
+        if ($request->has('is_free')) {
+            $item->is_free = $request->boolean('is_free');
         }
 
         $item->save();

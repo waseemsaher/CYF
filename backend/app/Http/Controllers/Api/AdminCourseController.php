@@ -92,6 +92,7 @@ class AdminCourseController extends Controller
             'cover_image_path' => $course->getAttribute('cover_image_path'),
             'price_cents' => (int) $course->getAttribute('price_cents'),
             'status' => $course->getAttribute('status'),
+            'is_general' => (bool) $course->getAttribute('is_general'),
             'telegram_channel_id' => $course->getAttribute('telegram_channel_id'),
             'telegram_group_id' => $course->getAttribute('telegram_group_id'),
             'telegram_invite_link' => $course->getAttribute('telegram_invite_link'),

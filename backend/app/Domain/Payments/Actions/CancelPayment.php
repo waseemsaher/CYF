@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Payments\Actions;
 
+use App\Models\CouponRedemption;
 use App\Models\Payment;
 use App\Models\User;
+use DomainException;
 use Illuminate\Support\Facades\DB;
 
 class CancelPayment
@@ -19,12 +21,16 @@ class CancelPayment
                 ->findOrFail($payment->getKey());
 
             if (! $locked->isPending()) {
-                throw new \DomainException("Only pending payments can be cancelled. Current status: {$locked->getAttribute('status')}");
+                throw new DomainException("Only pending payments can be cancelled. Current status: {$locked->getAttribute('status')}");
             }
 
             $locked->update([
                 'status' => 'cancelled',
             ]);
+
+            if ($locked->getAttribute('coupon_id') !== null) {
+                CouponRedemption::where('payment_id', $locked->getKey())->delete();
+            }
 
             activity('payment')
                 ->performedOn($locked)

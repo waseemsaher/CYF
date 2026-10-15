@@ -1,0 +1,13 @@
+backend/
+frontend/build/
+frontend/.svelte-kit/
+.git/
+.github/
+.agents/
+.claude/
+.gemini/
+node_modules/
+*.pem
+.env*
+*.log
+

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Payments\Actions\CancelPayment;
 use App\Domain\Payments\Actions\SubmitPayment;
 use App\Models\Course;
 use App\Models\Enrollment;
@@ -9,8 +10,10 @@ use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;
+use App\Jobs\SendCourseInviteLinkJob;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Permission;
@@ -121,6 +124,35 @@ it('rejects a second pending payment for the same course/term', function (): voi
         ->assertJsonValidationErrors(['course_id']);
 });
 
+it('rejects submitting payment when student already has an active enrollment', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    Enrollment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'source' => 'admin_grant',
+        'status' => 'active',
+        'starts_at' => now(),
+        'expires_at' => now()->addMonths(3),
+    ]);
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+            'method' => 'vodafone_cash',
+            'sender_identifier' => '01012345678',
+            'proof' => $proof,
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['course_id']);
+});
+
 it('creates instant enrollment for free courses', function (): void {
     Storage::fake('local');
     $data = setupPaymentTestData();
@@ -148,6 +180,36 @@ it('creates instant enrollment for free courses', function (): void {
         'course_id' => $data['course']->getKey(),
         'source' => 'free',
     ]);
+});
+
+it('dispatches Telegram invite link job when enrolling in a free course with linked telegram', function (): void {
+    Queue::fake();
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $data['student']->update(['telegram_user_id' => 777888999]);
+    $data['course']->update([
+        'price_cents' => 0,
+        'telegram_invite_link' => 'https://t.me/+freecourseinvite',
+    ]);
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+            'method' => 'vodafone_cash',
+            'sender_identifier' => '01012345678',
+            'proof' => $proof,
+        ]);
+
+    $response->assertCreated();
+
+    Queue::assertPushed(SendCourseInviteLinkJob::class, function (SendCourseInviteLinkJob $job) use ($data): bool {
+        return $job->user->getKey() === $data['student']->getKey()
+            && $job->course->getKey() === $data['course']->getKey();
+    });
 });
 
 it('lists only the students own payments', function (): void {
@@ -237,6 +299,56 @@ it('allows a student to cancel their own pending payment', function (): void {
         ->assertJsonPath('data.status', 'cancelled');
 });
 
+it('throws DomainException when attempting to cancel non-pending payment in CancelPayment action', function (): void {
+    $data = setupPaymentTestData();
+
+    $payment = Payment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'method' => 'vodafone_cash',
+        'list_price_cents' => 30000,
+        'discount_cents' => 0,
+        'amount_due_cents' => 30000,
+        'sender_identifier' => '01012345678',
+        'proof_path' => 'proofs/test.jpg',
+        'proof_hash' => hash('sha256', 'cancel_race_test'),
+        'status' => 'approved',
+    ]);
+
+    $action = app(CancelPayment::class);
+
+    expect(fn () => $action->handle($payment, $data['student']))
+        ->toThrow(DomainException::class, 'Only pending payments can be cancelled. Current status: approved');
+});
+
+it('returns 422 when CancelPayment throws DomainException during cancel request', function (): void {
+    $data = setupPaymentTestData();
+
+    $payment = Payment::create([
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'term_id' => $data['term']->getKey(),
+        'method' => 'vodafone_cash',
+        'list_price_cents' => 30000,
+        'discount_cents' => 0,
+        'amount_due_cents' => 30000,
+        'sender_identifier' => '01012345678',
+        'proof_path' => 'proofs/test.jpg',
+        'proof_hash' => hash('sha256', 'cancel_race_test_2'),
+        'status' => 'pending',
+    ]);
+
+    $mock = Mockery::mock(CancelPayment::class);
+    $mock->shouldReceive('handle')->andThrow(new DomainException('Only pending payments can be cancelled. Current status: approved'));
+    $this->app->instance(CancelPayment::class, $mock);
+
+    $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments/'.$payment->getKey().'/cancel')
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Only pending payments can be cancelled. Current status: approved');
+});
+
 it('returns 422 when student cancels a payment that was approved concurrently', function (): void {
     $data = setupPaymentTestData();
 
@@ -320,6 +432,32 @@ it('cleans up stored proof file if payment creation fails', function (): void {
     expect(Storage::disk('local')->allFiles('proofs'))->toBeEmpty();
 });
 
+it('deletes stored proof file when payment creation fails to prevent orphan files via http', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    Payment::saving(function () {
+        throw new RuntimeException('Database failure on saving payment');
+    });
+
+    try {
+        $this->actingAs($data['student'], 'sanctum')
+            ->postJson('/api/v1/payments', [
+                'course_id' => $data['course']->getKey(),
+                'term_id' => $data['term']->getKey(),
+                'method' => 'vodafone_cash',
+                'sender_identifier' => '01012345678',
+                'proof' => $proof,
+            ]);
+    } catch (RuntimeException $e) {
+        // Expected
+    }
+
+    expect(Storage::disk('local')->allFiles('proofs'))->toBeEmpty();
+});
+
 it('serializes concurrent duplicate payment submissions and prevents two pending payments', function (): void {
     Storage::fake('local');
     $data = setupPaymentTestData();
@@ -343,7 +481,7 @@ it('serializes concurrent duplicate payment submissions and prevents two pending
     expect(Payment::query()->where('user_id', $data['student']->getKey())->count())->toBe(1);
 });
 
-it('rejects payment submission for an academic term that has already ended', function (): void {
+it('rejects payment submission for a term that has already ended', function (): void {
     Storage::fake('local');
     $data = setupPaymentTestData();
 
@@ -352,7 +490,7 @@ it('rejects payment submission for an academic term that has already ended', fun
         'starts_at' => now()->subMonths(6),
         'ends_at' => now()->subDays(5),
         'is_current' => false,
-        'sort_order' => 2,
+        'sort_order' => 99,
     ]);
 
     $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
@@ -370,7 +508,7 @@ it('rejects payment submission for an academic term that has already ended', fun
         ->assertJsonValidationErrors(['term_id']);
 });
 
-it('rejects payment submission with an invalid or unconfigured payment method', function (): void {
+it('rejects payment submission with an invalid payment method', function (): void {
     Storage::fake('local');
     $data = setupPaymentTestData();
 
@@ -386,5 +524,93 @@ it('rejects payment submission with an invalid or unconfigured payment method', 
         ]);
 
     $response->assertUnprocessable()
-        ->assertJsonValidationErrors(['method']);
+        ->assertJsonValidationErrors(['method'])
+        ->assertJsonPath('errors.method.0', 'طريقة الدفع المختارة غير صالحة.');
+});
+
+it('rejects payment submission when sender_identifier is not exactly 11 digits', function (string $invalidSender): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+            'method' => 'vodafone_cash',
+            'sender_identifier' => $invalidSender,
+            'proof' => $proof,
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['sender_identifier'])
+        ->assertJsonPath('errors.sender_identifier.0', 'رقم المرسل يجب أن يتكون من 11 رقمًا فقط.');
+})->with([
+    'too short' => '010123456',
+    'too long' => '010123456789',
+    'non-digits' => 'user@instapay',
+    'alphanumeric' => '0101234567a',
+]);
+
+it('normalizes Arabic-Indic digits in sender_identifier to 11 western digits', function (): void {
+    Storage::fake('local');
+    $data = setupPaymentTestData();
+
+    $proof = UploadedFile::fake()->image('receipt.jpg', 800, 600);
+
+    $response = $this->actingAs($data['student'], 'sanctum')
+        ->postJson('/api/v1/payments', [
+            'course_id' => $data['course']->getKey(),
+            'term_id' => $data['term']->getKey(),
+            'method' => 'vodafone_cash',
+            'sender_identifier' => '٠١٠١٢٣٤٥٦٧٨',
+            'proof' => $proof,
+        ]);
+
+    $response->assertCreated();
+    $this->assertDatabaseHas('payments', [
+        'user_id' => $data['student']->getKey(),
+        'course_id' => $data['course']->getKey(),
+        'sender_identifier' => '01012345678',
+    ]);
+});
+
+it('returns active payment methods and recipient numbers publicly', function (): void {
+    Setting::setValue('payments', 'methods', [
+        [
+            'key' => 'vodafone_cash',
+            'label' => ['ar' => 'فودافون كاش', 'en' => 'Vodafone Cash'],
+            'type' => 'ewallet',
+            'number' => '01009971545',
+            'instructions' => [
+                'ar' => 'حوّل المبلغ على رقم فودافون كاش الموضح.',
+                'en' => 'Transfer the amount to the Vodafone Cash number shown.',
+            ],
+            'is_active' => true,
+        ],
+        [
+            'key' => 'instapay',
+            'label' => ['ar' => 'إنستاباي', 'en' => 'InstaPay'],
+            'type' => 'instapay',
+            'number' => '01009971545',
+            'instructions' => [
+                'ar' => 'حوّل عبر إنستاباي إلى الرقم الموضح.',
+                'en' => 'Transfer via InstaPay to the number shown.',
+            ],
+            'is_active' => false,
+        ],
+    ]);
+
+    $response = $this->getJson('/api/v1/reference/payment-methods');
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.key', 'vodafone_cash')
+        ->assertJsonPath('data.0.number', '01009971545');
+
+    $aliasResponse = $this->getJson('/api/v1/payment-methods');
+    $aliasResponse->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.number', '01009971545');
 });
