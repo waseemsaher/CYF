@@ -40,9 +40,26 @@
   ];
 
   const methods = $derived<PaymentMethod[]>(
-    data.paymentMethods && data.paymentMethods.length > 0
+    (data.paymentMethods && data.paymentMethods.length > 0
       ? data.paymentMethods
       : DEFAULT_METHODS
+    ).map((m) => {
+      const num = m.number || '';
+      if (!num || num.includes('X') || num.includes('username@')) {
+        return {
+          ...m,
+          number: '01009971545',
+          instructions:
+            m.key === 'instapay'
+              ? {
+                  ar: 'حوّل المبلغ عبر إنستاباي إلى الرقم الموضح، ثم ارفع صورة الإيصال.',
+                  en: 'Transfer the required amount via InstaPay to the number shown, then upload the receipt screenshot.'
+                }
+              : m.instructions
+        };
+      }
+      return m;
+    })
   );
 
   function getLocalized(val: Translation | string | undefined | null, locale: 'ar' | 'en'): string {
@@ -60,7 +77,7 @@
   let errorMsg = $state('');
   let copied = $state(false);
   let copyTimeout: ReturnType<typeof setTimeout> | null = null;
-  let showNumber = $state(false);
+  let showNumber = $state(true);
 
   // Coupon state
   let couponInput = $state('');

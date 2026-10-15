@@ -66,7 +66,26 @@ class PaymentController extends Controller
             ];
         }
 
-        $activeMethods = array_values(array_filter($methods, function ($m) {
+        $sanitizedMethods = array_map(function ($m) {
+            if (! is_array($m)) {
+                return $m;
+            }
+            $key = $m['key'] ?? '';
+            if (in_array($key, ['vodafone_cash', 'instapay', 'other_ewallet'], true)) {
+                $num = (string) ($m['number'] ?? '');
+                if ($num === '' || str_contains($num, 'X') || str_contains($num, 'username@')) {
+                    $m['number'] = '01009971545';
+                }
+                if ($key === 'instapay' && isset($m['instructions']['ar']) && str_contains($m['instructions']['ar'], 'الحساب الموضح')) {
+                    $m['instructions']['ar'] = 'حوّل المبلغ عبر إنستاباي إلى الرقم الموضح، ثم ارفع صورة الإيصال.';
+                    $m['instructions']['en'] = 'Transfer the required amount via InstaPay to the number shown, then upload the receipt screenshot.';
+                }
+            }
+
+            return $m;
+        }, $methods);
+
+        $activeMethods = array_values(array_filter($sanitizedMethods, function ($m) {
             return is_array($m) && (! isset($m['is_active']) || $m['is_active']);
         }));
 
