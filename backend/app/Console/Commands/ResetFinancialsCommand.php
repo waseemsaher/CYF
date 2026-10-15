@@ -93,4 +93,3 @@ class ResetFinancialsCommand extends Command
         return self::SUCCESS;
     }
 }
-
