@@ -11,7 +11,23 @@
 
   let { children }: { children: Snippet } = $props();
 
-  let isDark = $state(false);
+  function getInitialTheme(): boolean {
+    if (typeof document !== 'undefined') {
+      const savedTheme = localStorage.getItem('codeera_theme') ||
+                          localStorage.getItem('coderaa_theme') ||
+                          localStorage.getItem('fcai_theme');
+      if (savedTheme) {
+        return savedTheme === 'dark';
+      }
+      const docTheme = document.documentElement.getAttribute('data-theme');
+      if (docTheme) {
+        return docTheme === 'dark';
+      }
+    }
+    return true;
+  }
+
+  let isDark = $state(getInitialTheme());
   let mobileMenuOpen = $state(false);
   let webManifestLink = $derived(pwaInfo ? pwaInfo.webManifest.linkTag : '');
 
@@ -111,12 +127,7 @@
       }
     }
     if (typeof document !== 'undefined') {
-      const activeTheme = document.documentElement.getAttribute('data-theme') ||
-                          localStorage.getItem('codeera_theme') ||
-                          localStorage.getItem('coderaa_theme') ||
-                          localStorage.getItem('fcai_theme') ||
-                          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      isDark = activeTheme === 'dark';
+      isDark = getInitialTheme();
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
       document.documentElement.classList.toggle('dark', isDark);
     }

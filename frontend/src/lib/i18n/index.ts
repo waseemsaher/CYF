@@ -915,13 +915,11 @@ function getInitialLocale(): Locale {
     if (saved === 'en' || saved === 'ar') {
       return saved;
     }
-    const htmlLang = document.documentElement.getAttribute('lang');
-    if (htmlLang === 'en') return 'en';
   }
   return 'ar';
 }
 
-export const currentLocale = writable<Locale>('ar');
+export const currentLocale = writable<Locale>(typeof document !== 'undefined' ? getInitialLocale() : 'ar');
 
 export function initLocale(): void {
   if (typeof document !== 'undefined') {
