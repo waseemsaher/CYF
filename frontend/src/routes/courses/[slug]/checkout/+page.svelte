@@ -77,7 +77,7 @@
   let errorMsg = $state('');
   let copied = $state(false);
   let copyTimeout: ReturnType<typeof setTimeout> | null = null;
-  let showNumber = $state(true);
+  let showNumber = $state(false);
 
   // Coupon state
   let couponInput = $state('');
