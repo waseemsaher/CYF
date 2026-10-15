@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 use App\Domain\Payments\Actions\CancelPayment;
 use App\Domain\Payments\Actions\SubmitPayment;
+use App\Jobs\SendCourseInviteLinkJob;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\Term;
 use App\Models\User;
-use App\Jobs\SendCourseInviteLinkJob;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
