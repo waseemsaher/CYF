@@ -126,9 +126,9 @@ class DatabaseBackupCommand extends Command
                     $rows = DB::table($tableName)->get();
                     foreach ($rows as $row) {
                         $rowArray = (array) $row;
-                        $cols = implode(', ', array_map(fn ($c) => "\"{$c}\"", array_keys($rowArray)));
-                        $vals = implode(', ', array_map(fn ($v) => $v === null ? 'NULL' : "'".str_replace("'", "''", (string) $v)."'", array_values($rowArray)));
-                        $sql .= "INSERT INTO \"{$tableName}\" ({$cols}) VALUES ({$vals});\n";
+                        $cols = implode(', ', array_keys($rowArray));
+                        $vals = implode(', ', array_map(fn ($v) => $v === null ? 'NULL' : "'".addslashes((string) $v)."'", array_values($rowArray)));
+                        $sql .= "INSERT INTO {$tableName} ({$cols}) VALUES ({$vals});\n";
                     }
                 }
             }
