@@ -229,4 +229,39 @@ export function deleteAdminDiscount(fetcher: typeof fetch = fetch, discountId: n
   return apiDelete(fetcher, `/admin/discounts/${discountId}`);
 }
 
+export type AdminActivityLogItem = {
+  id: number;
+  description: string;
+  log_name: string;
+  causer_name: string;
+  created_at: string;
+  subject_type: string | null;
+  subject_id: number | null;
+};
+
+export type AdminActivityLogFilters = {
+  log_name?: string;
+  causer_id?: number | string;
+  date_from?: string;
+  date_to?: string;
+};
+
+export function getAdminActivityLogs(
+  fetcher: typeof fetch = fetch,
+  page = 1,
+  filters: AdminActivityLogFilters = {}
+) {
+  const query = new URLSearchParams();
+  query.set('page', String(page));
+  if (filters.log_name) query.set('log_name', filters.log_name);
+  if (filters.causer_id) query.set('causer_id', String(filters.causer_id));
+  if (filters.date_from) query.set('date_from', filters.date_from);
+  if (filters.date_to) query.set('date_to', filters.date_to);
+
+  return apiGet<{
+    data: AdminActivityLogItem[];
+    meta: { current_page: number; last_page: number; total: number; per_page: number };
+  }>(fetcher, `/admin/activity-logs?${query.toString()}`);
+}
+
 
