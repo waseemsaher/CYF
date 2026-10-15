@@ -19,6 +19,11 @@ class DiscountPolicy
         return $this->manage($user);
     }
 
+    public function create(User $user): bool
+    {
+        return $this->manage($user);
+    }
+
     public function update(User $user, Discount $discount): bool
     {
         return $this->manage($user);

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\AdminCourseController;
+use App\Http\Controllers\Api\AdminDiscountController;
 use App\Http\Controllers\Api\AdminEnrollmentController;
 use App\Http\Controllers\Api\AdminLearningController;
 use App\Http\Controllers\Api\AdminOverviewController;
@@ -101,6 +102,12 @@ Route::prefix('v1')->group(function (): void {
             Route::put('/courses/{course}', [AdminCourseController::class, 'update']);
             Route::delete('/courses/{course}', [AdminCourseController::class, 'destroy']);
             Route::post('/courses/{course}/telegram/test', [AdminCourseController::class, 'testTelegramConnection']);
+
+            // Discount management
+            Route::get('/discounts', [AdminDiscountController::class, 'index']);
+            Route::post('/discounts', [AdminDiscountController::class, 'store']);
+            Route::put('/discounts/{discount}', [AdminDiscountController::class, 'update']);
+            Route::delete('/discounts/{discount}', [AdminDiscountController::class, 'destroy']);
 
             // Learning content management
             Route::post('/courses/{course}/sections', [AdminLearningController::class, 'storeSection']);
