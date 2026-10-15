@@ -1,9 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { getContentBlock } from '$lib/api/admin';
   import { currentLocale } from '$lib/i18n';
 
-  const fallbackAr = `نحن في Codeera نحرص على حماية بياناتك الشخصية. تشرح هذه السياسة ما البيانات التي نجمعها ولماذا وكيف نستخدمها.
+  const contentAr = `نحن في Codeera نحرص على حماية بياناتك الشخصية. تشرح هذه السياسة ما البيانات التي نجمعها ولماذا وكيف نستخدمها.
 
 1. البيانات التي نجمعها
 عند التسجيل: الاسم، البريد الإلكتروني، كلمة المرور (مخزّنة بشكل مشفّر)، الفرع الدراسي (بنين/بنات)، الفرقة الدراسية، القسم، واختيارياً: اسم مستخدم تليجرام ورقم الهاتف. عند ربط حساب تليجرام: معرّف حسابك على تليجرام (Telegram User ID) واسم المستخدم العام إن وُجد. عند الاشتراك: صورة إيصال الدفع التي ترفعها واسم/رقم المحوّل. لا نطلب منك أبداً أرقام بطاقاتك البنكية الكاملة أو بيانات دفع مباشرة بطاقاتك ائتمانية.
@@ -33,7 +31,7 @@
 7. التواصل
 لأي استفسار أو طلب يخص بياناتك، تواصل معنا عبر info@codeera.tech.`;
 
-  const fallbackEn = `We at Codeera are committed to protecting your personal data. This policy explains what information we collect, why, and how we use it.
+  const contentEn = `We at Codeera are committed to protecting your personal data. This policy explains what information we collect, why, and how we use it.
 
 1. Information we collect
 At registration: name, email, password (stored hashed), branch (boys/girls), academic year, department, and optionally: Telegram username and phone number. When you link your Telegram account: your Telegram user ID and public Telegram username, if set. When you enroll: the payment proof screenshot you upload and the sender name/number. We never ask for full bank card numbers or direct bank credentials.
@@ -64,28 +62,7 @@ You have the right to view and update your profile data at any time. You can req
 For any question or request regarding your data, contact us at info@codeera.tech.`;
 
   let selectedLang: 'ar' | 'en' | null = $state(null);
-  let contentAr: string = $state('');
-  let contentEn: string = $state('');
-  let loading = $state(true);
-
   let activeLang = $derived(selectedLang ?? $currentLocale);
-
-  async function loadBlock() {
-    try {
-      const res = await getContentBlock(fetch, 'legal.privacy');
-      contentAr = res.data.content?.ar || fallbackAr;
-      contentEn = res.data.content?.en || fallbackEn;
-    } catch {
-      contentAr = fallbackAr;
-      contentEn = fallbackEn;
-    } finally {
-      loading = false;
-    }
-  }
-
-  onMount(() => {
-    loadBlock();
-  });
 </script>
 
 <svelte:head>
@@ -121,16 +98,9 @@ For any question or request regarding your data, contact us at info@codeera.tech
       </div>
     </div>
 
-    {#if loading}
-      <div class="loading-skeleton">
-        <div class="skeleton-line wide"></div>
-        <div class="skeleton-block"></div>
-      </div>
-    {:else}
-      <article class="legal-content">
-        {activeLang === 'en' ? (contentEn || fallbackEn) : (contentAr || fallbackAr)}
-      </article>
-    {/if}
+    <article class="legal-content">
+      {activeLang === 'en' ? contentEn : contentAr}
+    </article>
   </div>
 </div>
 
@@ -204,38 +174,6 @@ For any question or request regarding your data, contact us at info@codeera.tech
   .lang-pill.active {
     background: var(--storm);
     color: var(--paper);
-  }
-
-  .loading-skeleton {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .skeleton-line {
-    height: 1.5rem;
-    background: var(--line);
-    border-radius: 0.35rem;
-    opacity: 0.3;
-    animation: pulse-skeleton 1.2s ease-in-out infinite;
-  }
-
-  .skeleton-line.wide {
-    width: 75%;
-  }
-
-  .skeleton-block {
-    height: 5rem;
-    background: var(--line);
-    border-radius: 0.5rem;
-    opacity: 0.2;
-    animation: pulse-skeleton 1.2s ease-in-out infinite;
-    animation-delay: 0.2s;
-  }
-
-  @keyframes pulse-skeleton {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.35; }
   }
 
   .legal-content {

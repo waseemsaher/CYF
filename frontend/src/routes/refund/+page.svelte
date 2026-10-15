@@ -1,9 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { getContentBlock } from '$lib/api/admin';
   import { currentLocale } from '$lib/i18n';
 
-  const fallbackAr = `نظراً لطبيعة الدفع اليدوي عبر محفظة إلكترونية، لا يوجد حالياً نظام استرداد فوري/أوتوماتيكي من داخل حسابك. كل طلب استرداد يُدرس يدوياً من فريق الإدارة.
+  const contentAr = `نظراً لطبيعة الدفع اليدوي عبر محفظة إلكترونية، لا يوجد حالياً نظام استرداد فوري/أوتوماتيكي من داخل حسابك. كل طلب استرداد يُدرس يدوياً من فريق الإدارة.
 
 1. الحالات التي يُقبل فيها الاسترداد
 • دفعت مبلغًا بالخطأ (مثل تكرار الدفع لنفس المادة مرتين).
@@ -28,7 +26,7 @@
 6. التواصل
 أي استفسار حول استرداد مبلغ، تواصل معنا عبر info@codeera.tech.`;
 
-  const fallbackEn = `Given that payments are processed manually via e-wallet transfer, there is currently no automated self-service refund button in your account. Every refund request is manually reviewed by the administration team.
+  const contentEn = `Given that payments are processed manually via e-wallet transfer, there is currently no automated self-service refund button in your account. Every refund request is manually reviewed by the administration team.
 
 1. Cases where a refund may be granted
 • You paid by mistake (e.g., paying twice for the same course).
@@ -54,28 +52,7 @@ This policy does not apply to free courses, and it does not cover limited-time p
 For any question about a refund, contact us at info@codeera.tech.`;
 
   let selectedLang: 'ar' | 'en' | null = $state(null);
-  let contentAr: string = $state('');
-  let contentEn: string = $state('');
-  let loading = $state(true);
-
   let activeLang = $derived(selectedLang ?? $currentLocale);
-
-  async function loadBlock() {
-    try {
-      const res = await getContentBlock(fetch, 'legal.refund');
-      contentAr = res.data.content?.ar || fallbackAr;
-      contentEn = res.data.content?.en || fallbackEn;
-    } catch {
-      contentAr = fallbackAr;
-      contentEn = fallbackEn;
-    } finally {
-      loading = false;
-    }
-  }
-
-  onMount(() => {
-    loadBlock();
-  });
 </script>
 
 <svelte:head>
@@ -111,16 +88,9 @@ For any question about a refund, contact us at info@codeera.tech.`;
       </div>
     </div>
 
-    {#if loading}
-      <div class="loading-skeleton">
-        <div class="skeleton-line wide"></div>
-        <div class="skeleton-block"></div>
-      </div>
-    {:else}
-      <article class="legal-content">
-        {activeLang === 'en' ? (contentEn || fallbackEn) : (contentAr || fallbackAr)}
-      </article>
-    {/if}
+    <article class="legal-content">
+      {activeLang === 'en' ? contentEn : contentAr}
+    </article>
   </div>
 </div>
 
@@ -194,38 +164,6 @@ For any question about a refund, contact us at info@codeera.tech.`;
   .lang-pill.active {
     background: var(--storm);
     color: var(--paper);
-  }
-
-  .loading-skeleton {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .skeleton-line {
-    height: 1.5rem;
-    background: var(--line);
-    border-radius: 0.35rem;
-    opacity: 0.3;
-    animation: pulse-skeleton 1.2s ease-in-out infinite;
-  }
-
-  .skeleton-line.wide {
-    width: 75%;
-  }
-
-  .skeleton-block {
-    height: 5rem;
-    background: var(--line);
-    border-radius: 0.5rem;
-    opacity: 0.2;
-    animation: pulse-skeleton 1.2s ease-in-out infinite;
-    animation-delay: 0.2s;
-  }
-
-  @keyframes pulse-skeleton {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.35; }
   }
 
   .legal-content {

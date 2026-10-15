@@ -1,9 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { getContentBlock } from '$lib/api/admin';
   import { currentLocale } from '$lib/i18n';
 
-  const fallbackAr = `باستخدامك منصة Codeera (codeera.tech) فإنك توافق على الشروط التالية. يُرجى قراءتها بعناية قبل التسجيل أو الاشتراك في أي مادة.
+  const contentAr = `باستخدامك منصة Codeera (codeera.tech) فإنك توافق على الشروط التالية. يُرجى قراءتها بعناية قبل التسجيل أو الاشتراك في أي مادة.
 
 1. عن المنصة
 Codeera منصة تعليمية إلكترونية موجهة لطلاب كلية الحاسبات والذكاء الاصطناعي (FCAI) بجامعة الأزهر، وتقدم محتوى دراسي عبر مجموعات وقنوات تليجرام مغلقة، مرتبطة بحساب الطالب على المنصة.
@@ -38,7 +36,7 @@ Codeera منصة تعليمية إلكترونية موجهة لطلاب كلي�
 8. القانون الحاكم والتواصل
 تخضع هذه الشروط لقوانين جمهورية مصر العربية. لأي استفسار، تواصل معنا عبر info@codeera.tech.`;
 
-  const fallbackEn = `By using the Codeera platform (codeera.tech) you agree to the following terms. Please read them carefully before registering or enrolling in any course.
+  const contentEn = `By using the Codeera platform (codeera.tech) you agree to the following terms. Please read them carefully before registering or enrolling in any course.
 
 1. About the platform
 Codeera is an e-learning platform for Faculty of Computers and Artificial Intelligence (FCAI) students at Al-Azhar University, offering structured courses delivered through closed Telegram groups linked to your account on the platform.
@@ -74,28 +72,7 @@ These terms may be updated from time to time. Any change will be published on th
 These terms are governed by the laws of the Arab Republic of Egypt. For any inquiry, contact info@codeera.tech.`;
 
   let selectedLang: 'ar' | 'en' | null = $state(null);
-  let contentAr: string = $state('');
-  let contentEn: string = $state('');
-  let loading = $state(true);
-
   let activeLang = $derived(selectedLang ?? $currentLocale);
-
-  async function loadBlock() {
-    try {
-      const res = await getContentBlock(fetch, 'legal.terms');
-      contentAr = res.data.content?.ar || fallbackAr;
-      contentEn = res.data.content?.en || fallbackEn;
-    } catch {
-      contentAr = fallbackAr;
-      contentEn = fallbackEn;
-    } finally {
-      loading = false;
-    }
-  }
-
-  onMount(() => {
-    loadBlock();
-  });
 </script>
 
 <svelte:head>
@@ -131,16 +108,9 @@ These terms are governed by the laws of the Arab Republic of Egypt. For any inqu
       </div>
     </div>
 
-    {#if loading}
-      <div class="loading-skeleton">
-        <div class="skeleton-line wide"></div>
-        <div class="skeleton-block"></div>
-      </div>
-    {:else}
-      <article class="legal-content">
-        {activeLang === 'en' ? (contentEn || fallbackEn) : (contentAr || fallbackAr)}
-      </article>
-    {/if}
+    <article class="legal-content">
+      {activeLang === 'en' ? contentEn : contentAr}
+    </article>
   </div>
 </div>
 
@@ -214,38 +184,6 @@ These terms are governed by the laws of the Arab Republic of Egypt. For any inqu
   .lang-pill.active {
     background: var(--storm);
     color: var(--paper);
-  }
-
-  .loading-skeleton {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .skeleton-line {
-    height: 1.5rem;
-    background: var(--line);
-    border-radius: 0.35rem;
-    opacity: 0.3;
-    animation: pulse-skeleton 1.2s ease-in-out infinite;
-  }
-
-  .skeleton-line.wide {
-    width: 75%;
-  }
-
-  .skeleton-block {
-    height: 5rem;
-    background: var(--line);
-    border-radius: 0.5rem;
-    opacity: 0.2;
-    animation: pulse-skeleton 1.2s ease-in-out infinite;
-    animation-delay: 0.2s;
-  }
-
-  @keyframes pulse-skeleton {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.35; }
   }
 
   .legal-content {
