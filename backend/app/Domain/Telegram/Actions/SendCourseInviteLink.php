@@ -159,22 +159,27 @@ class SendCourseInviteLink
         $courseTitle = htmlspecialchars((string) ($course->getTranslation('title', 'ar') ?: $course->slug), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $message = "🎉 مرحباً! تم تفعيل اشتراكك في مادة: <b>{$courseTitle}</b>\n\n";
 
+        $index = 1;
+
         if ($channelInviteLink) {
             $escapedChannel = htmlspecialchars((string) $channelInviteLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $message .= "📢 <b>1. قناة المادة (المحاضرات والملفات والشروحات):</b>\n{$escapedChannel}\n\n";
+            $message .= "📢 <b>{$index}. قناة المادة (المحاضرات والملفات والشروحات):</b>\n{$escapedChannel}\n\n";
+            $index++;
         }
 
         if ($groupInviteLink) {
             $escapedGroup = htmlspecialchars((string) $groupInviteLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $message .= "💬 <b>2. شات المادة (للنقاش والتواصل):</b>\n{$escapedGroup}\n\n";
+            $message .= "💬 <b>{$index}. شات المادة (للنقاش والتواصل):</b>\n{$escapedGroup}\n\n";
+            $index++;
         } elseif ($staticInvite) {
             $escapedStatic = htmlspecialchars((string) $staticInvite, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $message .= "🔗 <b>رابط الانضمام إلى المقرر:</b>\n{$escapedStatic}\n\n";
+            $message .= "🔗 <b>{$index}. رابط الانضمام إلى المقرر:</b>\n{$escapedStatic}\n\n";
+            $index++;
         }
 
         $generalGroupLink = config('telegram.general_group_link', 'https://t.me/code_eraa');
         $escapedGeneral = htmlspecialchars((string) $generalGroupLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $message .= "🌐 <b>3. الرابط العام للمنصة:</b>\n{$escapedGeneral}\n\n";
+        $message .= "🌐 <b>{$index}. الرابط العام للمنصة:</b>\n{$escapedGeneral}\n\n";
 
         $message .= '⚠️ تنبيه: روابط المادة مخصصة لك وصالحة لمدة 48 ساعة فقط. يرجى الانضمام الآن وعدم مشاركتها مع أحد.';
 

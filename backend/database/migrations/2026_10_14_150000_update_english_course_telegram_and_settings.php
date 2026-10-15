@@ -17,7 +17,7 @@ return new class extends Migration
         if ($course) {
             $course->update([
                 'telegram_channel_id' => '-1004331858990',
-                'telegram_group_id' => '-1005589255780',
+                'telegram_group_id' => '-1003639967800',
                 'telegram_invite_link' => 'https://t.me/+D07NyjD8W3E0ZmFk',
                 'teacher_share_percent' => 70,
                 'is_general' => true,
@@ -39,7 +39,7 @@ return new class extends Migration
                 'is_general' => true,
                 'teacher_share_percent' => 70,
                 'telegram_channel_id' => '-1004331858990',
-                'telegram_group_id' => '-1005589255780',
+                'telegram_group_id' => '-1003639967800',
                 'telegram_invite_link' => 'https://t.me/+D07NyjD8W3E0ZmFk',
                 'sort_order' => 5,
             ]);

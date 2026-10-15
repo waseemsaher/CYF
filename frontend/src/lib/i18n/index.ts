@@ -301,7 +301,7 @@ export const translations: Record<Locale, Translations> = {
       secondaryCta: 'إنشاء حساب',
       dashboardCta: 'لوحة التحكم',
       stats: [
-        { value: '+5', label: 'مقررات تخصصية متكاملة' },
+        { value: '', label: 'مقررات تخصصية متكاملة' },
         { value: '', label: 'تطابق مع توصيف المقرر الأكاديمي' },
         { value: '', label: 'تفعيل المحتوى بعد اعتماد الدفع' }
       ],
@@ -377,7 +377,7 @@ export const translations: Record<Locale, Translations> = {
         items: [
           {
             title: 'تغطية شاملة لمقررات الكلية',
-            desc: 'محتوى مصور ومكتوب متوافق 100% مع توصيف المقررات الأكاديمية والمناهج المعتمدة.'
+            desc: 'محتوى مصور ومكتوب  مع توصيف المقررات الأكاديمية والمناهج المعتمدة.'
           },
           {
             title: 'تفعيل فوري للمحتوى',
@@ -613,7 +613,7 @@ export const translations: Record<Locale, Translations> = {
       secondaryCta: 'Create Account',
       dashboardCta: 'My Dashboard',
       stats: [
-        { value: '+5', label: 'Comprehensive Tech Courses' },
+        { value: '', label: 'Comprehensive Tech Courses' },
         { value: '', label: 'Match with Academic Course Specifications' },
         { value: '', label: 'Content Access Upon Payment Approval' }
       ],
@@ -689,14 +689,14 @@ export const translations: Record<Locale, Translations> = {
         items: [
           {
             title: 'Full Curriculum Coverage',
-            desc: 'Video lectures and notes 100% aligned with verified academic course specifications.'
+            desc: 'Video lectures and notes aligned with verified academic course specifications.'
           },
           {
             title: 'Instant Content Activation',
             desc: 'Course content opens directly upon payment approval, without any waiting or extra steps.'
           },
           {
-            title: 'Smart Self-Assessment Quizzes',
+            title: '"Coming Soon" Smart Self-Assessment Quizzes',
             desc: 'Test your understanding after each module with interactive quizzes, instant scores, and answer keys.'
           },
           {
@@ -720,7 +720,7 @@ export const translations: Record<Locale, Translations> = {
           },
           {
             q: 'How long does subscription verification take?',
-            a: 'Payment receipts are reviewed regularly by administrators as quickly as possible (usually within minutes to a few hours). You will receive an email confirmation and immediate access upon approval.'
+            a: 'Payment receipts are reviewed regularly by administrators as quickly as possible (usually within minutes to a few hours). You will receive a Telegram confirmation and immediate access upon approval.'
           },
           {
             q: 'How long does my course subscription remain valid?',
@@ -861,7 +861,7 @@ export const translations: Record<Locale, Translations> = {
         departmentLabel: 'Academic Department',
         telegramLabel: 'Telegram Username (optional)',
         telegramPlaceholder: '@username',
-        phoneLabel: 'E-Wallet Number (Vodafone Cash / InstaPay)',
+        phoneLabel: 'For refunds if needed, E-Wallet Number (Vodafone Cash / InstaPay)',
         phonePlaceholder: '01012345678',
         submit: 'Create Account & Start Learning',
         submitting: 'Creating account...',
