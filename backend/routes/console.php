@@ -47,4 +47,5 @@ Artisan::command('telegram:set-webhook {--info}', function () {
 
 Schedule::command('telegram:remove-expired')->daily();
 Schedule::command('sanctum:prune-expired --hours=24')->daily();
+// Activity logs are intentionally retained forever and must never be scheduled for pruning (no activitylog:clean); covered by daily db:backup.
 Schedule::command('db:backup')->dailyAt('02:00');

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\AdminActivityLogController;
 use App\Http\Controllers\Api\AdminCouponController;
 use App\Http\Controllers\Api\AdminCourseController;
 use App\Http\Controllers\Api\AdminDiscountController;
@@ -105,6 +106,10 @@ Route::prefix('v1')->group(function (): void {
         Route::prefix('admin')->middleware('role_or_permission:superadmin|admin|payments.review|courses.manage|students.manage|content.manage|coupons.manage')->group(function (): void {
             // Overview dashboard
             Route::get('/overview', [AdminOverviewController::class, '__invoke']);
+
+            // Activity log
+            Route::get('/activity-logs', [AdminActivityLogController::class, 'index']);
+            Route::get('/activity-log', [AdminActivityLogController::class, 'index']);
 
             // Student management
             Route::get('/students', [AdminStudentController::class, 'index']);

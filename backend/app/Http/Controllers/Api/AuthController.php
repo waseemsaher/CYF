@@ -83,7 +83,7 @@ class AuthController extends Controller
     {
         $credentials = $request->validated();
 
-        if (! Auth::attempt([
+        if (! Auth::guard('web')->attempt([
             'email' => $credentials['email'],
             'password' => $credentials['password'],
         ])) {
@@ -93,7 +93,7 @@ class AuthController extends Controller
         }
 
         /** @var User|null $user */
-        $user = Auth::user();
+        $user = Auth::guard('web')->user();
 
         if (! $user instanceof User) {
             return response()->json([
@@ -121,6 +121,11 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth-token')->plainTextToken;
         $payload = $this->profileAction->handle($user);
+
+        activity('auth')
+            ->performedOn($user)
+            ->causedBy($user)
+            ->log('Logged in');
 
         return response()->json([
             'data' => [

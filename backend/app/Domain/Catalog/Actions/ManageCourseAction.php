@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Actions;
 
 use App\Models\Course;
+use App\Models\User;
 
 class ManageCourseAction
 {
@@ -21,6 +22,15 @@ class ManageCourseAction
         if (is_array($audiences)) {
             $this->syncAudiences($course, $audiences);
         }
+
+        $causer = auth()->user();
+        $title = (string) ($course->getTranslation('title', 'ar') ?: $course->getTranslation('title', 'en'));
+
+        $activity = activity('courses')->performedOn($course);
+        if ($causer instanceof User) {
+            $activity->causedBy($causer);
+        }
+        $activity->log("Created course {$title}");
 
         return $course->load('audiences');
     }
@@ -40,11 +50,29 @@ class ManageCourseAction
             $this->syncAudiences($course, $audiences);
         }
 
+        $causer = auth()->user();
+        $title = (string) ($course->getTranslation('title', 'ar') ?: $course->getTranslation('title', 'en'));
+
+        $activity = activity('courses')->performedOn($course);
+        if ($causer instanceof User) {
+            $activity->causedBy($causer);
+        }
+        $activity->log("Updated course {$title}");
+
         return $course->refresh()->load('audiences');
     }
 
     public function delete(Course $course): void
     {
+        $causer = auth()->user();
+        $title = (string) ($course->getTranslation('title', 'ar') ?: $course->getTranslation('title', 'en'));
+
+        $activity = activity('courses')->performedOn($course);
+        if ($causer instanceof User) {
+            $activity->causedBy($causer);
+        }
+        $activity->log("Deleted course {$title}");
+
         $course->delete();
     }
 

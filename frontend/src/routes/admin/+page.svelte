@@ -5,6 +5,7 @@
     getAdminCourses,
     getAdminStudents,
     getAdminTeachers,
+    getAdminActivityLogs,
     assignTeacherToCourse,
     createAdminCourse,
     updateAdminCourse,
@@ -15,6 +16,7 @@
     type AdminCourse,
     type AdminStudent,
     type AdminTeacher,
+    type AdminActivityLogItem,
   } from '$lib/api/admin';
   import { getAuthToken } from '$lib/api/client';
   import { getCurrentUser } from '$lib/api/auth';
@@ -37,6 +39,18 @@
 
   // Active Tab
   let activeTab = $state<'courses' | 'discounts' | 'teachers' | 'students' | 'activity' | 'system'>('courses');
+
+  // Activity Log State
+  let activityLogs = $state<AdminActivityLogItem[]>([]);
+  let activityPage = $state(1);
+  let activityLastPage = $state(1);
+  let activityTotal = $state(0);
+  let activityLoading = $state(false);
+  let activityError = $state('');
+  let activityLoaded = $state(false);
+  let activityFilterLogName = $state('');
+  let activityFilterDateFrom = $state('');
+  let activityFilterDateTo = $state('');
 
   // Modal State
   let isCourseModalOpen = $state(false);
@@ -122,6 +136,54 @@
       loading = false;
     }
   }
+
+  async function loadActivityLogs(page = 1, append = false) {
+    activityLoading = true;
+    activityError = '';
+    try {
+      const res = await getAdminActivityLogs(fetch, page, {
+        log_name: activityFilterLogName || undefined,
+        date_from: activityFilterDateFrom || undefined,
+        date_to: activityFilterDateTo || undefined,
+      });
+      if (append) {
+        activityLogs = [...activityLogs, ...(res.data || [])];
+      } else {
+        activityLogs = res.data || [];
+      }
+      activityPage = res.meta?.current_page || page;
+      activityLastPage = res.meta?.last_page || 1;
+      activityTotal = res.meta?.total || 0;
+      activityLoaded = true;
+    } catch (e: any) {
+      activityError = e?.message || 'تعذر تحميل سجل العمليات والتدقيق.';
+    } finally {
+      activityLoading = false;
+    }
+  }
+
+  function handleFilterActivity() {
+    loadActivityLogs(1, false);
+  }
+
+  function handleResetActivityFilters() {
+    activityFilterLogName = '';
+    activityFilterDateFrom = '';
+    activityFilterDateTo = '';
+    loadActivityLogs(1, false);
+  }
+
+  function handleLoadMoreActivity() {
+    if (activityPage < activityLastPage && !activityLoading) {
+      loadActivityLogs(activityPage + 1, true);
+    }
+  }
+
+  $effect(() => {
+    if (activeTab === 'activity' && !activityLoaded && !activityLoading) {
+      loadActivityLogs(1, false);
+    }
+  });
 
   async function refreshReferenceData() {
     try {
@@ -750,15 +812,79 @@
               <h2>سجل العمليات والتدقيق (Activity Log)</h2>
               <p>سجل زمني لجميع عمليات الدفع، تعديل البيانات، والاعتمادات بالمنصة.</p>
             </div>
+            {#if activityTotal > 0}
+              <div class="panel-stats-badge">
+                إجمالي السجلات: {activityTotal}
+              </div>
+            {/if}
           </div>
 
-          {#if overview.recent_activity.length === 0}
+          <!-- Filter Bar -->
+          <div class="activity-filter-bar">
+            <div class="filter-group">
+              <label for="filter-log-name">نوع السجل</label>
+              <select id="filter-log-name" bind:value={activityFilterLogName} onchange={handleFilterActivity}>
+                <option value="">جميع السجلات</option>
+                <option value="payment">المدفوعات (payment)</option>
+                <option value="courses">المقررات (courses)</option>
+                <option value="discounts">الخصومات (discounts)</option>
+                <option value="auth">تسجيل الدخول (auth)</option>
+                <option value="enrollment">الاشتراكات (enrollment)</option>
+                <option value="telegram">تيليجرام (telegram)</option>
+                <option value="coupon">الكوبونات (coupon)</option>
+                <option value="payout">المستحقات (payout)</option>
+                <option value="user">المستخدمون (user)</option>
+                <option value="settings">الإعدادات (settings)</option>
+                <option value="content">المحتوى (content)</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label for="filter-date-from">من تاريخ</label>
+              <input
+                type="date"
+                id="filter-date-from"
+                bind:value={activityFilterDateFrom}
+                onchange={handleFilterActivity}
+              />
+            </div>
+
+            <div class="filter-group">
+              <label for="filter-date-to">إلى تاريخ</label>
+              <input
+                type="date"
+                id="filter-date-to"
+                bind:value={activityFilterDateTo}
+                onchange={handleFilterActivity}
+              />
+            </div>
+
+            <div class="filter-actions">
+              {#if activityFilterLogName || activityFilterDateFrom || activityFilterDateTo}
+                <button type="button" class="btn-filter-reset" onclick={handleResetActivityFilters}>
+                  إلغاء الفلاتر
+                </button>
+              {/if}
+            </div>
+          </div>
+
+          {#if activityError}
+            <div class="modal-error-banner" style="margin-bottom: 1.25rem;" role="alert">
+              {activityError}
+            </div>
+          {/if}
+
+          {#if activityLoading && activityLogs.length === 0}
             <div class="empty-box">
-              <p>لا توجد سجلات نشاط مسجلة بعد.</p>
+              <p>جاري تحميل سجل العمليات والتدقيق...</p>
+            </div>
+          {:else if activityLogs.length === 0}
+            <div class="empty-box">
+              <p>لا توجد سجلات نشاط مسجلة تطابق معايير البحث.</p>
             </div>
           {:else}
             <div class="activity-timeline">
-              {#each overview.recent_activity as act (act.id)}
+              {#each activityLogs as act (act.id)}
                 <div class="activity-entry">
                   <div class="entry-dot" aria-hidden="true"></div>
                   <div class="entry-content">
@@ -766,7 +892,13 @@
                     <p class="entry-meta">
                       <span>بواسطة: <strong>{act.causer_name || 'النظام'}</strong></span>
                       <span class="sep">•</span>
-                      <span>سجل: {act.log_name}</span>
+                      <span class="log-tag">{act.log_name}</span>
+                      {#if act.subject_type && act.subject_id}
+                        <span class="sep">•</span>
+                        <span class="subject-tag">
+                          {act.subject_type.split('\\').pop()} #{act.subject_id}
+                        </span>
+                      {/if}
                       <span class="sep">•</span>
                       <span>{new Date(act.created_at).toLocaleString('ar-EG')}</span>
                     </p>
@@ -774,6 +906,23 @@
                 </div>
               {/each}
             </div>
+
+            {#if activityPage < activityLastPage}
+              <div class="load-more-container">
+                <button
+                  type="button"
+                  class="btn-load-more"
+                  onclick={handleLoadMoreActivity}
+                  disabled={activityLoading}
+                >
+                  {#if activityLoading}
+                    جاري التحميل...
+                  {:else}
+                    عرض المزيد ({activityLogs.length} من {activityTotal})
+                  {/if}
+                </button>
+              </div>
+            {/if}
           {/if}
         </section>
 
@@ -1673,6 +1822,122 @@
     display: flex;
     gap: 0.4rem;
     flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .panel-stats-badge {
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 0.35rem 0.85rem;
+    border-radius: 2rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .activity-filter-bar {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    padding: 1rem 1.25rem;
+    border-radius: 0.85rem;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .filter-group select,
+  .filter-group input {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    color: var(--storm);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.88rem;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .filter-group select:focus,
+  .filter-group input:focus {
+    border-color: var(--deep-cyan);
+  }
+
+  .filter-actions {
+    display: flex;
+    align-items: center;
+  }
+
+  .btn-filter-reset {
+    background: transparent;
+    border: 1.5px solid var(--line);
+    color: var(--muted);
+    padding: 0.5rem 0.85rem;
+    border-radius: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+
+  .btn-filter-reset:hover {
+    border-color: var(--storm);
+    color: var(--storm);
+  }
+
+  .log-tag {
+    background: rgba(15, 40, 47, 0.08);
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-family: monospace;
+    color: var(--storm);
+  }
+
+  .subject-tag {
+    color: var(--deep-cyan);
+    font-weight: 700;
+    font-size: 0.8rem;
+  }
+
+  .load-more-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+
+  .btn-load-more {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    color: var(--storm);
+    padding: 0.65rem 1.75rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+
+  .btn-load-more:hover:not(:disabled) {
+    border-color: var(--deep-cyan);
+    color: var(--deep-cyan);
+    transform: translateY(-1px);
+  }
+
+  .btn-load-more:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   /* System Modules Grid */
