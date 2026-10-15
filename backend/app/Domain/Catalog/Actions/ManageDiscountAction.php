@@ -53,4 +53,3 @@ class ManageDiscountAction
         $discount->delete();
     }
 }
-
