@@ -22,6 +22,7 @@
   import { currentLocale, formatPrice } from '$lib/i18n';
   import AuthGuardCard from '$lib/components/AuthGuardCard.svelte';
   import TeacherManagement from '$lib/components/admin/TeacherManagement.svelte';
+  import DiscountManagement from '$lib/components/admin/DiscountManagement.svelte';
 
   let overview: AdminOverviewData | null = $state(null);
   let courses: AdminCourse[] = $state([]);
@@ -35,7 +36,7 @@
   let currentRole = $state('');
 
   // Active Tab
-  let activeTab = $state<'courses' | 'teachers' | 'students' | 'activity' | 'system'>('courses');
+  let activeTab = $state<'courses' | 'discounts' | 'teachers' | 'students' | 'activity' | 'system'>('courses');
 
   // Modal State
   let isCourseModalOpen = $state(false);
@@ -352,6 +353,10 @@
   }
 
   onMount(() => {
+    const urlTab = new URLSearchParams(window.location.search).get('tab');
+    if (urlTab === 'courses' || urlTab === 'discounts' || urlTab === 'teachers' || urlTab === 'students' || urlTab === 'activity' || urlTab === 'system') {
+      activeTab = urlTab;
+    }
     loadData();
   });
 </script>
@@ -490,6 +495,15 @@
           onclick={() => activeTab = 'courses'}
         >
           إدارة المقررات ({courses.length})
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          class:active={activeTab === 'discounts'}
+          onclick={() => activeTab = 'discounts'}
+          data-testid="tab-discounts"
+        >
+          إدارة الخصومات
         </button>
         <button
           type="button"
@@ -638,6 +652,10 @@
             </div>
           {/if}
         </section>
+
+      <!-- TAB: DISCOUNTS MANAGEMENT -->
+      {:else if activeTab === 'discounts'}
+        <DiscountManagement />
 
       <!-- TAB: TEACHERS MANAGEMENT -->
       {:else if activeTab === 'teachers'}

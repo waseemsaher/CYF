@@ -178,5 +178,55 @@ export function resetAdminStudents(fetcher: typeof fetch = fetch) {
   return apiPost<{ message: string; count: number }>(fetcher, '/admin/users/reset-students', {});
 }
 
+export type AdminDiscount = {
+  id: number;
+  name: { ar: string; en: string };
+  type: 'percent' | 'fixed';
+  value: number;
+  scope: 'all' | 'courses';
+  starts_at: string;
+  ends_at: string;
+  is_active: boolean;
+  courses?: { id: number; slug: string; title: { ar: string; en: string } }[];
+  course_ids?: number[];
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type CreateDiscountPayload = {
+  name: { ar: string; en: string };
+  type: 'percent' | 'fixed';
+  value: number;
+  scope: 'all' | 'courses';
+  starts_at: string;
+  ends_at: string;
+  is_active?: boolean;
+  course_ids?: number[];
+};
+
+export type UpdateDiscountPayload = Partial<CreateDiscountPayload>;
+
+export function getAdminDiscounts(fetcher: typeof fetch = fetch, page = 1) {
+  return apiGet<{ data: AdminDiscount[]; meta: { current_page: number; last_page: number; total: number } }>(
+    fetcher,
+    `/admin/discounts?page=${page}`
+  );
+}
+
+export function createAdminDiscount(fetcher: typeof fetch = fetch, data: CreateDiscountPayload) {
+  return apiPost<{ data: AdminDiscount }>(fetcher, '/admin/discounts', data);
+}
+
+export function updateAdminDiscount(
+  fetcher: typeof fetch = fetch,
+  discountId: number,
+  data: UpdateDiscountPayload
+) {
+  return apiPut<{ data: AdminDiscount }>(fetcher, `/admin/discounts/${discountId}`, data);
+}
+
+export function deleteAdminDiscount(fetcher: typeof fetch = fetch, discountId: number) {
+  return apiDelete(fetcher, `/admin/discounts/${discountId}`);
+}
 
 

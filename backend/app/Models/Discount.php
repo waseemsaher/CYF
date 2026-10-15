@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Translatable\HasTranslations;
@@ -47,5 +48,16 @@ class Discount extends Model
     public function courses(): BelongsToMany
     {
         return $this->belongsToMany(Course::class, 'discount_course');
+    }
+
+    /**
+     * @param  Builder<Discount>  $query
+     * @return Builder<Discount>
+     */
+    public function scopeActiveNow(Builder $query): Builder
+    {
+        return $query->where('is_active', true)
+            ->whereDate('starts_at', '<=', now())
+            ->whereDate('ends_at', '>=', now());
     }
 }
