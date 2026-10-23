@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Telegram\Actions\SendCourseInviteLink;
 use App\Domain\Telegram\Services\TelegramUrlService;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\CourseItem;
 use App\Models\Enrollment;
+use App\Models\TelegramCourseInvite;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -112,7 +114,7 @@ class CourseContentController extends Controller
         $telegramInviteLink = null;
         if ($isUnlocked) {
             if ($user !== null) {
-                $userInvite = \App\Models\TelegramCourseInvite::query()
+                $userInvite = TelegramCourseInvite::query()
                     ->where('user_id', $user->id)
                     ->where('course_id', $course->id)
                     ->where('expires_at', '>', now())
@@ -124,8 +126,8 @@ class CourseContentController extends Controller
 
                 if (! $telegramInviteLink && $user->telegram_user_id && ($course->telegram_channel_id || $course->telegram_group_id)) {
                     try {
-                        app(\App\Domain\Telegram\Actions\SendCourseInviteLink::class)->handle($user, $course);
-                        $telegramInviteLink = \App\Models\TelegramCourseInvite::query()
+                        app(SendCourseInviteLink::class)->handle($user, $course);
+                        $telegramInviteLink = TelegramCourseInvite::query()
                             ->where('user_id', $user->id)
                             ->where('course_id', $course->id)
                             ->where('expires_at', '>', now())
