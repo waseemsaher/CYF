@@ -80,29 +80,7 @@ class SendCourseInviteLink
                     ]);
                 }
 
-                try {
-                    $response = $this->client->createChatInviteLink(
-                        chatId: $channelId,
-                        memberLimit: 1,
-                        expireDate: $expireDate,
-                        createsJoinRequest: true,
-                    );
-
-                    if ($response->successful()) {
-                        $channelInviteLink = $response->json('result.invite_link');
-                    } else {
-                        Log::error('Failed to create Telegram channel invite link', [
-                            'channel_id' => $channelId,
-                            'user_id' => $user->getKey(),
-                            'response' => $response->body(),
-                        ]);
-                    }
-                } catch (Throwable $e) {
-                    Log::error('Exception creating Telegram channel invite link', [
-                        'channel_id' => $channelId,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+                $channelInviteLink = $this->generateChatInvite($channelId, $expireDate, (int) $user->getKey(), 'channel');
             }
         }
 
@@ -121,29 +99,7 @@ class SendCourseInviteLink
                     ]);
                 }
 
-                try {
-                    $response = $this->client->createChatInviteLink(
-                        chatId: $groupId,
-                        memberLimit: 1,
-                        expireDate: $expireDate,
-                        createsJoinRequest: true,
-                    );
-
-                    if ($response->successful()) {
-                        $groupInviteLink = $response->json('result.invite_link');
-                    } else {
-                        Log::error('Failed to create Telegram group invite link', [
-                            'group_id' => $groupId,
-                            'user_id' => $user->getKey(),
-                            'response' => $response->body(),
-                        ]);
-                    }
-                } catch (Throwable $e) {
-                    Log::error('Exception creating Telegram group invite link', [
-                        'group_id' => $groupId,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+                $groupInviteLink = $this->generateChatInvite($groupId, $expireDate, (int) $user->getKey(), 'group');
             }
         }
 
@@ -215,5 +171,60 @@ class SendCourseInviteLink
         }
 
         return true;
+    }
+
+    /**
+     * Resiliently create a unique invite link for a chat:
+     * 1. Attempt with join request (creates_join_request: true).
+     * 2. If Telegram rejects (e.g. chat doesn't support join requests or member_limit conflict),
+     *    fallback to single-use direct invite link (memberLimit: 1, creates_join_request: false).
+     */
+    private function generateChatInvite(int|string $chatId, int $expireDate, int $userId, string $type): ?string
+    {
+        try {
+            $response = $this->client->createChatInviteLink(
+                chatId: $chatId,
+                memberLimit: 1,
+                expireDate: $expireDate,
+                createsJoinRequest: true,
+            );
+
+            if ($response->successful() && $response->json('ok')) {
+                return $response->json('result.invite_link');
+            }
+
+            Log::info("Telegram {$type} join-request invite link rejected, falling back to direct single-use link", [
+                'chat_id' => $chatId,
+                'user_id' => $userId,
+                'response' => $response->body(),
+            ]);
+
+            $fallback = $this->client->createChatInviteLink(
+                chatId: $chatId,
+                memberLimit: 1,
+                expireDate: $expireDate,
+                createsJoinRequest: false,
+            );
+
+            if ($fallback->successful() && $fallback->json('ok')) {
+                return $fallback->json('result.invite_link');
+            }
+
+            Log::error("All attempts to create Telegram {$type} invite link failed", [
+                'chat_id' => $chatId,
+                'user_id' => $userId,
+                'response' => $fallback->body(),
+            ]);
+
+            return null;
+        } catch (Throwable $e) {
+            Log::error("Exception creating Telegram {$type} invite link", [
+                'chat_id' => $chatId,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 }

@@ -109,13 +109,45 @@ class CourseContentController extends Controller
             ];
         }
 
+        $telegramInviteLink = null;
+        if ($isUnlocked) {
+            if ($user !== null) {
+                $userInvite = \App\Models\TelegramCourseInvite::query()
+                    ->where('user_id', $user->id)
+                    ->where('course_id', $course->id)
+                    ->where('expires_at', '>', now())
+                    ->whereNull('used_at')
+                    ->latest('id')
+                    ->value('invite_link');
+
+                $telegramInviteLink = $userInvite ?: $course->telegram_invite_link;
+
+                if (! $telegramInviteLink && $user->telegram_user_id && ($course->telegram_channel_id || $course->telegram_group_id)) {
+                    try {
+                        app(\App\Domain\Telegram\Actions\SendCourseInviteLink::class)->handle($user, $course);
+                        $telegramInviteLink = \App\Models\TelegramCourseInvite::query()
+                            ->where('user_id', $user->id)
+                            ->where('course_id', $course->id)
+                            ->where('expires_at', '>', now())
+                            ->whereNull('used_at')
+                            ->latest('id')
+                            ->value('invite_link');
+                    } catch (\Throwable $e) {
+                        // Non-blocking
+                    }
+                }
+            } else {
+                $telegramInviteLink = $course->telegram_invite_link;
+            }
+        }
+
         return response()->json([
             'data' => [
                 'course' => [
                     'id' => $course->id,
                     'slug' => $course->slug,
                     'title' => $course->getTranslations('title'),
-                    'telegram_invite_link' => $isUnlocked ? $course->telegram_invite_link : null,
+                    'telegram_invite_link' => $telegramInviteLink,
                 ],
                 'is_unlocked' => $isUnlocked,
                 'sections' => $sectionsData,
