@@ -32,9 +32,9 @@ RUN if [ "$INSTALL_DEV" = "true" ]; then \
     fi
 
 # ------------------------------------------------------------------------------
-# Stage 2: Production PHP 8.4 FPM Alpine Runtime
+# Stage 2: Production PHP 8.4 FPM Alpine Runtime (Patched against CVE-2026-109618/9)
 # ------------------------------------------------------------------------------
-FROM php:8.4-fpm-alpine AS runner
+FROM php:8.4.27-fpm-alpine AS runner
 
 WORKDIR /var/www/html
 
