@@ -33,7 +33,10 @@ class GetCurrentUserProfileAction
                 'is_active' => (bool) $user->getAttribute('is_active'),
                 'enrolled_courses' => $user->enrollments()
                     ->where('status', 'active')
-                    ->where('expires_at', '>', now())
+                    ->where(function ($query): void {
+                        $query->whereNull('expires_at')
+                            ->orWhere('expires_at', '>', now());
+                    })
                     ->with('course')
                     ->get()
                     ->map(fn (Enrollment $enrollment): ?array => $enrollment->course ? [

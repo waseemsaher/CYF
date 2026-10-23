@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Telegram\Services\TelegramUrlService;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\CourseItem;
@@ -28,7 +29,7 @@ class CourseContentController extends Controller
             ->firstOrFail();
 
         /** @var User|null $user */
-        $user = $request->user();
+        $user = $request->user('sanctum') ?? $request->user();
 
         $isUnlocked = false;
         if ($user !== null) {
@@ -72,7 +73,15 @@ class CourseContentController extends Controller
 
                 if ($itemUnlocked) {
                     $itemData['description'] = $item->getTranslations('description');
-                    $itemData['url'] = $item->url;
+
+                    $url = $item->url;
+                    if (! $url && $item->telegram_message_id) {
+                        /** @var TelegramUrlService $telegramUrlService */
+                        $telegramUrlService = app(TelegramUrlService::class);
+                        $url = $telegramUrlService->forLesson($item);
+                    }
+
+                    $itemData['url'] = $url;
                     $itemData['has_file'] = $item->file_path !== null;
                     $itemData['telegram_message_id'] = $item->telegram_message_id;
                     $itemData['has_telegram_video'] = $item->telegram_message_id !== null;
@@ -122,8 +131,12 @@ class CourseContentController extends Controller
         /** @var Course $course */
         $course = Course::query()->where('slug', $slug)->firstOrFail();
 
-        /** @var User $user */
-        $user = $request->user();
+        /** @var User|null $user */
+        $user = $request->user('sanctum') ?? $request->user();
+
+        if ($user === null) {
+            return response()->json(['message' => 'Unauthorized. Active enrollment required.'], 403);
+        }
 
         $isStaff = $user->hasRole(['superadmin', 'admin']) || $user->can('courses.manage');
         $isTeacher = $user->hasRole('teacher') && $course->teachers()->where('users.id', $user->id)->exists();

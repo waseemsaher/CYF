@@ -237,3 +237,62 @@ it('denies unauthenticated direct access to private course files', function (): 
     $this->getJson("/api/v1/courses/{$course->slug}/items/{$item->id}/file")
         ->assertUnauthorized();
 });
+
+it('unlocks full content when student authenticates with Sanctum bearer token', function (): void {
+    $course = Course::create([
+        'slug' => 'physics',
+        'title' => ['ar' => 'فيزياء', 'en' => 'Physics'],
+        'description' => ['ar' => 'وصف', 'en' => 'Desc'],
+        'status' => 'published',
+        'price_cents' => 20000,
+        'telegram_channel_id' => -1004431704885,
+        'telegram_invite_link' => 'https://t.me/+physicslink',
+    ]);
+
+    $term = Term::create([
+        'name' => ['ar' => 'فصل 1', 'en' => 'Term 1'],
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addMonths(3),
+        'is_current' => true,
+    ]);
+
+    $student = User::factory()->create();
+    $token = $student->createToken('auth-token')->plainTextToken;
+
+    Enrollment::create([
+        'user_id' => $student->id,
+        'course_id' => $course->id,
+        'term_id' => $term->id,
+        'source' => 'payment',
+        'status' => 'active',
+        'starts_at' => now()->subDay(),
+        'expires_at' => now()->addMonths(3),
+    ]);
+
+    $section = app(CreateSection::class)->handle($course, ['ar' => 'المقدمة', 'en' => 'Introduction']);
+
+    app(CreateCourseItem::class)->handle(
+        course: $course,
+        section: $section,
+        type: 'lecture_link',
+        title: ['ar' => 'محاضرة 1', 'en' => 'Lecture 1'],
+        description: ['ar' => 'شرح الفيزياء', 'en' => 'Physics explanation'],
+        url: null,
+        file: null,
+        quizId: null,
+        position: 1,
+        isPublished: true,
+        telegramMessageId: 42,
+    );
+
+    $response = $this->withHeader('Authorization', "Bearer {$token}")
+        ->getJson("/api/v1/courses/{$course->slug}/content");
+
+    $response->assertOk()
+        ->assertJsonPath('data.is_unlocked', true)
+        ->assertJsonPath('data.course.telegram_invite_link', 'https://t.me/+physicslink')
+        ->assertJsonPath('data.sections.0.items.0.is_locked', false)
+        ->assertJsonPath('data.sections.0.items.0.telegram_message_id', 42)
+        ->assertJsonPath('data.sections.0.items.0.has_telegram_video', true)
+        ->assertJsonPath('data.sections.0.items.0.url', 'https://t.me/c/4431704885/42');
+});

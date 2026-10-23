@@ -109,6 +109,20 @@
         </div>
 
         <div class="header-actions">
+          {#if content.is_unlocked && content.course.telegram_invite_link}
+            <a
+              href={content.course.telegram_invite_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-join-telegram"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+              </svg>
+              الانضمام لمجموعة المادة ↗
+            </a>
+          {/if}
+
           {#if content.is_unlocked && telegramStatus && !telegramStatus.is_linked}
             <a href="/link-telegram" class="btn-link-telegram">
               ربط حساب تليجرام لاستلام الروابط
@@ -135,6 +149,25 @@
       {#if resendMsg}
         <div class="resend-banner resend-banner-{resendMsg.type}" role="status">
           {resendMsg.text}
+        </div>
+      {/if}
+
+      {#if !content.is_unlocked}
+        <div class="locked-banner" role="alert">
+          <div class="locked-banner-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <div class="locked-banner-text">
+            <strong>المحتوى التعليمي مقفل حالياً</strong>
+            <p>يتطلب فتح هذا المحتوى وجود اشتراك نشط ومفعّل في المادة. إذا قمت برفع إثبات الدفع مؤخراً، فقد يكون قيد مراجعة الإدارة.</p>
+          </div>
+          <div class="locked-banner-actions">
+            <a href="/courses/{slug}" class="btn-banner-link">صفحة المادة</a>
+            <a href="/payments" class="btn-banner-link outline">متابعة الدفعات</a>
+          </div>
         </div>
       {/if}
 
@@ -217,8 +250,26 @@
                         {:else}
                           {#if item.type === 'lecture_link' || item.type === 'external_link'}
                             {#if item.url}
-                              <a href={item.url} target="_blank" rel="noopener noreferrer" class="btn-item btn-link">
-                                فتح الرابط ↗
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn-item {item.has_telegram_video ? 'btn-telegram' : 'btn-link'}"
+                              >
+                                {#if item.has_telegram_video}
+                                  مشاهدة على تليجرام ▶
+                                {:else}
+                                  فتح الرابط ↗
+                                {/if}
+                              </a>
+                            {:else if item.has_telegram_video && content.course.telegram_invite_link}
+                              <a
+                                href={content.course.telegram_invite_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="btn-item btn-telegram"
+                              >
+                                مشاهدة على تليجرام ▶
                               </a>
                             {/if}
                           {:else if item.type === 'file'}
@@ -366,6 +417,26 @@
     flex-wrap: wrap;
   }
 
+  .btn-join-telegram {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #0088cc;
+    color: white;
+    padding: 0.65rem 1.25rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.88rem;
+    border: 2px solid #0088cc;
+    transition: opacity 150ms ease, transform 150ms ease;
+  }
+
+  .btn-join-telegram:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+  }
+
   .btn-link-telegram {
     display: inline-flex;
     align-items: center;
@@ -427,6 +498,84 @@
     background: #fee2e2;
     color: #991b1b;
     border: 1px solid #fecaca;
+  }
+
+  .locked-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: var(--card);
+    border: 2px solid var(--line);
+    border-inline-start: 4px solid var(--accent, #f59e0b);
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .locked-banner-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.5rem;
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    flex-shrink: 0;
+  }
+
+  .locked-banner-text {
+    flex: 1;
+    min-width: 240px;
+  }
+
+  .locked-banner-text strong {
+    display: block;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--storm);
+    margin-bottom: 0.25rem;
+  }
+
+  .locked-banner-text p {
+    font-size: 0.88rem;
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .locked-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .btn-banner-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+    background: var(--storm);
+    color: white;
+    transition: opacity 150ms ease;
+  }
+
+  .btn-banner-link:hover {
+    opacity: 0.9;
+  }
+
+  .btn-banner-link.outline {
+    background: var(--paper);
+    color: var(--storm);
+    border: 1px solid var(--line);
+  }
+
+  .btn-banner-link.outline:hover {
+    background: var(--card);
   }
 
   /* Sections */
@@ -602,6 +751,16 @@
     background: var(--paper);
     color: var(--deep-cyan);
     border: 2px solid var(--line);
+  }
+
+  .btn-telegram {
+    background: #0088cc;
+    color: white;
+    border: 2px solid #0088cc;
+  }
+
+  .btn-telegram:hover {
+    opacity: 0.9;
   }
 
   .btn-file {

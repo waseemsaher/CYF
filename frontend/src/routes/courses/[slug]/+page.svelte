@@ -55,7 +55,10 @@
     }
   });
 
-  let isEnrolled = $derived(Boolean(currentContent?.is_unlocked));
+  let isEnrolled = $derived(
+    Boolean(currentContent?.is_unlocked) ||
+    Boolean($currentUser?.enrolled_courses?.some((c) => c.slug === data.course.slug || c.id === data.course.id))
+  );
 
   // Free Preview Modal State
   let isPreviewModalOpen = $state(false);
@@ -240,6 +243,12 @@
           <span>{$currentLocale === 'en' ? 'Go to Course Content' : 'انتقل إلى محتوى المادة'}</span>
           <span aria-hidden="true">{$currentLocale === 'en' ? '→' : '←'}</span>
         </a>
+        {#if currentContent?.course?.telegram_invite_link}
+          <a class="enroll-btn telegram-btn" href={currentContent.course.telegram_invite_link} target="_blank" rel="noopener noreferrer">
+            <span>{$currentLocale === 'en' ? 'Join Course Telegram Group' : 'انضمام لمجموعة التليجرام'}</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+        {/if}
       </aside>
     {:else if hasPendingPayment}
       <aside class="enrollment-panel pending" aria-label={$currentLocale === 'en' ? 'Payment Under Review' : 'الدفعة قيد المراجعة'}>
@@ -855,6 +864,17 @@
   .enroll-btn.enrolled-btn:hover {
     background: #059669;
     border-color: #059669;
+  }
+
+  .enroll-btn.telegram-btn {
+    background: #0088cc;
+    border-color: #0088cc;
+    color: #ffffff;
+    margin-top: 0.5rem;
+  }
+
+  .enroll-btn.telegram-btn:hover {
+    opacity: 0.95;
   }
 
   .enroll-btn.pending-btn {
